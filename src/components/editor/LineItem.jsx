@@ -167,6 +167,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         type="number"
                         value={item.quantity}
                         onChange={(e) => handleChange('quantity', parseFloat(e.target.value) || 1)}
+                        onFocus={(e) => e.target.select()}
                         min="1"
                         className="input-sm w-full text-left text-sm"
                         title="Quantity"
@@ -184,6 +185,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         type="number"
                         value={item.days}
                         onChange={(e) => handleChange('days', parseFloat(e.target.value) || 1)}
+                        onFocus={(e) => e.target.select()}
                         min="0.5"
                         step="0.5"
                         className="input-sm w-full text-left text-sm"
@@ -202,6 +204,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         type="number"
                         value={item.cost}
                         onChange={(e) => handleChange('cost', parseFloat(e.target.value) || 0)}
+                        onFocus={(e) => e.target.select()}
                         min="0"
                         className="input-sm w-full text-left text-sm text-gray-500"
                         title="Cost"
@@ -219,6 +222,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         type="number"
                         value={item.charge}
                         onChange={(e) => handleChange('charge', parseFloat(e.target.value) || 0)}
+                        onFocus={(e) => e.target.select()}
                         min="0"
                         className="input-sm w-full text-left text-sm"
                         title="Charge"

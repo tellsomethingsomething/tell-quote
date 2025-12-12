@@ -1,19 +1,8 @@
-import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { SECTIONS, SECTION_ORDER } from '../../data/sections';
 import { calculateSectionTotal, calculateGrandTotalWithFees } from '../../utils/calculations';
 import { formatCurrency } from '../../utils/currency';
 import { useSettingsStore } from '../../store/settingsStore';
-
-// Register fonts for a more creative look
-Font.register({
-    family: 'Inter',
-    fonts: [
-        { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff2', fontWeight: 400 },
-        { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hjp-Ek-_EeA.woff2', fontWeight: 500 },
-        { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hjp-Ek-_EeA.woff2', fontWeight: 600 },
-        { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hjp-Ek-_EeA.woff2', fontWeight: 700 },
-    ],
-});
 
 // Tell Brand Color Palette - Business Class
 const colors = {
@@ -39,7 +28,7 @@ const styles = StyleSheet.create({
     page: {
         padding: 0,
         fontSize: 9,
-        fontFamily: 'Inter',
+        fontFamily: 'Helvetica',
         backgroundColor: colors.white,
     },
 
@@ -456,7 +445,7 @@ const styles = StyleSheet.create({
     termsPage: {
         padding: 0,
         fontSize: 8,
-        fontFamily: 'Inter',
+        fontFamily: 'Helvetica',
         backgroundColor: colors.white,
     },
     termsHeader: {
