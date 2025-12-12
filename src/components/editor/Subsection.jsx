@@ -70,7 +70,7 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
 
     return (
         <div
-            className="bg-dark-bg/50 rounded-lg p-3 transition-colors hover:bg-dark-bg/70"
+            className="bg-dark-bg/50 rounded-md p-2 transition-colors hover:bg-dark-bg/70"
             onDragOver={(e) => {
                 e.preventDefault();
                 e.currentTarget.classList.add('bg-accent-primary/10');
@@ -96,25 +96,25 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
         >
             {/* Subsection Header - Only hide for default 'Services' in flat sections */}
             {!shouldHideHeader && (
-                <div className="flex items-center gap-3 mb-2 cursor-grab active:cursor-grabbing">
-                    <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex items-center gap-2 mb-1.5 cursor-grab active:cursor-grabbing">
+                    <svg className="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
                     </svg>
-                    <h4 className="text-sm font-medium text-gray-400">{subsectionName}</h4>
-                    <span className="text-xs text-gray-600">{items.length} {items.length === 1 ? 'item' : 'items'}</span>
+                    <h4 className="text-xs font-medium text-gray-400">{subsectionName}</h4>
+                    <span className="text-[10px] text-gray-600">{items.length} items</span>
                 </div>
             )}
 
             {/* Line Items */}
             {items.length > 0 && (
-                <div className="space-y-2 mb-2">
+                <div className="space-y-1 mb-1">
                     {/* Column Headers */}
-                    <div className="flex flex-wrap items-center gap-2 px-2 py-1 text-xs text-gray-500 border-b border-dark-border">
+                    <div className="flex flex-wrap items-center gap-2 px-2 py-0.5 text-[10px] text-gray-500 border-b border-dark-border">
                         <div className="flex-1 min-w-[180px]">Item</div>
-                        <div className="w-16 text-center">Qty</div>
-                        <div className="w-16 text-center">Days</div>
-                        <div className="w-20 text-right hidden lg:block">Cost</div>
-                        <div className="w-20 text-right">Charge</div>
+                        <div className="w-16 text-left">Qty</div>
+                        <div className="w-16 text-left">Days</div>
+                        <div className="w-24 text-left hidden lg:block">Cost</div>
+                        <div className="w-24 text-left">Charge</div>
                         <div className="w-24 text-right">Total</div>
                         <div className="w-14 text-right hidden lg:block">Margin</div>
                         <div className="w-6"></div>

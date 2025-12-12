@@ -20,7 +20,7 @@ export default function EditorPanel({ onGoToSettings }) {
             <FeesEditor />
 
             {/* Sections */}
-            <div className="space-y-3">
+            <div className="space-y-2">
                 {sectionOrder.map((sectionId, index) => (
                     <Section
                         key={sectionId}

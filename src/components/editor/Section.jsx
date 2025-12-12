@@ -227,7 +227,7 @@ const Section = memo(function Section({ sectionId, index, totalSections }) {
 
             {/* Section Content */}
             {section.isExpanded && (
-                <div id={`section-${sectionId}-content`} className="mt-4 space-y-3">
+                <div id={`section-${sectionId}-content`} className="mt-3 space-y-2">
                     {allSubsections.map((subsectionName, idx) => (
                         <div
                             key={subsectionName}
