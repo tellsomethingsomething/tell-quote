@@ -309,7 +309,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                 </div>
 
                 {/* Financial Summary - Combined view for better scannability */}
-                <div className="grid grid-cols-4 gap-3 mb-6">
+                <div className="grid grid-cols-2 gap-3 mb-6">
                     {/* Confirmed (Won) */}
                     <div className="card bg-gradient-to-br from-green-900/30 to-green-950/20 border-green-800/30 p-3">
                         <div className="flex items-center gap-2 mb-2">
