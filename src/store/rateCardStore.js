@@ -131,6 +131,15 @@ export const useRateCardStore = create(
                 saveRateCardLocal(items);
                 saveSectionsLocal(sections);
                 set({ items, sections, loading: false });
+
+                // Auto-seed if database is empty
+                if (items.length === 0) {
+                    console.log('Rate card empty, seeding defaults...');
+                    // Use setTimeout to allow state to settle first
+                    setTimeout(() => {
+                        get().seedRateCard();
+                    }, 100);
+                }
             } catch (e) {
                 console.error('Failed to load rate card from DB:', e);
                 set({ loading: false });

@@ -9,7 +9,7 @@ const REGIONS = [
 ];
 
 export default function RateCardPage({ onBack }) {
-    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, exportTemplate, addSection, deleteSection, renameSection, moveSection, seedRateCard } = useRateCardStore();
+    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection } = useRateCardStore();
     const fileInputRef = useRef(null);
     const saveTimeoutRef = useRef(null);
     const [selectedSection, setSelectedSection] = useState('all');
@@ -163,24 +163,6 @@ export default function RateCardPage({ onBack }) {
                                 e.target.value = ''; // Reset
                             }}
                         />
-                        <button
-                            onClick={() => {
-                                const result = seedRateCard();
-                                if (result.added > 0) {
-                                    alert(`Added ${result.added} default services!`);
-                                    triggerSaved();
-                                } else {
-                                    alert(result.message || 'Default services already loaded');
-                                }
-                            }}
-                            className="btn-ghost text-sm"
-                            title="Load default services from Tell Productions rate card"
-                        >
-                            Load Defaults
-                        </button>
-                        <button onClick={exportTemplate} className="btn-ghost text-sm" title="Download a blank CSV template to fill in">
-                            Download Template
-                        </button>
                         <button onClick={() => fileInputRef.current?.click()} className="btn-ghost text-sm">
                             Import CSV
                         </button>
@@ -465,30 +447,19 @@ export default function RateCardPage({ onBack }) {
 
             {/* Items List */}
             <div className="flex-1 overflow-y-auto p-4">
-                {filteredItems.length === 0 ? (
+                {filteredItems.length === 0 && !searchQuery ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center">
+                        <div className="w-8 h-8 border-2 border-accent-primary border-t-transparent rounded-full animate-spin mb-4" />
+                        <h3 className="text-lg font-medium text-gray-400 mb-2">Loading services...</h3>
+                        <p className="text-sm text-gray-600">Setting up your rate card</p>
+                    </div>
+                ) : filteredItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                         <svg className="w-16 h-16 text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        <h3 className="text-lg font-medium text-gray-400 mb-2">No services yet</h3>
-                        <p className="text-sm text-gray-600 mb-4">Add your rates and services to use in quotes</p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => {
-                                    const result = seedRateCard();
-                                    if (result.added > 0) {
-                                        alert(`Added ${result.added} default services!`);
-                                        triggerSaved();
-                                    }
-                                }}
-                                className="btn-primary"
-                            >
-                                Load Default Services
-                            </button>
-                            <button onClick={() => setShowAddForm(true)} className="btn-secondary">
-                                Add Manually
-                            </button>
-                        </div>
+                        <h3 className="text-lg font-medium text-gray-400 mb-2">No matches found</h3>
+                        <p className="text-sm text-gray-600">Try a different search term</p>
                     </div>
                 ) : (
                     <div className="space-y-2">
