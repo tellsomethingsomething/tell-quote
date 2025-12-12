@@ -6,11 +6,12 @@ import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { CURRENCIES } from '../data/currencies';
 
+// Status colors aligned with brand palette for visual harmony
 const STATUSES = [
-    { id: 'draft', label: 'In Drafts', color: '#6b7280', bgColor: 'bg-gray-500/10' },
-    { id: 'sent', label: 'Sent', color: '#3b82f6', bgColor: 'bg-blue-500/10' },
+    { id: 'draft', label: 'Drafts', color: '#9CA3AF', bgColor: 'bg-gray-400/10' },
+    { id: 'sent', label: 'Sent', color: '#0F8B8D', bgColor: 'bg-[#0F8B8D]/10' },      // Brand Teal
     { id: 'won', label: 'Won', color: '#22c55e', bgColor: 'bg-green-500/10' },
-    { id: 'dead', label: 'Dead', color: '#ef4444', bgColor: 'bg-red-500/10' },
+    { id: 'dead', label: 'Lost', color: '#F87171', bgColor: 'bg-red-400/10' },
 ];
 
 const MONTHS = [
@@ -189,14 +190,14 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
             <div className="bg-dark-bg border-b border-dark-border p-6">
 
                 {/* Top Bar with Title and Navigation */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-100">Welcome back, {userName}</h1>
-                        <p className="text-sm text-gray-500">Pipeline Dashboard in {dashboardCurrency}</p>
+                        <h1 className="text-xl font-semibold text-gray-100">Welcome back, {userName}</h1>
+                        <p className="text-sm text-gray-500 mt-0.5">Pipeline Dashboard</p>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        {/* New Quote Button */}
+                    <div className="flex items-center gap-3">
+                        {/* New Quote Button - uses brand teal via btn-primary */}
                         <button
                             onClick={() => onNewQuote && onNewQuote()}
                             className="btn-primary flex items-center gap-2"
@@ -268,64 +269,85 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                     </div>
                 </div>
 
-                {/* Financial Summary - Actuals (Won) */}
-                <div className="grid grid-cols-3 gap-6 mb-4">
-                    <div className="card bg-gradient-to-br from-green-900/40 to-green-950/40 border-green-900/50">
-                        <p className="text-sm text-green-400/80 mb-1">Confirmed Revenue (Won)</p>
-                        <p className="text-2xl font-bold text-green-400 tracking-tight">
-                            {formatCurrency(financialStats.won.revenue, dashboardCurrency)}
-                        </p>
+                {/* Financial Summary - Combined view for better scannability */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                    {/* Confirmed (Won) */}
+                    <div className="card bg-gradient-to-br from-green-900/30 to-green-950/20 border-green-800/30">
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                            <span className="text-xs font-medium text-green-400/90 uppercase tracking-wide">Confirmed (Won)</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <p className="text-xs text-gray-500 mb-0.5">Revenue</p>
+                                <p className="text-lg font-semibold text-green-400 tabular-nums">
+                                    {formatCurrency(financialStats.won.revenue, dashboardCurrency)}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 mb-0.5">Profit</p>
+                                <p className="text-lg font-semibold text-green-400 tabular-nums">
+                                    {formatCurrency(financialStats.won.profit, dashboardCurrency)}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 mb-0.5">Avg Margin</p>
+                                <p className="text-lg font-semibold text-green-400 tabular-nums">
+                                    {financialStats.won.avgMargin.toFixed(1)}%
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="card bg-gradient-to-br from-green-900/40 to-green-950/40 border-green-900/50">
-                        <p className="text-sm text-green-400/80 mb-1">Confirmed Profit (Won)</p>
-                        <p className="text-2xl font-bold text-green-400 tracking-tight">
-                            {formatCurrency(financialStats.won.profit, dashboardCurrency)}
-                        </p>
-                    </div>
-                    <div className="card bg-gradient-to-br from-green-900/40 to-green-950/40 border-green-900/50">
-                        <p className="text-sm text-green-400/80 mb-1">Avg Margin (Won)</p>
-                        <p className="text-2xl font-bold text-green-400 tracking-tight">
-                            {financialStats.won.avgMargin.toFixed(1)}%
-                        </p>
+
+                    {/* Pipeline (Draft + Sent) */}
+                    <div className="card bg-gradient-to-br from-[#0F8B8D]/10 to-[#143642]/10 border-[#0F8B8D]/20">
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="w-2 h-2 rounded-full bg-[#0F8B8D]"></div>
+                            <span className="text-xs font-medium text-[#0F8B8D]/90 uppercase tracking-wide">Pipeline (Draft + Sent)</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <p className="text-xs text-gray-500 mb-0.5">Potential</p>
+                                <p className="text-lg font-semibold text-gray-200 tabular-nums">
+                                    {formatCurrency(financialStats.pipeline.revenue, dashboardCurrency)}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 mb-0.5">Est. Profit</p>
+                                <p className="text-lg font-semibold text-gray-300 tabular-nums">
+                                    {formatCurrency(financialStats.pipeline.profit, dashboardCurrency)}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 mb-0.5">Avg Margin</p>
+                                <p className="text-lg font-semibold text-gray-300 tabular-nums">
+                                    {financialStats.pipeline.avgMargin.toFixed(1)}%
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Financial Summary - Forecast (Draft + Sent) */}
-                <div className="grid grid-cols-3 gap-6 mb-8">
-                    <div className="card bg-gradient-to-br from-gray-800 to-gray-900 border-none">
-                        <p className="text-sm text-gray-400 mb-1">Pipeline Potential (Draft + Sent)</p>
-                        <p className="text-2xl font-bold text-white tracking-tight">
-                            {formatCurrency(financialStats.pipeline.revenue, dashboardCurrency)}
-                        </p>
-                    </div>
-                    <div className="card bg-gradient-to-br from-gray-800 to-gray-900 border-none">
-                        <p className="text-sm text-gray-400 mb-1">Pipeline Profit Potential</p>
-                        <p className="text-2xl font-bold text-gray-200 tracking-tight">
-                            {formatCurrency(financialStats.pipeline.profit, dashboardCurrency)}
-                        </p>
-                    </div>
-                    <div className="card bg-gradient-to-br from-gray-800 to-gray-900 border-none">
-                        <p className="text-sm text-gray-400 mb-1">Avg Margin (Pipeline)</p>
-                        <p className="text-2xl font-bold text-gray-200 tracking-tight">
-                            {financialStats.pipeline.avgMargin.toFixed(1)}%
-                        </p>
-                    </div>
-                </div>
-
-                {/* Pipeline Summary Cards */}
-                <div className="grid grid-cols-4 gap-4 mb-6">
+                {/* Pipeline Summary Cards - Compact horizontal strip */}
+                <div className="flex gap-3">
                     {STATUSES.map(status => (
                         <div
                             key={status.id}
-                            className={`rounded-lg p-4 ${status.bgColor} border border-white/5`}
+                            className={`flex-1 rounded-lg px-3 py-2 ${status.bgColor} border border-white/5`}
                         >
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-medium text-gray-400">{status.label}</span>
-                                <span className="text-xs text-gray-500">{pipelineData[status.id].length}</span>
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2">
+                                    <div
+                                        className="w-2 h-2 rounded-full"
+                                        style={{ backgroundColor: status.color }}
+                                    />
+                                    <span className="text-xs font-medium text-gray-400">{status.label}</span>
+                                    <span className="text-xs text-gray-600 tabular-nums">({pipelineData[status.id].length})</span>
+                                </div>
+                                <span className="text-sm font-semibold tabular-nums" style={{ color: status.color }}>
+                                    {formatCurrency(totals[status.id], dashboardCurrency)}
+                                </span>
                             </div>
-                            <p className="text-lg font-bold" style={{ color: status.color }}>
-                                {formatCurrency(totals[status.id], dashboardCurrency)}
-                            </p>
                         </div>
                     ))}
                 </div>
@@ -353,7 +375,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                         return (
                             <div
                                 key={status.id}
-                                className={`space-y-2 rounded-xl transition-colors ${dragOverColumn === status.id ? 'bg-white/5 ring-2 ring-accent-primary/20' : ''}`}
+                                className={`space-y-2 rounded-xl transition-colors ${dragOverColumn === status.id ? 'bg-white/5 ring-2 ring-[#0F8B8D]/30' : ''}`}
                                 onDragOver={(e) => handleDragOver(e, status.id)}
                                 onDrop={(e) => handleDrop(e, status.id)}
                                 onDragLeave={handleDragLeave}
@@ -402,10 +424,11 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                                                         onDragStart={(e) => handleDragStart(e, quote.id)}
                                                         onDragEnd={handleDragEnd}
                                                         onClick={() => onViewQuote && onViewQuote(quote)}
-                                                        className={`w-full card text-left hover:border-white/20 transition-all cursor-move 
+                                                        className={`w-full card text-left hover:border-white/15 transition-all cursor-move
                                                             ${draggedQuoteId === quote.id ? 'opacity-50 scale-95' : 'opacity-100'}
-                                                            active:cursor-grabbing hover:shadow-lg group relative pr-2`}
+                                                            active:cursor-grabbing hover:shadow-lg group relative`}
                                                     >
+                                                        {/* Delete button */}
                                                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <button
                                                                 onClick={(e) => {
@@ -423,22 +446,26 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                                                             </button>
                                                         </div>
 
-                                                        <div className="flex justify-between items-start mb-1 pr-6">
-                                                            <p className="text-xs text-gray-500 font-mono">{quote.quoteNumber}</p>
+                                                        {/* Quote number and date */}
+                                                        <div className="flex justify-between items-start mb-1.5 pr-6">
+                                                            <p className="text-[11px] text-gray-500 font-mono tracking-tight">{quote.quoteNumber}</p>
                                                             {quote.project?.startDate && (
-                                                                <span className="text-[10px] bg-dark-bg/50 px-1.5 py-0.5 rounded text-gray-400">
+                                                                <span className="text-[10px] bg-dark-bg/70 px-1.5 py-0.5 rounded text-gray-500">
                                                                     {new Date(quote.project.startDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <p className="text-sm font-medium text-gray-200 mb-1 truncate">
+                                                        {/* Client name */}
+                                                        <p className="text-sm font-medium text-gray-200 mb-0.5 truncate">
                                                             {getClientName(quote)}
                                                         </p>
+                                                        {/* Project title */}
                                                         {quote.project?.title && (
                                                             <p className="text-xs text-gray-500 truncate mb-2">{quote.project.title}</p>
                                                         )}
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-sm font-bold" style={{ color: status.color }}>
+                                                        {/* Amount */}
+                                                        <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                                                            <span className="text-sm font-semibold tabular-nums" style={{ color: status.color }}>
                                                                 {formatCurrency(displayAmount, dashboardCurrency)}
                                                             </span>
                                                         </div>

@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+/* Inter - Highly legible, modern sans-serif optimized for screens */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* JetBrains Mono - Clean monospace for numbers and codes */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -20,11 +23,11 @@
   }
 
   .input {
-    @apply w-full bg-dark-card border border-dark-border rounded-input px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-all duration-200;
+    @apply w-full bg-dark-card border border-dark-border rounded-input px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-teal/50 focus:border-brand-teal transition-all duration-200;
   }
 
   .input-sm {
-    @apply bg-dark-card border border-dark-border rounded-input px-2 py-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-accent-primary/50 focus:border-accent-primary transition-all duration-200;
+    @apply bg-dark-card border border-dark-border rounded-input px-2 py-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-teal/50 focus:border-brand-teal transition-all duration-200;
   }
 
   /* Base button - 44px min height for touch targets */
@@ -42,11 +45,15 @@
   }
 
   .btn-primary {
-    @apply btn bg-accent-primary hover:bg-accent-primary/90 text-white shadow-sm shadow-accent-primary/20 hover:shadow-md hover:shadow-accent-primary/30;
+    @apply btn bg-brand-teal hover:bg-brand-teal-light text-white shadow-sm shadow-brand-teal/25 hover:shadow-md hover:shadow-brand-teal/35;
   }
 
   .btn-secondary {
-    @apply btn bg-accent-secondary hover:bg-accent-secondary/90 text-white shadow-sm shadow-accent-secondary/20;
+    @apply btn bg-brand-navy hover:bg-brand-navy-light text-white shadow-sm shadow-brand-navy/20;
+  }
+
+  .btn-accent {
+    @apply btn bg-brand-orange hover:bg-brand-orange-light text-white shadow-sm shadow-brand-orange/25;
   }
 
   .btn-ghost {
@@ -168,5 +175,5 @@ select.input {
 }
 
 select.input:focus {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2310b981' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%230F8B8D' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
 }
