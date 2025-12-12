@@ -1,0 +1,124 @@
+-- Supabase Schema for Quote Tool
+-- Run this in Supabase SQL Editor
+
+-- Enable UUID extension
+create extension if not exists "uuid-ossp";
+
+-- Quotes table
+create table quotes (
+  id uuid default uuid_generate_v4() primary key,
+  quote_number text not null,
+  quote_date date,
+  validity_days integer default 30,
+  status text default 'draft',
+  currency text default 'USD',
+  prepared_by text,
+
+  -- Client info (denormalized for simplicity)
+  client jsonb default '{}',
+
+  -- Project info
+  project jsonb default '{}',
+
+  -- Sections with line items
+  sections jsonb default '{}',
+
+  -- Fees
+  fees jsonb default '{}',
+
+  -- Proposal data
+  proposal jsonb default '{}',
+
+  -- Metadata
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Clients table
+create table clients (
+  id uuid default uuid_generate_v4() primary key,
+  company text not null,
+  contact text,
+  email text,
+  phone text,
+  address text,
+  notes text,
+  tags text[] default '{}',
+  contacts jsonb default '[]',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Rate cards table
+create table rate_cards (
+  id uuid default uuid_generate_v4() primary key,
+  name text not null,
+  section text not null,
+  subsection text not null,
+  unit text default 'day',
+  cost numeric default 0,
+  charge numeric default 0,
+  notes text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Settings table (single row for app settings)
+create table settings (
+  id uuid default uuid_generate_v4() primary key,
+  company jsonb default '{}',
+  quote_defaults jsonb default '{}',
+  terms_and_conditions text,
+  users jsonb default '[]',
+  ai_settings jsonb default '{}',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Create indexes for common queries
+create index quotes_quote_number_idx on quotes(quote_number);
+create index quotes_status_idx on quotes(status);
+create index quotes_created_at_idx on quotes(created_at desc);
+create index clients_company_idx on clients(company);
+create index rate_cards_section_idx on rate_cards(section);
+
+-- Enable Row Level Security (but allow all for now - internal tool)
+alter table quotes enable row level security;
+alter table clients enable row level security;
+alter table rate_cards enable row level security;
+alter table settings enable row level security;
+
+-- Policies to allow all operations (internal tool, no auth required initially)
+create policy "Allow all quotes" on quotes for all using (true) with check (true);
+create policy "Allow all clients" on clients for all using (true) with check (true);
+create policy "Allow all rate_cards" on rate_cards for all using (true) with check (true);
+create policy "Allow all settings" on settings for all using (true) with check (true);
+
+-- Function to update updated_at timestamp
+create or replace function update_updated_at_column()
+returns trigger as $$
+begin
+  new.updated_at = timezone('utc'::text, now());
+  return new;
+end;
+$$ language plpgsql;
+
+-- Triggers for updated_at
+create trigger update_quotes_updated_at before update on quotes
+  for each row execute function update_updated_at_column();
+create trigger update_clients_updated_at before update on clients
+  for each row execute function update_updated_at_column();
+create trigger update_rate_cards_updated_at before update on rate_cards
+  for each row execute function update_updated_at_column();
+create trigger update_settings_updated_at before update on settings
+  for each row execute function update_updated_at_column();
+
+-- Insert default settings row
+insert into settings (company, quote_defaults, terms_and_conditions, users, ai_settings)
+values (
+  '{"name": "Tell Productions Sdn Bhd", "email": "", "phone": "", "address": ""}',
+  '{"currency": "MYR", "validityDays": 30}',
+  '',
+  '[]',
+  '{}'
+);

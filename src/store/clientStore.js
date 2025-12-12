@@ -1,94 +1,139 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { supabase } from '../lib/supabase';
 
 const CLIENTS_STORAGE_KEY = 'tell_clients';
 const SAVED_QUOTES_KEY = 'tell_saved_quotes';
 
-// Load clients from localStorage
-function loadClients() {
+// Load from localStorage (fallback/cache)
+function loadClientsLocal() {
     try {
         const saved = localStorage.getItem(CLIENTS_STORAGE_KEY);
         return saved ? JSON.parse(saved) : [];
     } catch (e) {
-        console.error('Failed to load clients:', e);
         return [];
     }
 }
 
-// Save clients to localStorage
-function saveClients(clients) {
-    try {
-        localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
-    } catch (e) {
-        console.error('Failed to save clients:', e);
-    }
-}
-
-// Load saved quotes from localStorage
-function loadSavedQuotes() {
+function loadSavedQuotesLocal() {
     try {
         const saved = localStorage.getItem(SAVED_QUOTES_KEY);
         return saved ? JSON.parse(saved) : [];
     } catch (e) {
-        console.error('Failed to load saved quotes:', e);
         return [];
     }
 }
 
-// Save quotes to localStorage
-function saveSavedQuotes(quotes) {
+function saveClientsLocal(clients) {
     try {
-        localStorage.setItem(SAVED_QUOTES_KEY, JSON.stringify(quotes));
+        localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
     } catch (e) {
-        console.error('Failed to save quotes:', e);
+        console.error('Failed to save clients locally:', e);
     }
 }
 
-// Generate unique ID
+function saveSavedQuotesLocal(quotes) {
+    try {
+        localStorage.setItem(SAVED_QUOTES_KEY, JSON.stringify(quotes));
+    } catch (e) {
+        console.error('Failed to save quotes locally:', e);
+    }
+}
+
 function generateId() {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
 export const useClientStore = create(
     subscribeWithSelector((set, get) => ({
-        // Clients list
-        clients: loadClients(),
+        clients: loadClientsLocal(),
+        savedQuotes: loadSavedQuotesLocal(),
+        loading: false,
 
-        // Saved quotes
-        savedQuotes: loadSavedQuotes(),
+        // Initialize - load from Supabase
+        initialize: async () => {
+            set({ loading: true });
+            try {
+                // Load clients
+                const { data: clientsData, error: clientsError } = await supabase
+                    .from('clients')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
-        // Initialize (call on app start)
-        initialize: () => {
-            set({
-                clients: loadClients(),
-                savedQuotes: loadSavedQuotes(),
-            });
+                if (clientsError) throw clientsError;
+
+                // Load quotes
+                const { data: quotesData, error: quotesError } = await supabase
+                    .from('quotes')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (quotesError) throw quotesError;
+
+                // Map DB format to app format
+                const clients = (clientsData || []).map(c => ({
+                    id: c.id,
+                    company: c.company,
+                    contact: c.contact,
+                    email: c.email,
+                    phone: c.phone,
+                    address: c.address,
+                    notes: c.notes,
+                    tags: c.tags || [],
+                    contacts: c.contacts || [],
+                    createdAt: c.created_at,
+                    updatedAt: c.updated_at,
+                }));
+
+                const savedQuotes = (quotesData || []).map(q => ({
+                    id: q.id,
+                    quoteNumber: q.quote_number,
+                    quoteDate: q.quote_date,
+                    validityDays: q.validity_days,
+                    status: q.status,
+                    currency: q.currency,
+                    preparedBy: q.prepared_by,
+                    client: q.client || {},
+                    project: q.project || {},
+                    sections: q.sections || {},
+                    fees: q.fees || {},
+                    proposal: q.proposal || {},
+                    createdAt: q.created_at,
+                    updatedAt: q.updated_at,
+                }));
+
+                saveClientsLocal(clients);
+                saveSavedQuotesLocal(savedQuotes);
+                set({ clients, savedQuotes, loading: false });
+            } catch (e) {
+                console.error('Failed to load from DB:', e);
+                set({ loading: false });
+            }
         },
 
         // =====================
         // CLIENT OPERATIONS
         // =====================
 
-        // Add a new client
-        addClient: (clientData) => {
+        addClient: async (clientData) => {
             const newClient = {
                 id: generateId(),
                 company: clientData.company || '',
-                contact: clientData.contact || '', // Primary contact name (legacy support)
-                email: clientData.email || '', // Primary contact email (legacy support)
-                phone: clientData.phone || '', // Primary contact phone (legacy support)
+                contact: clientData.contact || '',
+                email: clientData.email || '',
+                phone: clientData.phone || '',
                 website: clientData.website || '',
                 location: clientData.location || '',
-                address: clientData.address || '', // Company Registered Address
-                region: clientData.region || 'MALAYSIA', // Charge Basis / Region
+                address: clientData.address || '',
+                region: clientData.region || 'MALAYSIA',
                 notes: clientData.notes || '',
-                contacts: clientData.contacts || [], // New contacts array
-                tags: clientData.tags || [], // Client tags (e.g. VIP, Corporate, Event)
+                contacts: clientData.contacts || [],
+                tags: clientData.tags || [],
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             };
 
-            // If legacy contact info is provided but no contacts array, create a primary contact
+            // If legacy contact info, create primary contact
             if (!newClient.contacts.length && (newClient.contact || newClient.email)) {
                 newClient.contacts.push({
                     id: generateId(),
@@ -100,58 +145,96 @@ export const useClientStore = create(
                 });
             }
 
+            // Save to Supabase
+            try {
+                const { data, error } = await supabase
+                    .from('clients')
+                    .insert({
+                        company: newClient.company,
+                        contact: newClient.contact,
+                        email: newClient.email,
+                        phone: newClient.phone,
+                        address: newClient.address,
+                        notes: newClient.notes,
+                        tags: newClient.tags,
+                        contacts: newClient.contacts,
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                newClient.id = data.id;
+            } catch (e) {
+                console.error('Failed to save client to DB:', e);
+            }
+
             set(state => {
                 const clients = [...state.clients, newClient];
-                saveClients(clients);
+                saveClientsLocal(clients);
                 return { clients };
             });
 
             return newClient;
         },
 
-        // Update client
-        updateClient: (clientId, updates) => {
+        updateClient: async (clientId, updates) => {
             set(state => {
                 const clients = state.clients.map(client =>
                     client.id === clientId
                         ? { ...client, ...updates, updatedAt: new Date().toISOString() }
                         : client
                 );
-                saveClients(clients);
+                saveClientsLocal(clients);
                 return { clients };
             });
+
+            // Save to Supabase
+            try {
+                await supabase
+                    .from('clients')
+                    .update({
+                        company: updates.company,
+                        contact: updates.contact,
+                        email: updates.email,
+                        phone: updates.phone,
+                        address: updates.address,
+                        notes: updates.notes,
+                        tags: updates.tags,
+                        contacts: updates.contacts,
+                    })
+                    .eq('id', clientId);
+            } catch (e) {
+                console.error('Failed to update client in DB:', e);
+            }
         },
 
-        // Delete client (and their quotes)
-        deleteClient: (clientId) => {
+        deleteClient: async (clientId) => {
             set(state => {
                 const clients = state.clients.filter(c => c.id !== clientId);
                 const savedQuotes = state.savedQuotes.filter(q => q.clientId !== clientId);
-                saveClients(clients);
-                saveSavedQuotes(savedQuotes);
+                saveClientsLocal(clients);
+                saveSavedQuotesLocal(savedQuotes);
                 return { clients, savedQuotes };
             });
+
+            // Delete from Supabase
+            try {
+                await supabase.from('clients').delete().eq('id', clientId);
+            } catch (e) {
+                console.error('Failed to delete client from DB:', e);
+            }
         },
 
-        // Get client by ID
         getClient: (clientId) => {
             return get().clients.find(c => c.id === clientId);
         },
 
-        // Get or create client from quote data
         getOrCreateClient: (clientData) => {
             const { clients } = get();
-
-            // Try to find existing client by company name
             const existing = clients.find(
                 c => c.company.toLowerCase() === clientData.company?.toLowerCase()
             );
-
-            if (existing) {
-                return existing;
-            }
-
-            // Create new client
+            if (existing) return existing;
             return get().addClient(clientData);
         },
 
@@ -170,7 +253,6 @@ export const useClientStore = create(
                         isPrimary: contact.isPrimary || false,
                     };
 
-                    // If new contact is primary, unmark others
                     const contacts = contact.isPrimary
                         ? client.contacts?.map(c => ({ ...c, isPrimary: false })) || []
                         : client.contacts || [];
@@ -181,7 +263,18 @@ export const useClientStore = create(
                         updatedAt: new Date().toISOString()
                     };
                 });
-                saveClients(clients);
+                saveClientsLocal(clients);
+
+                // Update in DB
+                const updatedClient = clients.find(c => c.id === clientId);
+                if (updatedClient) {
+                    supabase
+                        .from('clients')
+                        .update({ contacts: updatedClient.contacts })
+                        .eq('id', clientId)
+                        .then(() => {});
+                }
+
                 return { clients };
             });
         },
@@ -192,12 +285,9 @@ export const useClientStore = create(
                     if (client.id !== clientId) return client;
 
                     let contacts = client.contacts || [];
-
-                    // If setting as primary, unmark others
                     if (updates.isPrimary) {
                         contacts = contacts.map(c => ({ ...c, isPrimary: false }));
                     }
-
                     contacts = contacts.map(c =>
                         c.id === contactId ? { ...c, ...updates } : c
                     );
@@ -208,7 +298,18 @@ export const useClientStore = create(
                         updatedAt: new Date().toISOString()
                     };
                 });
-                saveClients(clients);
+                saveClientsLocal(clients);
+
+                // Update in DB
+                const updatedClient = clients.find(c => c.id === clientId);
+                if (updatedClient) {
+                    supabase
+                        .from('clients')
+                        .update({ contacts: updatedClient.contacts })
+                        .eq('id', clientId)
+                        .then(() => {});
+                }
+
                 return { clients };
             });
         },
@@ -224,7 +325,18 @@ export const useClientStore = create(
                         updatedAt: new Date().toISOString()
                     };
                 });
-                saveClients(clients);
+                saveClientsLocal(clients);
+
+                // Update in DB
+                const updatedClient = clients.find(c => c.id === clientId);
+                if (updatedClient) {
+                    supabase
+                        .from('clients')
+                        .update({ contacts: updatedClient.contacts })
+                        .eq('id', clientId)
+                        .then(() => {});
+                }
+
                 return { clients };
             });
         },
@@ -233,14 +345,12 @@ export const useClientStore = create(
         // QUOTE OPERATIONS
         // =====================
 
-        // Save a quote (links to client)
-        saveQuote: (quote, clientId = null) => {
+        saveQuote: async (quote, clientId = null) => {
             const { getOrCreateClient } = get();
 
-            // If no clientId, create/get client from quote's client data
             let finalClientId = clientId;
             if (!finalClientId && quote.client?.company) {
-                const client = getOrCreateClient(quote.client);
+                const client = await getOrCreateClient(quote.client);
                 finalClientId = client.id;
             }
 
@@ -252,8 +362,50 @@ export const useClientStore = create(
                 savedAt: new Date().toISOString(),
             };
 
+            // Save to Supabase
+            try {
+                const dbQuote = {
+                    quote_number: savedQuote.quoteNumber,
+                    quote_date: savedQuote.quoteDate,
+                    validity_days: savedQuote.validityDays,
+                    status: savedQuote.status,
+                    currency: savedQuote.currency,
+                    prepared_by: savedQuote.preparedBy,
+                    client: savedQuote.client,
+                    project: savedQuote.project,
+                    sections: savedQuote.sections,
+                    fees: savedQuote.fees,
+                    proposal: savedQuote.proposal,
+                };
+
+                // Check if exists
+                const { data: existing } = await supabase
+                    .from('quotes')
+                    .select('id')
+                    .eq('quote_number', savedQuote.quoteNumber)
+                    .single();
+
+                if (existing) {
+                    await supabase
+                        .from('quotes')
+                        .update(dbQuote)
+                        .eq('id', existing.id);
+                    savedQuote.id = existing.id;
+                } else {
+                    const { data, error } = await supabase
+                        .from('quotes')
+                        .insert(dbQuote)
+                        .select()
+                        .single();
+                    if (!error && data) {
+                        savedQuote.id = data.id;
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to save quote to DB:', e);
+            }
+
             set(state => {
-                // Check if quote already exists (update) or is new (add)
                 const existingIndex = state.savedQuotes.findIndex(
                     q => q.quoteNumber === quote.quoteNumber
                 );
@@ -266,68 +418,94 @@ export const useClientStore = create(
                     savedQuotes = [...state.savedQuotes, savedQuote];
                 }
 
-                saveSavedQuotes(savedQuotes);
+                saveSavedQuotesLocal(savedQuotes);
                 return { savedQuotes };
             });
 
             return savedQuote;
         },
 
-        // Get quotes for a client
         getClientQuotes: (clientId) => {
             return get().savedQuotes.filter(q => q.clientId === clientId);
         },
 
-        // Get quote by ID
         getQuote: (quoteId) => {
             return get().savedQuotes.find(q => q.id === quoteId);
         },
 
-        // Get quote by quote number
         getQuoteByNumber: (quoteNumber) => {
             return get().savedQuotes.find(q => q.quoteNumber === quoteNumber);
         },
 
-        // Delete quote
-        deleteQuote: (quoteId) => {
+        deleteQuote: async (quoteId) => {
             set(state => {
                 const savedQuotes = state.savedQuotes.filter(q => q.id !== quoteId);
-                saveSavedQuotes(savedQuotes);
+                saveSavedQuotesLocal(savedQuotes);
                 return { savedQuotes };
             });
+
+            try {
+                await supabase.from('quotes').delete().eq('id', quoteId);
+            } catch (e) {
+                console.error('Failed to delete quote from DB:', e);
+            }
         },
 
-        // Update quote status
-        updateQuoteStatus: (quoteId, status) => {
+        updateQuoteStatus: async (quoteId, status) => {
             set(state => {
                 const savedQuotes = state.savedQuotes.map(q =>
                     q.id === quoteId
                         ? { ...q, status, updatedAt: new Date().toISOString() }
                         : q
                 );
-                saveSavedQuotes(savedQuotes);
+                saveSavedQuotesLocal(savedQuotes);
                 return { savedQuotes };
             });
+
+            try {
+                await supabase
+                    .from('quotes')
+                    .update({ status })
+                    .eq('id', quoteId);
+            } catch (e) {
+                console.error('Failed to update quote status in DB:', e);
+            }
         },
 
-        // Update quote (for tags and other fields)
-        updateQuote: (quoteId, updates) => {
+        updateQuote: async (quoteId, updates) => {
             set(state => {
                 const savedQuotes = state.savedQuotes.map(q =>
                     q.id === quoteId
                         ? { ...q, ...updates, updatedAt: new Date().toISOString() }
                         : q
                 );
-                saveSavedQuotes(savedQuotes);
+                saveSavedQuotesLocal(savedQuotes);
                 return { savedQuotes };
             });
+
+            try {
+                const dbUpdates = {};
+                if (updates.status) dbUpdates.status = updates.status;
+                if (updates.client) dbUpdates.client = updates.client;
+                if (updates.project) dbUpdates.project = updates.project;
+                if (updates.sections) dbUpdates.sections = updates.sections;
+                if (updates.fees) dbUpdates.fees = updates.fees;
+
+                if (Object.keys(dbUpdates).length > 0) {
+                    await supabase
+                        .from('quotes')
+                        .update(dbUpdates)
+                        .eq('id', quoteId);
+                }
+            } catch (e) {
+                console.error('Failed to update quote in DB:', e);
+            }
         },
 
         // =====================
         // EXPORT/IMPORT
         // =====================
 
-        // Export all data as JSON
         exportData: () => {
             const { clients, savedQuotes } = get();
             const data = {
@@ -348,7 +526,6 @@ export const useClientStore = create(
             URL.revokeObjectURL(url);
         },
 
-        // Import data from JSON
         importData: async (file) => {
             try {
                 const text = await file.text();
@@ -363,8 +540,8 @@ export const useClientStore = create(
                     savedQuotes: data.savedQuotes,
                 });
 
-                saveClients(data.clients);
-                saveSavedQuotes(data.savedQuotes);
+                saveClientsLocal(data.clients);
+                saveSavedQuotesLocal(data.savedQuotes);
 
                 return { success: true, clientCount: data.clients.length, quoteCount: data.savedQuotes.length };
             } catch (e) {
@@ -377,7 +554,6 @@ export const useClientStore = create(
         // STATS
         // =====================
 
-        // Get extended stats for a specific client
         getClientStats: (clientId) => {
             const quotes = get().savedQuotes.filter(q => q.clientId === clientId);
             if (!quotes.length) return null;
@@ -390,15 +566,12 @@ export const useClientStore = create(
                 totalQuotes: quotes.length,
                 wonCount: won.length,
                 lostCount: lost.length,
-                // Win rate = won / closed deals (only count finished deals, not drafts/sent)
                 winRate: closedDeals > 0 ? Math.round((won.length / closedDeals) * 100) : 0,
             };
         },
 
-        // Get stats for dashboard
         getStats: () => {
             const { clients, savedQuotes } = get();
-
             return {
                 totalClients: clients.length,
                 totalQuotes: savedQuotes.length,
@@ -408,10 +581,8 @@ export const useClientStore = create(
             };
         },
 
-        // Get company-wide financial stats
         getFinancialStats: () => {
             const { savedQuotes } = get();
-
             let wonCount = 0;
             let lostCount = 0;
             let totalClosed = 0;

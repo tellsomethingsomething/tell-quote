@@ -1,28 +1,26 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { supabase } from '../lib/supabase';
 
 const SETTINGS_KEY = 'tell_settings';
 
 // Default settings
 const defaultSettings = {
-    // Company details
     company: {
-        name: '',
+        name: 'Tell Productions Sdn Bhd',
         address: '',
         city: '',
         country: 'Malaysia',
         phone: '',
         email: '',
         website: '',
-        logo: null, // Base64 or URL
+        logo: null,
     },
-    // Tax & Legal
     taxInfo: {
         taxNumber: '',
         registrationNumber: '',
         licenses: '',
     },
-    // Bank details
     bankDetails: {
         bankName: '',
         accountName: '',
@@ -30,7 +28,6 @@ const defaultSettings = {
         swiftCode: '',
         currency: 'MYR',
     },
-    // Quote defaults
     quoteDefaults: {
         validityDays: 30,
         paymentTerms: '50% deposit on confirmation, balance on completion',
@@ -40,11 +37,9 @@ const defaultSettings = {
 • Any additional requirements may incur extra charges.
 • Cancellation within 7 days of project start may incur fees.`,
     },
-    // Users/Salespeople
     users: [
         { id: 'default', name: 'Tom', email: '', role: 'admin' }
     ],
-    // What to show on PDF
     pdfOptions: {
         showCompanyAddress: true,
         showCompanyPhone: true,
@@ -53,12 +48,10 @@ const defaultSettings = {
         showBankDetails: false,
         showLogo: true,
     },
-    // AI Settings
     aiSettings: {
         anthropicKey: '',
         openaiKey: '',
     },
-    // Project types
     projectTypes: [
         { id: 'broadcast', label: 'Broadcast' },
         { id: 'streaming', label: 'Streaming' },
@@ -67,7 +60,6 @@ const defaultSettings = {
         { id: 'technical_consultancy', label: 'Technical Management & Consultancy' },
         { id: 'other', label: 'Other' },
     ],
-    // Regions
     regions: [
         { id: 'MALAYSIA', label: 'Malaysia', currency: 'MYR' },
         { id: 'SEA', label: 'South East Asia', currency: 'USD' },
@@ -76,50 +68,109 @@ const defaultSettings = {
     ],
 };
 
-// Load settings from localStorage
-function loadSettings() {
+// Load from localStorage (fallback)
+function loadSettingsLocal() {
     try {
         const saved = localStorage.getItem(SETTINGS_KEY);
         if (saved) {
             const parsed = JSON.parse(saved);
-            // Merge with defaults to ensure new fields are available
-            return {
-                ...defaultSettings,
-                ...parsed,
-                company: { ...defaultSettings.company, ...parsed.company },
-                taxInfo: { ...defaultSettings.taxInfo, ...parsed.taxInfo },
-                bankDetails: { ...defaultSettings.bankDetails, ...parsed.bankDetails },
-                quoteDefaults: { ...defaultSettings.quoteDefaults, ...parsed.quoteDefaults },
-                pdfOptions: { ...defaultSettings.pdfOptions, ...parsed.pdfOptions },
-                aiSettings: { ...defaultSettings.aiSettings, ...parsed.aiSettings },
-                users: parsed.users || defaultSettings.users,
-                projectTypes: parsed.projectTypes || defaultSettings.projectTypes,
-                regions: parsed.regions || defaultSettings.regions,
-            };
+            return mergeSettings(parsed);
         }
         return defaultSettings;
     } catch (e) {
-        console.error('Failed to load settings:', e);
         return defaultSettings;
     }
 }
 
-// Save settings to localStorage
-function saveSettings(settings) {
+// Merge with defaults
+function mergeSettings(parsed) {
+    return {
+        ...defaultSettings,
+        ...parsed,
+        company: { ...defaultSettings.company, ...parsed.company },
+        taxInfo: { ...defaultSettings.taxInfo, ...parsed.taxInfo },
+        bankDetails: { ...defaultSettings.bankDetails, ...parsed.bankDetails },
+        quoteDefaults: { ...defaultSettings.quoteDefaults, ...parsed.quoteDefaults },
+        pdfOptions: { ...defaultSettings.pdfOptions, ...parsed.pdfOptions },
+        aiSettings: { ...defaultSettings.aiSettings, ...parsed.aiSettings },
+        users: parsed.users || defaultSettings.users,
+        projectTypes: parsed.projectTypes || defaultSettings.projectTypes,
+        regions: parsed.regions || defaultSettings.regions,
+    };
+}
+
+// Save to localStorage (cache)
+function saveSettingsLocal(settings) {
     try {
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     } catch (e) {
-        console.error('Failed to save settings:', e);
+        console.error('Failed to save settings locally:', e);
+    }
+}
+
+// Database ID for settings (single row)
+let settingsDbId = null;
+
+// Save to Supabase
+async function saveSettingsToDb(settings) {
+    try {
+        if (settingsDbId) {
+            await supabase
+                .from('settings')
+                .update({
+                    company: settings.company,
+                    quote_defaults: settings.quoteDefaults,
+                    terms_and_conditions: settings.quoteDefaults?.termsAndConditions || '',
+                    users: settings.users,
+                    ai_settings: settings.aiSettings,
+                })
+                .eq('id', settingsDbId);
+        }
+    } catch (e) {
+        console.error('Failed to save settings to DB:', e);
     }
 }
 
 export const useSettingsStore = create(
     subscribeWithSelector((set, get) => ({
-        settings: loadSettings(),
+        settings: loadSettingsLocal(),
+        loading: false,
 
-        // Initialize
-        initialize: () => {
-            set({ settings: loadSettings() });
+        // Initialize - load from Supabase
+        initialize: async () => {
+            set({ loading: true });
+            try {
+                const { data, error } = await supabase
+                    .from('settings')
+                    .select('*')
+                    .limit(1)
+                    .single();
+
+                if (error) throw error;
+
+                if (data) {
+                    settingsDbId = data.id;
+                    const dbSettings = {
+                        ...loadSettingsLocal(),
+                        company: data.company || defaultSettings.company,
+                        quoteDefaults: {
+                            ...defaultSettings.quoteDefaults,
+                            ...data.quote_defaults,
+                            termsAndConditions: data.terms_and_conditions || defaultSettings.quoteDefaults.termsAndConditions,
+                        },
+                        users: data.users || defaultSettings.users,
+                        aiSettings: data.ai_settings || defaultSettings.aiSettings,
+                    };
+                    const merged = mergeSettings(dbSettings);
+                    saveSettingsLocal(merged);
+                    set({ settings: merged, loading: false });
+                } else {
+                    set({ loading: false });
+                }
+            } catch (e) {
+                console.error('Failed to load settings from DB:', e);
+                set({ loading: false });
+            }
         },
 
         // Update company info
@@ -129,7 +180,8 @@ export const useSettingsStore = create(
                     ...state.settings,
                     company: { ...state.settings.company, ...company },
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
+                saveSettingsToDb(updated);
                 return { settings: updated };
             });
         },
@@ -141,7 +193,7 @@ export const useSettingsStore = create(
                     ...state.settings,
                     taxInfo: { ...state.settings.taxInfo, ...taxInfo },
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
                 return { settings: updated };
             });
         },
@@ -153,7 +205,7 @@ export const useSettingsStore = create(
                     ...state.settings,
                     bankDetails: { ...state.settings.bankDetails, ...bankDetails },
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
                 return { settings: updated };
             });
         },
@@ -165,7 +217,8 @@ export const useSettingsStore = create(
                     ...state.settings,
                     quoteDefaults: { ...state.settings.quoteDefaults, ...quoteDefaults },
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
+                saveSettingsToDb(updated);
                 return { settings: updated };
             });
         },
@@ -177,7 +230,7 @@ export const useSettingsStore = create(
                     ...state.settings,
                     pdfOptions: { ...state.settings.pdfOptions, ...pdfOptions },
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
                 return { settings: updated };
             });
         },
@@ -189,7 +242,8 @@ export const useSettingsStore = create(
                     ...state.settings,
                     aiSettings: { ...state.settings.aiSettings, ...aiSettings },
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
+                saveSettingsToDb(updated);
                 return { settings: updated };
             });
         },
@@ -207,7 +261,8 @@ export const useSettingsStore = create(
                     ...state.settings,
                     users: [...state.settings.users, newUser],
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
+                saveSettingsToDb(updated);
                 return { settings: updated };
             });
         },
@@ -221,7 +276,8 @@ export const useSettingsStore = create(
                         u.id === userId ? { ...u, ...updates } : u
                     ),
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
+                saveSettingsToDb(updated);
                 return { settings: updated };
             });
         },
@@ -233,7 +289,8 @@ export const useSettingsStore = create(
                     ...state.settings,
                     users: state.settings.users.filter(u => u.id !== userId),
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
+                saveSettingsToDb(updated);
                 return { settings: updated };
             });
         },
@@ -243,7 +300,7 @@ export const useSettingsStore = create(
             return get().settings.users.find(u => u.id === userId);
         },
 
-        // --- Project Types ---
+        // Project Types
         addProjectType: (label) => {
             set(state => {
                 const id = label.toLowerCase().replace(/\s+/g, '_') + '_' + Math.random().toString(36).substring(2, 7);
@@ -251,7 +308,7 @@ export const useSettingsStore = create(
                     ...state.settings,
                     projectTypes: [...state.settings.projectTypes, { id, label }],
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
                 return { settings: updated };
             });
         },
@@ -264,7 +321,7 @@ export const useSettingsStore = create(
                         pt.id === id ? { ...pt, label } : pt
                     ),
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
                 return { settings: updated };
             });
         },
@@ -275,7 +332,7 @@ export const useSettingsStore = create(
                     ...state.settings,
                     projectTypes: state.settings.projectTypes.filter(pt => pt.id !== id),
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
                 return { settings: updated };
             });
         },
@@ -289,12 +346,12 @@ export const useSettingsStore = create(
                 if (newIndex < 0 || newIndex >= types.length) return state;
                 [types[index], types[newIndex]] = [types[newIndex], types[index]];
                 const updated = { ...state.settings, projectTypes: types };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
                 return { settings: updated };
             });
         },
 
-        // --- Regions ---
+        // Regions
         addRegion: (label, currency = 'USD') => {
             set(state => {
                 const id = label.toUpperCase().replace(/\s+/g, '_');
@@ -302,7 +359,7 @@ export const useSettingsStore = create(
                     ...state.settings,
                     regions: [...state.settings.regions, { id, label, currency }],
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
                 return { settings: updated };
             });
         },
@@ -315,7 +372,7 @@ export const useSettingsStore = create(
                         r.id === id ? { ...r, ...updates } : r
                     ),
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
                 return { settings: updated };
             });
         },
@@ -326,7 +383,7 @@ export const useSettingsStore = create(
                     ...state.settings,
                     regions: state.settings.regions.filter(r => r.id !== id),
                 };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
                 return { settings: updated };
             });
         },
@@ -340,7 +397,7 @@ export const useSettingsStore = create(
                 if (newIndex < 0 || newIndex >= regions.length) return state;
                 [regions[index], regions[newIndex]] = [regions[newIndex], regions[index]];
                 const updated = { ...state.settings, regions };
-                saveSettings(updated);
+                saveSettingsLocal(updated);
                 return { settings: updated };
             });
         },
@@ -362,7 +419,7 @@ export const useSettingsStore = create(
         // Reset to defaults
         resetSettings: () => {
             set({ settings: defaultSettings });
-            saveSettings(defaultSettings);
+            saveSettingsLocal(defaultSettings);
         },
     }))
 );

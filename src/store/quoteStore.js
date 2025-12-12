@@ -2,13 +2,14 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { SECTIONS, SECTION_ORDER } from '../data/sections';
 import { FALLBACK_RATES } from '../data/currencies';
-import { REGIONS } from '../data/currencies'; // Import REGIONS
+import { REGIONS } from '../data/currencies';
 import { saveQuote, loadQuote, generateQuoteNumber } from '../utils/storage';
 import { fetchLiveRates } from '../utils/currency';
-import { useRateCardStore } from './rateCardStore'; // Import rate store for lookups
-import { useClientStore } from './clientStore'; // Import for auto-save to library
+import { useRateCardStore } from './rateCardStore';
+import { useClientStore } from './clientStore';
+import { supabase } from '../lib/supabase';
 
-// Save quote to localStorage AND auto-save to library if previously saved
+// Save quote to localStorage AND auto-save to library/DB if previously saved
 function saveQuoteWithLibrarySync(quote) {
     // Save to localStorage (current editing session)
     saveQuote(quote);
