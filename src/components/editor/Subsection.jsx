@@ -126,12 +126,17 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
         >
             {/* Subsection Header - Only hide for default 'Services' in flat sections */}
             {!shouldHideHeader && (
-                <div className="flex items-center gap-2 mb-1.5 cursor-grab active:cursor-grabbing">
-                    <svg className="w-3 h-3 text-gray-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex items-center gap-2 mb-1.5">
+                    <svg className="w-3 h-3 text-gray-600 flex-shrink-0 cursor-grab" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
                     </svg>
                     {isEditingName ? (
-                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <div
+                            className="flex items-center gap-1"
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            draggable={false}
+                        >
                             <input
                                 ref={nameInputRef}
                                 type="text"
@@ -143,6 +148,7 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
                                 }}
                                 className="input-sm text-xs py-0.5 w-32"
                                 aria-label="Subsection name"
+                                draggable={false}
                             />
                             <button
                                 onClick={handleSaveName}
@@ -165,8 +171,10 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
                         </div>
                     ) : (
                         <h4
-                            className="text-xs font-medium text-gray-400 cursor-pointer hover:text-gray-300"
+                            className="text-xs font-medium text-gray-400 cursor-text hover:text-gray-300"
                             onClick={handleStartEditName}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            draggable={false}
                             title="Click to rename"
                         >
                             {displayName}
