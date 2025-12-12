@@ -1,12 +1,18 @@
 // AI-powered cover image generator using DALL-E + Claude for smart prompts
 
 /**
- * Uses Claude to generate an optimal DALL-E prompt based on project context
+ * Uses Claude Sonnet to generate an optimal DALL-E prompt based on project context
  */
 export async function generateSmartImagePrompt(project, client, anthropicKey) {
     if (!anthropicKey) {
         return createFallbackPrompt(project);
     }
+
+    // Extract prompt inputs if available
+    const promptInputs = project.promptInputs || {};
+    const sport = promptInputs.sport || '';
+    const shot = promptInputs.shot || '';
+    const notes = promptInputs.notes || '';
 
     try {
         const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -24,19 +30,27 @@ export async function generateSmartImagePrompt(project, client, anthropicKey) {
                     role: 'user',
                     content: `Generate a DALL-E 3 image prompt for a professional proposal cover page.
 
-PROJECT: ${project.title || 'Corporate Event'}
-TYPE: ${project.type || 'Production'}
-VENUE: ${project.venue || 'Event Venue'}
-CLIENT: ${client?.company || 'Corporate Client'}
+PROJECT DETAILS:
+- Title: ${project.title || 'Corporate Event'}
+- Type: ${project.type || 'Production'}
+- Venue: ${project.venue || 'Event Venue'}
+- Client: ${client?.company || 'Corporate Client'}
+
+USER INPUTS FOR IMAGE:
+- Sport: ${sport || '(not specified)'}
+- Shot/Scene: ${shot || '(not specified)'}
+- Additional Notes: ${notes || '(none)'}
 
 Requirements:
 - Professional, high-end corporate aesthetic
-- Subtle reference to the project/venue theme
-- Abstract or semi-abstract style (no specific text or logos)
+- If a sport is specified, incorporate that sport's visual elements subtly
+- If a shot type is specified, use that as the composition guide
+- Abstract or semi-abstract style (no specific text, logos, or human faces)
 - Dark, moody color palette (deep blues, cyans, dark gradients)
-- Suitable for A4 portrait document cover
+- Suitable for A4 portrait document cover (1024x1792 pixels)
 - Cinematic, broadcast-quality feel
 - Sports/events production industry aesthetic
+- Incorporate any user notes into the visual style
 
 Output ONLY the DALL-E prompt, nothing else. Keep it under 200 words.`
                 }]

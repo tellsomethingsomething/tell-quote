@@ -83,6 +83,12 @@ function createEmptyQuote() {
         },
         preparedBy: 'default', // ID of the user who prepared the quote
         sections: createEmptySections(),
+        // Proposal content (for Full Proposal export)
+        proposal: {
+            coverImage: null,      // Base64 or URL of generated cover image
+            proposalText: '',      // AI-generated proposal text
+            isGenerated: false,    // Whether content has been generated
+        },
     };
 }
 
@@ -401,6 +407,19 @@ export const useQuoteStore = create(
             localStorage.removeItem('exchange_rates_cache');
             const { rates, timestamp } = await fetchLiveRates();
             set({ rates, ratesUpdated: timestamp, ratesLoading: false });
+        },
+
+        // Update proposal data
+        setProposal: (proposal) => {
+            set(state => {
+                const updated = {
+                    ...state.quote,
+                    proposal: { ...state.quote.proposal, ...proposal },
+                    updatedAt: new Date().toISOString()
+                };
+                saveQuoteWithLibrarySync(updated);
+                return { quote: updated };
+            });
         },
     }))
 );

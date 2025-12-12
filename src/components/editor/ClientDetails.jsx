@@ -7,6 +7,7 @@ export default function ClientDetails() {
     const { clients } = useClientStore();
     const { client } = quote;
     const [showDropdown, setShowDropdown] = useState(false);
+    const [tagInput, setTagInput] = useState('');
 
     // Filter clients based on input
     const filteredClients = client.company
@@ -26,6 +27,22 @@ export default function ClientDetails() {
 
     const handleChange = (field, value) => {
         setClientDetails({ [field]: value });
+    };
+
+    const handleAddTag = (e) => {
+        if (e.key === 'Enter' && tagInput.trim()) {
+            e.preventDefault();
+            const currentTags = client.tags || [];
+            if (!currentTags.includes(tagInput.trim())) {
+                setClientDetails({ tags: [...currentTags, tagInput.trim()] });
+            }
+            setTagInput('');
+        }
+    };
+
+    const handleRemoveTag = (tagToRemove) => {
+        const currentTags = client.tags || [];
+        setClientDetails({ tags: currentTags.filter(tag => tag !== tagToRemove) });
     };
 
     const handleSelectClient = (selectedClient) => {
@@ -190,6 +207,37 @@ export default function ClientDetails() {
                         placeholder="Notes about this contact..."
                         rows={2}
                         className="input resize-none text-sm"
+                    />
+                </div>
+
+                {/* Tags */}
+                <div>
+                    <label className="label">Tags <span className="text-gray-600 font-normal">(internal only)</span></label>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                        {(client.tags || []).map((tag, idx) => (
+                            <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent-primary/20 text-accent-primary rounded text-xs"
+                            >
+                                {tag}
+                                <button
+                                    onClick={() => handleRemoveTag(tag)}
+                                    className="hover:text-white transition-colors"
+                                >
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </span>
+                        ))}
+                    </div>
+                    <input
+                        type="text"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={handleAddTag}
+                        placeholder="Type and press Enter to add..."
+                        className="input text-sm"
                     />
                 </div>
             </div>

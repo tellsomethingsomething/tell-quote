@@ -70,44 +70,82 @@ export function gatherQuoteContext(quote, currency, settings) {
 /**
  * Generates an AI prompt for proposal creation
  */
-export function createProposalPrompt(context) {
+export function createProposalPrompt(context, proposalInputs = {}) {
     const sectionsDescription = context.sections.map(s =>
-        `- ${s.section}: ${s.items.map(i => i.name).join(', ')} (${s.total})`
+        `- ${s.section}: ${s.items.map(i => `${i.name} (qty: ${i.quantity}, days: ${i.days})`).join(', ')}`
     ).join('\n');
 
-    return `You are writing a professional business proposal for a production services company. Write a compelling 4-paragraph proposal based on this quote data:
+    // Extract personnel for "Your Team" section
+    const personnelSection = context.sections.find(s => s.section.toLowerCase().includes('personnel') || s.section.toLowerCase().includes('crew'));
+    const personnelList = personnelSection ? personnelSection.items.map(i => i.name).join(', ') : '';
 
-COMPANY: ${context.company}
-CLIENT: ${context.client.name}${context.client.location ? ` (${context.client.location})` : ''}
+    const { context: briefContext, keyPoints, tone } = proposalInputs;
 
-PROJECT DETAILS:
-- Title: ${context.project.title}
+    return `Generate a professional 1-page proposal for Tell Productions Sdn Bhd sports production services.
+
+## INPUT DATA
+
+CLIENT:
+- Company: ${context.client.name}
+- Contact: ${context.client.contact || 'Not specified'}
+
+PROJECT:
+- Title: ${context.project.title || 'Project'}
 - Type: ${context.project.type || 'Production'}
 - Venue: ${context.project.venue || 'To be confirmed'}
-- Dates: ${context.project.startDate || 'TBC'}${context.project.endDate ? ` to ${context.project.endDate}` : ''}
+- Dates: ${context.project.startDate || 'TBC'}${context.project.endDate && context.project.endDate !== context.project.startDate ? ` to ${context.project.endDate}` : ''}
 ${context.project.description ? `- Description: ${context.project.description}` : ''}
 
-SERVICES INCLUDED:
+LINE ITEMS / KIT:
 ${sectionsDescription}
 
-INVESTMENT: ${context.financials.total}${context.financials.discount > 0 ? ` (includes ${context.financials.discount}% discount)` : ''}
-VALIDITY: ${context.financials.validityDays} days
+${personnelList ? `KEY PERSONNEL FROM QUOTE: ${personnelList}` : ''}
 
-Write exactly 4 paragraphs:
-1. Opening: Introduce the proposal, express enthusiasm for the project, mention the client and event
-2. Services: Describe what's being provided, highlight key elements from each section professionally
-3. Value & Approach: Explain the value proposition, mention expertise, quality, and project management
-4. Investment & Next Steps: State the total, validity, and invite discussion
+${briefContext ? `ADDITIONAL CONTEXT:\n${briefContext}\n` : ''}
+${keyPoints ? `KEY POINTS TO EMPHASIZE:\n${keyPoints}\n` : ''}
 
-Keep it professional, confident, and tailored to sports/event production. Do not use bullet points. Each paragraph should be 3-5 sentences.`;
+## OUTPUT FORMAT
+
+Write FOUR sections as flowing prose (NO BULLET POINTS). Each section should be 2-4 sentences.
+
+**PROJECT OVERVIEW**
+2-3 sentences summarising the project title, type, venue, location, and dates. Set the scene.
+
+**WHAT WE'LL DO**
+One to two paragraphs describing the deliverables and services derived from the line items. Write as flowing prose — describe the key deliverables, service categories being provided, and what the client will receive. Be specific about equipment and services from the kit list.
+
+**HOW WE'LL DO IT**
+One paragraph describing the timeline and methodology. Mention setup, show days, and strike in natural sentences. Include the technical approach and how coordination will work.
+
+**YOUR TEAM**
+Short paragraph introducing 2-4 key personnel roles from the quote. Don't list roles — weave them into flowing sentences that convey experience and capability. Example: "Your production will be led by an experienced Technical Director, supported by specialist Graphics Operators..."
+
+## WRITING STYLE
+
+- Professional but approachable — not stuffy corporate speak
+- Confident — we know what we're doing
+- Client-focused — frame as benefits to them
+- Concise — every word earns its place
+- Active voice — "We will deliver" not "Delivery will be provided"
+- Use contractions naturally: We're, We'll, We've
+- NO bullet points — all flowing paragraphs
+- AVOID: "synergise", "leverage", "reach out", "circle back", generic filler
+
+${tone ? `Tone: ${tone}` : ''}
+
+## COMPANY CONTEXT
+
+Tell Productions Sdn Bhd is a Malaysian sports production company specializing in live football broadcast production, venue presentation and LED content, broadcast graphics systems, and REMI production. Operating across Southeast Asia, the Gulf, and Central Asia.
+
+Output the four sections only, with section headings in caps. No pricing (this is a summary, not a quote).`;
 }
 
 /**
  * Calls Claude API to generate proposal
  */
-export async function generateAIProposal(quote, currency, settings, apiKey) {
+export async function generateAIProposal(quote, currency, settings, apiKey, proposalInputs = {}) {
     const context = gatherQuoteContext(quote, currency, settings);
-    const prompt = createProposalPrompt(context);
+    const prompt = createProposalPrompt(context, proposalInputs);
 
     try {
         const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -159,22 +197,25 @@ export async function generateAIProposal(quote, currency, settings, apiKey) {
  * Fallback template-based proposal when AI is unavailable
  */
 export function generateFallbackProposal(context) {
-    const { company, client, project, sections, financials } = context;
+    const { company, client, project, sections } = context;
 
     const servicesList = sections.map(s => s.section.toLowerCase()).join(', ');
-    const totalItems = sections.reduce((acc, s) => acc + s.items.length, 0);
 
-    const para1 = `${company} is pleased to present this proposal for ${project.title}${project.type ? `, a ${project.type.toLowerCase()} production` : ''}. We are excited to partner with ${client.name} to deliver a comprehensive production solution that meets your objectives and exceeds expectations. ${project.venue ? `The event will take place at ${project.venue}` : 'We will work closely with your team to ensure seamless execution'}${project.startDate ? ` from ${project.startDate}${project.endDate ? ` to ${project.endDate}` : ''}` : ''}.`;
+    // Extract personnel
+    const personnelSection = sections.find(s => s.section.toLowerCase().includes('personnel') || s.section.toLowerCase().includes('crew'));
+    const personnelList = personnelSection ? personnelSection.items.slice(0, 3).map(i => i.name).join(', ') : 'Technical Director, Graphics Operators';
 
-    const para2 = `Our proposal encompasses ${servicesList}, totaling ${totalItems} deliverables tailored specifically to your requirements. ${sections.slice(0, 2).map(s => `Our ${s.section.toLowerCase()} includes ${s.items.slice(0, 3).map(i => i.name).join(', ')}${s.items.length > 3 ? ' and more' : ''}`).join('. ')}. Each element has been carefully selected to ensure the highest production standards.`;
+    const overview = `PROJECT OVERVIEW\n\n${project.title}${project.type ? ` — a ${project.type.toLowerCase()} production` : ''}${project.venue ? ` at ${project.venue}` : ''}${project.startDate ? `. Taking place ${project.startDate}${project.endDate && project.endDate !== project.startDate ? ` to ${project.endDate}` : ''}` : ''}. We've worked with ${client.name} to scope out exactly what's needed for this event.`;
 
-    const para3 = `We pride ourselves on delivering exceptional quality while maintaining cost-effectiveness. Our experienced team will manage all aspects of the production, from pre-event planning through to on-site execution and post-event support. We ensure clear communication throughout the process, with dedicated project management to coordinate all elements seamlessly.`;
+    const whatWeDo = `WHAT WE'LL DO\n\nTell Productions will provide comprehensive production services covering ${servicesList}. ${sections.slice(0, 2).map(s => `For ${s.section.toLowerCase()}, we're providing ${s.items.slice(0, 3).map(i => i.name).join(', ')}${s.items.length > 3 ? ' and additional equipment' : ''}`).join('. ')}. All equipment and services have been selected to meet the specific requirements of this production.`;
 
-    const para4 = `The total investment for this comprehensive production package is ${financials.total}${financials.discount > 0 ? `, which includes a ${financials.discount}% discount` : ''}. This quotation remains valid for ${financials.validityDays} days. We welcome the opportunity to discuss this proposal in detail and are happy to adjust the scope to align with your specific needs. Please contact us to proceed.`;
+    const howWeDo = `HOW WE'LL DO IT\n\nOur team will arrive ahead of the event for setup and technical rehearsals, ensuring all systems are tested and integrated before we go live. During show days, we'll operate from the venue, delivering broadcast-quality output throughout. We'll handle coordination between all production elements and ensure clear communication at every stage.`;
+
+    const yourTeam = `YOUR TEAM\n\nYour production will be led by experienced professionals including ${personnelList}. All crew are seasoned broadcast specialists who've delivered events across Southeast Asia and the Gulf — we know how to make it work.`;
 
     return {
-        paragraphs: [para1, para2, para3, para4],
-        fullText: [para1, para2, para3, para4].join('\n\n'),
+        paragraphs: [overview, whatWeDo, howWeDo, yourTeam],
+        fullText: [overview, whatWeDo, howWeDo, yourTeam].join('\n\n'),
         context
     };
 }

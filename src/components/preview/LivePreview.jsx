@@ -26,8 +26,8 @@ export default function LivePreview() {
 
     const isDistributed = quote.fees?.distributeFees;
 
-    // Generate PDF Link
-    const generatePDF = async () => {
+    // Generate Quote PDF only
+    const generateQuotePDF = async () => {
         const blob = await pdf(
             <QuotePDF quote={quote} currency={quote.currency} includeTerms={includeTerms} />
         ).toBlob();
@@ -195,25 +195,28 @@ export default function LivePreview() {
             </div>
 
             {/* Overlay for PDF gen */}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-[1px] gap-4">
-                <label className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-lg cursor-pointer hover:bg-white/20 transition-colors">
-                    <input
-                        type="checkbox"
-                        checked={includeTerms}
-                        onChange={(e) => setIncludeTerms(e.target.checked)}
-                        className="w-4 h-4 rounded border-white/30 text-accent-primary focus:ring-accent-primary"
-                    />
-                    <span className="text-white text-sm">Include Terms & Conditions page</span>
-                </label>
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-[1px] gap-3">
+                {/* Export Quote PDF Button */}
                 <button
-                    onClick={generatePDF}
-                    className="bg-accent-primary hover:bg-accent-secondary text-white px-6 py-3 rounded-full font-bold shadow-xl transform transition hover:scale-105 flex items-center gap-2"
+                    onClick={generateQuotePDF}
+                    className="px-6 py-3 rounded-full font-bold shadow-xl transform transition flex items-center gap-2 w-56 justify-center bg-accent-primary hover:bg-accent-secondary hover:scale-105 text-white"
                 >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                    Download PDF
+                    Export PDF
                 </button>
+
+                {/* T&C Option */}
+                <label className="flex items-center gap-2 cursor-pointer hover:bg-white/10 px-3 py-1 rounded transition-colors">
+                    <input
+                        type="checkbox"
+                        checked={includeTerms}
+                        onChange={(e) => setIncludeTerms(e.target.checked)}
+                        className="w-3 h-3 rounded border-white/30 text-accent-primary focus:ring-accent-primary"
+                    />
+                    <span className="text-white/70 text-[10px]">Include T&Cs</span>
+                </label>
             </div>
         </div>
     );

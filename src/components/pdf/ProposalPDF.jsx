@@ -430,34 +430,16 @@ export default function ProposalPDF({
                         </View>
 
                         <View style={styles.coverCenter}>
-                            <Text style={styles.coverLabel}>Proposal & Quotation</Text>
                             <Text style={styles.coverTitle}>{project.title || 'Project Proposal'}</Text>
-                            {project.venue && (
-                                <Text style={styles.coverSubtitle}>{project.venue}</Text>
-                            )}
-                            {project.startDate && (
-                                <Text style={styles.coverSubtitle}>
-                                    {project.startDate}{project.endDate && project.endDate !== project.startDate ? ` - ${project.endDate}` : ''}
-                                </Text>
-                            )}
+                            <Text style={styles.coverLabel}>Project Quote</Text>
                         </View>
 
                         <View style={styles.coverBottom}>
                             <View style={styles.coverMeta}>
-                                <Text style={styles.coverMetaLabel}>Prepared For</Text>
-                                <Text style={styles.coverMetaValue}>{client.company || 'Client'}</Text>
-                                {client.contact && (
-                                    <Text style={[styles.coverMetaValue, { opacity: 0.7, fontSize: 10 }]}>
-                                        Attn: {client.contact}
-                                    </Text>
-                                )}
+                                <Text style={styles.coverMetaValue}>{quote.quoteDate || quoteDate.toLocaleDateString()}</Text>
                             </View>
                             <View style={styles.coverQuoteNumber}>
-                                <Text style={styles.coverMetaLabel}>Reference</Text>
-                                <Text style={styles.coverMetaValue}>{quote.quoteNumber}</Text>
-                                <Text style={[styles.coverMetaValue, { opacity: 0.7, fontSize: 10 }]}>
-                                    {quoteDate.toLocaleDateString()}
-                                </Text>
+                                <Text style={styles.coverMetaValue}>Prepared by {preparedByName}</Text>
                             </View>
                         </View>
                     </View>

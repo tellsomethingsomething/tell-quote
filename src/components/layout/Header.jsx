@@ -2,21 +2,15 @@ import { useState } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useClientStore } from '../../store/clientStore';
 import { useAuthStore } from '../../store/authStore';
-import { useSettingsStore } from '../../store/settingsStore';
 import Navigation from './Navigation';
-import { generateAIProposal, generateFallbackProposal, gatherQuoteContext } from '../../utils/proposalGenerator';
 
 export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes }) {
     const { quote, ratesLoading, refreshRates } = useQuoteStore();
     const { saveQuote } = useClientStore();
     const { logout } = useAuthStore();
-    const { settings } = useSettingsStore();
     const [saving, setSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
-    const [showProposalModal, setShowProposalModal] = useState(false);
-    const [proposalText, setProposalText] = useState('');
-    const [generatingProposal, setGeneratingProposal] = useState(false);
 
     const handleSaveQuote = () => {
         setSaving(true);
@@ -36,30 +30,6 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
         } finally {
             setSaving(false);
         }
-    };
-
-    const handleGenerateProposal = async () => {
-        setGeneratingProposal(true);
-        setShowProposalModal(true);
-        setProposalText('Generating proposal...');
-
-        const apiKey = settings.aiSettings?.anthropicKey;
-
-        if (apiKey) {
-            const result = await generateAIProposal(quote, quote.currency, settings, apiKey);
-            setProposalText(result.fullText);
-        } else {
-            // Use fallback template
-            const context = gatherQuoteContext(quote, quote.currency, settings);
-            const result = generateFallbackProposal(context);
-            setProposalText(result.fullText + '\n\n---\n(Add your API key in Settings > AI Features for AI-powered proposals)');
-        }
-
-        setGeneratingProposal(false);
-    };
-
-    const copyProposal = () => {
-        navigator.clipboard.writeText(proposalText);
     };
 
     // Dashboard view header - minimal (DashboardPage has its own header/nav now)
@@ -203,19 +173,6 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                             </svg>
                         </button>
 
-                        {/* Generate Proposal */}
-                        <button
-                            onClick={handleGenerateProposal}
-                            disabled={generatingProposal}
-                            className="btn-ghost text-sm flex items-center gap-1"
-                            title="Generate AI Proposal"
-                        >
-                            <svg className={`w-4 h-4 ${generatingProposal ? 'animate-pulse' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                            </svg>
-                            <span className="hidden sm:inline">Proposal</span>
-                        </button>
-
                         {/* Save Quote */}
                         <button
                             onClick={handleSaveQuote}
@@ -238,59 +195,6 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                 </div>
             </div>
 
-            {/* Proposal Modal */}
-            {showProposalModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                    <div className="bg-dark-card border border-dark-border rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl mx-4">
-                        <div className="flex items-center justify-between p-4 border-b border-dark-border">
-                            <h2 className="text-lg font-bold text-gray-100">AI-Generated Proposal</h2>
-                            <button
-                                onClick={() => setShowProposalModal(false)}
-                                className="p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10"
-                            >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-4">
-                            {generatingProposal ? (
-                                <div className="flex items-center justify-center py-12">
-                                    <div className="animate-spin w-8 h-8 border-2 border-accent-primary border-t-transparent rounded-full"></div>
-                                </div>
-                            ) : (
-                                <div className="prose prose-sm prose-invert max-w-none">
-                                    {proposalText.split('\n\n').map((para, idx) => (
-                                        <p key={idx} className="text-gray-300 leading-relaxed mb-4">
-                                            {para}
-                                        </p>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="flex justify-end gap-2 p-4 border-t border-dark-border">
-                            <button
-                                onClick={handleGenerateProposal}
-                                disabled={generatingProposal}
-                                className="btn-ghost text-sm"
-                            >
-                                Regenerate
-                            </button>
-                            <button
-                                onClick={copyProposal}
-                                className="btn-primary text-sm flex items-center gap-2"
-                            >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                                Copy to Clipboard
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </header>
     );
 }

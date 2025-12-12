@@ -4,5 +4,6 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/tell-quote/',
+  // Use /tell-quote/ for GitHub Pages, / for Vercel
+  base: process.env.GITHUB_ACTIONS ? '/tell-quote/' : '/',
 })
