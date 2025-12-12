@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     },
     projectDetailText: {
         fontSize: 10,
-        color: '#FFFFFFD9',
+        color: colors.white,
     },
 
     // === CLIENT ROW ===
@@ -668,7 +668,7 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                                                 const lineTotal = displayRate * (item.quantity || 1) * (item.days || 1);
 
                                                 return (
-                                                    <View key={item.id || idx} style={[styles.tableRow, idx % 2 === 0 && styles.tableRowAlt]}>
+                                                    <View key={item.id || idx} style={idx % 2 === 0 ? [styles.tableRow, styles.tableRowAlt] : styles.tableRow}>
                                                         <Text style={[styles.cellText, styles.col1]}>{item.name || 'Item'}</Text>
                                                         <Text style={[styles.cellTextMuted, styles.col2]}>{item.quantity || 1}</Text>
                                                         <Text style={[styles.cellTextMuted, styles.col3]}>{item.days || 1}</Text>
