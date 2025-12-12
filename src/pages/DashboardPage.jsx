@@ -141,6 +141,45 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
         };
     }, [filteredQuotes, rates, dashboardCurrency]);
 
+    // Calculate 3-month and 6-month forecasts based on project start dates
+    const forecastStats = useMemo(() => {
+        const now = new Date();
+        const threeMonthsOut = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
+        const sixMonthsOut = new Date(now.getFullYear(), now.getMonth() + 6, now.getDate());
+
+        let forecast3mRevenue = 0;
+        let forecast3mProfit = 0;
+        let forecast6mRevenue = 0;
+        let forecast6mProfit = 0;
+
+        // Look at pipeline quotes (draft + sent) with project start dates
+        savedQuotes.forEach(q => {
+            if (q.status !== 'draft' && q.status !== 'sent') return;
+
+            const startDate = q.project?.startDate ? new Date(q.project.startDate) : null;
+            if (!startDate || startDate < now) return;
+
+            const calculations = calculateGrandTotalWithFees(q.sections || {}, q.fees || {});
+            const revenue = convertCurrency(calculations.totalCharge, q.currency || 'USD', dashboardCurrency, rates);
+            const cost = convertCurrency(calculations.totalCost, q.currency || 'USD', dashboardCurrency, rates);
+            const profit = revenue - cost;
+
+            if (startDate <= threeMonthsOut) {
+                forecast3mRevenue += revenue;
+                forecast3mProfit += profit;
+            }
+            if (startDate <= sixMonthsOut) {
+                forecast6mRevenue += revenue;
+                forecast6mProfit += profit;
+            }
+        });
+
+        return {
+            threeMonth: { revenue: forecast3mRevenue, profit: forecast3mProfit },
+            sixMonth: { revenue: forecast6mRevenue, profit: forecast6mProfit }
+        };
+    }, [savedQuotes, rates, dashboardCurrency]);
+
 
     // Get client name
     const getClientName = (quote) => {
@@ -270,58 +309,90 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                 </div>
 
                 {/* Financial Summary - Combined view for better scannability */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-4 gap-3 mb-6">
                     {/* Confirmed (Won) */}
-                    <div className="card bg-gradient-to-br from-green-900/30 to-green-950/20 border-green-800/30">
-                        <div className="flex items-center gap-2 mb-3">
+                    <div className="card bg-gradient-to-br from-green-900/30 to-green-950/20 border-green-800/30 p-3">
+                        <div className="flex items-center gap-2 mb-2">
                             <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                            <span className="text-xs font-medium text-green-400/90 uppercase tracking-wide">Confirmed (Won)</span>
+                            <span className="text-[10px] font-medium text-green-400/90 uppercase tracking-wide">Won</span>
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <p className="text-xs text-gray-500 mb-0.5">Revenue</p>
-                                <p className="text-lg font-semibold text-green-400 tabular-nums">
-                                    {formatCurrency(financialStats.won.revenue, dashboardCurrency)}
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-baseline">
+                                <p className="text-[10px] text-gray-500">Revenue</p>
+                                <p className="text-sm font-semibold text-green-400 tabular-nums">
+                                    {formatCurrency(financialStats.won.revenue, dashboardCurrency, 0)}
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-xs text-gray-500 mb-0.5">Profit</p>
-                                <p className="text-lg font-semibold text-green-400 tabular-nums">
-                                    {formatCurrency(financialStats.won.profit, dashboardCurrency)}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 mb-0.5">Avg Margin</p>
-                                <p className="text-lg font-semibold text-green-400 tabular-nums">
-                                    {financialStats.won.avgMargin.toFixed(1)}%
+                            <div className="flex justify-between items-baseline">
+                                <p className="text-[10px] text-gray-500">Profit</p>
+                                <p className="text-sm font-semibold text-green-400 tabular-nums">
+                                    {formatCurrency(financialStats.won.profit, dashboardCurrency, 0)}
                                 </p>
                             </div>
                         </div>
                     </div>
 
                     {/* Pipeline (Draft + Sent) */}
-                    <div className="card bg-gradient-to-br from-[#0F8B8D]/10 to-[#143642]/10 border-[#0F8B8D]/20">
-                        <div className="flex items-center gap-2 mb-3">
+                    <div className="card bg-gradient-to-br from-[#0F8B8D]/10 to-[#143642]/10 border-[#0F8B8D]/20 p-3">
+                        <div className="flex items-center gap-2 mb-2">
                             <div className="w-2 h-2 rounded-full bg-[#0F8B8D]"></div>
-                            <span className="text-xs font-medium text-[#0F8B8D]/90 uppercase tracking-wide">Pipeline (Draft + Sent)</span>
+                            <span className="text-[10px] font-medium text-[#0F8B8D]/90 uppercase tracking-wide">Pipeline</span>
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <p className="text-xs text-gray-500 mb-0.5">Potential</p>
-                                <p className="text-lg font-semibold text-gray-200 tabular-nums">
-                                    {formatCurrency(financialStats.pipeline.revenue, dashboardCurrency)}
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-baseline">
+                                <p className="text-[10px] text-gray-500">Revenue</p>
+                                <p className="text-sm font-semibold text-gray-200 tabular-nums">
+                                    {formatCurrency(financialStats.pipeline.revenue, dashboardCurrency, 0)}
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-xs text-gray-500 mb-0.5">Est. Profit</p>
-                                <p className="text-lg font-semibold text-gray-300 tabular-nums">
-                                    {formatCurrency(financialStats.pipeline.profit, dashboardCurrency)}
+                            <div className="flex justify-between items-baseline">
+                                <p className="text-[10px] text-gray-500">Profit</p>
+                                <p className="text-sm font-semibold text-gray-300 tabular-nums">
+                                    {formatCurrency(financialStats.pipeline.profit, dashboardCurrency, 0)}
                                 </p>
                             </div>
-                            <div>
-                                <p className="text-xs text-gray-500 mb-0.5">Avg Margin</p>
-                                <p className="text-lg font-semibold text-gray-300 tabular-nums">
-                                    {financialStats.pipeline.avgMargin.toFixed(1)}%
+                        </div>
+                    </div>
+
+                    {/* 3-Month Forecast */}
+                    <div className="card bg-gradient-to-br from-amber-900/20 to-amber-950/10 border-amber-800/20 p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                            <span className="text-[10px] font-medium text-amber-400/90 uppercase tracking-wide">3-Month Forecast</span>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-baseline">
+                                <p className="text-[10px] text-gray-500">Revenue</p>
+                                <p className="text-sm font-semibold text-amber-400 tabular-nums">
+                                    {formatCurrency(forecastStats.threeMonth.revenue, dashboardCurrency, 0)}
+                                </p>
+                            </div>
+                            <div className="flex justify-between items-baseline">
+                                <p className="text-[10px] text-gray-500">Profit</p>
+                                <p className="text-sm font-semibold text-amber-400/80 tabular-nums">
+                                    {formatCurrency(forecastStats.threeMonth.profit, dashboardCurrency, 0)}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 6-Month Forecast */}
+                    <div className="card bg-gradient-to-br from-purple-900/20 to-purple-950/10 border-purple-800/20 p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                            <span className="text-[10px] font-medium text-purple-400/90 uppercase tracking-wide">6-Month Forecast</span>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="flex justify-between items-baseline">
+                                <p className="text-[10px] text-gray-500">Revenue</p>
+                                <p className="text-sm font-semibold text-purple-400 tabular-nums">
+                                    {formatCurrency(forecastStats.sixMonth.revenue, dashboardCurrency, 0)}
+                                </p>
+                            </div>
+                            <div className="flex justify-between items-baseline">
+                                <p className="text-[10px] text-gray-500">Profit</p>
+                                <p className="text-sm font-semibold text-purple-400/80 tabular-nums">
+                                    {formatCurrency(forecastStats.sixMonth.profit, dashboardCurrency, 0)}
                                 </p>
                             </div>
                         </div>
