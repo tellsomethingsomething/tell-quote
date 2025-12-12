@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { supabase } from '../lib/supabase';
 import { SEED_ITEMS } from '../data/rateCardSeed';
 
 const RATE_CARD_KEY = 'tell_rate_card';
@@ -15,17 +16,12 @@ const createEmptyPricing = () => ({
 
 // Default sections
 const DEFAULT_SECTIONS = [
-    // Production Team
     { id: 'prod_mgmt_remote', name: 'Production Management - Remote' },
     { id: 'prod_staffing', name: 'Production Staffing' },
     { id: 'prod_management', name: 'Production Management' },
     { id: 'prod_technical', name: 'Technical Crew' },
-
-    // Graphics & Creative
     { id: 'event_graphics', name: 'Event Graphics' },
     { id: 'creative', name: 'Creative Services' },
-
-    // Production Equipment
     { id: 'spr_equipment', name: 'SPR Equipment' },
     { id: 'equip_video', name: 'Video Equipment' },
     { id: 'equip_audio', name: 'Audio Equipment' },
@@ -34,72 +30,116 @@ const DEFAULT_SECTIONS = [
     { id: 'equip_vt', name: 'VT & Replay' },
     { id: 'equip_cabling', name: 'Cabling & Infrastructure' },
     { id: 'extras', name: 'Extras' },
-
-    // Core Services
     { id: 'logistics', name: 'Logistics' },
     { id: 'expenses', name: 'Expenses' },
 ];
 
-// Load functions
-function loadRateCard() {
+// Load from localStorage (cache/fallback)
+function loadRateCardLocal() {
     try {
         const saved = localStorage.getItem(RATE_CARD_KEY);
         return saved ? JSON.parse(saved) : [];
     } catch (e) {
-        console.error('Failed to load rate card:', e);
         return [];
     }
 }
 
-function loadSections() {
+function loadSectionsLocal() {
     try {
         const saved = localStorage.getItem(RATE_CARD_SECTIONS_KEY);
         return saved ? JSON.parse(saved) : DEFAULT_SECTIONS;
     } catch (e) {
-        console.error('Failed to load sections:', e);
         return DEFAULT_SECTIONS;
     }
 }
 
-// Save functions
-function saveRateCard(items) {
+function saveRateCardLocal(items) {
     try {
         localStorage.setItem(RATE_CARD_KEY, JSON.stringify(items));
     } catch (e) {
-        console.error('Failed to save rate card:', e);
+        console.error('Failed to save rate card locally:', e);
     }
 }
 
-function saveSections(sections) {
+function saveSectionsLocal(sections) {
     try {
         localStorage.setItem(RATE_CARD_SECTIONS_KEY, JSON.stringify(sections));
     } catch (e) {
-        console.error('Failed to save sections:', e);
+        console.error('Failed to save sections locally:', e);
     }
 }
 
-// Generate unique ID
 function generateId() {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
 export const useRateCardStore = create(
     subscribeWithSelector((set, get) => ({
-        // State
-        items: loadRateCard(),
-        sections: loadSections(),
+        items: loadRateCardLocal(),
+        sections: loadSectionsLocal(),
+        loading: false,
 
-        // Initialize
-        initialize: () => {
-            set({
-                items: loadRateCard(),
-                sections: loadSections()
-            });
+        // Initialize - load from Supabase
+        initialize: async () => {
+            set({ loading: true });
+            try {
+                // Load rate card items
+                const { data: itemsData, error: itemsError } = await supabase
+                    .from('rate_cards')
+                    .select('*')
+                    .order('created_at', { ascending: true });
+
+                if (itemsError) throw itemsError;
+
+                // Load sections
+                const { data: sectionsData, error: sectionsError } = await supabase
+                    .from('rate_card_sections')
+                    .select('*')
+                    .order('sort_order', { ascending: true });
+
+                if (sectionsError) throw sectionsError;
+
+                // Map DB format to app format
+                const items = (itemsData || []).map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    description: item.description || '',
+                    section: item.section,
+                    unit: item.unit || 'day',
+                    pricing: item.pricing || createEmptyPricing(),
+                    createdAt: item.created_at,
+                    updatedAt: item.updated_at,
+                }));
+
+                // Use sections from DB or defaults
+                const sections = sectionsData && sectionsData.length > 0
+                    ? sectionsData.map(s => ({ id: s.id, name: s.name }))
+                    : DEFAULT_SECTIONS;
+
+                // If no sections in DB, seed them
+                if (!sectionsData || sectionsData.length === 0) {
+                    for (let i = 0; i < DEFAULT_SECTIONS.length; i++) {
+                        const s = DEFAULT_SECTIONS[i];
+                        await supabase.from('rate_card_sections').upsert({
+                            id: s.id,
+                            name: s.name,
+                            sort_order: i,
+                        });
+                    }
+                }
+
+                saveRateCardLocal(items);
+                saveSectionsLocal(sections);
+                set({ items, sections, loading: false });
+            } catch (e) {
+                console.error('Failed to load rate card from DB:', e);
+                set({ loading: false });
+            }
         },
 
         // --- Sections Actions ---
 
-        addSection: (name) => {
+        addSection: async (name) => {
             const newSection = {
                 id: name.toLowerCase().replace(/\s+/g, '_') + '_' + Math.random().toString(36).substring(2, 7),
                 name
@@ -107,46 +147,77 @@ export const useRateCardStore = create(
 
             set(state => {
                 const sections = [...state.sections, newSection];
-                saveSections(sections);
+                saveSectionsLocal(sections);
                 return { sections };
             });
+
+            // Save to Supabase
+            try {
+                await supabase.from('rate_card_sections').insert({
+                    id: newSection.id,
+                    name: newSection.name,
+                    sort_order: get().sections.length,
+                });
+            } catch (e) {
+                console.error('Failed to save section to DB:', e);
+            }
 
             return newSection;
         },
 
-        deleteSection: (sectionId) => {
-            // Check if section has items
+        deleteSection: async (sectionId) => {
+            // Move items to 'extras' section
             const hasItems = get().items.some(item => item.section === sectionId);
             if (hasItems) {
-                // Move items to 'other' or throw? Let's just warn or require empty
-                // Ideally we should reassign items to 'other'
                 set(state => {
                     const items = state.items.map(item =>
-                        item.section === sectionId ? { ...item, section: 'other', updatedAt: new Date().toISOString() } : item
+                        item.section === sectionId
+                            ? { ...item, section: 'extras', updatedAt: new Date().toISOString() }
+                            : item
                     );
-                    saveRateCard(items);
+                    saveRateCardLocal(items);
+
+                    // Update items in DB
+                    items.filter(i => i.section === 'extras').forEach(item => {
+                        supabase.from('rate_cards').update({ section: 'extras' }).eq('id', item.id);
+                    });
+
                     return { items };
                 });
             }
 
             set(state => {
                 const sections = state.sections.filter(s => s.id !== sectionId);
-                saveSections(sections);
+                saveSectionsLocal(sections);
                 return { sections };
             });
+
+            // Delete from Supabase
+            try {
+                await supabase.from('rate_card_sections').delete().eq('id', sectionId);
+            } catch (e) {
+                console.error('Failed to delete section from DB:', e);
+            }
         },
 
-        renameSection: (sectionId, newName) => {
+        renameSection: async (sectionId, newName) => {
             set(state => {
                 const sections = state.sections.map(s =>
                     s.id === sectionId ? { ...s, name: newName } : s
                 );
-                saveSections(sections);
+                saveSectionsLocal(sections);
                 return { sections };
             });
+
+            // Update in Supabase
+            try {
+                await supabase.from('rate_card_sections').update({ name: newName }).eq('id', sectionId);
+            } catch (e) {
+                console.error('Failed to rename section in DB:', e);
+            }
         },
 
-        moveSection: (sectionId, direction) => {
+        moveSection: async (sectionId, direction) => {
             set(state => {
                 const sections = [...state.sections];
                 const index = sections.findIndex(s => s.id === sectionId);
@@ -155,56 +226,96 @@ export const useRateCardStore = create(
                 const newIndex = direction === 'up' ? index - 1 : index + 1;
                 if (newIndex < 0 || newIndex >= sections.length) return state;
 
-                // Swap positions
                 [sections[index], sections[newIndex]] = [sections[newIndex], sections[index]];
-                saveSections(sections);
+                saveSectionsLocal(sections);
+
+                // Update sort_order in DB
+                sections.forEach((s, i) => {
+                    supabase.from('rate_card_sections').update({ sort_order: i }).eq('id', s.id);
+                });
+
                 return { sections };
             });
         },
 
         // --- Items Actions ---
 
-        // Add new item
-        addItem: (itemData) => {
+        addItem: async (itemData) => {
             const newItem = {
                 id: generateId(),
                 name: itemData.name || '',
                 description: itemData.description || '',
-                section: itemData.section || 'other',
-                unit: itemData.unit || 'day', // day, item, project
+                section: itemData.section || 'extras',
+                unit: itemData.unit || 'day',
                 pricing: itemData.pricing || createEmptyPricing(),
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             };
 
+            // Save to Supabase first to get UUID
+            try {
+                const { data, error } = await supabase
+                    .from('rate_cards')
+                    .insert({
+                        name: newItem.name,
+                        description: newItem.description,
+                        section: newItem.section,
+                        unit: newItem.unit,
+                        pricing: newItem.pricing,
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                newItem.id = data.id;
+            } catch (e) {
+                console.error('Failed to save item to DB:', e);
+            }
+
             set(state => {
                 const items = [...state.items, newItem];
-                saveRateCard(items);
+                saveRateCardLocal(items);
                 return { items };
             });
 
             return newItem;
         },
 
-        // Update item
-        updateItem: (itemId, updates) => {
+        updateItem: async (itemId, updates) => {
             set(state => {
                 const items = state.items.map(item =>
                     item.id === itemId
                         ? { ...item, ...updates, updatedAt: new Date().toISOString() }
                         : item
                 );
-                saveRateCard(items);
+                saveRateCardLocal(items);
                 return { items };
             });
+
+            // Update in Supabase
+            try {
+                const dbUpdates = {};
+                if (updates.name !== undefined) dbUpdates.name = updates.name;
+                if (updates.description !== undefined) dbUpdates.description = updates.description;
+                if (updates.section !== undefined) dbUpdates.section = updates.section;
+                if (updates.unit !== undefined) dbUpdates.unit = updates.unit;
+                if (updates.pricing !== undefined) dbUpdates.pricing = updates.pricing;
+
+                if (Object.keys(dbUpdates).length > 0) {
+                    await supabase.from('rate_cards').update(dbUpdates).eq('id', itemId);
+                }
+            } catch (e) {
+                console.error('Failed to update item in DB:', e);
+            }
         },
 
-        // Update item pricing for a region
-        updateItemPricing: (itemId, region, pricing) => {
+        updateItemPricing: async (itemId, region, pricing) => {
+            let updatedItem = null;
+
             set(state => {
                 const items = state.items.map(item => {
                     if (item.id !== itemId) return item;
-                    return {
+                    updatedItem = {
                         ...item,
                         pricing: {
                             ...item.pricing,
@@ -212,27 +323,44 @@ export const useRateCardStore = create(
                         },
                         updatedAt: new Date().toISOString(),
                     };
+                    return updatedItem;
                 });
-                saveRateCard(items);
+                saveRateCardLocal(items);
                 return { items };
             });
+
+            // Update in Supabase
+            if (updatedItem) {
+                try {
+                    await supabase
+                        .from('rate_cards')
+                        .update({ pricing: updatedItem.pricing })
+                        .eq('id', itemId);
+                } catch (e) {
+                    console.error('Failed to update pricing in DB:', e);
+                }
+            }
         },
 
-        // Delete item
-        deleteItem: (itemId) => {
+        deleteItem: async (itemId) => {
             set(state => {
                 const items = state.items.filter(item => item.id !== itemId);
-                saveRateCard(items);
+                saveRateCardLocal(items);
                 return { items };
             });
+
+            // Delete from Supabase
+            try {
+                await supabase.from('rate_cards').delete().eq('id', itemId);
+            } catch (e) {
+                console.error('Failed to delete item from DB:', e);
+            }
         },
 
-        // Get items by section
         getItemsBySection: (sectionId) => {
             return get().items.filter(item => item.section === sectionId);
         },
 
-        // Search items
         searchItems: (query) => {
             const q = query.toLowerCase();
             return get().items.filter(item =>
@@ -241,7 +369,6 @@ export const useRateCardStore = create(
             );
         },
 
-        // Duplicate item
         duplicateItem: (itemId) => {
             const item = get().items.find(i => i.id === itemId);
             if (!item) return null;
@@ -252,99 +379,184 @@ export const useRateCardStore = create(
             });
         },
 
-        // Import items from JSON
-        importItems: async (file) => {
-            try {
-                const text = await file.text();
-                const data = JSON.parse(text);
-
-                if (!Array.isArray(data)) {
-                    throw new Error('Invalid format: expected array of items');
-                }
-
-                // Merge with existing items (skip duplicates by name)
-                const existingNames = new Set(get().items.map(i => i.name.toLowerCase()));
-                const newItems = data.filter(item =>
-                    item.name && !existingNames.has(item.name.toLowerCase())
-                ).map(item => ({
+        // Seed rate card with default items
+        seedRateCard: async () => {
+            const existingNames = new Set(get().items.map(i => i.name.toLowerCase()));
+            const newItems = SEED_ITEMS
+                .filter(item => !existingNames.has(item.name.toLowerCase()))
+                .map(item => ({
                     ...item,
                     id: generateId(),
-                    pricing: item.pricing || createEmptyPricing(),
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                 }));
 
+            if (newItems.length === 0) {
+                return { success: true, added: 0, message: 'All items already exist' };
+            }
+
+            // Save to Supabase
+            try {
+                const dbItems = newItems.map(item => ({
+                    name: item.name,
+                    description: item.description,
+                    section: item.section,
+                    unit: item.unit,
+                    pricing: item.pricing,
+                }));
+
+                const { data, error } = await supabase
+                    .from('rate_cards')
+                    .insert(dbItems)
+                    .select();
+
+                if (error) throw error;
+
+                // Update IDs from DB
+                if (data) {
+                    data.forEach((dbItem, i) => {
+                        if (newItems[i]) newItems[i].id = dbItem.id;
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to seed rate card to DB:', e);
+            }
+
+            set(state => {
+                const items = [...state.items, ...newItems];
+                saveRateCardLocal(items);
+                return { items };
+            });
+
+            // Reset sections to defaults
+            set({ sections: DEFAULT_SECTIONS });
+            saveSectionsLocal(DEFAULT_SECTIONS);
+
+            return { success: true, added: newItems.length };
+        },
+
+        // Import from CSV
+        importFromCSV: async (file) => {
+            try {
+                const text = await file.text();
+                const lines = text.split('\n');
+                if (lines.length < 2) throw new Error('Invalid CSV format');
+
+                const headers = lines[0].split(',').map(h => h.trim());
+                const regions = ['MALAYSIA', 'SEA', 'GULF', 'CENTRAL_ASIA'];
+                const getIdx = (name) => headers.indexOf(name);
+
+                const newItems = [];
+                const updatedItems = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line || line.startsWith('#')) continue;
+
+                    // Parse CSV with quotes
+                    const values = [];
+                    let inQuote = false;
+                    let currentVal = '';
+
+                    for (let j = 0; j < line.length; j++) {
+                        const char = line[j];
+                        if (char === '"') {
+                            if (inQuote && line[j + 1] === '"') {
+                                currentVal += '"';
+                                j++;
+                            } else {
+                                inQuote = !inQuote;
+                            }
+                        } else if (char === ',' && !inQuote) {
+                            values.push(currentVal);
+                            currentVal = '';
+                        } else {
+                            currentVal += char;
+                        }
+                    }
+                    values.push(currentVal);
+
+                    const item = {
+                        id: values[getIdx('id')] || generateId(),
+                        section: values[getIdx('section')] || 'extras',
+                        name: values[getIdx('name')] || '',
+                        description: values[getIdx('description')] || '',
+                        unit: values[getIdx('unit')] || 'day',
+                        pricing: createEmptyPricing(),
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+
+                    regions.forEach(r => {
+                        const costIdx = getIdx(`${r}_cost`);
+                        const chargeIdx = getIdx(`${r}_charge`);
+                        if (costIdx !== -1 && chargeIdx !== -1) {
+                            item.pricing[r] = {
+                                cost: parseFloat(values[costIdx]) || 0,
+                                charge: parseFloat(values[chargeIdx]) || 0
+                            };
+                        }
+                    });
+
+                    const exists = get().items.some(existing => existing.id === item.id);
+                    if (exists) {
+                        updatedItems.push(item);
+                    } else {
+                        newItems.push(item);
+                    }
+                }
+
+                // Save new items to Supabase
+                if (newItems.length > 0) {
+                    const dbItems = newItems.map(item => ({
+                        name: item.name,
+                        description: item.description,
+                        section: item.section,
+                        unit: item.unit,
+                        pricing: item.pricing,
+                    }));
+
+                    const { data } = await supabase.from('rate_cards').insert(dbItems).select();
+                    if (data) {
+                        data.forEach((dbItem, i) => {
+                            if (newItems[i]) newItems[i].id = dbItem.id;
+                        });
+                    }
+                }
+
+                // Update existing items in Supabase
+                for (const item of updatedItems) {
+                    await supabase.from('rate_cards').update({
+                        name: item.name,
+                        description: item.description,
+                        section: item.section,
+                        unit: item.unit,
+                        pricing: item.pricing,
+                    }).eq('id', item.id);
+                }
+
                 set(state => {
-                    const items = [...state.items, ...newItems];
-                    saveRateCard(items);
+                    let items = [...state.items];
+                    updatedItems.forEach(update => {
+                        items = items.map(i => i.id === update.id ? update : i);
+                    });
+                    items = [...items, ...newItems];
+                    saveRateCardLocal(items);
                     return { items };
                 });
 
-                return { success: true, imported: newItems.length };
+                return { success: true, count: newItems.length + updatedItems.length };
             } catch (e) {
-                console.error('Failed to import items:', e);
+                console.error('Failed to import CSV:', e);
                 return { success: false, error: e.message };
             }
         },
 
-        // Export items to JSON
-        exportItems: () => {
-            const { items } = get();
-            const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `rate-card-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        },
-
-        // Export template CSV for importing new items
-        exportTemplate: () => {
-            const regions = ['MALAYSIA', 'SEA', 'GULF', 'CENTRAL_ASIA'];
-            const { sections } = get();
-
-            // Headers must match import format exactly
-            const headers = ['id', 'section', 'name', 'description', 'unit'];
-            regions.forEach(r => {
-                headers.push(`${r}_cost`);
-                headers.push(`${r}_charge`);
-            });
-
-            let csvContent = headers.join(',') + '\n';
-
-            // Add instructions as comments (rows starting with # will be skipped on import)
-            csvContent += '# INSTRUCTIONS: Fill in your services below. Delete example rows before importing.\n';
-            csvContent += '# Leave "id" empty for new items. Unit options: day, item, project\n';
-            csvContent += `# Available sections: ${sections.map(s => s.id + ' (' + s.name + ')').join(', ')}\n`;
-            csvContent += '#\n';
-
-            // Add example rows for each section type
-            sections.slice(0, 3).forEach((section, idx) => {
-                const baseCost = 100 + (idx * 50);
-                const baseCharge = baseCost * 1.5;
-                csvContent += `,${section.id},"Example ${section.name} Item","Description here",day,${baseCost},${baseCharge},${baseCost * 1.2},${baseCharge * 1.2},${baseCost * 1.5},${baseCharge * 1.5},${baseCost * 1.3},${baseCharge * 1.3}\n`;
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `rate-card-template.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        },
-
-        // Export items to CSV (for backup)
+        // Export to CSV
         exportToCSV: () => {
             const { items } = get();
             const regions = ['MALAYSIA', 'SEA', 'GULF', 'CENTRAL_ASIA'];
 
-            // Header
             const headers = ['id', 'section', 'name', 'description', 'unit'];
             regions.forEach(r => {
                 headers.push(`${r}_cost`);
@@ -353,12 +565,11 @@ export const useRateCardStore = create(
 
             let csvContent = headers.join(',') + '\n';
 
-            // Rows
             items.forEach(item => {
                 const row = [
                     item.id,
                     item.section || '',
-                    `"${(item.name || '').replace(/"/g, '""')}"`, // Escape quotes
+                    `"${(item.name || '').replace(/"/g, '""')}"`,
                     `"${(item.description || '').replace(/"/g, '""')}"`,
                     item.unit || 'day'
                 ];
@@ -383,132 +594,38 @@ export const useRateCardStore = create(
             URL.revokeObjectURL(url);
         },
 
-        // Seed rate card with default items
-        seedRateCard: () => {
-            const existingNames = new Set(get().items.map(i => i.name.toLowerCase()));
-            const newItems = SEED_ITEMS
-                .filter(item => !existingNames.has(item.name.toLowerCase()))
-                .map(item => ({
-                    ...item,
-                    id: generateId(),
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                }));
+        // Export template
+        exportTemplate: () => {
+            const regions = ['MALAYSIA', 'SEA', 'GULF', 'CENTRAL_ASIA'];
+            const { sections } = get();
 
-            if (newItems.length === 0) {
-                return { success: true, added: 0, message: 'All items already exist' };
-            }
-
-            set(state => {
-                const items = [...state.items, ...newItems];
-                saveRateCard(items);
-                return { items };
+            const headers = ['id', 'section', 'name', 'description', 'unit'];
+            regions.forEach(r => {
+                headers.push(`${r}_cost`);
+                headers.push(`${r}_charge`);
             });
 
-            // Also reset sections to defaults
-            set({ sections: DEFAULT_SECTIONS });
-            saveSections(DEFAULT_SECTIONS);
+            let csvContent = headers.join(',') + '\n';
+            csvContent += '# INSTRUCTIONS: Fill in your services below. Delete example rows before importing.\n';
+            csvContent += '# Leave "id" empty for new items. Unit options: day, item, project\n';
+            csvContent += `# Available sections: ${sections.map(s => s.id + ' (' + s.name + ')').join(', ')}\n`;
+            csvContent += '#\n';
 
-            return { success: true, added: newItems.length };
-        },
+            sections.slice(0, 3).forEach((section, idx) => {
+                const baseCost = 100 + (idx * 50);
+                const baseCharge = baseCost * 1.5;
+                csvContent += `,${section.id},"Example ${section.name} Item","Description here",day,${baseCost},${baseCharge},${baseCost * 1.2},${baseCharge * 1.2},${baseCost * 1.5},${baseCharge * 1.5},${baseCost * 1.3},${baseCharge * 1.3}\n`;
+            });
 
-        // Import items from CSV
-        importFromCSV: async (file) => {
-            try {
-                const text = await file.text();
-                const lines = text.split('\n');
-                if (lines.length < 2) throw new Error('Invalid CSV format');
-
-                const headers = lines[0].split(',').map(h => h.trim());
-                const regions = ['MALAYSIA', 'SEA', 'GULF', 'CENTRAL_ASIA'];
-
-                // Helper to find index
-                const getIdx = (name) => headers.indexOf(name);
-
-                const newItems = [];
-                const updatedItems = [];
-
-                // Parse rows
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line || line.startsWith('#')) continue; // Skip empty lines and comments
-
-                    // Simple CSV parser that handles quoted strings
-                    const values = [];
-                    let inQuote = false;
-                    let currentVal = '';
-
-                    for (let j = 0; j < line.length; j++) {
-                        const char = line[j];
-                        if (char === '"') {
-                            if (inQuote && line[j + 1] === '"') {
-                                currentVal += '"';
-                                j++;
-                            } else {
-                                inQuote = !inQuote;
-                            }
-                        } else if (char === ',' && !inQuote) {
-                            values.push(currentVal);
-                            currentVal = '';
-                        } else {
-                            currentVal += char;
-                        }
-                    }
-                    values.push(currentVal);
-
-                    // Create item object
-                    const item = {
-                        id: values[getIdx('id')] || generateId(),
-                        section: values[getIdx('section')] || 'other',
-                        name: values[getIdx('name')] || '',
-                        description: values[getIdx('description')] || '',
-                        unit: values[getIdx('unit')] || 'day',
-                        pricing: createEmptyPricing(),
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    };
-
-                    // Parse pricing
-                    regions.forEach(r => {
-                        const costIdx = getIdx(`${r}_cost`);
-                        const chargeIdx = getIdx(`${r}_charge`);
-                        if (costIdx !== -1 && chargeIdx !== -1) {
-                            item.pricing[r] = {
-                                cost: parseFloat(values[costIdx]) || 0,
-                                charge: parseFloat(values[chargeIdx]) || 0
-                            };
-                        }
-                    });
-
-                    // If ID exists in store, it's an update, otherwise new
-                    const exists = get().items.some(existing => existing.id === item.id);
-                    if (exists) {
-                        updatedItems.push(item);
-                    } else {
-                        newItems.push(item);
-                    }
-                }
-
-                set(state => {
-                    let items = [...state.items];
-
-                    // Apply updates
-                    updatedItems.forEach(update => {
-                        items = items.map(i => i.id === update.id ? update : i);
-                    });
-
-                    // Add new
-                    items = [...items, ...newItems];
-
-                    saveRateCard(items);
-                    return { items };
-                });
-
-                return { success: true, count: newItems.length + updatedItems.length };
-            } catch (e) {
-                console.error('Failed to import CSV:', e);
-                return { success: false, error: e.message };
-            }
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `rate-card-template.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         },
     }))
 );
