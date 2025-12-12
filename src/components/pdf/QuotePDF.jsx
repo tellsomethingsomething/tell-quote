@@ -148,30 +148,20 @@ const styles = StyleSheet.create({
     projectDetails: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 24,
     },
     projectDetail: {
         flexDirection: 'row',
         alignItems: 'center',
-    },
-    projectIcon: {
-        width: 16,
-        height: 16,
-        marginRight: 8,
-        backgroundColor: colors.teal,
-        borderRadius: 8,
-        opacity: 0.3,
+        marginRight: 24,
     },
     projectDetailText: {
         fontSize: 10,
-        color: colors.white,
-        opacity: 0.85,
+        color: '#FFFFFFD9',
     },
 
     // === CLIENT ROW ===
     clientRow: {
         flexDirection: 'row',
-        gap: 20,
         marginBottom: 32,
     },
     clientCard: {
@@ -179,6 +169,14 @@ const styles = StyleSheet.create({
         padding: 20,
         backgroundColor: colors.snow,
         borderRadius: 6,
+        marginRight: 10,
+    },
+    clientCardLast: {
+        flex: 1,
+        padding: 20,
+        backgroundColor: colors.snow,
+        borderRadius: 6,
+        marginLeft: 10,
     },
     clientLabel: {
         fontSize: 7,
@@ -358,7 +356,6 @@ const styles = StyleSheet.create({
     notesSection: {
         marginTop: 40,
         flexDirection: 'row',
-        gap: 20,
     },
     notesCard: {
         flex: 1,
@@ -367,6 +364,16 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         borderTopWidth: 3,
         borderTopColor: colors.teal,
+        marginRight: 10,
+    },
+    notesCardLast: {
+        flex: 1,
+        padding: 20,
+        backgroundColor: colors.snow,
+        borderRadius: 6,
+        borderTopWidth: 3,
+        borderTopColor: colors.teal,
+        marginLeft: 10,
     },
     notesTitle: {
         fontSize: 8,
@@ -477,16 +484,19 @@ const styles = StyleSheet.create({
     },
     termsColumns: {
         flexDirection: 'row',
-        gap: 32,
     },
     termsColumn: {
         flex: 1,
+        paddingRight: 16,
+    },
+    termsColumnLast: {
+        flex: 1,
+        paddingLeft: 16,
     },
     termsText: {
         fontSize: 8,
         color: colors.slate,
         lineHeight: 1.8,
-        textAlign: 'justify',
     },
 });
 
@@ -596,7 +606,7 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                             {client?.email && <Text style={styles.clientDetail}>{client.email}</Text>}
                             {client?.phone && <Text style={styles.clientDetail}>{client.phone}</Text>}
                         </View>
-                        <View style={styles.clientCard}>
+                        <View style={styles.clientCardLast}>
                             <Text style={styles.clientLabel}>From</Text>
                             <Text style={styles.clientName}>{company?.name || 'Tell'}</Text>
                             {preparedByName && <Text style={styles.clientDetail}>Prepared by: {preparedByName}</Text>}
@@ -731,7 +741,7 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
 
                     {/* Notes Section */}
                     <View style={styles.notesSection}>
-                        <View style={styles.notesCard}>
+                        <View style={pdfOptions?.showBankDetails && bankDetails?.bankName ? styles.notesCard : [styles.notesCard, { marginRight: 0 }]}>
                             <Text style={styles.notesTitle}>Terms & Conditions</Text>
                             <Text style={styles.notesText}>
                                 {quoteDefaults?.termsAndConditions || 'Payment due within 30 days of invoice date. All prices are subject to confirmation at time of booking.'}
@@ -739,7 +749,7 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                         </View>
 
                         {pdfOptions?.showBankDetails && bankDetails?.bankName && (
-                            <View style={styles.notesCard}>
+                            <View style={styles.notesCardLast}>
                                 <Text style={styles.notesTitle}>Payment Details</Text>
                                 <Text style={styles.notesText}>Bank: {bankDetails.bankName}</Text>
                                 <Text style={styles.notesText}>Account: {bankDetails.accountName}</Text>
@@ -796,7 +806,7 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                                         <View style={styles.termsColumn}>
                                             <Text style={styles.termsText}>{col1}</Text>
                                         </View>
-                                        <View style={styles.termsColumn}>
+                                        <View style={styles.termsColumnLast}>
                                             <Text style={styles.termsText}>{col2}</Text>
                                         </View>
                                     </>
