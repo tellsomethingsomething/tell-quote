@@ -168,7 +168,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         value={item.quantity}
                         onChange={(e) => handleChange('quantity', parseFloat(e.target.value) || 1)}
                         min="1"
-                        className="input-sm w-full text-center text-sm"
+                        className="input-sm w-full text-left text-sm"
                         title="Quantity"
                         aria-label="Quantity"
                     />
@@ -186,7 +186,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         onChange={(e) => handleChange('days', parseFloat(e.target.value) || 1)}
                         min="0.5"
                         step="0.5"
-                        className="input-sm w-full text-center text-sm"
+                        className="input-sm w-full text-left text-sm"
                         title="Days"
                         aria-label="Number of days"
                     />
@@ -194,9 +194,6 @@ export default function LineItem({ item, sectionId, subsectionName }) {
 
                 {/* Cost (internal) */}
                 <div className="w-24 hidden lg:block relative">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-600" aria-hidden="true">
-                        {getCurrencySymbol(quote.currency)}
-                    </span>
                     <label htmlFor={`cost-${item.id}`} className="sr-only">
                         Cost per unit
                     </label>
@@ -206,7 +203,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         value={item.cost}
                         onChange={(e) => handleChange('cost', parseFloat(e.target.value) || 0)}
                         min="0"
-                        className="input-sm w-full text-right text-sm text-gray-500 pl-7"
+                        className="input-sm w-full text-left text-sm text-gray-500"
                         title="Cost"
                         aria-label={`Cost per unit in ${quote.currency}`}
                     />
@@ -214,9 +211,6 @@ export default function LineItem({ item, sectionId, subsectionName }) {
 
                 {/* Charge */}
                 <div className="w-24 relative">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-500" aria-hidden="true">
-                        {getCurrencySymbol(quote.currency)}
-                    </span>
                     <label htmlFor={`charge-${item.id}`} className="sr-only">
                         Charge per unit
                     </label>
@@ -226,7 +220,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         value={item.charge}
                         onChange={(e) => handleChange('charge', parseFloat(e.target.value) || 0)}
                         min="0"
-                        className="input-sm w-full text-right text-sm pl-7"
+                        className="input-sm w-full text-left text-sm"
                         title="Charge"
                         aria-label={`Charge per unit in ${quote.currency}`}
                     />

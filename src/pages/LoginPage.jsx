@@ -22,12 +22,8 @@ export default function LoginPage() {
             <div className="w-full max-w-md">
                 {/* Logo & Title */}
                 <div className="text-center mb-8">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-primary to-blue-600 flex items-center justify-center shadow-lg shadow-accent-primary/20 mx-auto mb-4">
-                        <svg className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                    </div>
-                    <h1 className="text-2xl font-bold text-white mb-2">Quote Tool</h1>
+                    <img src="/tell-logo.svg" alt="Tell" className="h-10 mx-auto mb-4" />
+                    <h1 className="text-xl font-bold text-white mb-2">Internal Tool</h1>
                     <p className="text-gray-500 text-sm">Directors & Partners Access</p>
                 </div>
 

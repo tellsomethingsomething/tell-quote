@@ -1,17 +1,31 @@
-import { useState, memo } from 'react';
+import { useState, memo, useRef, useEffect } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { SECTIONS } from '../../data/sections';
 import { calculateSectionTotal } from '../../utils/calculations';
 import { formatCurrency, convertCurrency, getRegionCurrency } from '../../utils/currency';
 import Subsection from './Subsection';
 
-const Section = memo(function Section({ sectionId }) {
-    const { quote, toggleSection, rates } = useQuoteStore();
+const Section = memo(function Section({ sectionId, index, totalSections }) {
+    const { quote, toggleSection, moveSection, updateSectionName, rates } = useQuoteStore();
     const section = quote.sections[sectionId];
     const sectionConfig = SECTIONS[sectionId];
 
     const [showAddSubsection, setShowAddSubsection] = useState(false);
     const [newSubsectionName, setNewSubsectionName] = useState('');
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editedName, setEditedName] = useState('');
+    const nameInputRef = useRef(null);
+
+    // Get custom name or fall back to default
+    const displayName = quote.sectionNames?.[sectionId] || sectionConfig?.name || '';
+
+    // Focus input when editing starts
+    useEffect(() => {
+        if (isEditingName && nameInputRef.current) {
+            nameInputRef.current.focus();
+            nameInputRef.current.select();
+        }
+    }, [isEditingName]);
 
     if (!section || !sectionConfig) return null;
 
@@ -41,6 +55,22 @@ const Section = memo(function Section({ sectionId }) {
         }
     };
 
+    const handleStartEditName = (e) => {
+        e.stopPropagation();
+        setEditedName(displayName);
+        setIsEditingName(true);
+    };
+
+    const handleSaveName = () => {
+        updateSectionName(sectionId, editedName);
+        setIsEditingName(false);
+    };
+
+    const handleCancelEditName = () => {
+        setIsEditingName(false);
+        setEditedName('');
+    };
+
     return (
         <div
             className="card overflow-hidden"
@@ -57,19 +87,88 @@ const Section = memo(function Section({ sectionId }) {
             >
                 <div className="flex items-center gap-3">
                     <div
-                        className="w-2 h-2 rounded-full"
+                        className="w-2 h-2 rounded-full flex-shrink-0"
                         style={{ backgroundColor: sectionConfig.color }}
                         aria-hidden="true"
                     />
-                    <h3 id={`section-${sectionId}-title`} className="font-semibold text-gray-200">
-                        {sectionConfig.name}
-                    </h3>
-                    <span className="text-xs text-gray-500 bg-dark-card px-2 py-0.5 rounded">
+                    {isEditingName ? (
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <input
+                                ref={nameInputRef}
+                                type="text"
+                                value={editedName}
+                                onChange={(e) => setEditedName(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveName();
+                                    if (e.key === 'Escape') handleCancelEditName();
+                                }}
+                                className="input-sm text-sm font-semibold py-0.5"
+                                aria-label="Section name"
+                            />
+                            <button
+                                onClick={handleSaveName}
+                                className="p-1 text-green-400 hover:text-green-300"
+                                aria-label="Save name"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </button>
+                            <button
+                                onClick={handleCancelEditName}
+                                className="p-1 text-gray-400 hover:text-gray-300"
+                                aria-label="Cancel"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    ) : (
+                        <h3
+                            id={`section-${sectionId}-title`}
+                            className="font-semibold text-gray-200 cursor-pointer hover:text-white"
+                            onClick={handleStartEditName}
+                            title="Click to rename"
+                        >
+                            {displayName}
+                        </h3>
+                    )}
+                    <span className="text-xs text-gray-500 bg-dark-card px-2 py-0.5 rounded flex-shrink-0">
                         {itemCount} items
                     </span>
                 </div>
 
                 <div className="flex items-center gap-3">
+                    {/* Move buttons */}
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                moveSection(sectionId, 'up');
+                            }}
+                            disabled={index === 0}
+                            className={`p-1 rounded transition-colors ${index === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
+                            aria-label="Move section up"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                moveSection(sectionId, 'down');
+                            }}
+                            disabled={index === totalSections - 1}
+                            className={`p-1 rounded transition-colors ${index === totalSections - 1 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white hover:bg-white/10'}`}
+                            aria-label="Move section down"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                    </div>
                     <span className="text-sm font-medium text-gray-300">{formattedTotal}</span>
                     <svg
                         className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${section.isExpanded ? 'rotate-180' : ''}`}

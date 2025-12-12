@@ -44,22 +44,15 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
         const activeTab = view;
 
         return (
-            <header className="h-[60px] bg-[#111827] border-b border-gray-800 flex items-center justify-between px-6 z-20 sticky top-0">
+            <header className="h-[60px] bg-dark-bg/95 backdrop-blur-md border-b border-dark-border flex items-center justify-between px-6 z-20 sticky top-0">
                 <div className="flex items-center gap-4">
                     {/* Logo - Click to go to Dashboard (Home) */}
                     <button
                         onClick={onGoToDashboard}
-                        className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                        className="flex items-center hover:opacity-80 transition-all duration-200"
                         title="Go to Dashboard"
                     >
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-primary to-blue-600 flex items-center justify-center shadow-lg shadow-accent-primary/20">
-                            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                        </div>
-                        <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 hidden md:block">
-                            Quote Tool
-                        </span>
+                        <img src="/tell-logo.svg" alt="Tell" className="h-7" />
                     </button>
                 </div>
 
@@ -124,28 +117,23 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
             <div className="max-w-[1920px] mx-auto px-4 py-3">
                 <div className="flex items-center justify-between gap-4">
                     {/* Logo & Navigation */}
-                    {/* Logo & Navigation */}
                     <div className="flex items-center gap-4">
+                        <button
+                            onClick={onGoToClients}
+                            className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+                            title="Back to Quotes"
+                        >
+                            <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                        </button>
                         <div className="flex items-center gap-3">
-                            <button
-                                onClick={onGoToClients}
-                                className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-primary to-blue-600 flex items-center justify-center shadow-lg shadow-accent-primary/20 hover:opacity-80 transition-opacity"
-                                title="Back to Clients"
-                            >
-                                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                </svg>
-                            </button>
-                            <div className="flex flex-col">
-                                <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                                    Quote Editor
+                            <img src="/tell-logo.svg" alt="Tell" className="h-6" />
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono text-accent-primary">{quote.quoteNumber}</span>
+                                <span className="text-[10px] text-gray-500 border border-gray-800 rounded px-1">
+                                    {quote.preparedBy === 'default' ? 'Admin' : 'User'}
                                 </span>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-mono text-accent-primary">{quote.quoteNumber}</span>
-                                    <span className="text-[10px] text-gray-500 border border-gray-800 rounded px-1">
-                                        {quote.preparedBy === 'default' ? 'Admin' : 'User'}
-                                    </span>
-                                </div>
                             </div>
                         </div>
                     </div>

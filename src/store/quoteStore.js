@@ -47,38 +47,53 @@ async function syncQuoteToSupabase(quote) {
             region: quote.region,
             prepared_by: quote.preparedBy,
             client: quote.client,
-            project: quote.project,
+            project: {
+                ...quote.project,
+                // Store section order and names in project JSONB to avoid schema changes
+                _sectionOrder: quote.sectionOrder,
+                _sectionNames: quote.sectionNames,
+            },
             sections: quote.sections,
             fees: quote.fees,
             proposal: quote.proposal,
         };
 
-        // Check if quote exists by quote_number
-        const { data: existing } = await supabase
-            .from('quotes')
-            .select('id')
-            .eq('quote_number', quote.quoteNumber)
-            .single();
-
         let savedId = quote.id;
 
-        if (existing) {
-            // Update existing
+        // If we have an ID, update directly
+        if (quote.id) {
             await supabase
                 .from('quotes')
                 .update(dbQuote)
-                .eq('id', existing.id);
-            savedId = existing.id;
+                .eq('id', quote.id);
         } else {
-            // Insert new
-            const { data, error } = await supabase
+            // Check if quote exists by quote_number (use limit instead of single to avoid errors)
+            const { data: existingList } = await supabase
                 .from('quotes')
-                .insert(dbQuote)
-                .select()
-                .single();
+                .select('id')
+                .eq('quote_number', quote.quoteNumber)
+                .limit(1);
 
-            if (!error && data) {
-                savedId = data.id;
+            const existing = existingList?.[0];
+
+            if (existing) {
+                // Update existing
+                await supabase
+                    .from('quotes')
+                    .update(dbQuote)
+                    .eq('id', existing.id);
+                savedId = existing.id;
+            } else {
+                // Insert new
+                const { data, error } = await supabase
+                    .from('quotes')
+                    .insert(dbQuote)
+                    .select()
+                    .single();
+
+                if (!error && data) {
+                    savedId = data.id;
+                }
             }
         }
 
@@ -178,6 +193,8 @@ function createEmptyQuote() {
             distributeFees: false, // Toggle to hide fees in unit rates
         },
         preparedBy: 'default', // ID of the user who prepared the quote
+        sectionOrder: SECTION_ORDER, // Custom section order
+        sectionNames: {}, // Custom section names (overrides defaults)
         sections: createEmptySections(),
         // Proposal content (for Full Proposal export)
         proposal: {
@@ -389,6 +406,48 @@ export const useQuoteStore = create(
                     isExpanded: !sections[sectionId].isExpanded,
                 };
                 const updated = { ...state.quote, sections };
+                return { quote: updated };
+            });
+        },
+
+        // Move section up or down
+        moveSection: (sectionId, direction) => {
+            set(state => {
+                const order = [...(state.quote.sectionOrder || SECTION_ORDER)];
+                const index = order.indexOf(sectionId);
+                if (index === -1) return state;
+
+                const newIndex = direction === 'up' ? index - 1 : index + 1;
+                if (newIndex < 0 || newIndex >= order.length) return state;
+
+                // Swap positions
+                [order[index], order[newIndex]] = [order[newIndex], order[index]];
+
+                const updated = {
+                    ...state.quote,
+                    sectionOrder: order,
+                    updatedAt: new Date().toISOString()
+                };
+                saveQuoteWithLibrarySync(updated);
+                return { quote: updated };
+            });
+        },
+
+        // Update section name (custom override)
+        updateSectionName: (sectionId, newName) => {
+            set(state => {
+                const sectionNames = { ...state.quote.sectionNames };
+                if (newName.trim()) {
+                    sectionNames[sectionId] = newName.trim();
+                } else {
+                    delete sectionNames[sectionId]; // Remove override, use default
+                }
+                const updated = {
+                    ...state.quote,
+                    sectionNames,
+                    updatedAt: new Date().toISOString()
+                };
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
