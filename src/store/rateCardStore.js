@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { SEED_ITEMS } from '../data/rateCardSeed';
 
 const RATE_CARD_KEY = 'tell_rate_card';
 const RATE_CARD_SECTIONS_KEY = 'tell_rate_card_sections';
@@ -13,24 +14,28 @@ const createEmptyPricing = () => ({
 });
 
 // Default sections
-// Default sections
 const DEFAULT_SECTIONS = [
     // Production Team
-    { id: 'prod_production', name: 'Production (Team)' },
-    { id: 'prod_technical', name: 'Technical Crew' },
+    { id: 'prod_mgmt_remote', name: 'Production Management - Remote' },
+    { id: 'prod_staffing', name: 'Production Staffing' },
     { id: 'prod_management', name: 'Production Management' },
+    { id: 'prod_technical', name: 'Technical Crew' },
+
+    // Graphics & Creative
+    { id: 'event_graphics', name: 'Event Graphics' },
+    { id: 'creative', name: 'Creative Services' },
 
     // Production Equipment
+    { id: 'spr_equipment', name: 'SPR Equipment' },
     { id: 'equip_video', name: 'Video Equipment' },
     { id: 'equip_audio', name: 'Audio Equipment' },
     { id: 'equip_cameras', name: 'Cameras' },
     { id: 'equip_graphics', name: 'Graphics Equipment' },
     { id: 'equip_vt', name: 'VT & Replay' },
     { id: 'equip_cabling', name: 'Cabling & Infrastructure' },
-    { id: 'equip_other', name: 'Other Equipment' },
+    { id: 'extras', name: 'Extras' },
 
     // Core Services
-    { id: 'creative', name: 'Creative Services' },
     { id: 'logistics', name: 'Logistics' },
     { id: 'expenses', name: 'Expenses' },
 ];
@@ -376,6 +381,35 @@ export const useRateCardStore = create(
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+        },
+
+        // Seed rate card with default items
+        seedRateCard: () => {
+            const existingNames = new Set(get().items.map(i => i.name.toLowerCase()));
+            const newItems = SEED_ITEMS
+                .filter(item => !existingNames.has(item.name.toLowerCase()))
+                .map(item => ({
+                    ...item,
+                    id: generateId(),
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                }));
+
+            if (newItems.length === 0) {
+                return { success: true, added: 0, message: 'All items already exist' };
+            }
+
+            set(state => {
+                const items = [...state.items, ...newItems];
+                saveRateCard(items);
+                return { items };
+            });
+
+            // Also reset sections to defaults
+            set({ sections: DEFAULT_SECTIONS });
+            saveSections(DEFAULT_SECTIONS);
+
+            return { success: true, added: newItems.length };
         },
 
         // Import items from CSV

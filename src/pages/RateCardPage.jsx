@@ -9,7 +9,7 @@ const REGIONS = [
 ];
 
 export default function RateCardPage({ onBack }) {
-    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, exportTemplate, addSection, deleteSection, renameSection, moveSection } = useRateCardStore();
+    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, exportTemplate, addSection, deleteSection, renameSection, moveSection, seedRateCard } = useRateCardStore();
     const fileInputRef = useRef(null);
     const [selectedSection, setSelectedSection] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -129,6 +129,20 @@ export default function RateCardPage({ onBack }) {
                                 e.target.value = ''; // Reset
                             }}
                         />
+                        <button
+                            onClick={() => {
+                                const result = seedRateCard();
+                                if (result.added > 0) {
+                                    alert(`Added ${result.added} default services!`);
+                                } else {
+                                    alert(result.message || 'Default services already loaded');
+                                }
+                            }}
+                            className="btn-ghost text-sm"
+                            title="Load default services from Tell Productions rate card"
+                        >
+                            Load Defaults
+                        </button>
                         <button onClick={exportTemplate} className="btn-ghost text-sm" title="Download a blank CSV template to fill in">
                             Download Template
                         </button>
@@ -422,9 +436,22 @@ export default function RateCardPage({ onBack }) {
                         </svg>
                         <h3 className="text-lg font-medium text-gray-400 mb-2">No services yet</h3>
                         <p className="text-sm text-gray-600 mb-4">Add your rates and services to use in quotes</p>
-                        <button onClick={() => setShowAddForm(true)} className="btn-primary">
-                            Add First Service
-                        </button>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    const result = seedRateCard();
+                                    if (result.added > 0) {
+                                        alert(`Added ${result.added} default services!`);
+                                    }
+                                }}
+                                className="btn-primary"
+                            >
+                                Load Default Services
+                            </button>
+                            <button onClick={() => setShowAddForm(true)} className="btn-secondary">
+                                Add Manually
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <div className="space-y-2">
