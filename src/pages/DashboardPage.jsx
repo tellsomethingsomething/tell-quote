@@ -141,7 +141,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
         };
     }, [filteredQuotes, rates, dashboardCurrency]);
 
-    // Calculate 3-month and 6-month forecasts based on project start dates
+    // Calculate 3-month and 6-month forecasts based on project/event start dates
     const forecastStats = useMemo(() => {
         const now = new Date();
         const threeMonthsOut = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
@@ -152,9 +152,10 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
         let forecast6mRevenue = 0;
         let forecast6mProfit = 0;
 
-        // Look at pipeline quotes (draft + sent) with project start dates
+        // Include won + pipeline quotes with event dates in the forecast windows
         savedQuotes.forEach(q => {
-            if (q.status !== 'draft' && q.status !== 'sent') return;
+            // Skip lost/dead quotes
+            if (q.status === 'dead') return;
 
             const startDate = q.project?.startDate ? new Date(q.project.startDate) : null;
             if (!startDate || startDate < now) return;
@@ -164,10 +165,12 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
             const cost = convertCurrency(calculations.totalCost, q.currency || 'USD', dashboardCurrency, rates);
             const profit = revenue - cost;
 
+            // 3-month: events scheduled within next 3 months
             if (startDate <= threeMonthsOut) {
                 forecast3mRevenue += revenue;
                 forecast3mProfit += profit;
             }
+            // 6-month: events scheduled within next 6 months
             if (startDate <= sixMonthsOut) {
                 forecast6mRevenue += revenue;
                 forecast6mProfit += profit;
