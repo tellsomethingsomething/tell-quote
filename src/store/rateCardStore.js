@@ -14,24 +14,24 @@ const createEmptyPricing = () => ({
     CENTRAL_ASIA: { cost: 0, charge: 0 },
 });
 
-// Default sections
+// Default sections - synced with Quote subsections
 const DEFAULT_SECTIONS = [
-    { id: 'prod_mgmt_remote', name: 'Production Management - Remote' },
-    { id: 'prod_staffing', name: 'Production Staffing' },
-    { id: 'prod_management', name: 'Production Management' },
-    { id: 'prod_technical', name: 'Technical Crew' },
-    { id: 'event_graphics', name: 'Event Graphics' },
-    { id: 'creative', name: 'Creative Services' },
-    { id: 'spr_equipment', name: 'SPR Equipment' },
-    { id: 'equip_video', name: 'Video Equipment' },
-    { id: 'equip_audio', name: 'Audio Equipment' },
-    { id: 'equip_cameras', name: 'Cameras' },
-    { id: 'equip_graphics', name: 'Graphics Equipment' },
-    { id: 'equip_vt', name: 'VT & Replay' },
-    { id: 'equip_cabling', name: 'Cabling & Infrastructure' },
-    { id: 'extras', name: 'Extras' },
-    { id: 'logistics', name: 'Logistics' },
-    { id: 'expenses', name: 'Expenses' },
+    // Production Team subsections
+    { id: 'prod_production', name: 'Production', group: 'Production Team' },
+    { id: 'prod_technical', name: 'Technical Crew', group: 'Production Team' },
+    { id: 'prod_management', name: 'Production Management', group: 'Production Team' },
+    // Production Equipment subsections
+    { id: 'equip_video', name: 'Video', group: 'Production Equipment' },
+    { id: 'equip_audio', name: 'Audio', group: 'Production Equipment' },
+    { id: 'equip_cameras', name: 'Cameras', group: 'Production Equipment' },
+    { id: 'equip_graphics', name: 'Graphics', group: 'Production Equipment' },
+    { id: 'equip_vt', name: 'VT', group: 'Production Equipment' },
+    { id: 'equip_cabling', name: 'Cabling', group: 'Production Equipment' },
+    { id: 'equip_other', name: 'Other Equipment', group: 'Production Equipment' },
+    // Flat sections
+    { id: 'creative', name: 'Creative', group: 'Creative' },
+    { id: 'logistics', name: 'Logistics', group: 'Logistics' },
+    { id: 'expenses', name: 'Expenses', group: 'Expenses' },
 ];
 
 // Load from localStorage (cache/fallback)
@@ -113,7 +113,7 @@ export const useRateCardStore = create(
 
                 // Use sections from DB or defaults
                 const sections = sectionsData && sectionsData.length > 0
-                    ? sectionsData.map(s => ({ id: s.id, name: s.name }))
+                    ? sectionsData.map(s => ({ id: s.id, name: s.name, group: s.group_name || 'Other' }))
                     : DEFAULT_SECTIONS;
 
                 // If no sections in DB, seed them
@@ -124,6 +124,7 @@ export const useRateCardStore = create(
                             id: s.id,
                             name: s.name,
                             sort_order: i,
+                            group_name: s.group,
                         });
                     }
                 }
@@ -433,6 +434,33 @@ export const useRateCardStore = create(
             saveSectionsLocal(DEFAULT_SECTIONS);
 
             return { success: true, added: newItems.length };
+        },
+
+        // Reset sections to sync with Quote subsections
+        resetSectionsToDefaults: async () => {
+            try {
+                // Delete all existing sections from DB
+                await supabase.from('rate_card_sections').delete().neq('id', '');
+
+                // Insert new defaults
+                for (let i = 0; i < DEFAULT_SECTIONS.length; i++) {
+                    const s = DEFAULT_SECTIONS[i];
+                    await supabase.from('rate_card_sections').upsert({
+                        id: s.id,
+                        name: s.name,
+                        sort_order: i,
+                        group_name: s.group,
+                    });
+                }
+
+                set({ sections: DEFAULT_SECTIONS });
+                saveSectionsLocal(DEFAULT_SECTIONS);
+
+                return { success: true };
+            } catch (e) {
+                console.error('Failed to reset sections:', e);
+                return { success: false, error: e.message };
+            }
         },
 
         // Import from CSV

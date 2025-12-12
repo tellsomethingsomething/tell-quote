@@ -9,7 +9,7 @@ const REGIONS = [
 ];
 
 export default function RateCardPage({ onBack }) {
-    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection } = useRateCardStore();
+    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults } = useRateCardStore();
     const fileInputRef = useRef(null);
     const saveTimeoutRef = useRef(null);
     const [selectedSection, setSelectedSection] = useState('all');
@@ -235,63 +235,90 @@ export default function RateCardPage({ onBack }) {
                             </button>
                         </div>
 
-                        {/* Existing Categories List */}
-                        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">Existing Categories</h3>
-                            {sections.map((section, index) => (
-                                <div key={section.id} className="flex items-center gap-2 p-2 bg-dark-bg/50 rounded hover:bg-dark-bg transition-colors group">
-                                    {/* Reorder buttons */}
-                                    <div className="flex flex-col gap-0.5">
-                                        <button
-                                            onClick={() => { moveSection(section.id, 'up'); triggerSaved(); }}
-                                            disabled={index === 0}
-                                            className="text-gray-600 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
-                                            title="Move up"
-                                        >
-                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                            </svg>
-                                        </button>
-                                        <button
-                                            onClick={() => { moveSection(section.id, 'down'); triggerSaved(); }}
-                                            disabled={index === sections.length - 1}
-                                            className="text-gray-600 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
-                                            title="Move down"
-                                        >
-                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
+                        {/* Existing Categories List - Grouped */}
+                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">Categories (synced with Quote subsections)</h3>
+                            {/* Group sections by their group property */}
+                            {(() => {
+                                const groups = {};
+                                sections.forEach((section, index) => {
+                                    const groupName = section.group || 'Other';
+                                    if (!groups[groupName]) groups[groupName] = [];
+                                    groups[groupName].push({ ...section, originalIndex: index });
+                                });
+                                return Object.entries(groups).map(([groupName, groupSections]) => (
+                                    <div key={groupName}>
+                                        <h4 className="text-[10px] font-medium text-gray-600 uppercase mb-1 px-2">{groupName}</h4>
+                                        <div className="space-y-1">
+                                            {groupSections.map((section) => (
+                                                <div key={section.id} className="flex items-center gap-2 p-2 bg-dark-bg/50 rounded hover:bg-dark-bg transition-colors group">
+                                                    {/* Reorder buttons */}
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <button
+                                                            onClick={() => { moveSection(section.id, 'up'); triggerSaved(); }}
+                                                            disabled={section.originalIndex === 0}
+                                                            className="text-gray-600 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                                                            title="Move up"
+                                                        >
+                                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                                            </svg>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { moveSection(section.id, 'down'); triggerSaved(); }}
+                                                            disabled={section.originalIndex === sections.length - 1}
+                                                            className="text-gray-600 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                                                            title="Move down"
+                                                        >
+                                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Editable name */}
+                                                    <input
+                                                        type="text"
+                                                        value={section.name}
+                                                        onChange={(e) => { renameSection(section.id, e.target.value); triggerSaved(); }}
+                                                        className="flex-1 bg-transparent text-sm text-gray-300 focus:bg-dark-bg rounded px-2 py-1 border border-transparent focus:border-dark-border"
+                                                    />
+
+                                                    {/* Delete button */}
+                                                    <button
+                                                        onClick={() => {
+                                                            if (confirm(`Delete category "${section.name}"? Items will be moved to 'Other'.`)) {
+                                                                deleteSection(section.id);
+                                                                triggerSaved();
+                                                            }
+                                                        }}
+                                                        className="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                                        title="Delete Category"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-
-                                    {/* Editable name */}
-                                    <input
-                                        type="text"
-                                        value={section.name}
-                                        onChange={(e) => { renameSection(section.id, e.target.value); triggerSaved(); }}
-                                        className="flex-1 bg-transparent text-sm text-gray-300 focus:bg-dark-bg rounded px-2 py-1 border border-transparent focus:border-dark-border"
-                                    />
-
-                                    {/* Delete button */}
-                                    <button
-                                        onClick={() => {
-                                            if (confirm(`Delete category "${section.name}"? Items will be moved to 'Other'.`)) {
-                                                deleteSection(section.id);
-                                                triggerSaved();
-                                            }
-                                        }}
-                                        className="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1"
-                                        title="Delete Category"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            ))}
+                                ));
+                            })()}
                         </div>
 
-                        <div className="flex justify-end mt-6 pt-4 border-t border-dark-border">
+                        <div className="flex justify-between items-center mt-6 pt-4 border-t border-dark-border">
+                            <button
+                                onClick={async () => {
+                                    if (confirm('Reset categories to sync with Quote subsections? This will replace all current categories.')) {
+                                        await resetSectionsToDefaults();
+                                        triggerSaved();
+                                    }
+                                }}
+                                className="text-xs text-gray-500 hover:text-orange-400 transition-colors"
+                            >
+                                Sync with Quotes
+                            </button>
                             <button onClick={() => setShowAddCategoryForm(false)} className="btn-ghost">Done</button>
                         </div>
                     </div>

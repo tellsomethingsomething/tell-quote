@@ -75,6 +75,16 @@ create table settings (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- Rate card sections table
+create table rate_card_sections (
+  id text primary key,
+  name text not null,
+  group_name text,
+  sort_order integer default 0,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- Create indexes for common queries
 create index quotes_quote_number_idx on quotes(quote_number);
 create index quotes_status_idx on quotes(status);
@@ -86,12 +96,14 @@ create index rate_cards_section_idx on rate_cards(section);
 alter table quotes enable row level security;
 alter table clients enable row level security;
 alter table rate_cards enable row level security;
+alter table rate_card_sections enable row level security;
 alter table settings enable row level security;
 
 -- Policies to allow all operations (internal tool, no auth required initially)
 create policy "Allow all quotes" on quotes for all using (true) with check (true);
 create policy "Allow all clients" on clients for all using (true) with check (true);
 create policy "Allow all rate_cards" on rate_cards for all using (true) with check (true);
+create policy "Allow all rate_card_sections" on rate_card_sections for all using (true) with check (true);
 create policy "Allow all settings" on settings for all using (true) with check (true);
 
 -- Function to update updated_at timestamp
@@ -109,6 +121,8 @@ create trigger update_quotes_updated_at before update on quotes
 create trigger update_clients_updated_at before update on clients
   for each row execute function update_updated_at_column();
 create trigger update_rate_cards_updated_at before update on rate_cards
+  for each row execute function update_updated_at_column();
+create trigger update_rate_card_sections_updated_at before update on rate_card_sections
   for each row execute function update_updated_at_column();
 create trigger update_settings_updated_at before update on settings
   for each row execute function update_updated_at_column();
