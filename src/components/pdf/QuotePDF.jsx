@@ -1,521 +1,650 @@
-import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 import { SECTIONS, SECTION_ORDER } from '../../data/sections';
 import { calculateSectionTotal, calculateGrandTotalWithFees } from '../../utils/calculations';
 import { formatCurrency } from '../../utils/currency';
 import { useSettingsStore } from '../../store/settingsStore';
 
-// Professional color palette
+// Register fonts for a more creative look
+Font.register({
+    family: 'Inter',
+    fonts: [
+        { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff2', fontWeight: 400 },
+        { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hjp-Ek-_EeA.woff2', fontWeight: 500 },
+        { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hjp-Ek-_EeA.woff2', fontWeight: 600 },
+        { src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hjp-Ek-_EeA.woff2', fontWeight: 700 },
+    ],
+});
+
+// Tell Brand Color Palette
 const colors = {
-    primary: '#1E3A5F',      // Deep navy blue
-    accent: '#00A3E0',       // Vibrant sports blue
-    success: '#10B981',      // Green for positive values
-    danger: '#EF4444',       // Red for discounts
-    dark: '#111827',
-    gray: '#6B7280',
-    lightGray: '#F3F4F6',
+    // Primary
+    navy: '#143642',
+    teal: '#0F8B8D',
+    orange: '#FE7F2D',
+    // Secondary
+    darkTeal: '#0B6062',
+    darkOrange: '#D46C26',
+    // Neutrals
+    black: '#1A1A1A',
+    darkGray: '#4A5568',
+    gray: '#718096',
+    lightGray: '#E2E8F0',
+    offWhite: '#F7F7F7',
     white: '#FFFFFF',
+    // Functional
+    success: '#10B981',
+    danger: '#EF4444',
 };
 
 const styles = StyleSheet.create({
     page: {
         padding: 0,
         fontSize: 9,
-        fontFamily: 'Helvetica',
+        fontFamily: 'Inter',
         backgroundColor: colors.white,
     },
-    // Top accent bar
-    accentBar: {
-        height: 8,
-        backgroundColor: colors.accent,
-    },
-    // Main content wrapper
-    content: {
-        padding: 40,
-        paddingTop: 30,
-    },
-    // Header
-    header: {
+
+    // === HEADER SECTION ===
+    headerBar: {
+        backgroundColor: colors.navy,
+        paddingVertical: 24,
+        paddingHorizontal: 40,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 25,
+        alignItems: 'center',
     },
-    logoSection: {
+    logoContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 15,
+        gap: 12,
     },
     logo: {
-        width: 50,
-        height: 50,
+        width: 100,
+        height: 30,
     },
-    logoPlaceholder: {
-        width: 50,
-        height: 50,
-        backgroundColor: colors.primary,
-        borderRadius: 6,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    logoText: {
+    logoFallback: {
+        fontSize: 22,
+        fontWeight: 700,
         color: colors.white,
-        fontSize: 16,
-        fontWeight: 'bold',
+        letterSpacing: -0.5,
     },
-    companyInfo: {
-        marginTop: 2,
+    quoteTag: {
+        backgroundColor: colors.teal,
+        paddingVertical: 6,
+        paddingHorizontal: 14,
+        borderRadius: 4,
     },
-    companyName: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: colors.primary,
-        marginBottom: 2,
+    quoteTagText: {
+        fontSize: 10,
+        fontWeight: 600,
+        color: colors.white,
+        textTransform: 'uppercase',
+        letterSpacing: 1.5,
     },
-    companyDetail: {
-        fontSize: 8,
-        color: colors.gray,
-        marginBottom: 1,
+
+    // === MAIN CONTENT ===
+    content: {
+        padding: 40,
+        paddingTop: 32,
+        paddingBottom: 80,
     },
-    // Quote badge
-    quoteBadge: {
-        alignItems: 'flex-end',
+
+    // === QUOTE INFO STRIP ===
+    quoteInfoStrip: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 28,
+        paddingBottom: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.lightGray,
     },
+    quoteNumberSection: {},
     quoteLabel: {
         fontSize: 8,
         color: colors.gray,
         textTransform: 'uppercase',
         letterSpacing: 1,
+        marginBottom: 4,
     },
     quoteNumber: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: colors.primary,
-        marginTop: 2,
+        fontSize: 20,
+        fontWeight: 700,
+        color: colors.navy,
+        letterSpacing: -0.5,
     },
-    quoteMeta: {
-        marginTop: 8,
+    quoteDates: {
         alignItems: 'flex-end',
     },
-    quoteMetaText: {
+    dateRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 3,
+    },
+    dateLabel: {
         fontSize: 8,
         color: colors.gray,
+        marginRight: 8,
     },
-    // Project banner
-    projectBanner: {
-        backgroundColor: colors.primary,
-        padding: 20,
+    dateValue: {
+        fontSize: 9,
+        fontWeight: 500,
+        color: colors.black,
+    },
+
+    // === PROJECT CARD ===
+    projectCard: {
+        backgroundColor: colors.navy,
         borderRadius: 8,
-        marginBottom: 25,
+        padding: 24,
+        marginBottom: 24,
     },
     projectTitle: {
         fontSize: 18,
-        fontWeight: 'bold',
+        fontWeight: 700,
         color: colors.white,
-        marginBottom: 10,
+        marginBottom: 16,
+        letterSpacing: -0.3,
     },
-    projectDetails: {
+    projectMeta: {
         flexDirection: 'row',
-        gap: 30,
+        flexWrap: 'wrap',
+        gap: 20,
     },
-    projectDetail: {
+    projectMetaItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
+        gap: 8,
     },
-    projectIcon: {
-        width: 12,
-        height: 12,
-        backgroundColor: colors.accent,
-        borderRadius: 2,
+    projectMetaDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: colors.teal,
     },
-    projectText: {
-        fontSize: 9,
+    projectMetaText: {
+        fontSize: 10,
         color: colors.white,
         opacity: 0.9,
     },
-    // Client info card
-    clientCard: {
-        backgroundColor: colors.lightGray,
-        padding: 15,
-        borderRadius: 6,
-        marginBottom: 25,
+
+    // === CLIENT & PREPARED BY ===
+    infoRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        gap: 24,
+        marginBottom: 28,
     },
-    clientSection: {
+    infoCard: {
         flex: 1,
+        backgroundColor: colors.offWhite,
+        borderRadius: 6,
+        padding: 16,
+        borderLeftWidth: 3,
+        borderLeftColor: colors.teal,
     },
-    clientLabel: {
+    infoCardLabel: {
         fontSize: 7,
-        color: colors.gray,
+        fontWeight: 600,
+        color: colors.teal,
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        letterSpacing: 1,
+        marginBottom: 8,
+    },
+    infoCardName: {
+        fontSize: 13,
+        fontWeight: 600,
+        color: colors.navy,
         marginBottom: 4,
     },
-    clientName: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: colors.dark,
+    infoCardDetail: {
+        fontSize: 9,
+        color: colors.darkGray,
         marginBottom: 2,
     },
-    clientDetail: {
-        fontSize: 9,
-        color: colors.gray,
-        marginBottom: 1,
-    },
-    // Sections
+
+    // === SECTIONS ===
     section: {
-        marginBottom: 20,
+        marginBottom: 16,
     },
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        backgroundColor: colors.navy,
         paddingVertical: 10,
-        paddingHorizontal: 12,
-        backgroundColor: colors.primary,
+        paddingHorizontal: 14,
         borderRadius: 4,
-        marginBottom: 2,
+    },
+    sectionHeaderWithColor: {
+        borderLeftWidth: 4,
     },
     sectionTitle: {
         fontSize: 11,
-        fontWeight: 'bold',
+        fontWeight: 600,
         color: colors.white,
+        letterSpacing: 0.3,
     },
     sectionTotal: {
         fontSize: 11,
-        fontWeight: 'bold',
+        fontWeight: 700,
         color: colors.white,
     },
-    // Table
+
+    // === TABLE ===
     tableHeader: {
         flexDirection: 'row',
-        backgroundColor: colors.lightGray,
-        paddingVertical: 8,
-        paddingHorizontal: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        backgroundColor: colors.offWhite,
         borderBottomWidth: 1,
-        borderBottomColor: '#E5E7EB',
+        borderBottomColor: colors.lightGray,
     },
     tableHeaderText: {
         fontSize: 7,
-        fontWeight: 'bold',
+        fontWeight: 600,
         color: colors.gray,
-        textTransform: 'uppercase',
-        letterSpacing: 0.3,
-    },
-    tableRow: {
-        flexDirection: 'row',
-        paddingVertical: 8,
-        paddingHorizontal: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
-    },
-    tableRowAlt: {
-        backgroundColor: '#FAFAFA',
-    },
-    col1: { width: '42%' },
-    col2: { width: '10%', textAlign: 'left' },
-    col3: { width: '10%', textAlign: 'left' },
-    col4: { width: '19%', textAlign: 'left' },
-    col5: { width: '19%', textAlign: 'left' },
-    cellText: {
-        fontSize: 9,
-        color: colors.dark,
-    },
-    cellTextLight: {
-        fontSize: 9,
-        color: colors.gray,
-    },
-    // Subsection
-    subsectionRow: {
-        flexDirection: 'row',
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        backgroundColor: '#F9FAFB',
-    },
-    subsectionTitle: {
-        fontSize: 8,
-        fontWeight: 'bold',
-        color: colors.accent,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
-    // Totals
-    totalsSection: {
-        marginTop: 25,
-        alignItems: 'flex-end',
+    tableRow: {
+        flexDirection: 'row',
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.lightGray,
     },
-    totalsBox: {
+    tableRowAlt: {
+        backgroundColor: colors.offWhite,
+    },
+    col1: { width: '44%' },
+    col2: { width: '10%', textAlign: 'center' },
+    col3: { width: '10%', textAlign: 'center' },
+    col4: { width: '18%', textAlign: 'right' },
+    col5: { width: '18%', textAlign: 'right' },
+    cellText: {
+        fontSize: 9,
+        color: colors.black,
+    },
+    cellTextMuted: {
+        fontSize: 9,
+        color: colors.gray,
+    },
+    cellTextBold: {
+        fontSize: 9,
+        fontWeight: 600,
+        color: colors.black,
+    },
+
+    // === SUBSECTION ===
+    subsectionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        backgroundColor: colors.white,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.lightGray,
+    },
+    subsectionDot: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: colors.teal,
+        marginRight: 8,
+    },
+    subsectionTitle: {
+        fontSize: 8,
+        fontWeight: 600,
+        color: colors.teal,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+
+    // === TOTALS ===
+    totalsSection: {
+        marginTop: 24,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+    },
+    totalsCard: {
         width: 280,
-        backgroundColor: colors.lightGray,
-        borderRadius: 6,
-        padding: 15,
+        backgroundColor: colors.offWhite,
+        borderRadius: 8,
+        padding: 20,
+        borderWidth: 1,
+        borderColor: colors.lightGray,
     },
     totalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 8,
+        alignItems: 'center',
+        marginBottom: 10,
     },
     totalLabel: {
         fontSize: 10,
-        color: colors.gray,
+        color: colors.darkGray,
     },
     totalValue: {
         fontSize: 10,
-        fontWeight: 'bold',
-        color: colors.dark,
+        fontWeight: 500,
+        color: colors.black,
     },
     totalValueDiscount: {
         fontSize: 10,
-        fontWeight: 'bold',
+        fontWeight: 500,
         color: colors.danger,
     },
     grandTotalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 10,
-        paddingTop: 12,
+        alignItems: 'center',
+        marginTop: 12,
+        paddingTop: 14,
         borderTopWidth: 2,
-        borderTopColor: colors.primary,
+        borderTopColor: colors.navy,
     },
     grandTotalLabel: {
         fontSize: 12,
-        fontWeight: 'bold',
-        color: colors.primary,
+        fontWeight: 700,
+        color: colors.navy,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
     },
     grandTotalValue: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: colors.primary,
+        fontSize: 16,
+        fontWeight: 700,
+        color: colors.navy,
     },
-    // Bottom section
+
+    // === BOTTOM INFO ===
     bottomSection: {
-        marginTop: 30,
+        marginTop: 32,
         flexDirection: 'row',
         gap: 20,
     },
-    infoBox: {
+    bottomCard: {
         flex: 1,
-        padding: 15,
-        backgroundColor: colors.lightGray,
+        padding: 16,
+        backgroundColor: colors.offWhite,
         borderRadius: 6,
     },
-    infoBoxTitle: {
-        fontSize: 9,
-        fontWeight: 'bold',
-        color: colors.primary,
-        marginBottom: 8,
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-    },
-    infoBoxText: {
+    bottomCardTitle: {
         fontSize: 8,
-        color: colors.gray,
-        lineHeight: 1.5,
+        fontWeight: 700,
+        color: colors.navy,
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+        marginBottom: 10,
+        paddingBottom: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.lightGray,
     },
-    // Signature section
+    bottomCardText: {
+        fontSize: 8,
+        color: colors.darkGray,
+        lineHeight: 1.6,
+    },
+
+    // === SIGNATURE ===
     signatureSection: {
         marginTop: 40,
         flexDirection: 'row',
         justifyContent: 'space-between',
+        gap: 40,
     },
     signatureBox: {
-        width: '45%',
+        flex: 1,
     },
     signatureLine: {
         borderBottomWidth: 1,
-        borderBottomColor: colors.gray,
-        marginBottom: 8,
-        paddingBottom: 30,
+        borderBottomColor: colors.darkGray,
+        marginBottom: 10,
+        height: 40,
     },
     signatureLabel: {
         fontSize: 8,
         color: colors.gray,
     },
-    // Footer
+
+    // === FOOTER ===
     footer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        paddingVertical: 12,
-        paddingHorizontal: 40,
-        backgroundColor: colors.primary,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        paddingVertical: 14,
+        paddingHorizontal: 40,
+        backgroundColor: colors.navy,
+    },
+    footerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    footerLogo: {
+        width: 50,
+        height: 15,
     },
     footerText: {
         fontSize: 7,
         color: colors.white,
-        opacity: 0.8,
+        opacity: 0.7,
+    },
+    footerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
     },
     footerAccent: {
         fontSize: 7,
-        color: colors.accent,
+        color: colors.teal,
+        fontWeight: 600,
     },
-    // Terms & Conditions Page
+    footerDivider: {
+        width: 1,
+        height: 10,
+        backgroundColor: colors.white,
+        opacity: 0.3,
+    },
+
+    // === ACCENT BAR ===
+    accentBar: {
+        height: 4,
+        flexDirection: 'row',
+    },
+    accentBarTeal: {
+        flex: 3,
+        backgroundColor: colors.teal,
+    },
+    accentBarOrange: {
+        flex: 1,
+        backgroundColor: colors.orange,
+    },
+
+    // === TERMS PAGE ===
     termsPage: {
         padding: 0,
-        fontSize: 7,
-        fontFamily: 'Helvetica',
+        fontSize: 8,
+        fontFamily: 'Inter',
         backgroundColor: colors.white,
     },
     termsContent: {
         padding: 40,
-        paddingTop: 30,
-        paddingBottom: 60,
+        paddingTop: 32,
+        paddingBottom: 80,
     },
     termsHeader: {
-        marginBottom: 20,
-        paddingBottom: 15,
+        marginBottom: 24,
+        paddingBottom: 16,
         borderBottomWidth: 2,
-        borderBottomColor: colors.accent,
+        borderBottomColor: colors.teal,
     },
     termsTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: colors.primary,
-        marginBottom: 4,
+        fontSize: 18,
+        fontWeight: 700,
+        color: colors.navy,
+        letterSpacing: -0.3,
     },
     termsSubtitle: {
-        fontSize: 8,
+        fontSize: 9,
         color: colors.gray,
+        marginTop: 4,
     },
     termsColumns: {
         flexDirection: 'row',
-        gap: 20,
+        gap: 24,
     },
     termsColumn: {
         flex: 1,
     },
     termsText: {
-        fontSize: 7,
-        color: colors.dark,
-        lineHeight: 1.6,
+        fontSize: 8,
+        color: colors.darkGray,
+        lineHeight: 1.7,
         textAlign: 'justify',
     },
 });
+
+// Tell logo as base64 SVG for PDF embedding
+const TELL_LOGO_LIGHT = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTM2IiBoZWlnaHQ9IjMyOSIgdmlld0JveD0iMCAwIDUzNiAzMjkiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xNDkuNzA4IDEyMy4wNzVIMTA5LjE2N1YyNDguNzYzSDY4LjI1MDRWMTIzLjA3NUgyNy43MDk1VjkwLjE1ODJIMTQ5LjcwOFYxMjMuMDc1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI1NS45MzkgMjQ4Ljc2M0gxNjMuMjQ4VjkwLjE1ODJIMjU1LjkzOVYxMjMuMDc1SDE5OC4xNjVWMTUyLjA5N0gyNDguNjk4VjE4NC4xNjFIMTk4LjE2NVYyMTUuODQ2SDI1NS45MzlWMjQ4Ljc2M1oiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yNzMuODQ5IDI0OC43NjNWOTAuMTU4MkgzMTQuNzY2VjIxNS44NDZIMZC2LjE0NVYyNDguNzYzSDI3My44NDlaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNDAwLjU0NyAyNDguNzYzVjkwLjE1ODJINDQxLjQ2NFYyMTUuODQ2SDQ5Mi44NTNWMJQ4Ljc2M0g0MDAuNTQ3WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTUzNiAxNjQuNjM2TDM3My41MzEgMjkwLjQzOEw1MzYgMTY0LjYzNloiIGZpbGw9IiMwRjhCOEQiLz4KPHBhdGggZD0iTTUzNiAxNjQuNjM2TDQ0OC4zMzMgMTIuNzg3NUw1MzYgMTY0LjYzNloiIGZpbGw9IiMwRjhCOEQiLz4KPHBhdGggZD0iTTUwNy4yMjkgMzI4LjIwN0gzNzMuNTMxTDQ1MC44NTggMjMwLjU0M0w1MDcuMjI5IDMyOC4yMDdaIiBmaWxsPSIjREJEMkQ4Ii8+CjxwYXRoIGQ9Ik0zNjAuNzE4IDc0LjQzMTJMMjczLjUzMSAzMjguMjA3TDM4My4zMDEgMjE5Ljg1N0wzNjAuNzE4IDc0LjQzMTJaIiBmaWxsPSIjREJEMkQ4Ii8+CjxwYXRoIGQ9Ik0zNzMuNTMxIDI5MC40MzhMNTM2IDE2NC42MzZMMzczLjUzMSAyOTAuNDM4WiIgZmlsbD0iIzE0MzY0MiIvPgo8L3N2Zz4=';
 
 export default function QuotePDF({ quote, currency, includeTerms = false }) {
     const { client, project, sections, fees } = quote;
     const totals = calculateGrandTotalWithFees(sections, fees || {});
     const settings = useSettingsStore.getState().settings;
-    const { company, taxInfo, bankDetails, pdfOptions, quoteDefaults } = settings;
+    const { company, bankDetails, pdfOptions, quoteDefaults } = settings;
 
-    const quoteDate = new Date(quote.createdAt);
+    // Use custom section order if available
+    const sectionOrder = quote.sectionOrder || SECTION_ORDER;
+
+    const quoteDate = new Date(quote.createdAt || new Date());
     const validUntil = new Date(quoteDate);
-    validUntil.setDate(quoteDate.getDate() + (quote.validityDays || quoteDefaults.validityDays));
+    validUntil.setDate(quoteDate.getDate() + (quote.validityDays || quoteDefaults?.validityDays || 30));
 
-    const preparedByUser = settings.users.find(u => u.id === quote.preparedBy);
+    const preparedByUser = settings.users?.find(u => u.id === quote.preparedBy);
     const preparedByName = preparedByUser ? preparedByUser.name : '';
+
+    // Get custom section name or default
+    const getSectionName = (sectionId) => {
+        return quote.sectionNames?.[sectionId] || SECTIONS[sectionId]?.name || sectionId;
+    };
+
+    // Get custom subsection name or default
+    const getSubsectionName = (sectionId, subsectionName) => {
+        return sections?.[sectionId]?.subsectionNames?.[subsectionName] || subsectionName;
+    };
 
     return (
         <Document>
             <Page size="A4" style={styles.page}>
-                {/* Top accent bar */}
-                <View style={styles.accentBar} />
+                {/* Multi-color accent bar */}
+                <View style={styles.accentBar}>
+                    <View style={styles.accentBarTeal} />
+                    <View style={styles.accentBarOrange} />
+                </View>
+
+                {/* Header */}
+                <View style={styles.headerBar}>
+                    <View style={styles.logoContainer}>
+                        {company?.logo && pdfOptions?.showLogo ? (
+                            <Image src={company.logo} style={styles.logo} />
+                        ) : (
+                            <Text style={styles.logoFallback}>tell</Text>
+                        )}
+                    </View>
+                    <View style={styles.quoteTag}>
+                        <Text style={styles.quoteTagText}>Quotation</Text>
+                    </View>
+                </View>
 
                 <View style={styles.content}>
-                    {/* Header */}
-                    <View style={styles.header}>
-                        <View style={styles.logoSection}>
-                            {company.logo && pdfOptions.showLogo ? (
-                                <Image src={company.logo} style={styles.logo} />
-                            ) : (
-                                <View style={styles.logoPlaceholder}>
-                                    <Text style={styles.logoText}>
-                                        {company.name ? company.name.substring(0, 2).toUpperCase() : 'TP'}
-                                    </Text>
-                                </View>
-                            )}
-                            <View style={styles.companyInfo}>
-                                <Text style={styles.companyName}>{company.name}</Text>
-                                {pdfOptions.showCompanyAddress && company.address && (
-                                    <Text style={styles.companyDetail}>{company.address}</Text>
-                                )}
-                                {pdfOptions.showCompanyPhone && company.phone && (
-                                    <Text style={styles.companyDetail}>{company.phone}</Text>
-                                )}
-                                {pdfOptions.showCompanyEmail && company.email && (
-                                    <Text style={styles.companyDetail}>{company.email}</Text>
-                                )}
-                            </View>
-                        </View>
-
-                        <View style={styles.quoteBadge}>
-                            <Text style={styles.quoteLabel}>Quotation</Text>
+                    {/* Quote Info Strip */}
+                    <View style={styles.quoteInfoStrip}>
+                        <View style={styles.quoteNumberSection}>
+                            <Text style={styles.quoteLabel}>Quote Number</Text>
                             <Text style={styles.quoteNumber}>{quote.quoteNumber}</Text>
-                            <View style={styles.quoteMeta}>
-                                <Text style={styles.quoteMetaText}>Date: {quoteDate.toLocaleDateString()}</Text>
-                                <Text style={styles.quoteMetaText}>Valid Until: {validUntil.toLocaleDateString()}</Text>
+                        </View>
+                        <View style={styles.quoteDates}>
+                            <View style={styles.dateRow}>
+                                <Text style={styles.dateLabel}>Date:</Text>
+                                <Text style={styles.dateValue}>{quoteDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</Text>
+                            </View>
+                            <View style={styles.dateRow}>
+                                <Text style={styles.dateLabel}>Valid Until:</Text>
+                                <Text style={styles.dateValue}>{validUntil.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</Text>
                             </View>
                         </View>
                     </View>
 
-                    {/* Project Banner */}
-                    {project.title && (
-                        <View style={styles.projectBanner}>
+                    {/* Project Card */}
+                    {project?.title && (
+                        <View style={styles.projectCard}>
                             <Text style={styles.projectTitle}>{project.title}</Text>
-                            <View style={styles.projectDetails}>
+                            <View style={styles.projectMeta}>
                                 {project.venue && (
-                                    <View style={styles.projectDetail}>
-                                        <View style={styles.projectIcon} />
-                                        <Text style={styles.projectText}>{project.venue}</Text>
+                                    <View style={styles.projectMetaItem}>
+                                        <View style={styles.projectMetaDot} />
+                                        <Text style={styles.projectMetaText}>{project.venue}</Text>
                                     </View>
                                 )}
                                 {project.startDate && (
-                                    <View style={styles.projectDetail}>
-                                        <View style={styles.projectIcon} />
-                                        <Text style={styles.projectText}>
-                                            {project.startDate}
-                                            {project.endDate && project.endDate !== project.startDate && ` – ${project.endDate}`}
+                                    <View style={styles.projectMetaItem}>
+                                        <View style={styles.projectMetaDot} />
+                                        <Text style={styles.projectMetaText}>
+                                            {project.startDate}{project.endDate && project.endDate !== project.startDate ? ` — ${project.endDate}` : ''}
                                         </Text>
                                     </View>
                                 )}
                                 {project.type && (
-                                    <View style={styles.projectDetail}>
-                                        <View style={styles.projectIcon} />
-                                        <Text style={styles.projectText}>{project.type}</Text>
+                                    <View style={styles.projectMetaItem}>
+                                        <View style={styles.projectMetaDot} />
+                                        <Text style={styles.projectMetaText}>{project.type}</Text>
                                     </View>
                                 )}
                             </View>
                         </View>
                     )}
 
-                    {/* Client Card */}
-                    <View style={styles.clientCard}>
-                        <View style={styles.clientSection}>
-                            <Text style={styles.clientLabel}>Bill To</Text>
-                            {client.company && <Text style={styles.clientName}>{client.company}</Text>}
-                            {client.contact && <Text style={styles.clientDetail}>Attn: {client.contact}</Text>}
-                            {client.email && <Text style={styles.clientDetail}>{client.email}</Text>}
-                            {client.phone && <Text style={styles.clientDetail}>{client.phone}</Text>}
+                    {/* Client & Prepared By */}
+                    <View style={styles.infoRow}>
+                        <View style={styles.infoCard}>
+                            <Text style={styles.infoCardLabel}>Bill To</Text>
+                            {client?.company && <Text style={styles.infoCardName}>{client.company}</Text>}
+                            {client?.contact && <Text style={styles.infoCardDetail}>Attn: {client.contact}</Text>}
+                            {client?.email && <Text style={styles.infoCardDetail}>{client.email}</Text>}
+                            {client?.phone && <Text style={styles.infoCardDetail}>{client.phone}</Text>}
                         </View>
                         {preparedByName && (
-                            <View style={styles.clientSection}>
-                                <Text style={styles.clientLabel}>Prepared By</Text>
-                                <Text style={styles.clientName}>{preparedByName}</Text>
-                                <Text style={styles.clientDetail}>{company.name}</Text>
+                            <View style={styles.infoCard}>
+                                <Text style={styles.infoCardLabel}>Prepared By</Text>
+                                <Text style={styles.infoCardName}>{preparedByName}</Text>
+                                <Text style={styles.infoCardDetail}>{company?.name}</Text>
+                                {company?.email && <Text style={styles.infoCardDetail}>{company.email}</Text>}
                             </View>
                         )}
                     </View>
 
                     {/* Sections */}
-                    {SECTION_ORDER.map(sectionId => {
-                        const section = sections[sectionId];
+                    {sectionOrder.map(sectionId => {
+                        const section = sections?.[sectionId];
                         const config = SECTIONS[sectionId];
-                        if (!section) return null;
+                        if (!section || !config) return null;
+
+                        // Get subsection order
+                        const subsectionOrder = section.subsectionOrder ||
+                            [...config.subsections, ...(section.customSubsections || [])];
 
                         const sectionTotals = calculateSectionTotal(section.subsections);
-                        const itemCount = Object.values(section.subsections).reduce((acc, items) => acc + items.length, 0);
+                        const itemCount = Object.values(section.subsections || {}).reduce((acc, items) => acc + items.length, 0);
 
                         if (itemCount === 0) return null;
 
                         return (
                             <View key={sectionId} style={styles.section} wrap={false}>
-                                <View style={[styles.sectionHeader, { backgroundColor: config.color }]}>
-                                    <Text style={styles.sectionTitle}>{config.name}</Text>
+                                <View style={[styles.sectionHeader, styles.sectionHeaderWithColor, { borderLeftColor: config.color }]}>
+                                    <Text style={styles.sectionTitle}>{getSectionName(sectionId)}</Text>
                                     <Text style={styles.sectionTotal}>
                                         {formatCurrency(sectionTotals.totalCharge, currency)}
                                     </Text>
@@ -527,33 +656,41 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                                     <Text style={[styles.tableHeaderText, styles.col2]}>Qty</Text>
                                     <Text style={[styles.tableHeaderText, styles.col3]}>Days</Text>
                                     <Text style={[styles.tableHeaderText, styles.col4]}>Rate</Text>
-                                    <Text style={[styles.tableHeaderText, styles.col5]}>Total</Text>
+                                    <Text style={[styles.tableHeaderText, styles.col5]}>Amount</Text>
                                 </View>
 
                                 {/* Subsections with items */}
-                                {Object.entries(section.subsections).map(([subsectionName, items]) => {
+                                {subsectionOrder.map(subsectionName => {
+                                    const items = section.subsections?.[subsectionName] || [];
                                     if (items.length === 0) return null;
+
+                                    // Hide "Services" header for flat sections
+                                    const isFlatSection = ['creative', 'logistics', 'expenses'].includes(sectionId);
+                                    const shouldHideSubsectionHeader = isFlatSection && subsectionName === 'Services';
 
                                     return (
                                         <View key={subsectionName}>
-                                            <View style={styles.subsectionRow}>
-                                                <Text style={styles.subsectionTitle}>{subsectionName}</Text>
-                                            </View>
+                                            {!shouldHideSubsectionHeader && (
+                                                <View style={styles.subsectionRow}>
+                                                    <View style={styles.subsectionDot} />
+                                                    <Text style={styles.subsectionTitle}>{getSubsectionName(sectionId, subsectionName)}</Text>
+                                                </View>
+                                            )}
                                             {items.map((item, idx) => {
-                                                const displayRate = fees.distributeFees
+                                                const displayRate = fees?.distributeFees
                                                     ? totals.getDistributedRate(item.charge || 0)
                                                     : (item.charge || 0);
                                                 const lineTotal = displayRate * (item.quantity || 1) * (item.days || 1);
 
                                                 return (
-                                                    <View key={item.id || idx} style={[styles.tableRow, idx % 2 === 1 && styles.tableRowAlt]}>
+                                                    <View key={item.id || idx} style={[styles.tableRow, idx % 2 === 0 && styles.tableRowAlt]}>
                                                         <Text style={[styles.cellText, styles.col1]}>{item.name || 'Item'}</Text>
-                                                        <Text style={[styles.cellTextLight, styles.col2]}>{item.quantity || 1}</Text>
-                                                        <Text style={[styles.cellTextLight, styles.col3]}>{item.days || 1}</Text>
+                                                        <Text style={[styles.cellTextMuted, styles.col2]}>{item.quantity || 1}</Text>
+                                                        <Text style={[styles.cellTextMuted, styles.col3]}>{item.days || 1}</Text>
                                                         <Text style={[styles.cellText, styles.col4]}>
                                                             {formatCurrency(displayRate, currency)}
                                                         </Text>
-                                                        <Text style={[styles.cellText, styles.col5]}>
+                                                        <Text style={[styles.cellTextBold, styles.col5]}>
                                                             {formatCurrency(lineTotal, currency)}
                                                         </Text>
                                                     </View>
@@ -568,12 +705,12 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
 
                     {/* Totals */}
                     <View style={styles.totalsSection}>
-                        <View style={styles.totalsBox}>
+                        <View style={styles.totalsCard}>
                             {(fees?.discount > 0 || fees?.managementFee > 0 || fees?.commissionFee > 0) && (
                                 <View style={styles.totalRow}>
                                     <Text style={styles.totalLabel}>Subtotal</Text>
                                     <Text style={styles.totalValue}>
-                                        {fees.distributeFees
+                                        {fees?.distributeFees
                                             ? formatCurrency(totals.chargeWithFees, currency)
                                             : formatCurrency(totals.baseCharge, currency)
                                         }
@@ -581,7 +718,7 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                                 </View>
                             )}
 
-                            {!fees.distributeFees && fees?.managementFee > 0 && (
+                            {!fees?.distributeFees && fees?.managementFee > 0 && (
                                 <View style={styles.totalRow}>
                                     <Text style={styles.totalLabel}>Management Fee ({fees.managementFee}%)</Text>
                                     <Text style={styles.totalValue}>
@@ -590,7 +727,7 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                                 </View>
                             )}
 
-                            {!fees.distributeFees && fees?.commissionFee > 0 && (
+                            {!fees?.distributeFees && fees?.commissionFee > 0 && (
                                 <View style={styles.totalRow}>
                                     <Text style={styles.totalLabel}>Commission ({fees.commissionFee}%)</Text>
                                     <Text style={styles.totalValue}>
@@ -609,7 +746,7 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                             )}
 
                             <View style={styles.grandTotalRow}>
-                                <Text style={styles.grandTotalLabel}>TOTAL</Text>
+                                <Text style={styles.grandTotalLabel}>Total</Text>
                                 <Text style={styles.grandTotalValue}>
                                     {formatCurrency(totals.totalCharge, currency)}
                                 </Text>
@@ -619,21 +756,21 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
 
                     {/* Terms and Bank Info */}
                     <View style={styles.bottomSection}>
-                        <View style={styles.infoBox}>
-                            <Text style={styles.infoBoxTitle}>Terms & Conditions</Text>
-                            <Text style={styles.infoBoxText}>
-                                {quoteDefaults.termsAndConditions}
+                        <View style={styles.bottomCard}>
+                            <Text style={styles.bottomCardTitle}>Terms & Conditions</Text>
+                            <Text style={styles.bottomCardText}>
+                                {quoteDefaults?.termsAndConditions || 'Payment due within 30 days of invoice date.'}
                             </Text>
                         </View>
 
-                        {pdfOptions.showBankDetails && (
-                            <View style={styles.infoBox}>
-                                <Text style={styles.infoBoxTitle}>Payment Details</Text>
-                                <Text style={styles.infoBoxText}>Bank: {bankDetails.bankName}</Text>
-                                <Text style={styles.infoBoxText}>Account: {bankDetails.accountName}</Text>
-                                <Text style={styles.infoBoxText}>No: {bankDetails.accountNumber}</Text>
+                        {pdfOptions?.showBankDetails && bankDetails?.bankName && (
+                            <View style={styles.bottomCard}>
+                                <Text style={styles.bottomCardTitle}>Payment Details</Text>
+                                <Text style={styles.bottomCardText}>Bank: {bankDetails.bankName}</Text>
+                                <Text style={styles.bottomCardText}>Account: {bankDetails.accountName}</Text>
+                                <Text style={styles.bottomCardText}>Number: {bankDetails.accountNumber}</Text>
                                 {bankDetails.swiftCode && (
-                                    <Text style={styles.infoBoxText}>SWIFT: {bankDetails.swiftCode}</Text>
+                                    <Text style={styles.bottomCardText}>SWIFT: {bankDetails.swiftCode}</Text>
                                 )}
                             </View>
                         )}
@@ -654,28 +791,45 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
 
                 {/* Footer */}
                 <View style={styles.footer} fixed>
-                    <Text style={styles.footerText}>
-                        {company.name} {company.website && `• ${company.website}`}
-                    </Text>
-                    <Text style={styles.footerText}>
-                        <Text style={styles.footerAccent}>Quote {quote.quoteNumber}</Text> • Generated {new Date().toLocaleDateString()}
-                    </Text>
+                    <View style={styles.footerLeft}>
+                        <Text style={styles.footerText}>{company?.name || 'Tell'}</Text>
+                        {company?.website && (
+                            <>
+                                <View style={styles.footerDivider} />
+                                <Text style={styles.footerText}>{company.website}</Text>
+                            </>
+                        )}
+                    </View>
+                    <View style={styles.footerRight}>
+                        <Text style={styles.footerAccent}>{quote.quoteNumber}</Text>
+                        <View style={styles.footerDivider} />
+                        <Text style={styles.footerText}>{new Date().toLocaleDateString('en-GB')}</Text>
+                    </View>
                 </View>
             </Page>
 
             {/* Terms & Conditions Page */}
-            {includeTerms && quoteDefaults.termsAndConditions && (
+            {includeTerms && quoteDefaults?.termsAndConditions && (
                 <Page size="A4" style={styles.termsPage}>
-                    <View style={styles.accentBar} />
+                    <View style={styles.accentBar}>
+                        <View style={styles.accentBarTeal} />
+                        <View style={styles.accentBarOrange} />
+                    </View>
+
+                    <View style={styles.headerBar}>
+                        <View style={styles.logoContainer}>
+                            <Text style={styles.logoFallback}>tell</Text>
+                        </View>
+                    </View>
+
                     <View style={styles.termsContent}>
                         <View style={styles.termsHeader}>
                             <Text style={styles.termsTitle}>Terms & Conditions</Text>
                             <Text style={styles.termsSubtitle}>
-                                {company.name} • Quote {quote.quoteNumber}
+                                {company?.name} • Quote {quote.quoteNumber}
                             </Text>
                         </View>
 
-                        {/* Split terms into columns */}
                         <View style={styles.termsColumns}>
                             {(() => {
                                 const terms = quoteDefaults.termsAndConditions;
@@ -699,12 +853,14 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                     </View>
 
                     <View style={styles.footer} fixed>
-                        <Text style={styles.footerText}>
-                            {company.name} {company.website && `• ${company.website}`}
-                        </Text>
-                        <Text style={styles.footerText}>
-                            Terms & Conditions • Page 2
-                        </Text>
+                        <View style={styles.footerLeft}>
+                            <Text style={styles.footerText}>{company?.name || 'Tell'}</Text>
+                        </View>
+                        <View style={styles.footerRight}>
+                            <Text style={styles.footerText}>Terms & Conditions</Text>
+                            <View style={styles.footerDivider} />
+                            <Text style={styles.footerText}>Page 2</Text>
+                        </View>
                     </View>
                 </Page>
             )}

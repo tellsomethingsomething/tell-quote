@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useRateCardStore } from '../../store/rateCardStore';
 import LineItem from './LineItem';
@@ -38,12 +38,42 @@ const getRateCardSectionId = (sectionId, subsectionName) => {
 };
 
 export default function Subsection({ sectionId, subsectionName, color, isDragging }) {
-    const { quote, addLineItem } = useQuoteStore();
+    const { quote, addLineItem, updateSubsectionName } = useQuoteStore();
     const { items: rateCardItems } = useRateCardStore();
     const section = quote.sections[sectionId];
     const items = section?.subsections?.[subsectionName] || [];
 
     const [isAdding, setIsAdding] = useState(false);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editedName, setEditedName] = useState('');
+    const nameInputRef = useRef(null);
+
+    // Get custom name or fall back to original
+    const displayName = section?.subsectionNames?.[subsectionName] || subsectionName;
+
+    // Focus input when editing starts
+    useEffect(() => {
+        if (isEditingName && nameInputRef.current) {
+            nameInputRef.current.focus();
+            nameInputRef.current.select();
+        }
+    }, [isEditingName]);
+
+    const handleStartEditName = (e) => {
+        e.stopPropagation();
+        setEditedName(displayName);
+        setIsEditingName(true);
+    };
+
+    const handleSaveName = () => {
+        updateSubsectionName(sectionId, subsectionName, editedName);
+        setIsEditingName(false);
+    };
+
+    const handleCancelEditName = () => {
+        setIsEditingName(false);
+        setEditedName('');
+    };
 
     // Get rate card items for this specific subsection context
     const rateCardSectionId = getRateCardSectionId(sectionId, subsectionName);
@@ -97,10 +127,51 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
             {/* Subsection Header - Only hide for default 'Services' in flat sections */}
             {!shouldHideHeader && (
                 <div className="flex items-center gap-2 mb-1.5 cursor-grab active:cursor-grabbing">
-                    <svg className="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-3 h-3 text-gray-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
                     </svg>
-                    <h4 className="text-xs font-medium text-gray-400">{subsectionName}</h4>
+                    {isEditingName ? (
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <input
+                                ref={nameInputRef}
+                                type="text"
+                                value={editedName}
+                                onChange={(e) => setEditedName(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveName();
+                                    if (e.key === 'Escape') handleCancelEditName();
+                                }}
+                                className="input-sm text-xs py-0.5 w-32"
+                                aria-label="Subsection name"
+                            />
+                            <button
+                                onClick={handleSaveName}
+                                className="p-0.5 text-green-400 hover:text-green-300"
+                                aria-label="Save"
+                            >
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </button>
+                            <button
+                                onClick={handleCancelEditName}
+                                className="p-0.5 text-gray-400 hover:text-gray-300"
+                                aria-label="Cancel"
+                            >
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    ) : (
+                        <h4
+                            className="text-xs font-medium text-gray-400 cursor-pointer hover:text-gray-300"
+                            onClick={handleStartEditName}
+                            title="Click to rename"
+                        >
+                            {displayName}
+                        </h4>
+                    )}
                     <span className="text-[10px] text-gray-600">{items.length} items</span>
                 </div>
             )}

@@ -592,6 +592,33 @@ export const useQuoteStore = create(
             });
         },
 
+        // Rename a subsection (custom display name)
+        updateSubsectionName: (sectionId, originalName, newName) => {
+            set(state => {
+                const sections = { ...state.quote.sections };
+                const sectionData = { ...sections[sectionId] };
+
+                // Store custom subsection names
+                const subsectionNames = { ...(sectionData.subsectionNames || {}) };
+                if (newName.trim() && newName.trim() !== originalName) {
+                    subsectionNames[originalName] = newName.trim();
+                } else {
+                    delete subsectionNames[originalName]; // Remove override, use default
+                }
+
+                sectionData.subsectionNames = subsectionNames;
+                sections[sectionId] = sectionData;
+
+                const updated = {
+                    ...state.quote,
+                    sections,
+                    updatedAt: new Date().toISOString()
+                };
+                saveQuoteWithLibrarySync(updated);
+                return { quote: updated };
+            });
+        },
+
         // Refresh rates
         refreshRates: async () => {
             set({ ratesLoading: true });
