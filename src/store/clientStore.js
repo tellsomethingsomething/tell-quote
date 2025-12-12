@@ -85,22 +85,32 @@ export const useClientStore = create(
                     updatedAt: c.updated_at,
                 }));
 
-                const savedQuotes = (quotesData || []).map(q => ({
-                    id: q.id,
-                    quoteNumber: q.quote_number,
-                    quoteDate: q.quote_date,
-                    validityDays: q.validity_days,
-                    status: q.status,
-                    currency: q.currency,
-                    preparedBy: q.prepared_by,
-                    client: q.client || {},
-                    project: q.project || {},
-                    sections: q.sections || {},
-                    fees: q.fees || {},
-                    proposal: q.proposal || {},
-                    createdAt: q.created_at,
-                    updatedAt: q.updated_at,
-                }));
+                const savedQuotes = (quotesData || []).map(q => {
+                    // Match quote to client by company name
+                    const clientCompany = q.client?.company?.toLowerCase();
+                    const matchedClient = clientCompany
+                        ? clients.find(c => c.company?.toLowerCase() === clientCompany)
+                        : null;
+
+                    return {
+                        id: q.id,
+                        quoteNumber: q.quote_number,
+                        quoteDate: q.quote_date,
+                        validityDays: q.validity_days,
+                        status: q.status,
+                        currency: q.currency,
+                        region: q.region,
+                        preparedBy: q.prepared_by,
+                        client: q.client || {},
+                        clientId: matchedClient?.id || null,
+                        project: q.project || {},
+                        sections: q.sections || {},
+                        fees: q.fees || {},
+                        proposal: q.proposal || {},
+                        createdAt: q.created_at,
+                        updatedAt: q.updated_at,
+                    };
+                });
 
                 saveClientsLocal(clients);
                 saveSavedQuotesLocal(savedQuotes);

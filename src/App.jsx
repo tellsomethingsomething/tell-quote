@@ -111,7 +111,7 @@ function App() {
         return (
           <ClientDetailPage
             clientId={selectedClientId}
-            onBack={handleBackToClients}
+            onBackToDashboard={handleGoToDashboard}
             onEditQuote={handleEditQuote}
             onNewQuote={handleNewQuote}
           />

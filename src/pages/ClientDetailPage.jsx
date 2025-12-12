@@ -13,7 +13,7 @@ const STATUS_COLORS = {
     dead: 'bg-red-500/20 text-red-500',
 };
 
-export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQuote }) {
+export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQuote, onNewQuote }) {
     const { getClient, getClientQuotes, deleteQuote, updateQuoteStatus, deleteClient, updateClient, addContact, updateContact, deleteContact, getClientStats } = useClientStore();
     const { loadQuoteData } = useQuoteStore();
     const { settings } = useSettingsStore();
@@ -50,7 +50,7 @@ export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQ
             <div className="h-[calc(100vh-60px)] flex items-center justify-center">
                 <div className="text-center">
                     <p className="text-gray-400">Client not found</p>
-                    <button onClick={onBack} className="btn-ghost mt-4">Go Back</button>
+                    <button onClick={onBackToDashboard} className="btn-ghost mt-4">Back to Dashboard</button>
                 </div>
             </div>
         );
@@ -98,7 +98,7 @@ export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQ
             setContactForm({ ...contact });
         } else {
             setEditingContactId(null);
-            setContactForm({ name: '', role: '', email: '', phone: '', isPrimary: false, accountHolderId: '' });
+            setContactForm({ name: '', role: '', email: '', phone: '', notes: '', isPrimary: false, accountHolderId: '' });
         }
         setIsContactModalOpen(true);
     };
@@ -144,14 +144,6 @@ export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQ
         <div className="h-[calc(100vh-60px)] overflow-y-auto p-6 relative">
             {/* Header */}
             <div className="flex items-center gap-4 mb-6">
-                <button
-                    onClick={onBack}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                >
-                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                </button>
                 <div className="flex-1">
                     {isEditingClient ? (
                         <form onSubmit={saveClientEdit} className="flex gap-2 items-center flex-wrap">
@@ -220,7 +212,7 @@ export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQ
                     onClick={() => {
                         if (window.confirm(`Delete ${client.company} and all its data? This cannot be undone.`)) {
                             deleteClient(client.id);
-                            onBack();
+                            onBackToDashboard();
                         }
                     }}
                     className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
@@ -232,29 +224,6 @@ export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQ
                 </button>
             </div>
 
-            {/* Metrics Dashboard */}
-            {
-                stats && (
-                    <div className="grid grid-cols-4 gap-4 mb-8">
-                        <div className="card bg-gradient-to-br from-green-900/20 to-green-950/20 border-green-900/30">
-                            <p className="text-xs text-green-500/80 mb-1 font-medium uppercase tracking-wider">Win Rate</p>
-                            <p className="text-3xl font-bold text-green-400">{stats.winRate}%</p>
-                        </div>
-                        <div className="card">
-                            <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wider">Won Deals</p>
-                            <p className="text-3xl font-bold text-gray-200">{stats.wonCount}</p>
-                        </div>
-                        <div className="card">
-                            <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wider">Lost Deals</p>
-                            <p className="text-3xl font-bold text-gray-200">{stats.lostCount}</p>
-                        </div>
-                        <div className="card">
-                            <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wider">Total Quotes</p>
-                            <p className="text-3xl font-bold text-white">{stats.totalQuotes}</p>
-                        </div>
-                    </div>
-                )
-            }
             {/* Tags Management */}
             <div className="mb-8">
                 <h3 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">Tags</h3>
@@ -488,6 +457,11 @@ export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQ
                                                     <span>{contact.phone}</span>
                                                 </div>
                                             )}
+                                            {contact.notes && (
+                                                <div className="mt-2 pt-2 border-t border-white/5">
+                                                    <p className="text-xs text-gray-500 italic">{contact.notes}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     );
@@ -606,6 +580,17 @@ export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQ
                                         ))}
                                     </select>
                                     <p className="form-helper">Assign a team member responsible for this contact</p>
+                                </div>
+
+                                <div>
+                                    <label className="label">Notes</label>
+                                    <textarea
+                                        value={contactForm.notes || ''}
+                                        onChange={e => setContactForm({ ...contactForm, notes: e.target.value })}
+                                        className="input min-h-[80px] resize-none"
+                                        placeholder="Internal notes about this contact..."
+                                    />
+                                    <p className="form-helper">Internal notes only - not shown on quotes</p>
                                 </div>
 
                                 {/* Primary Contact Toggle */}
