@@ -34,20 +34,17 @@ export default function EmailGenerator() {
     const generateEmail = () => {
         const total = formatCurrency(totals.totalCharge, quote.currency);
 
-        const subject = `Quote: ${project.title || 'Project'} - ${quote.quoteNumber}`;
+        const subject = `Quote for ${project.title || 'Project'}${dateRange !== 'TBC' ? ` | ${dateRange}` : ''}`;
 
         const body = `Hi ${clientFirstName},
 
-Following our conversation, I've put together the quote for ${project.title || 'the project'}${project.venue ? ` at ${project.venue}` : ''}.
+I've put together the quote for ${project.title || 'the project'}${project.venue ? ` at ${project.venue}` : ''}.
 
-Dates: ${dateRange}
-Total: ${total}
+Attached is our proposal covering ${getServicesSummary()}. Total comes to ${total}. Quote's valid for ${quote.validityDays || 30} days.
 
-The quote's attached. It covers everything we discussed — ${getServicesSummary()}. Let me know if anything needs adjusting.
+Happy to jump on a call if you'd like to talk through any of it. Let me know if you have any questions.
 
-Happy to jump on a call if you've got questions.
-
-Cheers,
+Best,
 ${senderName}`;
 
         return { subject, body };
@@ -81,36 +78,61 @@ ${senderName}`;
         try {
             const total = formatCurrency(totals.totalCharge, quote.currency);
 
-            const prompt = `Generate a short, professional email to send with a quote attachment.
+            const prompt = `Generate a client email to accompany a production services quote from Tell Productions Sdn Bhd.
+
+## Input Data
 
 CLIENT: ${client.company || 'Client'}
 CONTACT: ${clientFirstName}
 PROJECT: ${project.title || 'Project'}
+TYPE: ${project.type || 'Production'}
 VENUE: ${project.venue || 'TBC'}
 DATES: ${dateRange}
+QUOTE REFERENCE: ${quote.quoteNumber}
 TOTAL: ${total}
+CURRENCY: ${quote.currency}
+VALIDITY: ${quote.validityDays || 30} days
 SERVICES: ${getServicesSummary()}
 SENDER: ${senderName}
 
-WRITING STYLE:
-- Direct and efficient, no waffle
-- Professional but casual - not stuffy corporate
-- Use contractions naturally (we're, we'll, I've)
-- Short paragraphs, 2-3 sentences max
-- Friendly but businesslike
-- AVOID: synergise, leverage, reach out, circle back, any corporate jargon
+## Writing Style
 
-OUTPUT FORMAT:
-Return ONLY a JSON object with two fields:
+Write in Tom's voice: professional but casual, direct, efficient. Never stuffy.
+
+Tone rules:
+- Use contractions naturally (I'm, we're, it's, we've)
+- Short paragraphs, 1-3 sentences each
+- No waffle or filler
+- Warm but not overly friendly
+- Confident without being pushy
+
+## Email Structure
+
+Subject line: Quote for [Project Title] | [Dates]
+
+Body:
+1. Opening (1 sentence) - Greeting and brief context
+2. The quote (2-3 sentences) - Reference attached quote, mention total and what it covers, note validity
+3. Next steps (1-2 sentences) - Clear call to action, offer to discuss
+4. Sign off: "Best, ${senderName}"
+
+## Rules
+
+AVOID:
+- Bullet points in the email
+- "Please find attached" (say "I've attached" or "Attached is")
+- "I hope this email finds you well"
+- "Don't hesitate to contact me" (say "Let me know if you have any questions")
+- Long paragraphs
+- Excessive thank-yous
+- Marketing language
+
+## Output Format
+
+Return ONLY a JSON object:
 {"subject": "the email subject line", "body": "the email body"}
 
-The email should:
-1. Reference the attached quote
-2. Briefly mention what's covered
-3. Invite questions
-4. Sign off casually
-
-Keep it under 100 words. No bullet points.`;
+Keep it under 120 words. No bullet points.`;
 
             const response = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
