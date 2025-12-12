@@ -9,6 +9,10 @@ import { useRateCardStore } from './rateCardStore';
 import { useClientStore } from './clientStore';
 import { supabase } from '../lib/supabase';
 
+// Auto-save interval (30 seconds)
+let autoSaveInterval = null;
+let lastSavedQuote = null;
+
 // Save quote to localStorage AND auto-save to library/DB if previously saved
 function saveQuoteWithLibrarySync(quote) {
     // Save to localStorage (current editing session)
@@ -22,6 +26,97 @@ function saveQuoteWithLibrarySync(quote) {
 
     if (existsInLibrary) {
         updateQuote(quote.id, quote);
+    }
+}
+
+// Sync current quote to Supabase
+async function syncQuoteToSupabase(quote) {
+    if (!quote || !quote.quoteNumber) return { synced: false };
+
+    // Check if quote has changed since last sync
+    const quoteStr = JSON.stringify(quote);
+    if (quoteStr === lastSavedQuote) return { synced: false, reason: 'no changes' };
+
+    try {
+        const dbQuote = {
+            quote_number: quote.quoteNumber,
+            quote_date: quote.quoteDate,
+            validity_days: quote.validityDays,
+            status: quote.status || 'draft',
+            currency: quote.currency,
+            region: quote.region,
+            prepared_by: quote.preparedBy,
+            client: quote.client,
+            project: quote.project,
+            sections: quote.sections,
+            fees: quote.fees,
+            proposal: quote.proposal,
+        };
+
+        // Check if quote exists by quote_number
+        const { data: existing } = await supabase
+            .from('quotes')
+            .select('id')
+            .eq('quote_number', quote.quoteNumber)
+            .single();
+
+        let savedId = quote.id;
+
+        if (existing) {
+            // Update existing
+            await supabase
+                .from('quotes')
+                .update(dbQuote)
+                .eq('id', existing.id);
+            savedId = existing.id;
+        } else {
+            // Insert new
+            const { data, error } = await supabase
+                .from('quotes')
+                .insert(dbQuote)
+                .select()
+                .single();
+
+            if (!error && data) {
+                savedId = data.id;
+            }
+        }
+
+        lastSavedQuote = quoteStr;
+
+        // Update local state with ID if it was new
+        if (savedId && !quote.id) {
+            useQuoteStore.getState().setQuoteId(savedId);
+            // Also update clientStore
+            const { saveQuote: saveToLibrary } = useClientStore.getState();
+            saveToLibrary({ ...quote, id: savedId });
+        }
+
+        console.log('Quote auto-saved to Supabase');
+        return { synced: true, id: savedId };
+    } catch (e) {
+        console.error('Auto-save failed:', e);
+        return { synced: false, error: e.message };
+    }
+}
+
+// Start auto-save interval
+function startAutoSave() {
+    if (autoSaveInterval) return;
+
+    autoSaveInterval = setInterval(() => {
+        const quote = useQuoteStore.getState().quote;
+        syncQuoteToSupabase(quote);
+    }, 30000); // 30 seconds
+
+    console.log('Auto-save started (every 30s)');
+}
+
+// Stop auto-save interval
+function stopAutoSave() {
+    if (autoSaveInterval) {
+        clearInterval(autoSaveInterval);
+        autoSaveInterval = null;
     }
 }
 
@@ -117,6 +212,24 @@ export const useQuoteStore = create(
             set({ ratesLoading: true });
             const { rates, timestamp } = await fetchLiveRates();
             set({ rates, ratesUpdated: timestamp, ratesLoading: false });
+
+            // Start auto-save to Supabase every 30 seconds
+            startAutoSave();
+        },
+
+        // Set quote ID (after first save to Supabase)
+        setQuoteId: (id) => {
+            set(state => {
+                const updated = { ...state.quote, id };
+                saveQuote(updated);
+                return { quote: updated };
+            });
+        },
+
+        // Manual sync to Supabase (for Save button)
+        syncToSupabase: async () => {
+            const quote = useQuoteStore.getState().quote;
+            return syncQuoteToSupabase(quote);
         },
 
         // Reset to new quote
