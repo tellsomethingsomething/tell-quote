@@ -53,6 +53,11 @@ const defaultSettings = {
         showBankDetails: false,
         showLogo: true,
     },
+    // AI Settings
+    aiSettings: {
+        apiKey: '',
+        provider: 'anthropic', // anthropic or openai
+    },
     // Project types
     projectTypes: [
         { id: 'broadcast', label: 'Broadcast' },
@@ -86,6 +91,7 @@ function loadSettings() {
                 bankDetails: { ...defaultSettings.bankDetails, ...parsed.bankDetails },
                 quoteDefaults: { ...defaultSettings.quoteDefaults, ...parsed.quoteDefaults },
                 pdfOptions: { ...defaultSettings.pdfOptions, ...parsed.pdfOptions },
+                aiSettings: { ...defaultSettings.aiSettings, ...parsed.aiSettings },
                 users: parsed.users || defaultSettings.users,
                 projectTypes: parsed.projectTypes || defaultSettings.projectTypes,
                 regions: parsed.regions || defaultSettings.regions,
@@ -170,6 +176,18 @@ export const useSettingsStore = create(
                 const updated = {
                     ...state.settings,
                     pdfOptions: { ...state.settings.pdfOptions, ...pdfOptions },
+                };
+                saveSettings(updated);
+                return { settings: updated };
+            });
+        },
+
+        // Update AI settings
+        setAiSettings: (aiSettings) => {
+            set(state => {
+                const updated = {
+                    ...state.settings,
+                    aiSettings: { ...state.settings.aiSettings, ...aiSettings },
                 };
                 saveSettings(updated);
                 return { settings: updated };

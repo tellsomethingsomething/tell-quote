@@ -10,6 +10,7 @@ const TABS = [
     { id: 'terms', label: 'Terms & Conditions' },
     { id: 'customize', label: 'Customization' },
     { id: 'pdf', label: 'PDF Options' },
+    { id: 'ai', label: 'AI Features' },
 ];
 
 export default function SettingsPage({ onBack }) {
@@ -20,6 +21,7 @@ export default function SettingsPage({ onBack }) {
         setBankDetails,
         setQuoteDefaults,
         setPdfOptions,
+        setAiSettings,
         addUser,
         updateUser,
         deleteUser,
@@ -61,6 +63,7 @@ export default function SettingsPage({ onBack }) {
     const saveBankDetails = (data) => { setBankDetails(data); triggerSaved(); };
     const saveQuoteDefaults = (data) => { setQuoteDefaults(data); triggerSaved(); };
     const savePdfOptions = (data) => { setPdfOptions(data); triggerSaved(); };
+    const saveAiSettings = (data) => { setAiSettings(data); triggerSaved(); };
     const saveUser = (id, data) => { updateUser(id, data); triggerSaved(); };
 
     const handleAddUser = () => {
@@ -692,6 +695,49 @@ export default function SettingsPage({ onBack }) {
                                     <span className="text-gray-300">{label}</span>
                                 </label>
                             ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* AI Features Tab */}
+                {activeTab === 'ai' && (
+                    <div className="max-w-2xl">
+                        <h3 className="text-xl font-bold text-gray-100 mb-2">AI Features</h3>
+                        <p className="text-sm text-gray-500 mb-6">
+                            Enable AI-powered features like proposal generation and cover page images.
+                        </p>
+
+                        <div className="space-y-6">
+                            <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
+                                <h4 className="text-sm font-semibold text-gray-300 mb-3">Anthropic API Key</h4>
+                                <p className="text-xs text-gray-500 mb-3">
+                                    Required for AI proposal generation. Get your API key from{' '}
+                                    <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" className="text-accent-primary hover:underline">
+                                        console.anthropic.com
+                                    </a>
+                                </p>
+                                <input
+                                    type="password"
+                                    value={settings.aiSettings?.apiKey || ''}
+                                    onChange={(e) => saveAiSettings({ apiKey: e.target.value })}
+                                    className="input w-full font-mono text-sm"
+                                    placeholder="sk-ant-api..."
+                                />
+                            </div>
+
+                            <div className="p-4 bg-accent-primary/10 border border-accent-primary/20 rounded-lg">
+                                <h4 className="text-sm font-semibold text-accent-primary mb-2">AI Features Available</h4>
+                                <ul className="text-sm text-gray-400 space-y-1">
+                                    <li>• Generate professional proposals from quote data</li>
+                                    <li>• AI-powered cover page background images (coming soon)</li>
+                                    <li>• Smart line item suggestions (coming soon)</li>
+                                </ul>
+                            </div>
+
+                            <p className="text-xs text-gray-600">
+                                Your API key is stored locally and never sent to our servers.
+                                AI requests are made directly from your browser to Anthropic's API.
+                            </p>
                         </div>
                     </div>
                 )}
