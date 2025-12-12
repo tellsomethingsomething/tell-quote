@@ -462,21 +462,15 @@ export default function RateCardPage({ onBack }) {
                                     className="flex items-center justify-between cursor-pointer"
                                     onClick={() => setExpandedItemId(expandedItemId === item.id ? null : item.id)}
                                 >
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3">
-                                            <input
-                                                type="text"
-                                                value={item.name}
-                                                onChange={(e) => updateItem(item.id, { name: e.target.value })}
-                                                onClick={e => e.stopPropagation()}
-                                                className="bg-transparent text-gray-200 font-medium focus:bg-dark-bg rounded px-1 -ml-1"
-                                            />
-                                            <span className="text-xs text-gray-600 px-2 py-0.5 bg-dark-bg rounded">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-200 font-medium truncate">{item.name}</span>
+                                            <span className="text-xs text-gray-600 px-2 py-0.5 bg-dark-bg rounded flex-shrink-0">
                                                 {sections.find(s => s.id === item.section)?.name || 'Other'}
                                             </span>
                                         </div>
                                         {item.description && (
-                                            <p className="text-xs text-gray-500 mt-1">{item.description}</p>
+                                            <p className="text-xs text-gray-500 mt-1 truncate">{item.description}</p>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
