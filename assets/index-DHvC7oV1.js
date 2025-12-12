@@ -47,17 +47,26 @@ ${a}
 ${i?`TONE/STYLE: ${i}
 `:""}
 
+WRITING STYLE (IMPORTANT):
+- Direct and efficient — get to the point without padding or filler
+- Professional but casual — never stuffy or overly formal
+- Use natural contractions: I'm, It's, We're, We've, can't, won't, etc.
+- Short paragraphs: 1-3 sentences maximum per paragraph
+- Action-oriented — focus on what's happening and what's needed
+- AVOID: "I am writing to...", "I would be most grateful", "synergise", "leverage", "circle back", "reach out", passive voice overuse
+- NO corporate jargon — write like a real person talking to another professional
+
 Write exactly 4 paragraphs:
-1. Opening: Introduce the proposal, express enthusiasm for the project, mention the client and event
-2. Services: Describe what's being provided, highlight key elements from each section professionally
-3. Value & Approach: Explain the value proposition, mention expertise, quality, and project management
-4. Investment & Next Steps: State the total, validity, and invite discussion
+1. Opening: Direct introduction — who we are, what this is for, genuine enthusiasm (not forced)
+2. Services: What we're providing — be specific about key elements, don't oversell
+3. Value & Approach: Why us — experience, how we work, project management approach
+4. Investment & Next Steps: The total, validity period, and clear call to action
 
-${i?`Use a ${i.toLowerCase()} tone throughout.`:"Keep it professional, confident, and tailored to sports/event production."}
-${a?"Make sure to emphasize the key points provided above.":""}
-Do not use bullet points. Each paragraph should be 3-5 sentences.`}async function mw(t,e,r,n,a={}){const i=Np(t,e,r),o=X_(i,a);try{const c=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":n,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1024,messages:[{role:"user",content:o}]})});if(!c.ok){const v=await c.json();throw new Error(v.error?.message||"API request failed")}const A=(await c.json()).content[0]?.text||"";return{success:!0,paragraphs:A.split(`
+${i?`Tone: ${i}`:""}
+${a?"Emphasize these key points naturally throughout.":""}
+Keep each paragraph to 2-4 sentences. No bullet points. Write conversationally but professionally.`}async function mw(t,e,r,n,a={}){const i=Np(t,e,r),o=X_(i,a);try{const c=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":n,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1024,messages:[{role:"user",content:o}]})});if(!c.ok){const v=await c.json();throw new Error(v.error?.message||"API request failed")}const A=(await c.json()).content[0]?.text||"";return{success:!0,paragraphs:A.split(`
 
-`).filter(v=>v.trim()),fullText:A,context:i}}catch(c){return console.error("AI Proposal generation failed:",c),{success:!1,error:c.message,...Tp(i)}}}function Tp(t){const{company:e,client:r,project:n,sections:a,financials:i}=t,o=a.map(b=>b.section.toLowerCase()).join(", "),c=a.reduce((b,E)=>b+E.items.length,0),f=`${e} is pleased to present this proposal for ${n.title}${n.type?`, a ${n.type.toLowerCase()} production`:""}. We are excited to partner with ${r.name} to deliver a comprehensive production solution that meets your objectives and exceeds expectations. ${n.venue?`The event will take place at ${n.venue}`:"We will work closely with your team to ensure seamless execution"}${n.startDate?` from ${n.startDate}${n.endDate?` to ${n.endDate}`:""}`:""}.`,A=`Our proposal encompasses ${o}, totaling ${c} deliverables tailored specifically to your requirements. ${a.slice(0,2).map(b=>`Our ${b.section.toLowerCase()} includes ${b.items.slice(0,3).map(E=>E.name).join(", ")}${b.items.length>3?" and more":""}`).join(". ")}. Each element has been carefully selected to ensure the highest production standards.`,h="We pride ourselves on delivering exceptional quality while maintaining cost-effectiveness. Our experienced team will manage all aspects of the production, from pre-event planning through to on-site execution and post-event support. We ensure clear communication throughout the process, with dedicated project management to coordinate all elements seamlessly.",v=`The total investment for this comprehensive production package is ${i.total}${i.discount>0?`, which includes a ${i.discount}% discount`:""}. This quotation remains valid for ${i.validityDays} days. We welcome the opportunity to discuss this proposal in detail and are happy to adjust the scope to align with your specific needs. Please contact us to proceed.`;return{paragraphs:[f,A,h,v],fullText:[f,A,h,v].join(`
+`).filter(v=>v.trim()),fullText:A,context:i}}catch(c){return console.error("AI Proposal generation failed:",c),{success:!1,error:c.message,...Tp(i)}}}function Tp(t){const{company:e,client:r,project:n,sections:a,financials:i}=t,o=a.map(v=>v.section.toLowerCase()).join(", "),c=`We're pleased to put together this proposal for ${n.title}${n.type?` — a ${n.type.toLowerCase()} production`:""}${n.venue?` at ${n.venue}`:""}${n.startDate?` (${n.startDate}${n.endDate&&n.endDate!==n.startDate?` - ${n.endDate}`:""})`:""}. We've worked with ${r.name} to scope out exactly what's needed.`,f=`This covers ${o}. ${a.slice(0,2).map(v=>`For ${v.section.toLowerCase()}, we're providing ${v.items.slice(0,3).map(b=>b.name).join(", ")}${v.items.length>3?" and more":""}`).join(". ")}.`,A="Our team will handle everything from planning through to delivery. We'll keep communication clear throughout and make sure all the moving parts come together on the day.",h=`Total investment: ${i.total}${i.discount>0?` (includes ${i.discount}% discount)`:""}. This quote is valid for ${i.validityDays} days. Happy to discuss any adjustments — just let us know.`;return{paragraphs:[c,f,A,h],fullText:[c,f,A,h].join(`
 
 `),context:t}}function $_({view:t="editor",onGoToClients:e,onGoToRateCard:r,onGoToSettings:n,onGoToDashboard:a,onGoToQuotes:i}){const{quote:o,ratesLoading:c,refreshRates:f}=fa(),{saveQuote:A}=Wo(),{logout:h}=Hx(),{settings:v}=kl(),[b,E]=It.useState(!1),[I,S]=It.useState(!1),[T,F]=It.useState(!1),[R,k]=It.useState(!1),[L,D]=It.useState(""),[H,O]=It.useState(!1),M=()=>{E(!0);try{const ee=A(o);ee?.id&&!o.id&&fa.getState().loadQuoteData({...o,id:ee.id}),S(!0),setTimeout(()=>S(!1),2e3)}catch{alert("Failed to save quote.")}finally{E(!1)}},q=async()=>{O(!0),k(!0),D("Generating proposal...");const ee=v.aiSettings?.anthropicKey;if(ee){const N=await mw(o,o.currency,v,ee);D(N.fullText)}else{const N=Np(o,o.currency,v),z=Tp(N);D(z.fullText+`
 
