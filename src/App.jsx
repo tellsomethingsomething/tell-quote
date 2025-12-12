@@ -9,6 +9,7 @@ import DashboardPage from './pages/DashboardPage';
 import QuotesPage from './pages/QuotesPage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
+import FSPage from './pages/FSPage';
 import { useQuoteStore } from './store/quoteStore';
 import { useClientStore } from './store/clientStore';
 import { useRateCardStore } from './store/rateCardStore';
@@ -98,6 +99,10 @@ function App() {
     setView('quotes');
   };
 
+  const handleGoToFS = () => {
+    setView('fs');
+  };
+
   // Render current view
   const renderView = () => {
     switch (view) {
@@ -137,6 +142,10 @@ function App() {
       case 'settings':
         return (
           <SettingsPage />
+        );
+      case 'fs':
+        return (
+          <FSPage onExit={handleGoToDashboard} />
         );
       case 'editor':
       default:
@@ -183,6 +192,7 @@ function App() {
         onGoToDashboard={handleGoToDashboard}
         onGoToQuotes={handleGoToQuotes}
         onGoToSettings={handleGoToSettings}
+        onGoToFS={handleGoToFS}
         selectedClientId={selectedClientId}
       />
       {renderView()}

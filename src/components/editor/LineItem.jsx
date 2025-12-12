@@ -181,7 +181,8 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         id={`quantity-${item.id}`}
                         type="number"
                         value={item.quantity}
-                        onChange={(e) => handleChange('quantity', parseFloat(e.target.value) || 1)}
+                        onChange={(e) => handleChange('quantity', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                        onBlur={(e) => { if (e.target.value === '' || isNaN(item.quantity)) handleChange('quantity', 1); }}
                         onFocus={(e) => e.target.select()}
                         min="1"
                         className="input-sm w-full text-left text-sm"
@@ -199,7 +200,8 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         id={`days-${item.id}`}
                         type="number"
                         value={item.days}
-                        onChange={(e) => handleChange('days', parseFloat(e.target.value) || 1)}
+                        onChange={(e) => handleChange('days', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                        onBlur={(e) => { if (e.target.value === '' || isNaN(item.days)) handleChange('days', 1); }}
                         onFocus={(e) => e.target.select()}
                         min="0.5"
                         step="0.5"
@@ -220,7 +222,8 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                             id={`cost-${item.id}`}
                             type="number"
                             value={item.cost}
-                            onChange={(e) => handleChange('cost', parseFloat(e.target.value) || 0)}
+                            onChange={(e) => handleChange('cost', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                            onBlur={(e) => { if (e.target.value === '' || isNaN(item.cost)) handleChange('cost', 0); }}
                             onFocus={(e) => e.target.select()}
                             min="0"
                             className="input-sm w-full pl-6 text-left text-sm text-gray-500"
@@ -241,7 +244,8 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                             id={`charge-${item.id}`}
                             type="number"
                             value={item.charge}
-                            onChange={(e) => handleChange('charge', parseFloat(e.target.value) || 0)}
+                            onChange={(e) => handleChange('charge', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                            onBlur={(e) => { if (e.target.value === '' || isNaN(item.charge)) handleChange('charge', 0); }}
                             onFocus={(e) => e.target.select()}
                             min="0"
                             className="input-sm w-full pl-6 text-left text-sm"

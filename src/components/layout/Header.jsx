@@ -4,7 +4,7 @@ import { useClientStore } from '../../store/clientStore';
 import { useAuthStore } from '../../store/authStore';
 import Navigation from './Navigation';
 
-export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes }) {
+export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS }) {
     const { quote, ratesLoading, refreshRates } = useQuoteStore();
     const { saveQuote } = useClientStore();
     const { logout } = useAuthStore();
@@ -70,8 +70,20 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                     />
                 </div>
 
-                {/* Right Side - User Menu */}
-                <div className="w-[120px] flex justify-end relative">
+                {/* Right Side - FS Button & User Menu */}
+                <div className="flex items-center gap-3 relative">
+                    {/* Full Screen Analytics Button */}
+                    <button
+                        onClick={onGoToFS}
+                        className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-teal-600/20 to-cyan-600/20 border border-teal-500/30 text-teal-400 text-xs font-bold hover:from-teal-600/30 hover:to-cyan-600/30 hover:border-teal-500/50 transition-all flex items-center gap-1.5"
+                        title="Full Screen Analytics"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        FS
+                    </button>
+
                     <button
                         onClick={() => setShowUserMenu(!showUserMenu)}
                         className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs text-gray-400 hover:border-gray-600 hover:text-gray-300 transition-colors"

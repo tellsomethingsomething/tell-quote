@@ -5,10 +5,21 @@ export default function FeesEditor() {
     const fees = quote.fees || { managementFee: 0, commissionFee: 0, discount: 0 };
 
     const handleChange = (field, value) => {
-        const numValue = parseFloat(value) || 0;
+        if (value === '') {
+            setFees({ [field]: '' });
+            return;
+        }
+        const numValue = parseFloat(value);
+        if (isNaN(numValue)) return;
         // Clamp between 0 and 100
         const clampedValue = Math.min(100, Math.max(0, numValue));
         setFees({ [field]: clampedValue });
+    };
+
+    const handleBlur = (field, value) => {
+        if (value === '' || isNaN(parseFloat(value))) {
+            setFees({ [field]: 0 });
+        }
     };
 
     return (
@@ -26,8 +37,9 @@ export default function FeesEditor() {
                     <div className="relative">
                         <input
                             type="number"
-                            value={fees.managementFee || 0}
+                            value={fees.managementFee}
                             onChange={(e) => handleChange('managementFee', e.target.value)}
+                            onBlur={(e) => handleBlur('managementFee', e.target.value)}
                             min="0"
                             max="100"
                             step="0.5"
@@ -43,8 +55,9 @@ export default function FeesEditor() {
                     <div className="relative">
                         <input
                             type="number"
-                            value={fees.commissionFee || 0}
+                            value={fees.commissionFee}
                             onChange={(e) => handleChange('commissionFee', e.target.value)}
+                            onBlur={(e) => handleBlur('commissionFee', e.target.value)}
                             min="0"
                             max="100"
                             step="0.5"
@@ -60,8 +73,9 @@ export default function FeesEditor() {
                     <div className="relative">
                         <input
                             type="number"
-                            value={fees.discount || 0}
+                            value={fees.discount}
                             onChange={(e) => handleChange('discount', e.target.value)}
+                            onBlur={(e) => handleBlur('discount', e.target.value)}
                             min="0"
                             max="100"
                             step="0.5"

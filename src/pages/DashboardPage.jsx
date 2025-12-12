@@ -142,17 +142,17 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
     }, [filteredQuotes, rates, dashboardCurrency]);
 
     // Calculate 3-month and 6-month forecasts based on project/event start dates
+    // Split into Won (confirmed) and Pipeline (potential) for overall business view
     const forecastStats = useMemo(() => {
         const now = new Date();
         const threeMonthsOut = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
         const sixMonthsOut = new Date(now.getFullYear(), now.getMonth() + 6, now.getDate());
 
-        let forecast3mRevenue = 0;
-        let forecast3mProfit = 0;
-        let forecast6mRevenue = 0;
-        let forecast6mProfit = 0;
+        let won3m = { revenue: 0, profit: 0 };
+        let pipeline3m = { revenue: 0, profit: 0 };
+        let won6m = { revenue: 0, profit: 0 };
+        let pipeline6m = { revenue: 0, profit: 0 };
 
-        // Include won + pipeline quotes with event dates in the forecast windows
         savedQuotes.forEach(q => {
             // Skip lost/dead quotes
             if (q.status === 'dead') return;
@@ -165,21 +165,41 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
             const cost = convertCurrency(calculations.totalCost, q.currency || 'USD', dashboardCurrency, rates);
             const profit = revenue - cost;
 
+            const isWon = q.status === 'won' || q.status === 'approved';
+
             // 3-month: events scheduled within next 3 months
             if (startDate <= threeMonthsOut) {
-                forecast3mRevenue += revenue;
-                forecast3mProfit += profit;
+                if (isWon) {
+                    won3m.revenue += revenue;
+                    won3m.profit += profit;
+                } else {
+                    pipeline3m.revenue += revenue;
+                    pipeline3m.profit += profit;
+                }
             }
             // 6-month: events scheduled within next 6 months
             if (startDate <= sixMonthsOut) {
-                forecast6mRevenue += revenue;
-                forecast6mProfit += profit;
+                if (isWon) {
+                    won6m.revenue += revenue;
+                    won6m.profit += profit;
+                } else {
+                    pipeline6m.revenue += revenue;
+                    pipeline6m.profit += profit;
+                }
             }
         });
 
         return {
-            threeMonth: { revenue: forecast3mRevenue, profit: forecast3mProfit },
-            sixMonth: { revenue: forecast6mRevenue, profit: forecast6mProfit }
+            threeMonth: {
+                won: won3m,
+                pipeline: pipeline3m,
+                total: { revenue: won3m.revenue + pipeline3m.revenue, profit: won3m.profit + pipeline3m.profit }
+            },
+            sixMonth: {
+                won: won6m,
+                pipeline: pipeline6m,
+                total: { revenue: won6m.revenue + pipeline6m.revenue, profit: won6m.profit + pipeline6m.profit }
+            }
         };
     }, [savedQuotes, rates, dashboardCurrency]);
 
@@ -363,17 +383,23 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                             <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                             <span className="text-[10px] font-medium text-amber-400/90 uppercase tracking-wide">3-Month Forecast</span>
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                             <div className="flex justify-between items-baseline">
-                                <p className="text-[10px] text-gray-500">Revenue</p>
-                                <p className="text-sm font-semibold text-amber-400 tabular-nums">
-                                    {formatCurrency(forecastStats.threeMonth.revenue, dashboardCurrency, 0)}
+                                <p className="text-[10px] text-green-500">Won</p>
+                                <p className="text-xs font-medium text-green-400 tabular-nums">
+                                    {formatCurrency(forecastStats.threeMonth.won.revenue, dashboardCurrency, 0)}
                                 </p>
                             </div>
                             <div className="flex justify-between items-baseline">
-                                <p className="text-[10px] text-gray-500">Profit</p>
-                                <p className="text-sm font-semibold text-amber-400/80 tabular-nums">
-                                    {formatCurrency(forecastStats.threeMonth.profit, dashboardCurrency, 0)}
+                                <p className="text-[10px] text-gray-500">Pipeline</p>
+                                <p className="text-xs font-medium text-gray-400 tabular-nums">
+                                    {formatCurrency(forecastStats.threeMonth.pipeline.revenue, dashboardCurrency, 0)}
+                                </p>
+                            </div>
+                            <div className="flex justify-between items-baseline pt-1 border-t border-amber-800/30">
+                                <p className="text-[10px] text-amber-400">Total</p>
+                                <p className="text-sm font-semibold text-amber-400 tabular-nums">
+                                    {formatCurrency(forecastStats.threeMonth.total.revenue, dashboardCurrency, 0)}
                                 </p>
                             </div>
                         </div>
@@ -385,17 +411,23 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                             <div className="w-2 h-2 rounded-full bg-purple-500"></div>
                             <span className="text-[10px] font-medium text-purple-400/90 uppercase tracking-wide">6-Month Forecast</span>
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                             <div className="flex justify-between items-baseline">
-                                <p className="text-[10px] text-gray-500">Revenue</p>
-                                <p className="text-sm font-semibold text-purple-400 tabular-nums">
-                                    {formatCurrency(forecastStats.sixMonth.revenue, dashboardCurrency, 0)}
+                                <p className="text-[10px] text-green-500">Won</p>
+                                <p className="text-xs font-medium text-green-400 tabular-nums">
+                                    {formatCurrency(forecastStats.sixMonth.won.revenue, dashboardCurrency, 0)}
                                 </p>
                             </div>
                             <div className="flex justify-between items-baseline">
-                                <p className="text-[10px] text-gray-500">Profit</p>
-                                <p className="text-sm font-semibold text-purple-400/80 tabular-nums">
-                                    {formatCurrency(forecastStats.sixMonth.profit, dashboardCurrency, 0)}
+                                <p className="text-[10px] text-gray-500">Pipeline</p>
+                                <p className="text-xs font-medium text-gray-400 tabular-nums">
+                                    {formatCurrency(forecastStats.sixMonth.pipeline.revenue, dashboardCurrency, 0)}
+                                </p>
+                            </div>
+                            <div className="flex justify-between items-baseline pt-1 border-t border-purple-800/30">
+                                <p className="text-[10px] text-purple-400">Total</p>
+                                <p className="text-sm font-semibold text-purple-400 tabular-nums">
+                                    {formatCurrency(forecastStats.sixMonth.total.revenue, dashboardCurrency, 0)}
                                 </p>
                             </div>
                         </div>

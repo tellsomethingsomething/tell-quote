@@ -4,7 +4,7 @@ import { useClientStore } from '../../store/clientStore';
 
 export default function ClientDetails() {
     const { quote, setClientDetails } = useQuoteStore();
-    const { clients } = useClientStore();
+    const { clients, updateContact } = useClientStore();
     const { client } = quote;
     const [showDropdown, setShowDropdown] = useState(false);
     const [tagInput, setTagInput] = useState('');
@@ -71,7 +71,18 @@ export default function ClientDetails() {
                 role: contact.role || '',
                 email: contact.email,
                 phone: contact.phone,
+                notes: contact.notes || '',
             });
+        }
+    };
+
+    // Sync contact field back to client store
+    const handleContactFieldChange = (field, value) => {
+        handleChange(field, value);
+
+        // If we have a selected contact, sync back to client store
+        if (clientData && client.contactId) {
+            updateContact(clientData.id, client.contactId, { [field]: value });
         }
     };
 
@@ -165,12 +176,12 @@ export default function ClientDetails() {
                 </div>
 
                 <div>
-                    <label className="label">Role <span className="text-gray-600 font-normal">(internal only)</span></label>
+                    <label className="label">Role on Project <span className="text-gray-600 font-normal">(for this quote)</span></label>
                     <input
                         type="text"
                         value={client.role || ''}
                         onChange={(e) => handleChange('role', e.target.value)}
-                        placeholder="e.g. Marketing Director"
+                        placeholder="e.g. Executive Producer, Client Liaison"
                         className="input"
                     />
                 </div>
@@ -181,7 +192,7 @@ export default function ClientDetails() {
                         <input
                             type="email"
                             value={client.email}
-                            onChange={(e) => handleChange('email', e.target.value)}
+                            onChange={(e) => handleContactFieldChange('email', e.target.value)}
                             placeholder="email@company.com"
                             className="input"
                         />
@@ -192,7 +203,7 @@ export default function ClientDetails() {
                         <input
                             type="tel"
                             value={client.phone}
-                            onChange={(e) => handleChange('phone', e.target.value)}
+                            onChange={(e) => handleContactFieldChange('phone', e.target.value)}
                             placeholder="+65 9123 4567"
                             className="input"
                         />
@@ -200,19 +211,23 @@ export default function ClientDetails() {
                 </div>
 
                 <div>
-                    <label className="label">Notes <span className="text-gray-600 font-normal">(internal only)</span></label>
+                    <label className="label">
+                        Notes
+                        {client.contactId && <span className="text-accent-primary font-normal ml-1">(synced to contact)</span>}
+                        {!client.contactId && <span className="text-gray-600 font-normal ml-1">(internal only)</span>}
+                    </label>
                     <textarea
                         value={client.notes || ''}
-                        onChange={(e) => handleChange('notes', e.target.value)}
+                        onChange={(e) => handleContactFieldChange('notes', e.target.value)}
                         placeholder="Notes about this contact..."
                         rows={2}
                         className="input resize-none text-sm"
                     />
                 </div>
 
-                {/* Tags */}
+                {/* Tags - for the event/project */}
                 <div>
-                    <label className="label">Tags <span className="text-gray-600 font-normal">(internal only)</span></label>
+                    <label className="label">Event Tags <span className="text-gray-600 font-normal">(for this quote)</span></label>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                         {(client.tags || []).map((tag, idx) => (
                             <span
