@@ -37,7 +37,7 @@ const getRateCardSectionId = (sectionId, subsectionName) => {
     return 'other';
 };
 
-export default function Subsection({ sectionId, subsectionName, color }) {
+export default function Subsection({ sectionId, subsectionName, color, isDragging }) {
     const { quote, addLineItem } = useQuoteStore();
     const { items: rateCardItems } = useRateCardStore();
     const section = quote.sections[sectionId];
@@ -96,7 +96,10 @@ export default function Subsection({ sectionId, subsectionName, color }) {
         >
             {/* Subsection Header - Only hide for default 'Services' in flat sections */}
             {!shouldHideHeader && (
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-3 mb-2 cursor-grab active:cursor-grabbing">
+                    <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                    </svg>
                     <h4 className="text-sm font-medium text-gray-400">{subsectionName}</h4>
                     <span className="text-xs text-gray-600">{items.length} {items.length === 1 ? 'item' : 'items'}</span>
                 </div>

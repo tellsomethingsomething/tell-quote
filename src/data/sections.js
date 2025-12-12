@@ -1,11 +1,5 @@
 // Quote sections and subsections structure
 export const SECTIONS = {
-    productionCompany: {
-        id: 'productionCompany',
-        name: 'Production Company',
-        color: '#8B5CF6', // Purple
-        subsections: ['Services'],
-    },
     productionTeam: {
         id: 'productionTeam',
         name: 'Production Team',
@@ -40,7 +34,6 @@ export const SECTIONS = {
 
 // Get ordered array of sections
 export const SECTION_ORDER = [
-    'productionCompany',
     'productionTeam',
     'productionEquipment',
     'creative',

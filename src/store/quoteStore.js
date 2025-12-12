@@ -573,6 +573,25 @@ export const useQuoteStore = create(
             });
         },
 
+        // Reorder subsections within a section (for drag and drop)
+        reorderSubsections: (sectionId, newOrder) => {
+            set(state => {
+                const sections = { ...state.quote.sections };
+                const sectionData = { ...sections[sectionId] };
+
+                sectionData.subsectionOrder = newOrder;
+                sections[sectionId] = sectionData;
+
+                const updated = {
+                    ...state.quote,
+                    sections,
+                    updatedAt: new Date().toISOString()
+                };
+                saveQuoteWithLibrarySync(updated);
+                return { quote: updated };
+            });
+        },
+
         // Refresh rates
         refreshRates: async () => {
             set({ ratesLoading: true });

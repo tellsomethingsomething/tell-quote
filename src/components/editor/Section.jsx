@@ -6,7 +6,7 @@ import { formatCurrency, convertCurrency, getRegionCurrency } from '../../utils/
 import Subsection from './Subsection';
 
 const Section = memo(function Section({ sectionId, index, totalSections }) {
-    const { quote, toggleSection, moveSection, updateSectionName, rates } = useQuoteStore();
+    const { quote, toggleSection, moveSection, updateSectionName, moveSubsection, rates } = useQuoteStore();
     const section = quote.sections[sectionId];
     const sectionConfig = SECTIONS[sectionId];
 
@@ -14,6 +14,8 @@ const Section = memo(function Section({ sectionId, index, totalSections }) {
     const [newSubsectionName, setNewSubsectionName] = useState('');
     const [isEditingName, setIsEditingName] = useState(false);
     const [editedName, setEditedName] = useState('');
+    const [draggedSubsection, setDraggedSubsection] = useState(null);
+    const [dragOverSubsection, setDragOverSubsection] = useState(null);
     const nameInputRef = useRef(null);
 
     // Get custom name or fall back to default
@@ -40,11 +42,52 @@ const Section = memo(function Section({ sectionId, index, totalSections }) {
 
     const formattedTotal = formatCurrency(displayCharge, quote.currency);
 
-    // Get all subsection names (original + custom)
-    const allSubsections = [...sectionConfig.subsections, ...(section.customSubsections || [])];
+    // Get all subsection names in order (use custom order if available)
+    const defaultOrder = [...sectionConfig.subsections, ...(section.customSubsections || [])];
+    const allSubsections = section.subsectionOrder || defaultOrder;
 
     // Count total items
     const itemCount = Object.values(section.subsections).reduce((acc, items) => acc + items.length, 0);
+
+    // Subsection drag handlers
+    const handleSubsectionDragStart = (e, subsectionName) => {
+        setDraggedSubsection(subsectionName);
+        e.dataTransfer.setData('subsection', subsectionName);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleSubsectionDragOver = (e, subsectionName) => {
+        e.preventDefault();
+        if (draggedSubsection && draggedSubsection !== subsectionName) {
+            setDragOverSubsection(subsectionName);
+        }
+    };
+
+    const handleSubsectionDrop = (e, targetSubsection) => {
+        e.preventDefault();
+        if (draggedSubsection && draggedSubsection !== targetSubsection) {
+            // Reorder subsections
+            const currentOrder = [...allSubsections];
+            const fromIndex = currentOrder.indexOf(draggedSubsection);
+            const toIndex = currentOrder.indexOf(targetSubsection);
+
+            if (fromIndex !== -1 && toIndex !== -1) {
+                currentOrder.splice(fromIndex, 1);
+                currentOrder.splice(toIndex, 0, draggedSubsection);
+
+                // Update the store with new order
+                const { reorderSubsections } = useQuoteStore.getState();
+                reorderSubsections(sectionId, currentOrder);
+            }
+        }
+        setDraggedSubsection(null);
+        setDragOverSubsection(null);
+    };
+
+    const handleSubsectionDragEnd = () => {
+        setDraggedSubsection(null);
+        setDragOverSubsection(null);
+    };
 
     const handleAddSubsection = () => {
         if (newSubsectionName.trim()) {
@@ -185,13 +228,27 @@ const Section = memo(function Section({ sectionId, index, totalSections }) {
             {/* Section Content */}
             {section.isExpanded && (
                 <div id={`section-${sectionId}-content`} className="mt-4 space-y-3">
-                    {allSubsections.map(subsectionName => (
-                        <Subsection
+                    {allSubsections.map((subsectionName, idx) => (
+                        <div
                             key={subsectionName}
-                            sectionId={sectionId}
-                            subsectionName={subsectionName}
-                            color={sectionConfig.color}
-                        />
+                            draggable
+                            onDragStart={(e) => handleSubsectionDragStart(e, subsectionName)}
+                            onDragOver={(e) => handleSubsectionDragOver(e, subsectionName)}
+                            onDrop={(e) => handleSubsectionDrop(e, subsectionName)}
+                            onDragEnd={handleSubsectionDragEnd}
+                            className={`transition-all duration-150 ${
+                                draggedSubsection === subsectionName ? 'opacity-50 scale-[0.98]' : ''
+                            } ${
+                                dragOverSubsection === subsectionName ? 'ring-2 ring-accent-primary/50 rounded-lg' : ''
+                            }`}
+                        >
+                            <Subsection
+                                sectionId={sectionId}
+                                subsectionName={subsectionName}
+                                color={sectionConfig.color}
+                                isDragging={draggedSubsection === subsectionName}
+                            />
+                        </div>
                     ))}
 
                     {/* Add Subsection */}
