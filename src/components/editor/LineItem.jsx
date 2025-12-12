@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
-import { searchItems } from '../../data/pricingDatabase';
+import { useRateCardStore } from '../../store/rateCardStore';
 import { calculateLineTotal, calculateLineMargin, getMarginColor } from '../../utils/calculations';
 import { formatCurrency, convertCurrency, getRegionCurrency, getCurrencySymbol } from '../../utils/currency';
 
 export default function LineItem({ item, sectionId, subsectionName }) {
     const { quote, updateLineItem, deleteLineItem, rates } = useQuoteStore();
+    const { items: rateCardItems, sections: rateCardSections } = useRateCardStore();
     const [showAutocomplete, setShowAutocomplete] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
     const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -26,11 +27,19 @@ export default function LineItem({ item, sectionId, subsectionName }) {
         updateLineItem(sectionId, subsectionName, item.id, { [field]: value });
     };
 
+    // Search Rate Card items
+    const searchRateCard = (query) => {
+        const searchLower = query.toLowerCase();
+        return rateCardItems.filter(rcItem =>
+            rcItem.name.toLowerCase().includes(searchLower)
+        ).slice(0, 8);
+    };
+
     const handleNameChange = (value) => {
         handleChange('name', value);
         if (value.length >= 2) {
-            const results = searchItems(value);
-            setSearchResults(results.slice(0, 5));
+            const results = searchRateCard(value);
+            setSearchResults(results);
             setShowAutocomplete(results.length > 0);
             setSelectedIndex(-1);
         } else {
@@ -38,10 +47,16 @@ export default function LineItem({ item, sectionId, subsectionName }) {
         }
     };
 
-    const handleSelectItem = (dbItem) => {
-        const pricing = dbItem.pricing?.[quote.region] || { cost: 0, charge: 0 };
+    // Get section name for display
+    const getSectionName = (sectionId) => {
+        const section = rateCardSections.find(s => s.id === sectionId);
+        return section?.name || sectionId;
+    };
+
+    const handleSelectItem = (rcItem) => {
+        const pricing = rcItem.pricing?.[quote.region] || { cost: 0, charge: 0 };
         updateLineItem(sectionId, subsectionName, item.id, {
-            name: dbItem.name,
+            name: rcItem.name,
             cost: pricing.cost,
             charge: pricing.charge,
         });
@@ -141,7 +156,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         >
                             {searchResults.map((result, idx) => (
                                 <button
-                                    key={idx}
+                                    key={result.id || idx}
                                     onClick={() => handleSelectItem(result)}
                                     className={`w-full px-3 py-2 text-left text-sm hover:bg-white/10 transition-colors flex justify-between items-center ${
                                         idx === selectedIndex ? 'bg-white/10' : ''
@@ -150,7 +165,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                                     aria-selected={idx === selectedIndex}
                                 >
                                     <span className="text-gray-200">{result.name}</span>
-                                    <span className="text-xs text-gray-500">{result.subsection}</span>
+                                    <span className="text-xs text-gray-500">{getSectionName(result.section)}</span>
                                 </button>
                             ))}
                         </div>
@@ -199,17 +214,20 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                     <label htmlFor={`cost-${item.id}`} className="sr-only">
                         Cost per unit
                     </label>
-                    <input
-                        id={`cost-${item.id}`}
-                        type="number"
-                        value={item.cost}
-                        onChange={(e) => handleChange('cost', parseFloat(e.target.value) || 0)}
-                        onFocus={(e) => e.target.select()}
-                        min="0"
-                        className="input-sm w-full text-left text-sm text-gray-500"
-                        title="Cost"
-                        aria-label={`Cost per unit in ${quote.currency}`}
-                    />
+                    <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">{getCurrencySymbol(quote.currency)}</span>
+                        <input
+                            id={`cost-${item.id}`}
+                            type="number"
+                            value={item.cost}
+                            onChange={(e) => handleChange('cost', parseFloat(e.target.value) || 0)}
+                            onFocus={(e) => e.target.select()}
+                            min="0"
+                            className="input-sm w-full pl-6 text-left text-sm text-gray-500"
+                            title="Cost"
+                            aria-label={`Cost per unit in ${quote.currency}`}
+                        />
+                    </div>
                 </div>
 
                 {/* Charge */}
@@ -217,17 +235,20 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                     <label htmlFor={`charge-${item.id}`} className="sr-only">
                         Charge per unit
                     </label>
-                    <input
-                        id={`charge-${item.id}`}
-                        type="number"
-                        value={item.charge}
-                        onChange={(e) => handleChange('charge', parseFloat(e.target.value) || 0)}
-                        onFocus={(e) => e.target.select()}
-                        min="0"
-                        className="input-sm w-full text-left text-sm"
-                        title="Charge"
-                        aria-label={`Charge per unit in ${quote.currency}`}
-                    />
+                    <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">{getCurrencySymbol(quote.currency)}</span>
+                        <input
+                            id={`charge-${item.id}`}
+                            type="number"
+                            value={item.charge}
+                            onChange={(e) => handleChange('charge', parseFloat(e.target.value) || 0)}
+                            onFocus={(e) => e.target.select()}
+                            min="0"
+                            className="input-sm w-full pl-6 text-left text-sm"
+                            title="Charge"
+                            aria-label={`Charge per unit in ${quote.currency}`}
+                        />
+                    </div>
                 </div>
 
                 {/* Total */}
