@@ -9,7 +9,7 @@ const REGIONS = [
 ];
 
 export default function RateCardPage({ onBack }) {
-    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection } = useRateCardStore();
+    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, exportTemplate, addSection, deleteSection, renameSection, moveSection } = useRateCardStore();
     const fileInputRef = useRef(null);
     const [selectedSection, setSelectedSection] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -129,6 +129,9 @@ export default function RateCardPage({ onBack }) {
                                 e.target.value = ''; // Reset
                             }}
                         />
+                        <button onClick={exportTemplate} className="btn-ghost text-sm" title="Download a blank CSV template to fill in">
+                            Download Template
+                        </button>
                         <button onClick={() => fileInputRef.current?.click()} className="btn-ghost text-sm">
                             Import CSV
                         </button>

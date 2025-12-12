@@ -310,16 +310,18 @@ export const useRateCardStore = create(
 
             let csvContent = headers.join(',') + '\n';
 
-            // Add example rows showing available sections
-            const sectionIds = sections.map(s => s.id);
+            // Add instructions as comments (rows starting with # will be skipped on import)
+            csvContent += '# INSTRUCTIONS: Fill in your services below. Delete example rows before importing.\n';
+            csvContent += '# Leave "id" empty for new items. Unit options: day, item, project\n';
+            csvContent += `# Available sections: ${sections.map(s => s.id + ' (' + s.name + ')').join(', ')}\n`;
+            csvContent += '#\n';
 
-            // Example row 1 - with section example
-            csvContent += `,${sectionIds[0] || 'other'},"Example Service Name","Service description goes here",day,100,150,120,180,150,225,130,195\n`;
-
-            // Example row 2 - another section
-            if (sectionIds[1]) {
-                csvContent += `,${sectionIds[1]},"Another Service","Another description",day,200,300,240,360,300,450,260,390\n`;
-            }
+            // Add example rows for each section type
+            sections.slice(0, 3).forEach((section, idx) => {
+                const baseCost = 100 + (idx * 50);
+                const baseCharge = baseCost * 1.5;
+                csvContent += `,${section.id},"Example ${section.name} Item","Description here",day,${baseCost},${baseCharge},${baseCost * 1.2},${baseCharge * 1.2},${baseCost * 1.5},${baseCharge * 1.5},${baseCost * 1.3},${baseCharge * 1.3}\n`;
+            });
 
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -395,7 +397,7 @@ export const useRateCardStore = create(
                 // Parse rows
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
-                    if (!line) continue;
+                    if (!line || line.startsWith('#')) continue; // Skip empty lines and comments
 
                     // Simple CSV parser that handles quoted strings
                     const values = [];
