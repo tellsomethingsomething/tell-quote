@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRateCardStore } from '../store/rateCardStore';
 
 const REGIONS = [
@@ -11,12 +11,21 @@ const REGIONS = [
 export default function RateCardPage({ onBack }) {
     const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, exportTemplate, addSection, deleteSection, renameSection, moveSection, seedRateCard } = useRateCardStore();
     const fileInputRef = useRef(null);
+    const saveTimeoutRef = useRef(null);
     const [selectedSection, setSelectedSection] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [showAddCategoryForm, setShowAddCategoryForm] = useState(false);
     const [expandedItemId, setExpandedItemId] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
+    const [showSaved, setShowSaved] = useState(false);
+
+    // Show saved indicator
+    const triggerSaved = useCallback(() => {
+        setShowSaved(true);
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = setTimeout(() => setShowSaved(false), 2000);
+    }, []);
 
     // New item form state
     const [newItem, setNewItem] = useState({
@@ -42,6 +51,13 @@ export default function RateCardPage({ onBack }) {
         return () => window.removeEventListener('keydown', handleEscape);
     }, [editingItem, showAddForm, showAddCategoryForm]);
 
+    // Cleanup save timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        };
+    }, []);
+
     // Open edit modal with item data
     const openEditModal = (item) => {
         setEditingItem({
@@ -63,6 +79,7 @@ export default function RateCardPage({ onBack }) {
             unit: editingItem.unit,
         });
         setEditingItem(null);
+        triggerSaved();
     };
 
     // Filter items
@@ -80,6 +97,7 @@ export default function RateCardPage({ onBack }) {
         setNewItem({ name: '', description: '', section: sections[0]?.id || 'other', unit: 'day' });
         setShowAddForm(false);
         setExpandedItemId(created.id);
+        triggerSaved();
     };
 
     const handleAddCategory = () => {
@@ -87,10 +105,12 @@ export default function RateCardPage({ onBack }) {
         addSection(newCategoryName);
         setNewCategoryName('');
         setShowAddCategoryForm(false);
+        triggerSaved();
     };
 
     const handlePricingChange = (itemId, region, field, value) => {
         updateItemPricing(itemId, region, { [field]: parseFloat(value) || 0 });
+        triggerSaved();
     };
 
     return (
@@ -107,9 +127,19 @@ export default function RateCardPage({ onBack }) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
-                        <div>
-                            <h1 className="text-xl font-bold text-gray-100">Rate Card</h1>
-                            <p className="text-xs text-gray-500">{items.length} services</p>
+                        <div className="flex items-center gap-3">
+                            <div>
+                                <h1 className="text-xl font-bold text-gray-100">Rate Card</h1>
+                                <p className="text-xs text-gray-500">{items.length} services</p>
+                            </div>
+                            {showSaved && (
+                                <span className="text-xs text-green-400 flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded-full">
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Saved
+                                </span>
+                            )}
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -122,8 +152,12 @@ export default function RateCardPage({ onBack }) {
                                 const file = e.target.files[0];
                                 if (file) {
                                     importFromCSV(file).then(res => {
-                                        if (res.success) alert(`Imported ${res.count} items successfully`);
-                                        else alert('Import failed: ' + res.error);
+                                        if (res.success) {
+                                            alert(`Imported ${res.count} items successfully`);
+                                            triggerSaved();
+                                        } else {
+                                            alert('Import failed: ' + res.error);
+                                        }
                                     });
                                 }
                                 e.target.value = ''; // Reset
@@ -134,6 +168,7 @@ export default function RateCardPage({ onBack }) {
                                 const result = seedRateCard();
                                 if (result.added > 0) {
                                     alert(`Added ${result.added} default services!`);
+                                    triggerSaved();
                                 } else {
                                     alert(result.message || 'Default services already loaded');
                                 }
@@ -226,7 +261,7 @@ export default function RateCardPage({ onBack }) {
                                     {/* Reorder buttons */}
                                     <div className="flex flex-col gap-0.5">
                                         <button
-                                            onClick={() => moveSection(section.id, 'up')}
+                                            onClick={() => { moveSection(section.id, 'up'); triggerSaved(); }}
                                             disabled={index === 0}
                                             className="text-gray-600 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
                                             title="Move up"
@@ -236,7 +271,7 @@ export default function RateCardPage({ onBack }) {
                                             </svg>
                                         </button>
                                         <button
-                                            onClick={() => moveSection(section.id, 'down')}
+                                            onClick={() => { moveSection(section.id, 'down'); triggerSaved(); }}
                                             disabled={index === sections.length - 1}
                                             className="text-gray-600 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
                                             title="Move down"
@@ -251,7 +286,7 @@ export default function RateCardPage({ onBack }) {
                                     <input
                                         type="text"
                                         value={section.name}
-                                        onChange={(e) => renameSection(section.id, e.target.value)}
+                                        onChange={(e) => { renameSection(section.id, e.target.value); triggerSaved(); }}
                                         className="flex-1 bg-transparent text-sm text-gray-300 focus:bg-dark-bg rounded px-2 py-1 border border-transparent focus:border-dark-border"
                                     />
 
@@ -260,6 +295,7 @@ export default function RateCardPage({ onBack }) {
                                         onClick={() => {
                                             if (confirm(`Delete category "${section.name}"? Items will be moved to 'Other'.`)) {
                                                 deleteSection(section.id);
+                                                triggerSaved();
                                             }
                                         }}
                                         className="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1"
@@ -442,6 +478,7 @@ export default function RateCardPage({ onBack }) {
                                     const result = seedRateCard();
                                     if (result.added > 0) {
                                         alert(`Added ${result.added} default services!`);
+                                        triggerSaved();
                                     }
                                 }}
                                 className="btn-primary"
@@ -489,7 +526,10 @@ export default function RateCardPage({ onBack }) {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (confirm('Delete this service?')) deleteItem(item.id);
+                                                if (confirm('Delete this service?')) {
+                                                    deleteItem(item.id);
+                                                    triggerSaved();
+                                                }
                                             }}
                                             className="p-1 text-gray-600 hover:text-red-400"
                                             title="Delete service"
