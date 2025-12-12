@@ -310,6 +310,19 @@ export const useClientStore = create(
             });
         },
 
+        // Update quote (for tags and other fields)
+        updateQuote: (quoteId, updates) => {
+            set(state => {
+                const savedQuotes = state.savedQuotes.map(q =>
+                    q.id === quoteId
+                        ? { ...q, ...updates, updatedAt: new Date().toISOString() }
+                        : q
+                );
+                saveSavedQuotes(savedQuotes);
+                return { savedQuotes };
+            });
+        },
+
         // =====================
         // EXPORT/IMPORT
         // =====================
@@ -369,26 +382,16 @@ export const useClientStore = create(
             const quotes = get().savedQuotes.filter(q => q.clientId === clientId);
             if (!quotes.length) return null;
 
-            // We need to calculate values. Importing the helper or duplicating logic?
-            // Since this is a store, avoiding circular dependency with utils is good, but duplicating calculation is risky.
-            // Let's assume we can get basic totals from the quote object if we stored them, OR we import the calculator.
-            // Check imports... we don't import calculator here.
-            // Ideally quote object should store its 'grandTotal' when saved. 
-            // Currently it saves the whole state. 'sections' are there.
-
-            // Allow passing a calculate function or import it.
-            // Ideally we modify saveQuote to compute and store the total value to avoid recalculating everywhere.
-            // value: number
-
-            // For now, let's just count.
             const won = quotes.filter(q => q.status === 'won');
             const lost = quotes.filter(q => q.status === 'dead' || q.status === 'rejected');
+            const closedDeals = won.length + lost.length;
 
             return {
                 totalQuotes: quotes.length,
                 wonCount: won.length,
                 lostCount: lost.length,
-                winRate: quotes.length > 0 ? (won.length / quotes.length) * 100 : 0,
+                // Win rate = won / closed deals (only count finished deals, not drafts/sent)
+                winRate: closedDeals > 0 ? Math.round((won.length / closedDeals) * 100) : 0,
             };
         },
 

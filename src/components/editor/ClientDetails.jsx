@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useClientStore } from '../../store/clientStore';
 
@@ -10,8 +10,19 @@ export default function ClientDetails() {
 
     // Filter clients based on input
     const filteredClients = client.company
-        ? clients.filter(c => c.company.toLowerCase().includes(client.company.toLowerCase()))
+        ? clients.filter(c => c?.company?.toLowerCase()?.includes(client.company.toLowerCase()))
         : clients;
+
+    // Handle escape key to close dropdown
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape' && showDropdown) {
+                setShowDropdown(false);
+            }
+        };
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+    }, [showDropdown]);
 
     const handleChange = (field, value) => {
         setClientDetails({ [field]: value });
@@ -29,7 +40,7 @@ export default function ClientDetails() {
 
     // Find full client data to access contacts
     const clientData = clients.find(c =>
-        c.company.toLowerCase() === client.company?.toLowerCase()
+        c?.company?.toLowerCase() === client?.company?.toLowerCase()
     );
 
     const handleSelectContact = (contactId) => {
@@ -40,6 +51,7 @@ export default function ClientDetails() {
             setClientDetails({
                 contactId: contact.id,
                 contact: contact.name,
+                role: contact.role || '',
                 email: contact.email,
                 phone: contact.phone,
             });
@@ -70,20 +82,22 @@ export default function ClientDetails() {
 
                     {/* Client Dropdown */}
                     {showDropdown && filteredClients.length > 0 && (
-                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[#111827] border border-gray-700 rounded-lg shadow-2xl max-h-48 overflow-y-auto">
-                            <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-700 bg-gray-900/50">
-                                Select existing client or type new
-                            </div>
-                            {filteredClients.map(c => (
+                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-dark-card border border-dark-border rounded-lg shadow-xl max-h-64 overflow-y-auto dropdown-menu">
+                            {filteredClients.map((c, index) => (
                                 <button
                                     key={c.id}
                                     onClick={() => handleSelectClient(c)}
-                                    className="w-full px-3 py-2 text-left hover:bg-white/10 transition-colors"
+                                    className={`w-full px-3 py-2.5 text-left hover:bg-accent-primary/10 transition-colors flex items-center gap-3 ${index !== filteredClients.length - 1 ? 'border-b border-dark-border/50' : ''}`}
                                 >
-                                    <p className="text-sm text-gray-200">{c.company}</p>
-                                    {c.contact && (
-                                        <p className="text-xs text-gray-500">{c.contact}</p>
-                                    )}
+                                    <div className="w-8 h-8 rounded-md bg-gray-800 flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">
+                                        {c.company.substring(0, 2).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-gray-200 font-medium truncate">{c.company}</p>
+                                        {c.contact && (
+                                            <p className="text-xs text-gray-500 truncate">{c.contact}</p>
+                                        )}
+                                    </div>
                                 </button>
                             ))}
                         </div>
@@ -92,7 +106,7 @@ export default function ClientDetails() {
                     {/* Click outside to close */}
                     {showDropdown && (
                         <div
-                            className="fixed inset-0 z-10"
+                            className="fixed inset-0 z-40"
                             onClick={() => setShowDropdown(false)}
                         />
                     )}
@@ -133,6 +147,17 @@ export default function ClientDetails() {
                     )}
                 </div>
 
+                <div>
+                    <label className="label">Role <span className="text-gray-600 font-normal">(internal only)</span></label>
+                    <input
+                        type="text"
+                        value={client.role || ''}
+                        onChange={(e) => handleChange('role', e.target.value)}
+                        placeholder="e.g. Marketing Director"
+                        className="input"
+                    />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label className="label">Email</label>
@@ -155,6 +180,17 @@ export default function ClientDetails() {
                             className="input"
                         />
                     </div>
+                </div>
+
+                <div>
+                    <label className="label">Notes <span className="text-gray-600 font-normal">(internal only)</span></label>
+                    <textarea
+                        value={client.notes || ''}
+                        onChange={(e) => handleChange('notes', e.target.value)}
+                        placeholder="Notes about this contact..."
+                        rows={2}
+                        className="input resize-none text-sm"
+                    />
                 </div>
             </div>
         </div>

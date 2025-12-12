@@ -96,9 +96,9 @@ export default function Subsection({ sectionId, subsectionName, color }) {
         >
             {/* Subsection Header - Only hide for default 'Services' in flat sections */}
             {!shouldHideHeader && (
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3 mb-2">
                     <h4 className="text-sm font-medium text-gray-400">{subsectionName}</h4>
-                    <span className="text-xs text-gray-600">{items.length} items</span>
+                    <span className="text-xs text-gray-600">{items.length} {items.length === 1 ? 'item' : 'items'}</span>
                 </div>
             )}
 

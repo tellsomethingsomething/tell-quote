@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { SECTIONS } from '../../data/sections';
 import { calculateSectionTotal } from '../../utils/calculations';
 import { formatCurrency, convertCurrency, getRegionCurrency } from '../../utils/currency';
 import Subsection from './Subsection';
 
-export default function Section({ sectionId }) {
+const Section = memo(function Section({ sectionId }) {
     const { quote, toggleSection, rates } = useQuoteStore();
     const section = quote.sections[sectionId];
     const sectionConfig = SECTIONS[sectionId];
@@ -42,18 +42,28 @@ export default function Section({ sectionId }) {
     };
 
     return (
-        <div className="card overflow-hidden" style={{ borderLeftColor: sectionConfig.color, borderLeftWidth: '3px' }}>
+        <div
+            className="card overflow-hidden"
+            style={{ borderLeftColor: sectionConfig.color, borderLeftWidth: '3px' }}
+            role="region"
+            aria-labelledby={`section-${sectionId}-title`}
+        >
             {/* Section Header */}
-            <div
-                className="section-header -m-4 mb-0"
+            <button
+                className="section-header -m-4 mb-0 w-full"
                 onClick={() => toggleSection(sectionId)}
+                aria-expanded={section.isExpanded}
+                aria-controls={`section-${sectionId}-content`}
             >
                 <div className="flex items-center gap-3">
                     <div
                         className="w-2 h-2 rounded-full"
                         style={{ backgroundColor: sectionConfig.color }}
+                        aria-hidden="true"
                     />
-                    <h3 className="font-semibold text-gray-200">{sectionConfig.name}</h3>
+                    <h3 id={`section-${sectionId}-title`} className="font-semibold text-gray-200">
+                        {sectionConfig.name}
+                    </h3>
                     <span className="text-xs text-gray-500 bg-dark-card px-2 py-0.5 rounded">
                         {itemCount} items
                     </span>
@@ -66,15 +76,16 @@ export default function Section({ sectionId }) {
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
+                        aria-hidden="true"
                     >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                 </div>
-            </div>
+            </button>
 
             {/* Section Content */}
             {section.isExpanded && (
-                <div className="mt-4 space-y-3">
+                <div id={`section-${sectionId}-content`} className="mt-4 space-y-3">
                     {allSubsections.map(subsectionName => (
                         <Subsection
                             key={subsectionName}
@@ -87,7 +98,11 @@ export default function Section({ sectionId }) {
                     {/* Add Subsection */}
                     {showAddSubsection ? (
                         <div className="flex items-center gap-2 p-2 bg-dark-bg rounded-lg">
+                            <label htmlFor={`new-subsection-${sectionId}`} className="sr-only">
+                                New subsection name
+                            </label>
                             <input
+                                id={`new-subsection-${sectionId}`}
                                 type="text"
                                 value={newSubsectionName}
                                 onChange={(e) => setNewSubsectionName(e.target.value)}
@@ -101,8 +116,13 @@ export default function Section({ sectionId }) {
                                         setNewSubsectionName('');
                                     }
                                 }}
+                                aria-label="New subsection name"
                             />
-                            <button onClick={handleAddSubsection} className="btn-primary text-xs py-1 px-2">
+                            <button
+                                onClick={handleAddSubsection}
+                                className="btn-primary text-xs py-1 px-2"
+                                aria-label="Add subsection"
+                            >
                                 Add
                             </button>
                             <button
@@ -111,6 +131,7 @@ export default function Section({ sectionId }) {
                                     setNewSubsectionName('');
                                 }}
                                 className="btn-ghost text-xs py-1 px-2"
+                                aria-label="Cancel adding subsection"
                             >
                                 Cancel
                             </button>
@@ -119,8 +140,9 @@ export default function Section({ sectionId }) {
                         <button
                             onClick={() => setShowAddSubsection(true)}
                             className="w-full py-2 text-sm text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center gap-1"
+                            aria-label="Add new subsection"
                         >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
                             Add Subsection
@@ -130,4 +152,6 @@ export default function Section({ sectionId }) {
             )}
         </div>
     );
-}
+});
+
+export default Section;

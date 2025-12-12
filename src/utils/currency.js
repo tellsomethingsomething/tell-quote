@@ -115,3 +115,8 @@ export function getRegionCurrency(regionId) {
     };
     return regionCurrencies[regionId] || 'USD';
 }
+
+// Get currency symbol
+export function getCurrencySymbol(currencyCode) {
+    return CURRENCIES[currencyCode]?.symbol || currencyCode;
+}

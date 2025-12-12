@@ -29,6 +29,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
     const [dragOverColumn, setDragOverColumn] = useState(null);
 
     const [collapsedColumns, setCollapsedColumns] = useState({});
+    const [pipelineMinimized, setPipelineMinimized] = useState(false);
 
     // Toggle column collapse
     const toggleColumn = (statusId) => {
@@ -51,7 +52,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
         return Array.from(yearSet).sort((a, b) => b - a);
     }, [savedQuotes]);
 
-    // Filter quotes by month/year and sort by Event Date
+    // Filter quotes by month/year and sort by most recent
     const filteredQuotes = useMemo(() => {
         const filtered = savedQuotes.filter(q => {
             if (!q) return false;
@@ -61,11 +62,11 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
             return matchesYear && matchesMonth;
         });
 
-        // Sort by Project Start Date (Earliest first)
+        // Sort by most recent (updatedAt or savedAt or createdAt)
         return filtered.sort((a, b) => {
-            const dateA = new Date(a?.project?.startDate || '9999-12-31');
-            const dateB = new Date(b?.project?.startDate || '9999-12-31');
-            return dateA - dateB;
+            const dateA = new Date(a?.updatedAt || a?.savedAt || a?.createdAt || 0);
+            const dateB = new Date(b?.updatedAt || b?.savedAt || b?.createdAt || 0);
+            return dateB - dateA; // Most recent first
         });
     }, [savedQuotes, selectedMonth, selectedYear]);
 
@@ -312,7 +313,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                 </div>
 
                 {/* Pipeline Summary Cards */}
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-4 gap-4 mb-6">
                     {STATUSES.map(status => (
                         <div
                             key={status.id}
@@ -328,10 +329,24 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                         </div>
                     ))}
                 </div>
+
             </div>
 
             {/* Pipeline Columns */}
             <div className="p-4">
+                {/* Pipeline Header with Minimize Toggle */}
+                <button
+                    onClick={() => setPipelineMinimized(!pipelineMinimized)}
+                    className="flex items-center gap-2 text-sm font-semibold text-gray-400 mb-3 hover:text-white transition-colors"
+                >
+                    <svg className={`w-4 h-4 transition-transform ${pipelineMinimized ? '' : 'rotate-90'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                    Pipeline Board
+                    <span className="text-xs text-gray-600 font-normal">({filteredQuotes.length} quotes)</span>
+                </button>
+
+                {!pipelineMinimized && (
                 <div className="grid grid-cols-4 gap-4 min-h-[400px] items-start">
                     {STATUSES.map(status => {
                         const isCollapsed = collapsedColumns[status.id];
@@ -367,10 +382,13 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
 
                                 {/* Quote Cards */}
                                 {!isCollapsed && (
-                                    <div className="space-y-2 px-1 pb-2">
+                                    <div className="space-y-3 px-1 pb-3">
                                         {pipelineData[status.id].length === 0 ? (
-                                            <div className="text-center py-8 text-gray-600 text-sm border-2 border-dashed border-dark-border rounded-lg">
-                                                No quotes
+                                            <div className="text-center py-12 text-gray-500 text-sm border-2 border-dashed border-dark-border/50 rounded-xl bg-dark-bg/30">
+                                                <svg className="w-8 h-8 mx-auto mb-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                No quotes yet
                                             </div>
                                         ) : (
                                             pipelineData[status.id].map(quote => {
@@ -434,6 +452,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                         );
                     })}
                 </div>
+                )}
             </div>
         </div>
     );

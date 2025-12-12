@@ -2,23 +2,30 @@
 
 // Calculate total for a single line item
 export function calculateLineTotal(item) {
-    const quantity = item.quantity || 1;
-    const days = item.days || 1;
+    if (!item) return { totalCost: 0, totalCharge: 0 };
+
+    const quantity = Number(item.quantity) || 1;
+    const days = Number(item.days) || 1;
+    const cost = Number(item.cost) || 0;
+    const charge = Number(item.charge) || 0;
 
     return {
-        totalCost: item.cost * quantity * days,
-        totalCharge: item.charge * quantity * days,
+        totalCost: cost * quantity * days,
+        totalCharge: charge * quantity * days,
     };
 }
 
 // Calculate margin percentage
 export function calculateMargin(cost, charge) {
-    if (charge === 0) return 0;
-    return ((charge - cost) / charge) * 100;
+    const numCost = Number(cost) || 0;
+    const numCharge = Number(charge) || 0;
+    if (numCharge === 0) return 0;
+    return ((numCharge - numCost) / numCharge) * 100;
 }
 
 // Calculate margin for a line item
 export function calculateLineMargin(item) {
+    if (!item) return 0;
     const { totalCost, totalCharge } = calculateLineTotal(item);
     return calculateMargin(totalCost, totalCharge);
 }
@@ -39,8 +46,11 @@ export function getMarginBgColor(margin) {
 
 // Calculate subsection totals
 export function calculateSubsectionTotal(items) {
+    if (!items || !Array.isArray(items)) return { totalCost: 0, totalCharge: 0 };
+
     return items.reduce(
         (acc, item) => {
+            if (!item) return acc;
             const { totalCost, totalCharge } = calculateLineTotal(item);
             return {
                 totalCost: acc.totalCost + totalCost,
@@ -53,6 +63,8 @@ export function calculateSubsectionTotal(items) {
 
 // Calculate section totals
 export function calculateSectionTotal(subsections) {
+    if (!subsections || typeof subsections !== 'object') return { totalCost: 0, totalCharge: 0 };
+
     let totalCost = 0;
     let totalCharge = 0;
 
@@ -67,11 +79,13 @@ export function calculateSectionTotal(subsections) {
 
 // Calculate grand total across all sections
 export function calculateGrandTotal(sections) {
+    if (!sections || typeof sections !== 'object') return { totalCost: 0, totalCharge: 0 };
+
     let totalCost = 0;
     let totalCharge = 0;
 
     Object.values(sections).forEach(section => {
-        if (section.subsections) {
+        if (section?.subsections) {
             const sectionTotal = calculateSectionTotal(section.subsections);
             totalCost += sectionTotal.totalCost;
             totalCharge += sectionTotal.totalCharge;
@@ -148,12 +162,16 @@ export function calculateTotalWithPercentages(sections, percentageItems) {
 
 // Count total items in quote
 export function countItems(sections) {
+    if (!sections || typeof sections !== 'object') return 0;
+
     let count = 0;
 
     Object.values(sections).forEach(section => {
-        if (section.subsections) {
+        if (section?.subsections) {
             Object.values(section.subsections).forEach(items => {
-                count += items.length;
+                if (Array.isArray(items)) {
+                    count += items.length;
+                }
             });
         }
     });

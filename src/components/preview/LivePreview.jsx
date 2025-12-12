@@ -117,31 +117,33 @@ export default function LivePreview() {
 
                 <div className="divide-y divide-gray-100">
                     {/* Iterate Sections */}
-                    {Object.values(quote.sections).map(section => (
-                        (section.isExpanded && Object.values(section.subsections).some(arr => arr.length > 0)) && (
+                    {Object.values(quote.sections || {}).map(section => (
+                        (section?.isExpanded && section?.subsections && Object.values(section.subsections).some(arr => Array.isArray(arr) && arr.length > 0)) && (
                             <div key={section.id} className="py-2">
                                 <div className="font-bold text-slate-700 bg-slate-50 px-2 py-1 mb-1">{section.name}</div>
-                                {Object.entries(section.subsections).map(([, items]) => (
-                                    items.map(item => (
-                                        <div key={item.id} className="flex px-2 py-1 text-slate-600">
-                                            <div className="flex-1">{item.name}</div>
-                                            <div className="w-16 text-center">{item.quantity}</div>
-                                            <div className="w-16 text-center">{item.days}</div>
-                                            <div className="w-24 text-right">
-                                                {formatCurrency(
-                                                    convertFromUSD(getDistributedRate(item.charge), quote.currency, rates),
-                                                    quote.currency,
-                                                    { showSymbol: false }
-                                                )}
+                                {Object.entries(section.subsections || {}).map(([subsectionName, items]) => (
+                                    Array.isArray(items) && items.map(item => (
+                                        item && (
+                                            <div key={item.id} className="flex px-2 py-1 text-slate-600">
+                                                <div className="flex-1">{item.name || ''}</div>
+                                                <div className="w-16 text-center">{item.quantity || 1}</div>
+                                                <div className="w-16 text-center">{item.days || 1}</div>
+                                                <div className="w-24 text-right">
+                                                    {formatCurrency(
+                                                        convertFromUSD(getDistributedRate(item.charge || 0), quote.currency, rates),
+                                                        quote.currency,
+                                                        { showSymbol: false }
+                                                    )}
+                                                </div>
+                                                <div className="w-24 text-right">
+                                                    {formatCurrency(
+                                                        convertFromUSD(getDistributedRate(item.charge || 0) * (item.quantity || 1) * (item.days || 1), quote.currency, rates),
+                                                        quote.currency,
+                                                        { showSymbol: false }
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div className="w-24 text-right">
-                                                {formatCurrency(
-                                                    convertFromUSD(getDistributedRate(item.charge) * (item.quantity || 1) * (item.days || 1), quote.currency, rates),
-                                                    quote.currency,
-                                                    { showSymbol: false }
-                                                )}
-                                            </div>
-                                        </div>
+                                        )
                                     ))
                                 ))}
                             </div>

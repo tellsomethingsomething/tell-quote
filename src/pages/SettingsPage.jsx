@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSettingsStore } from '../store/settingsStore';
 
 const TABS = [
@@ -7,6 +7,7 @@ const TABS = [
     { id: 'bank', label: 'Bank Details' },
     { id: 'users', label: 'Users' },
     { id: 'quote', label: 'Quote Defaults' },
+    { id: 'customize', label: 'Customization' },
     { id: 'pdf', label: 'PDF Options' },
 ];
 
@@ -21,11 +22,45 @@ export default function SettingsPage({ onBack }) {
         addUser,
         updateUser,
         deleteUser,
+        addProjectType,
+        updateProjectType,
+        deleteProjectType,
+        moveProjectType,
+        addRegion,
+        updateRegion,
+        deleteRegion,
+        moveRegion,
     } = useSettingsStore();
 
     const [activeTab, setActiveTab] = useState('company');
     const [showAddUser, setShowAddUser] = useState(false);
     const [newUser, setNewUser] = useState({ name: '', email: '' });
+    const [newProjectType, setNewProjectType] = useState('');
+    const [newRegion, setNewRegion] = useState({ label: '', currency: 'USD' });
+    const [showSaved, setShowSaved] = useState(false);
+    const saveTimeoutRef = useRef(null);
+
+    // Show saved indicator
+    const triggerSaved = () => {
+        setShowSaved(true);
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = setTimeout(() => setShowSaved(false), 2000);
+    };
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        };
+    }, []);
+
+    // Wrapped setters that show saved indicator
+    const saveCompanyInfo = (data) => { setCompanyInfo(data); triggerSaved(); };
+    const saveTaxInfo = (data) => { setTaxInfo(data); triggerSaved(); };
+    const saveBankDetails = (data) => { setBankDetails(data); triggerSaved(); };
+    const saveQuoteDefaults = (data) => { setQuoteDefaults(data); triggerSaved(); };
+    const savePdfOptions = (data) => { setPdfOptions(data); triggerSaved(); };
+    const saveUser = (id, data) => { updateUser(id, data); triggerSaved(); };
 
     const handleAddUser = () => {
         if (newUser.name.trim()) {
@@ -49,7 +84,17 @@ export default function SettingsPage({ onBack }) {
                     Back
                 </button>
 
-                <h2 className="text-lg font-bold text-gray-100 mb-4">Settings</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-gray-100">Settings</h2>
+                    {showSaved && (
+                        <span className="text-xs text-green-400 flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Saved
+                        </span>
+                    )}
+                </div>
 
                 <nav className="space-y-1">
                     {TABS.map(tab => (
@@ -101,7 +146,7 @@ export default function SettingsPage({ onBack }) {
                                                     if (file) {
                                                         const reader = new FileReader();
                                                         reader.onload = (event) => {
-                                                            setCompanyInfo({ logo: event.target.result });
+                                                            saveCompanyInfo({ logo: event.target.result });
                                                         };
                                                         reader.readAsDataURL(file);
                                                     }
@@ -110,7 +155,7 @@ export default function SettingsPage({ onBack }) {
                                         </label>
                                         {settings.company.logo && (
                                             <button
-                                                onClick={() => setCompanyInfo({ logo: null })}
+                                                onClick={() => saveCompanyInfo({ logo: null })}
                                                 className="text-xs text-red-400 hover:text-red-300"
                                             >
                                                 Remove
@@ -125,7 +170,7 @@ export default function SettingsPage({ onBack }) {
                                 <input
                                     type="text"
                                     value={settings.company.name}
-                                    onChange={(e) => setCompanyInfo({ name: e.target.value })}
+                                    onChange={(e) => saveCompanyInfo({ name: e.target.value })}
                                     className="input"
                                     placeholder="Your Company Name"
                                 />
@@ -134,7 +179,7 @@ export default function SettingsPage({ onBack }) {
                                 <label className="label">Address</label>
                                 <textarea
                                     value={settings.company.address}
-                                    onChange={(e) => setCompanyInfo({ address: e.target.value })}
+                                    onChange={(e) => saveCompanyInfo({ address: e.target.value })}
                                     className="input resize-none"
                                     rows={2}
                                     placeholder="Street address"
@@ -146,7 +191,7 @@ export default function SettingsPage({ onBack }) {
                                     <input
                                         type="text"
                                         value={settings.company.city}
-                                        onChange={(e) => setCompanyInfo({ city: e.target.value })}
+                                        onChange={(e) => saveCompanyInfo({ city: e.target.value })}
                                         className="input"
                                         placeholder="City"
                                     />
@@ -156,7 +201,7 @@ export default function SettingsPage({ onBack }) {
                                     <input
                                         type="text"
                                         value={settings.company.country}
-                                        onChange={(e) => setCompanyInfo({ country: e.target.value })}
+                                        onChange={(e) => saveCompanyInfo({ country: e.target.value })}
                                         className="input"
                                         placeholder="Country"
                                     />
@@ -168,7 +213,7 @@ export default function SettingsPage({ onBack }) {
                                     <input
                                         type="tel"
                                         value={settings.company.phone}
-                                        onChange={(e) => setCompanyInfo({ phone: e.target.value })}
+                                        onChange={(e) => saveCompanyInfo({ phone: e.target.value })}
                                         className="input"
                                         placeholder="+60 3 1234 5678"
                                     />
@@ -178,7 +223,7 @@ export default function SettingsPage({ onBack }) {
                                     <input
                                         type="email"
                                         value={settings.company.email}
-                                        onChange={(e) => setCompanyInfo({ email: e.target.value })}
+                                        onChange={(e) => saveCompanyInfo({ email: e.target.value })}
                                         className="input"
                                         placeholder="info@company.com"
                                     />
@@ -189,7 +234,7 @@ export default function SettingsPage({ onBack }) {
                                 <input
                                     type="url"
                                     value={settings.company.website}
-                                    onChange={(e) => setCompanyInfo({ website: e.target.value })}
+                                    onChange={(e) => saveCompanyInfo({ website: e.target.value })}
                                     className="input"
                                     placeholder="https://www.company.com"
                                 />
@@ -208,7 +253,7 @@ export default function SettingsPage({ onBack }) {
                                 <input
                                     type="text"
                                     value={settings.taxInfo.taxNumber}
-                                    onChange={(e) => setTaxInfo({ taxNumber: e.target.value })}
+                                    onChange={(e) => saveTaxInfo({ taxNumber: e.target.value })}
                                     className="input"
                                     placeholder="e.g. GST-123456789"
                                 />
@@ -218,7 +263,7 @@ export default function SettingsPage({ onBack }) {
                                 <input
                                     type="text"
                                     value={settings.taxInfo.registrationNumber}
-                                    onChange={(e) => setTaxInfo({ registrationNumber: e.target.value })}
+                                    onChange={(e) => saveTaxInfo({ registrationNumber: e.target.value })}
                                     className="input"
                                     placeholder="e.g. 123456-A"
                                 />
@@ -227,7 +272,7 @@ export default function SettingsPage({ onBack }) {
                                 <label className="label">Licenses / Certifications</label>
                                 <textarea
                                     value={settings.taxInfo.licenses}
-                                    onChange={(e) => setTaxInfo({ licenses: e.target.value })}
+                                    onChange={(e) => saveTaxInfo({ licenses: e.target.value })}
                                     className="input resize-none"
                                     rows={3}
                                     placeholder="List any relevant licenses or certifications"
@@ -247,7 +292,7 @@ export default function SettingsPage({ onBack }) {
                                 <input
                                     type="text"
                                     value={settings.bankDetails.bankName}
-                                    onChange={(e) => setBankDetails({ bankName: e.target.value })}
+                                    onChange={(e) => saveBankDetails({ bankName: e.target.value })}
                                     className="input"
                                     placeholder="e.g. Maybank"
                                 />
@@ -257,7 +302,7 @@ export default function SettingsPage({ onBack }) {
                                 <input
                                     type="text"
                                     value={settings.bankDetails.accountName}
-                                    onChange={(e) => setBankDetails({ accountName: e.target.value })}
+                                    onChange={(e) => saveBankDetails({ accountName: e.target.value })}
                                     className="input"
                                     placeholder="Account holder name"
                                 />
@@ -268,7 +313,7 @@ export default function SettingsPage({ onBack }) {
                                     <input
                                         type="text"
                                         value={settings.bankDetails.accountNumber}
-                                        onChange={(e) => setBankDetails({ accountNumber: e.target.value })}
+                                        onChange={(e) => saveBankDetails({ accountNumber: e.target.value })}
                                         className="input"
                                         placeholder="1234567890"
                                     />
@@ -278,7 +323,7 @@ export default function SettingsPage({ onBack }) {
                                     <input
                                         type="text"
                                         value={settings.bankDetails.swiftCode}
-                                        onChange={(e) => setBankDetails({ swiftCode: e.target.value })}
+                                        onChange={(e) => saveBankDetails({ swiftCode: e.target.value })}
                                         className="input"
                                         placeholder="MBBEMYKL"
                                     />
@@ -340,13 +385,13 @@ export default function SettingsPage({ onBack }) {
                                             <input
                                                 type="text"
                                                 value={user.name}
-                                                onChange={(e) => updateUser(user.id, { name: e.target.value })}
+                                                onChange={(e) => saveUser(user.id, { name: e.target.value })}
                                                 className="bg-transparent text-gray-200 font-medium focus:bg-dark-bg rounded px-1 -ml-1"
                                             />
                                             <input
                                                 type="email"
                                                 value={user.email}
-                                                onChange={(e) => updateUser(user.id, { email: e.target.value })}
+                                                onChange={(e) => saveUser(user.id, { email: e.target.value })}
                                                 className="bg-transparent text-xs text-gray-500 block focus:bg-dark-bg rounded px-1 -ml-1 mt-1"
                                                 placeholder="email@company.com"
                                             />
@@ -380,7 +425,7 @@ export default function SettingsPage({ onBack }) {
                                 <input
                                     type="number"
                                     value={settings.quoteDefaults.validityDays}
-                                    onChange={(e) => setQuoteDefaults({ validityDays: parseInt(e.target.value) || 30 })}
+                                    onChange={(e) => saveQuoteDefaults({ validityDays: parseInt(e.target.value) || 30 })}
                                     className="input w-32"
                                     min="1"
                                     max="365"
@@ -391,7 +436,7 @@ export default function SettingsPage({ onBack }) {
                                 <input
                                     type="text"
                                     value={settings.quoteDefaults.paymentTerms}
-                                    onChange={(e) => setQuoteDefaults({ paymentTerms: e.target.value })}
+                                    onChange={(e) => saveQuoteDefaults({ paymentTerms: e.target.value })}
                                     className="input"
                                     placeholder="e.g. 50% deposit on confirmation"
                                 />
@@ -400,10 +445,200 @@ export default function SettingsPage({ onBack }) {
                                 <label className="label">Terms & Conditions</label>
                                 <textarea
                                     value={settings.quoteDefaults.termsAndConditions}
-                                    onChange={(e) => setQuoteDefaults({ termsAndConditions: e.target.value })}
+                                    onChange={(e) => saveQuoteDefaults({ termsAndConditions: e.target.value })}
                                     className="input resize-none font-mono text-sm"
                                     rows={8}
                                 />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Customization Tab */}
+                {activeTab === 'customize' && (
+                    <div className="max-w-2xl">
+                        <h3 className="text-xl font-bold text-gray-100 mb-6">Customization</h3>
+
+                        {/* Project Types */}
+                        <div className="mb-8">
+                            <h4 className="text-sm font-semibold text-gray-300 mb-4">Project Types</h4>
+                            <div className="space-y-2 mb-4">
+                                {(settings.projectTypes || []).map((type, index) => (
+                                    <div key={type.id} className="flex items-center gap-2 p-2 bg-dark-bg/50 rounded group">
+                                        <div className="flex flex-col gap-0.5">
+                                            <button
+                                                onClick={() => { moveProjectType(type.id, 'up'); triggerSaved(); }}
+                                                disabled={index === 0}
+                                                className="text-gray-600 hover:text-gray-300 disabled:opacity-30"
+                                            >
+                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                                </svg>
+                                            </button>
+                                            <button
+                                                onClick={() => { moveProjectType(type.id, 'down'); triggerSaved(); }}
+                                                disabled={index === settings.projectTypes.length - 1}
+                                                className="text-gray-600 hover:text-gray-300 disabled:opacity-30"
+                                            >
+                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={type.label}
+                                            onChange={(e) => { updateProjectType(type.id, e.target.value); triggerSaved(); }}
+                                            className="flex-1 bg-transparent text-sm text-gray-300 focus:bg-dark-bg rounded px-2 py-1 border border-transparent focus:border-dark-border"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                if (confirm(`Delete "${type.label}"?`)) {
+                                                    deleteProjectType(type.id);
+                                                    triggerSaved();
+                                                }
+                                            }}
+                                            className="p-1 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={newProjectType}
+                                    onChange={(e) => setNewProjectType(e.target.value)}
+                                    placeholder="New project type..."
+                                    className="input flex-1"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && newProjectType.trim()) {
+                                            addProjectType(newProjectType.trim());
+                                            setNewProjectType('');
+                                            triggerSaved();
+                                        }
+                                    }}
+                                />
+                                <button
+                                    onClick={() => {
+                                        if (newProjectType.trim()) {
+                                            addProjectType(newProjectType.trim());
+                                            setNewProjectType('');
+                                            triggerSaved();
+                                        }
+                                    }}
+                                    className="btn-primary"
+                                >
+                                    Add
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Regions */}
+                        <div>
+                            <h4 className="text-sm font-semibold text-gray-300 mb-4">Regions</h4>
+                            <div className="space-y-2 mb-4">
+                                {(settings.regions || []).map((region, index) => (
+                                    <div key={region.id} className="flex items-center gap-2 p-2 bg-dark-bg/50 rounded group">
+                                        <div className="flex flex-col gap-0.5">
+                                            <button
+                                                onClick={() => { moveRegion(region.id, 'up'); triggerSaved(); }}
+                                                disabled={index === 0}
+                                                className="text-gray-600 hover:text-gray-300 disabled:opacity-30"
+                                            >
+                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                                </svg>
+                                            </button>
+                                            <button
+                                                onClick={() => { moveRegion(region.id, 'down'); triggerSaved(); }}
+                                                disabled={index === settings.regions.length - 1}
+                                                className="text-gray-600 hover:text-gray-300 disabled:opacity-30"
+                                            >
+                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={region.label}
+                                            onChange={(e) => { updateRegion(region.id, { label: e.target.value }); triggerSaved(); }}
+                                            className="flex-1 bg-transparent text-sm text-gray-300 focus:bg-dark-bg rounded px-2 py-1 border border-transparent focus:border-dark-border"
+                                        />
+                                        <select
+                                            value={region.currency}
+                                            onChange={(e) => { updateRegion(region.id, { currency: e.target.value }); triggerSaved(); }}
+                                            className="input w-24 text-sm"
+                                        >
+                                            <option value="USD">USD</option>
+                                            <option value="MYR">MYR</option>
+                                            <option value="SGD">SGD</option>
+                                            <option value="GBP">GBP</option>
+                                            <option value="AED">AED</option>
+                                            <option value="SAR">SAR</option>
+                                            <option value="QAR">QAR</option>
+                                            <option value="KWD">KWD</option>
+                                            <option value="THB">THB</option>
+                                            <option value="IDR">IDR</option>
+                                        </select>
+                                        <button
+                                            onClick={() => {
+                                                if (confirm(`Delete "${region.label}"?`)) {
+                                                    deleteRegion(region.id);
+                                                    triggerSaved();
+                                                }
+                                            }}
+                                            className="p-1 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={newRegion.label}
+                                    onChange={(e) => setNewRegion({ ...newRegion, label: e.target.value })}
+                                    placeholder="New region name..."
+                                    className="input flex-1"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && newRegion.label.trim()) {
+                                            addRegion(newRegion.label.trim(), newRegion.currency);
+                                            setNewRegion({ label: '', currency: 'USD' });
+                                            triggerSaved();
+                                        }
+                                    }}
+                                />
+                                <select
+                                    value={newRegion.currency}
+                                    onChange={(e) => setNewRegion({ ...newRegion, currency: e.target.value })}
+                                    className="input w-24"
+                                >
+                                    <option value="USD">USD</option>
+                                    <option value="MYR">MYR</option>
+                                    <option value="SGD">SGD</option>
+                                    <option value="GBP">GBP</option>
+                                    <option value="AED">AED</option>
+                                </select>
+                                <button
+                                    onClick={() => {
+                                        if (newRegion.label.trim()) {
+                                            addRegion(newRegion.label.trim(), newRegion.currency);
+                                            setNewRegion({ label: '', currency: 'USD' });
+                                            triggerSaved();
+                                        }
+                                    }}
+                                    className="btn-primary"
+                                >
+                                    Add
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -427,7 +662,7 @@ export default function SettingsPage({ onBack }) {
                                     <input
                                         type="checkbox"
                                         checked={settings.pdfOptions[key]}
-                                        onChange={(e) => setPdfOptions({ [key]: e.target.checked })}
+                                        onChange={(e) => savePdfOptions({ [key]: e.target.checked })}
                                         className="w-5 h-5 rounded bg-dark-bg border-dark-border text-accent-primary focus:ring-accent-primary"
                                     />
                                     <span className="text-gray-300">{label}</span>

@@ -131,6 +131,32 @@ export const useRateCardStore = create(
             });
         },
 
+        renameSection: (sectionId, newName) => {
+            set(state => {
+                const sections = state.sections.map(s =>
+                    s.id === sectionId ? { ...s, name: newName } : s
+                );
+                saveSections(sections);
+                return { sections };
+            });
+        },
+
+        moveSection: (sectionId, direction) => {
+            set(state => {
+                const sections = [...state.sections];
+                const index = sections.findIndex(s => s.id === sectionId);
+                if (index === -1) return state;
+
+                const newIndex = direction === 'up' ? index - 1 : index + 1;
+                if (newIndex < 0 || newIndex >= sections.length) return state;
+
+                // Swap positions
+                [sections[index], sections[newIndex]] = [sections[newIndex], sections[index]];
+                saveSections(sections);
+                return { sections };
+            });
+        },
+
         // --- Items Actions ---
 
         // Add new item

@@ -1,12 +1,16 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
+import { useSettingsStore } from '../store/settingsStore';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
+import { validateForm, sanitizeString } from '../utils/validation';
 
 export default function ClientsPage({ onSelectClient }) {
     const { clients, savedQuotes, getClientQuotes, addClient, deleteClient } = useClientStore();
     const { rates } = useQuoteStore();
+    const { settings } = useSettingsStore();
+    const projectTypes = settings.projectTypes || [];
 
     const [dashboardCurrency, setDashboardCurrency] = useState('USD');
     const [searchQuery, setSearchQuery] = useState('');
@@ -36,6 +40,18 @@ export default function ClientsPage({ onSelectClient }) {
         phone: '',
         tags: [],
     });
+    const [formErrors, setFormErrors] = useState({});
+
+    // Handle escape key to close modal
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape' && isAddClientModalOpen) {
+                setIsAddClientModalOpen(false);
+            }
+        };
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+    }, [isAddClientModalOpen]);
 
     // Calculate Client Metrics with advanced stats (filtered by year/month)
     const clientMetrics = useMemo(() => {
@@ -125,16 +141,17 @@ export default function ClientsPage({ onSelectClient }) {
         const projectTypeStats = {};
         filteredQuotes.forEach(q => {
             if (q.status === 'won') {
-                const type = q.project?.type || 'Unknown';
+                const typeId = q.project?.type || 'Unknown';
                 const total = calculateGrandTotalWithFees(q.sections || {}, q.fees || {});
-                const profit = convertCurrency(total.estimatedProfit, q.currency || 'USD', dashboardCurrency, rates);
+                const profit = convertCurrency(total.profit || 0, q.currency || 'USD', dashboardCurrency, rates);
 
-                if (!projectTypeStats[type]) projectTypeStats[type] = 0;
-                projectTypeStats[type] += profit;
+                if (!projectTypeStats[typeId]) projectTypeStats[typeId] = { profit: 0, count: 0 };
+                projectTypeStats[typeId].profit += profit;
+                projectTypeStats[typeId].count += 1;
             }
         });
         const bestProjectType = Object.entries(projectTypeStats)
-            .sort(([, a], [, b]) => b - a)[0]; // [type, profit]
+            .sort(([, a], [, b]) => b.profit - a.profit)[0]; // [typeId, {profit, count}]
 
         // 4. Monthly Performance (Last 12 Months)
         const monthlyStats = {};
@@ -173,7 +190,7 @@ export default function ClientsPage({ onSelectClient }) {
             topMarginClient,
             avgWinRate,
             avgMargin,
-            bestProjectType: bestProjectType ? { type: bestProjectType[0], profit: bestProjectType[1] } : null,
+            bestProjectType: bestProjectType ? { typeId: bestProjectType[0], profit: bestProjectType[1].profit, count: bestProjectType[1].count } : null,
             bestMonth,
             worstMonth
         };
@@ -219,11 +236,32 @@ export default function ClientsPage({ onSelectClient }) {
 
     const handleAddClient = (e) => {
         e.preventDefault();
-        if (!newClientData.company) return;
 
-        addClient(newClientData);
+        // Validate form
+        const { isValid, errors } = validateForm(newClientData, {
+            company: { required: true, label: 'Company name', minLength: 2 },
+            email: { email: true, label: 'Email' },
+            phone: { phone: true, label: 'Phone' },
+            website: { url: true, label: 'Website' }
+        });
+
+        if (!isValid) {
+            setFormErrors(errors);
+            return;
+        }
+
+        // Sanitize and add client
+        addClient({
+            ...newClientData,
+            company: sanitizeString(newClientData.company),
+            contact: sanitizeString(newClientData.contact),
+            location: sanitizeString(newClientData.location),
+            address: sanitizeString(newClientData.address),
+        });
+
         setIsAddClientModalOpen(false);
-        setNewClientData({ company: '', website: '', location: '', address: '', region: 'MALAYSIA', contact: '', email: '', phone: '' });
+        setFormErrors({});
+        setNewClientData({ company: '', website: '', location: '', address: '', region: 'MALAYSIA', contact: '', email: '', phone: '', tags: [] });
     };
 
     return (
@@ -320,7 +358,11 @@ export default function ClientsPage({ onSelectClient }) {
                 <div className="card bg-gradient-to-br from-purple-900/20 to-purple-950/20 border-purple-900/30">
                     <p className="text-xs text-purple-400 mb-1 uppercase tracking-wider">Best Project Type</p>
                     <div>
-                        <p className="text-lg font-bold text-white truncate">{stats.bestProjectType?.type || '-'}</p>
+                        <p className="text-lg font-bold text-white truncate">
+                            {stats.bestProjectType
+                                ? (projectTypes.find(t => t.id === stats.bestProjectType.typeId)?.label || stats.bestProjectType.typeId)
+                                : '-'}
+                        </p>
                         <p className="text-xs text-purple-400/60">
                             {stats.bestProjectType ? formatCurrency(stats.bestProjectType.profit, dashboardCurrency, 0) + ' Profit' : 'No Data'}
                         </p>
@@ -527,132 +569,155 @@ export default function ClientsPage({ onSelectClient }) {
             {/* Add Client Modal */}
             {
                 isAddClientModalOpen && (
-                    <div className="fixed inset-0 flex items-center justify-center z-50">
-                        <div className="bg-[#111827] border border-gray-800 rounded-xl p-6 w-full max-w-lg shadow-2xl relative">
+                    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-md modal-backdrop">
+                        <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-lg shadow-2xl modal-content relative">
                             <button
-                                onClick={() => setIsAddClientModalOpen(false)}
-                                className="absolute top-4 right-4 text-gray-500 hover:text-white"
+                                onClick={() => { setIsAddClientModalOpen(false); setFormErrors({}); }}
+                                className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
                             >
                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
 
-                            <h2 className="text-xl font-bold text-gray-100 mb-6">Add New Client</h2>
-                            <form onSubmit={handleAddClient} className="space-y-5">
+                            <h2 className="text-xl font-bold text-gray-100 mb-2">Add New Client</h2>
+                            <p className="text-sm text-gray-500 mb-6">Create a new client account to start generating quotes.</p>
+
+                            <form onSubmit={handleAddClient} className="space-y-6">
+                                {/* Company Information Section */}
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="text-sm font-medium text-gray-400 block mb-1">Company Legal Name *</label>
+                                        <label className="label label-required">Company Legal Name</label>
                                         <input
                                             type="text"
                                             required
                                             value={newClientData.company}
-                                            onChange={e => setNewClientData({ ...newClientData, company: e.target.value })}
-                                            className="input w-full bg-gray-900/50"
+                                            onChange={e => {
+                                                setNewClientData({ ...newClientData, company: e.target.value });
+                                                if (formErrors.company) setFormErrors({ ...formErrors, company: null });
+                                            }}
+                                            className={`input w-full ${formErrors.company ? 'border-red-500 focus:ring-red-500' : ''}`}
                                             placeholder="e.g. Acme Corporation Ltd"
                                         />
-                                    </div>
-
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-400 block mb-1">Charge Basis (Region)</label>
-                                        <select
-                                            value={newClientData.region || 'MALAYSIA'}
-                                            onChange={e => setNewClientData({ ...newClientData, region: e.target.value })}
-                                            className="input w-full bg-gray-900/50"
-                                        >
-                                            <option value="MALAYSIA">Malaysia (RM)</option>
-                                            <option value="SEA">SEA (USD)</option>
-                                            <option value="GULF">Gulf (USD)</option>
-                                            <option value="CENTRAL_ASIA">Central Asia (USD)</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-400 block mb-1">Company Registered Address</label>
-                                        <textarea
-                                            value={newClientData.address}
-                                            onChange={e => setNewClientData({ ...newClientData, address: e.target.value })}
-                                            className="input w-full bg-gray-900/50 min-h-[60px]"
-                                            placeholder="Full registered business address"
-                                        />
+                                        {formErrors.company && <p className="text-xs text-red-400 mt-1">{formErrors.company}</p>}
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-sm font-medium text-gray-400 block mb-1">Location (City/Country)</label>
+                                            <label className="label">Charge Basis (Region)</label>
+                                            <select
+                                                value={newClientData.region || 'MALAYSIA'}
+                                                onChange={e => setNewClientData({ ...newClientData, region: e.target.value })}
+                                                className="input w-full"
+                                            >
+                                                <option value="MALAYSIA">Malaysia (RM)</option>
+                                                <option value="SEA">SEA (USD)</option>
+                                                <option value="GULF">Gulf (USD)</option>
+                                                <option value="CENTRAL_ASIA">Central Asia (USD)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="label">Location</label>
                                             <input
                                                 type="text"
                                                 value={newClientData.location}
                                                 onChange={e => setNewClientData({ ...newClientData, location: e.target.value })}
-                                                className="input w-full bg-gray-900/50"
+                                                className="input w-full"
                                                 placeholder="e.g. Singapore"
                                             />
                                         </div>
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-400 block mb-1">Website</label>
-                                            <input
-                                                type="text"
-                                                value={newClientData.website}
-                                                onChange={e => setNewClientData({ ...newClientData, website: e.target.value })}
-                                                className="input w-full bg-gray-900/50"
-                                                placeholder="acme.com"
-                                            />
-                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="label">Company Registered Address</label>
+                                        <textarea
+                                            value={newClientData.address}
+                                            onChange={e => setNewClientData({ ...newClientData, address: e.target.value })}
+                                            className="input w-full min-h-[72px] resize-none"
+                                            placeholder="Full registered business address"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="label">Website</label>
+                                        <input
+                                            type="text"
+                                            value={newClientData.website}
+                                            onChange={e => {
+                                                setNewClientData({ ...newClientData, website: e.target.value });
+                                                if (formErrors.website) setFormErrors({ ...formErrors, website: null });
+                                            }}
+                                            className={`input w-full ${formErrors.website ? 'border-red-500 focus:ring-red-500' : ''}`}
+                                            placeholder="acme.com"
+                                        />
+                                        {formErrors.website && <p className="text-xs text-red-400 mt-1">{formErrors.website}</p>}
                                     </div>
                                 </div>
 
-                                <div className="pt-6 border-t border-gray-800">
-                                    <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                                {/* Primary Contact Section */}
+                                <div className="pt-6 border-t border-gray-800/50">
+                                    <h3 className="text-sm font-semibold text-white mb-1 flex items-center gap-2">
                                         <svg className="w-4 h-4 text-accent-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                         Primary Contact
                                     </h3>
-                                    <div className="grid grid-cols-1 gap-4">
+                                    <p className="text-xs text-gray-500 mb-4">Optional - You can add contacts later</p>
+
+                                    <div className="space-y-4">
                                         <div>
-                                            <label className="text-sm font-medium text-gray-400 block mb-1">Contact Name</label>
+                                            <label className="label">Contact Name</label>
                                             <input
                                                 type="text"
                                                 value={newClientData.contact}
                                                 onChange={e => setNewClientData({ ...newClientData, contact: e.target.value })}
-                                                className="input w-full bg-gray-900/50"
+                                                className="input w-full"
                                                 placeholder="e.g. John Doe"
                                             />
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="text-sm font-medium text-gray-400 block mb-1">Email Address</label>
+                                                <label className="label">Email Address</label>
                                                 <input
                                                     type="email"
                                                     value={newClientData.email}
-                                                    onChange={e => setNewClientData({ ...newClientData, email: e.target.value })}
-                                                    className="input w-full bg-gray-900/50"
+                                                    onChange={e => {
+                                                        setNewClientData({ ...newClientData, email: e.target.value });
+                                                        if (formErrors.email) setFormErrors({ ...formErrors, email: null });
+                                                    }}
+                                                    className={`input w-full ${formErrors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                                                     placeholder="john@acme.com"
                                                 />
+                                                {formErrors.email && <p className="text-xs text-red-400 mt-1">{formErrors.email}</p>}
                                             </div>
                                             <div>
-                                                <label className="text-sm font-medium text-gray-400 block mb-1">Phone Number</label>
+                                                <label className="label">Phone Number</label>
                                                 <input
                                                     type="text"
                                                     value={newClientData.phone}
-                                                    onChange={e => setNewClientData({ ...newClientData, phone: e.target.value })}
-                                                    className="input w-full bg-gray-900/50"
+                                                    onChange={e => {
+                                                        setNewClientData({ ...newClientData, phone: e.target.value });
+                                                        if (formErrors.phone) setFormErrors({ ...formErrors, phone: null });
+                                                    }}
+                                                    className={`input w-full ${formErrors.phone ? 'border-red-500 focus:ring-red-500' : ''}`}
                                                     placeholder="+65..."
                                                 />
+                                                {formErrors.phone && <p className="text-xs text-red-400 mt-1">{formErrors.phone}</p>}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end gap-3 pt-4">
+                                {/* Action Buttons */}
+                                <div className="flex justify-end gap-3 pt-6 border-t border-gray-800/50">
                                     <button
                                         type="button"
-                                        onClick={() => setIsAddClientModalOpen(false)}
-                                        className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+                                        onClick={() => { setIsAddClientModalOpen(false); setFormErrors({}); }}
+                                        className="btn-ghost"
                                     >
                                         Cancel
                                     </button>
-                                    <button type="submit" className="btn-primary px-6">
+                                    <button type="submit" className="btn-primary">
                                         Create Client
                                     </button>
                                 </div>

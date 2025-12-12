@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
+import { useSettingsStore } from '../store/settingsStore';
 import { formatCurrency } from '../utils/currency';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
+import { validateForm, sanitizeString } from '../utils/validation';
 
 const STATUS_COLORS = {
     draft: 'bg-amber-400/20 text-amber-400',
@@ -14,6 +16,8 @@ const STATUS_COLORS = {
 export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQuote }) {
     const { getClient, getClientQuotes, deleteQuote, updateQuoteStatus, deleteClient, updateClient, addContact, updateContact, deleteContact, getClientStats } = useClientStore();
     const { loadQuoteData } = useQuoteStore();
+    const { settings } = useSettingsStore();
+    const users = settings.users || [];
 
     const client = getClient(clientId);
     const quotes = getClientQuotes(clientId);
@@ -27,6 +31,19 @@ export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQ
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [editingContactId, setEditingContactId] = useState(null);
     const [contactForm, setContactForm] = useState({});
+    const [contactFormErrors, setContactFormErrors] = useState({});
+
+    // Handle escape key to close modals
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                if (isContactModalOpen) setIsContactModalOpen(false);
+                else if (isEditingClient) setIsEditingClient(false);
+            }
+        };
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+    }, [isContactModalOpen, isEditingClient]);
 
     if (!client) {
         return (
@@ -81,19 +98,40 @@ export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQ
             setContactForm({ ...contact });
         } else {
             setEditingContactId(null);
-            setContactForm({ name: '', role: '', email: '', phone: '', isPrimary: false });
+            setContactForm({ name: '', role: '', email: '', phone: '', isPrimary: false, accountHolderId: '' });
         }
         setIsContactModalOpen(true);
     };
 
     const saveContact = (e) => {
         e.preventDefault();
+
+        // Validate form
+        const { isValid, errors } = validateForm(contactForm, {
+            name: { required: true, label: 'Name', minLength: 2 },
+            email: { email: true, label: 'Email' },
+            phone: { phone: true, label: 'Phone' }
+        });
+
+        if (!isValid) {
+            setContactFormErrors(errors);
+            return;
+        }
+
+        // Sanitize and save
+        const sanitizedForm = {
+            ...contactForm,
+            name: sanitizeString(contactForm.name),
+            role: sanitizeString(contactForm.role),
+        };
+
         if (editingContactId) {
-            updateContact(clientId, editingContactId, contactForm);
+            updateContact(clientId, editingContactId, sanitizedForm);
         } else {
-            addContact(clientId, contactForm);
+            addContact(clientId, sanitizedForm);
         }
         setIsContactModalOpen(false);
+        setContactFormErrors({});
     };
 
     const confirmDeleteContact = (contactId) => {
@@ -361,20 +399,22 @@ export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQ
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Render existing contacts sorted by deal count */}
+                            {/* Render existing contacts with stats */}
                             {client.contacts
                                 ?.map(contact => {
+                                    // Calculate contact's deal stats
                                     const contactQuotes = quotes.filter(q => q.client?.contactId === contact.id);
-                                    return {
-                                        ...contact,
-                                        contactQuotes,
-                                        dealCount: contactQuotes.length,
-                                        wonCount: contactQuotes.filter(q => q.status === 'won').length
-                                    };
-                                })
-                                .sort((a, b) => b.dealCount - a.dealCount)
-                                .map(contact => {
-                                    const { contactQuotes, wonCount } = contact;
+                                    const wonQuotes = contactQuotes.filter(q => q.status === 'won');
+                                    const wonDeals = wonQuotes.length;
+                                    const lostDeals = contactQuotes.filter(q => q.status === 'dead' || q.status === 'rejected').length;
+                                    const closedDeals = wonDeals + lostDeals;
+                                    const winRate = closedDeals > 0 ? Math.round((wonDeals / closedDeals) * 100) : null;
+
+                                    // Calculate lifetime value (total revenue from won deals)
+                                    const lifetimeValue = wonQuotes.reduce((sum, q) => {
+                                        const total = calculateGrandTotalWithFees(q.sections || {}, q.fees || {});
+                                        return sum + (total.totalCharge || 0);
+                                    }, 0);
 
                                     return (<div key={contact.id} className="card group relative">
                                         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -396,19 +436,44 @@ export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQ
                                                     {contact.isPrimary && <span className="ml-2 text-[10px] bg-accent-primary/20 text-accent-primary px-1.5 py-0.5 rounded">PRIMARY</span>}
                                                 </p>
                                                 <p className="text-sm text-gray-500">{contact.role || 'No Role'}</p>
+                                                {contact.accountHolderId && (
+                                                    <p className="text-xs text-accent-primary/80 flex items-center gap-1 mt-0.5">
+                                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                        </svg>
+                                                        {users.find(u => u.id === contact.accountHolderId)?.name || 'Unknown'}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-2 mb-3 bg-white/5 rounded p-2">
-                                            <div className="text-center">
-                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Total Deals</p>
-                                                <p className="text-lg font-bold text-white">{contactQuotes.length}</p>
+                                        {/* Contact Stats */}
+                                        {contactQuotes.length > 0 && (
+                                            <div className="mb-3 bg-white/5 rounded-lg p-2">
+                                                <div className="grid grid-cols-3 gap-2 mb-2">
+                                                    <div className="text-center">
+                                                        <p className="text-lg font-bold text-white">{contactQuotes.length}</p>
+                                                        <p className="text-[10px] text-gray-500 uppercase">Quotes</p>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className="text-lg font-bold text-green-400">{wonDeals}</p>
+                                                        <p className="text-[10px] text-gray-500 uppercase">Won</p>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className={`text-lg font-bold ${winRate !== null ? (winRate >= 50 ? 'text-green-400' : 'text-amber-400') : 'text-gray-500'}`}>
+                                                            {winRate !== null ? `${winRate}%` : '-'}
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-500 uppercase">Win Rate</p>
+                                                    </div>
+                                                </div>
+                                                {lifetimeValue > 0 && (
+                                                    <div className="text-center pt-2 border-t border-white/10">
+                                                        <p className="text-lg font-bold text-accent-primary">{formatCurrency(lifetimeValue, 'USD')}</p>
+                                                        <p className="text-[10px] text-gray-500 uppercase">Lifetime Value</p>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="text-center">
-                                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Won Deals</p>
-                                                <p className="text-lg font-bold text-green-400">{wonCount}</p>
-                                            </div>
-                                        </div>
+                                        )}
 
                                         <div className="space-y-1 text-sm text-gray-400">
                                             {contact.email && (
@@ -455,70 +520,120 @@ export default function ClientDetailPage({ clientId, onBack, onEditQuote, onNewQ
             {/* Contact Modal */}
             {
                 isContactModalOpen && (
-                    <div className="fixed inset-0 flex items-center justify-center z-50">
-                        <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl">
-                            <h2 className="text-xl font-bold text-gray-100 mb-4">{editingContactId ? 'Edit Contact' : 'Add New Contact'}</h2>
-                            <form onSubmit={saveContact} className="space-y-4">
-                                <div>
-                                    <label className="label">Name *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={contactForm.name}
-                                        onChange={e => setContactForm({ ...contactForm, name: e.target.value })}
-                                        className="input"
-                                    />
+                    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-md modal-backdrop">
+                        <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative">
+                            <button
+                                onClick={() => { setIsContactModalOpen(false); setContactFormErrors({}); }}
+                                className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                            <h2 className="text-xl font-bold text-gray-100 mb-1">{editingContactId ? 'Edit Contact' : 'Add New Contact'}</h2>
+                            <p className="text-sm text-gray-500 mb-6">Add contact details for this client.</p>
+
+                            <form onSubmit={saveContact} className="space-y-5">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <label className="label label-required">Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={contactForm.name}
+                                            onChange={e => {
+                                                setContactForm({ ...contactForm, name: e.target.value });
+                                                if (contactFormErrors.name) setContactFormErrors({ ...contactFormErrors, name: null });
+                                            }}
+                                            className={`input ${contactFormErrors.name ? 'border-red-500 focus:ring-red-500' : ''}`}
+                                            placeholder="Full name"
+                                        />
+                                        {contactFormErrors.name && <p className="text-xs text-red-400 mt-1">{contactFormErrors.name}</p>}
+                                    </div>
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <label className="label">Role / Title</label>
+                                        <input
+                                            type="text"
+                                            value={contactForm.role}
+                                            onChange={e => setContactForm({ ...contactForm, role: e.target.value })}
+                                            className="input"
+                                            placeholder="e.g. Marketing Director"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="label">Role</label>
-                                    <input
-                                        type="text"
-                                        value={contactForm.role}
-                                        onChange={e => setContactForm({ ...contactForm, role: e.target.value })}
-                                        className="input"
-                                        placeholder="e.g. Producer"
-                                    />
-                                </div>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="label">Email</label>
                                         <input
                                             type="email"
                                             value={contactForm.email}
-                                            onChange={e => setContactForm({ ...contactForm, email: e.target.value })}
-                                            className="input"
+                                            onChange={e => {
+                                                setContactForm({ ...contactForm, email: e.target.value });
+                                                if (contactFormErrors.email) setContactFormErrors({ ...contactFormErrors, email: null });
+                                            }}
+                                            className={`input ${contactFormErrors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
+                                            placeholder="email@company.com"
                                         />
+                                        {contactFormErrors.email && <p className="text-xs text-red-400 mt-1">{contactFormErrors.email}</p>}
                                     </div>
                                     <div>
                                         <label className="label">Phone</label>
                                         <input
                                             type="text"
                                             value={contactForm.phone}
-                                            onChange={e => setContactForm({ ...contactForm, phone: e.target.value })}
-                                            className="input"
+                                            onChange={e => {
+                                                setContactForm({ ...contactForm, phone: e.target.value });
+                                                if (contactFormErrors.phone) setContactFormErrors({ ...contactFormErrors, phone: null });
+                                            }}
+                                            className={`input ${contactFormErrors.phone ? 'border-red-500 focus:ring-red-500' : ''}`}
+                                            placeholder="+65 9123 4567"
                                         />
+                                        {contactFormErrors.phone && <p className="text-xs text-red-400 mt-1">{contactFormErrors.phone}</p>}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+
+                                <div>
+                                    <label className="label">Account Holder</label>
+                                    <select
+                                        value={contactForm.accountHolderId || ''}
+                                        onChange={e => setContactForm({ ...contactForm, accountHolderId: e.target.value })}
+                                        className="input"
+                                    >
+                                        <option value="">-- Unassigned --</option>
+                                        {users.map(user => (
+                                            <option key={user.id} value={user.id}>{user.name}</option>
+                                        ))}
+                                    </select>
+                                    <p className="form-helper">Assign a team member responsible for this contact</p>
+                                </div>
+
+                                {/* Primary Contact Toggle */}
+                                <div className="flex items-center gap-3 p-3 bg-dark-bg/50 rounded-lg border border-dark-border">
                                     <input
                                         type="checkbox"
                                         id="isPrimary"
                                         checked={contactForm.isPrimary}
                                         onChange={e => setContactForm({ ...contactForm, isPrimary: e.target.checked })}
-                                        className="rounded border-gray-600 bg-dark-bg text-accent-primary focus:ring-accent-primary"
+                                        className="w-4 h-4 rounded border-gray-600 bg-dark-bg text-accent-primary focus:ring-accent-primary focus:ring-offset-0"
                                     />
-                                    <label htmlFor="isPrimary" className="text-sm text-gray-300">Set as Primary Contact</label>
+                                    <div>
+                                        <label htmlFor="isPrimary" className="text-sm font-medium text-gray-200 cursor-pointer">Set as Primary Contact</label>
+                                        <p className="text-xs text-gray-500">This contact will be the default for new quotes</p>
+                                    </div>
                                 </div>
-                                <div className="flex justify-end gap-3 mt-6">
+
+                                {/* Action Buttons */}
+                                <div className="flex justify-end gap-3 pt-4 border-t border-gray-800/50">
                                     <button
                                         type="button"
-                                        onClick={() => setIsContactModalOpen(false)}
+                                        onClick={() => { setIsContactModalOpen(false); setContactFormErrors({}); }}
                                         className="btn-ghost"
                                     >
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary">
-                                        Save Contact
+                                        {editingContactId ? 'Save Changes' : 'Add Contact'}
                                     </button>
                                 </div>
                             </form>

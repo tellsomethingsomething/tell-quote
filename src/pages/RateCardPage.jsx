@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRateCardStore } from '../store/rateCardStore';
 
 const REGIONS = [
@@ -9,13 +9,14 @@ const REGIONS = [
 ];
 
 export default function RateCardPage({ onBack }) {
-    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, exportTemplate, importFromCSV, addSection, deleteSection } = useRateCardStore();
+    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection } = useRateCardStore();
     const fileInputRef = useRef(null);
     const [selectedSection, setSelectedSection] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [showAddCategoryForm, setShowAddCategoryForm] = useState(false);
     const [expandedItemId, setExpandedItemId] = useState(null);
+    const [editingItem, setEditingItem] = useState(null);
 
     // New item form state
     const [newItem, setNewItem] = useState({
@@ -27,6 +28,42 @@ export default function RateCardPage({ onBack }) {
 
     // New Category state
     const [newCategoryName, setNewCategoryName] = useState('');
+
+    // Handle escape key to close modals
+    useEffect(() => {
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                if (editingItem) setEditingItem(null);
+                else if (showAddForm) setShowAddForm(false);
+                else if (showAddCategoryForm) setShowAddCategoryForm(false);
+            }
+        };
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+    }, [editingItem, showAddForm, showAddCategoryForm]);
+
+    // Open edit modal with item data
+    const openEditModal = (item) => {
+        setEditingItem({
+            id: item.id,
+            name: item.name,
+            description: item.description || '',
+            section: item.section,
+            unit: item.unit || 'day',
+        });
+    };
+
+    // Save edited item
+    const handleSaveEdit = () => {
+        if (!editingItem?.name.trim()) return;
+        updateItem(editingItem.id, {
+            name: editingItem.name,
+            description: editingItem.description,
+            section: editingItem.section,
+            unit: editingItem.unit,
+        });
+        setEditingItem(null);
+    };
 
     // Filter items
     const filteredItems = items.filter(item => {
@@ -95,16 +132,16 @@ export default function RateCardPage({ onBack }) {
                         <button onClick={() => fileInputRef.current?.click()} className="btn-ghost text-sm">
                             Import CSV
                         </button>
-                        <button onClick={exportTemplate} className="btn-ghost text-sm">
-                            Download Template
-                        </button>
                         <button onClick={exportToCSV} className="btn-ghost text-sm">
-                            Export Backup
+                            Export Data
                         </button>
                         <button onClick={() => setShowAddCategoryForm(true)} className="btn-secondary text-sm">
                             Manage Categories
                         </button>
-                        <button onClick={() => setShowAddForm(true)} className="btn-primary text-sm">
+                        <button onClick={() => {
+                            setNewItem({ name: '', description: '', section: sections[0]?.id || 'other', unit: 'day' });
+                            setShowAddForm(true);
+                        }} className="btn-primary text-sm">
                             + Add Service
                         </button>
                     </div>
@@ -134,8 +171,16 @@ export default function RateCardPage({ onBack }) {
 
             {/* Add Category Modal */}
             {showAddCategoryForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowAddCategoryForm(false)}>
-                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md modal-backdrop" onClick={() => setShowAddCategoryForm(false)}>
+                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-sm shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => setShowAddCategoryForm(false)}
+                            className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                         <h2 className="text-lg font-bold text-gray-100 mb-4">Manage Categories</h2>
 
                         {/* New Category Input */}
@@ -157,26 +202,56 @@ export default function RateCardPage({ onBack }) {
                         </div>
 
                         {/* Existing Categories List */}
-                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                             <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">Existing Categories</h3>
-                            {sections.map(section => (
-                                <div key={section.id} className="flex items-center justify-between p-2 bg-dark-bg/50 rounded hover:bg-dark-bg transition-colors group">
-                                    <span className="text-sm text-gray-300">{section.name}</span>
-                                    {section.id !== 'other' && (
+                            {sections.map((section, index) => (
+                                <div key={section.id} className="flex items-center gap-2 p-2 bg-dark-bg/50 rounded hover:bg-dark-bg transition-colors group">
+                                    {/* Reorder buttons */}
+                                    <div className="flex flex-col gap-0.5">
                                         <button
-                                            onClick={() => {
-                                                if (confirm(`Delete category "${section.name}"? Items will be moved to 'Other'.`)) {
-                                                    deleteSection(section.id);
-                                                }
-                                            }}
-                                            className="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            title="Delete Category"
+                                            onClick={() => moveSection(section.id, 'up')}
+                                            disabled={index === 0}
+                                            className="text-gray-600 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                                            title="Move up"
                                         >
-                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                                             </svg>
                                         </button>
-                                    )}
+                                        <button
+                                            onClick={() => moveSection(section.id, 'down')}
+                                            disabled={index === sections.length - 1}
+                                            className="text-gray-600 hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                                            title="Move down"
+                                        >
+                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    {/* Editable name */}
+                                    <input
+                                        type="text"
+                                        value={section.name}
+                                        onChange={(e) => renameSection(section.id, e.target.value)}
+                                        className="flex-1 bg-transparent text-sm text-gray-300 focus:bg-dark-bg rounded px-2 py-1 border border-transparent focus:border-dark-border"
+                                    />
+
+                                    {/* Delete button */}
+                                    <button
+                                        onClick={() => {
+                                            if (confirm(`Delete category "${section.name}"? Items will be moved to 'Other'.`)) {
+                                                deleteSection(section.id);
+                                            }
+                                        }}
+                                        className="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                        title="Delete Category"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -190,8 +265,16 @@ export default function RateCardPage({ onBack }) {
 
             {/* Add Item Modal */}
             {showAddForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowAddForm(false)}>
-                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md modal-backdrop" onClick={() => setShowAddForm(false)}>
+                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => setShowAddForm(false)}
+                            className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                         <h2 className="text-lg font-bold text-gray-100 mb-4">Add New Service</h2>
 
                         <div className="space-y-4">
@@ -254,6 +337,79 @@ export default function RateCardPage({ onBack }) {
                 </div>
             )}
 
+            {/* Edit Item Modal */}
+            {editingItem && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md modal-backdrop" onClick={() => setEditingItem(null)}>
+                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => setEditingItem(null)}
+                            className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <h2 className="text-lg font-bold text-gray-100 mb-4">Edit Service</h2>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="label">Service Name *</label>
+                                <input
+                                    type="text"
+                                    value={editingItem.name}
+                                    onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                                    className="input"
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div>
+                                <label className="label">Description</label>
+                                <input
+                                    type="text"
+                                    value={editingItem.description}
+                                    onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
+                                    placeholder="Optional description"
+                                    className="input"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label">Category</label>
+                                    <select
+                                        value={editingItem.section}
+                                        onChange={(e) => setEditingItem({ ...editingItem, section: e.target.value })}
+                                        className="input"
+                                    >
+                                        {sections.map(section => (
+                                            <option key={section.id} value={section.id}>{section.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="label">Unit</label>
+                                    <select
+                                        value={editingItem.unit}
+                                        onChange={(e) => setEditingItem({ ...editingItem, unit: e.target.value })}
+                                        className="input"
+                                    >
+                                        <option value="day">Per Day</option>
+                                        <option value="item">Per Item</option>
+                                        <option value="project">Per Project</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-dark-border">
+                            <button onClick={() => setEditingItem(null)} className="btn-ghost">Cancel</button>
+                            <button onClick={handleSaveEdit} className="btn-primary">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Items List */}
             <div className="flex-1 overflow-y-auto p-4">
                 {filteredItems.length === 0 ? (
@@ -293,13 +449,26 @@ export default function RateCardPage({ onBack }) {
                                             <p className="text-xs text-gray-500 mt-1">{item.description}</p>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                openEditModal(item);
+                                            }}
+                                            className="p-1 text-gray-600 hover:text-blue-400"
+                                            title="Edit service"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </button>
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (confirm('Delete this service?')) deleteItem(item.id);
                                             }}
                                             className="p-1 text-gray-600 hover:text-red-400"
+                                            title="Delete service"
                                         >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

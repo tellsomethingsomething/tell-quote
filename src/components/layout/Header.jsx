@@ -1,18 +1,28 @@
 import { useState } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useClientStore } from '../../store/clientStore';
+import { useAuthStore } from '../../store/authStore';
 import Navigation from './Navigation';
 
-export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard }) {
+export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes }) {
     const { quote, ratesLoading, refreshRates } = useQuoteStore();
     const { saveQuote } = useClientStore();
+    const { logout } = useAuthStore();
     const [saving, setSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [showUserMenu, setShowUserMenu] = useState(false);
 
     const handleSaveQuote = () => {
         setSaving(true);
         try {
-            saveQuote(quote);
+            // Save to library and get the saved quote with ID
+            const savedQuote = saveQuote(quote);
+
+            // Update the quote in editor with the ID so future edits auto-save
+            if (savedQuote?.id && !quote.id) {
+                useQuoteStore.getState().loadQuoteData({ ...quote, id: savedQuote.id });
+            }
+
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 2000);
         } catch {
@@ -30,7 +40,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
     // Let's make it simple for dashboard similar to clients view but maybe without title if DashboardPage handles it?
     // Clients view has "Tell Productions Quote Tool".
     // Let's use the same clean header for Dashboard as for Clients view.
-    if (view === 'clients' || view === 'dashboard' || view === 'rate-card' || view === 'settings') {
+    if (view === 'clients' || view === 'dashboard' || view === 'quotes' || view === 'rate-card' || view === 'settings') {
         const activeTab = view;
 
         return (
@@ -59,6 +69,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                         activeTab={activeTab}
                         onTabChange={(tab) => {
                             if (tab === 'dashboard') onGoToDashboard();
+                            if (tab === 'quotes') onGoToQuotes();
                             if (tab === 'clients') onGoToClients();
                             if (tab === 'rate-card') onGoToRateCard();
                             if (tab === 'settings') onGoToSettings();
@@ -66,11 +77,42 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                     />
                 </div>
 
-                {/* Right Side - User Profile or Empty */}
-                <div className="w-[120px] flex justify-end">
-                    <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs text-gray-400">
+                {/* Right Side - User Menu */}
+                <div className="w-[120px] flex justify-end relative">
+                    <button
+                        onClick={() => setShowUserMenu(!showUserMenu)}
+                        className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs text-gray-400 hover:border-gray-600 hover:text-gray-300 transition-colors"
+                    >
                         TM
-                    </div>
+                    </button>
+
+                    {/* User Dropdown Menu */}
+                    {showUserMenu && (
+                        <>
+                            <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setShowUserMenu(false)}
+                            />
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-dark-card border border-dark-border rounded-lg shadow-2xl z-50 dropdown-menu overflow-hidden">
+                                <div className="px-4 py-3 border-b border-dark-border">
+                                    <p className="text-sm font-medium text-gray-200">Signed in as</p>
+                                    <p className="text-xs text-gray-500">Director / Partner</p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setShowUserMenu(false);
+                                        logout();
+                                    }}
+                                    className="w-full px-4 py-2.5 text-left text-sm text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-colors flex items-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                    Sign Out
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
             </header>
         );

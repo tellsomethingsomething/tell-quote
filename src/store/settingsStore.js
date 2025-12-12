@@ -53,6 +53,22 @@ const defaultSettings = {
         showBankDetails: false,
         showLogo: true,
     },
+    // Project types
+    projectTypes: [
+        { id: 'broadcast', label: 'Broadcast' },
+        { id: 'streaming', label: 'Streaming' },
+        { id: 'graphics', label: 'Graphics' },
+        { id: 'sports_presentation', label: 'Sports Presentation' },
+        { id: 'technical_consultancy', label: 'Technical Management & Consultancy' },
+        { id: 'other', label: 'Other' },
+    ],
+    // Regions
+    regions: [
+        { id: 'MALAYSIA', label: 'Malaysia', currency: 'MYR' },
+        { id: 'SEA', label: 'South East Asia', currency: 'USD' },
+        { id: 'GULF', label: 'Gulf States', currency: 'USD' },
+        { id: 'CENTRAL_ASIA', label: 'Central Asia', currency: 'USD' },
+    ],
 };
 
 // Load settings from localStorage
@@ -71,6 +87,8 @@ function loadSettings() {
                 quoteDefaults: { ...defaultSettings.quoteDefaults, ...parsed.quoteDefaults },
                 pdfOptions: { ...defaultSettings.pdfOptions, ...parsed.pdfOptions },
                 users: parsed.users || defaultSettings.users,
+                projectTypes: parsed.projectTypes || defaultSettings.projectTypes,
+                regions: parsed.regions || defaultSettings.regions,
             };
         }
         return defaultSettings;
@@ -205,6 +223,108 @@ export const useSettingsStore = create(
         // Get user by ID
         getUser: (userId) => {
             return get().settings.users.find(u => u.id === userId);
+        },
+
+        // --- Project Types ---
+        addProjectType: (label) => {
+            set(state => {
+                const id = label.toLowerCase().replace(/\s+/g, '_') + '_' + Math.random().toString(36).substring(2, 7);
+                const updated = {
+                    ...state.settings,
+                    projectTypes: [...state.settings.projectTypes, { id, label }],
+                };
+                saveSettings(updated);
+                return { settings: updated };
+            });
+        },
+
+        updateProjectType: (id, label) => {
+            set(state => {
+                const updated = {
+                    ...state.settings,
+                    projectTypes: state.settings.projectTypes.map(pt =>
+                        pt.id === id ? { ...pt, label } : pt
+                    ),
+                };
+                saveSettings(updated);
+                return { settings: updated };
+            });
+        },
+
+        deleteProjectType: (id) => {
+            set(state => {
+                const updated = {
+                    ...state.settings,
+                    projectTypes: state.settings.projectTypes.filter(pt => pt.id !== id),
+                };
+                saveSettings(updated);
+                return { settings: updated };
+            });
+        },
+
+        moveProjectType: (id, direction) => {
+            set(state => {
+                const types = [...state.settings.projectTypes];
+                const index = types.findIndex(t => t.id === id);
+                if (index === -1) return state;
+                const newIndex = direction === 'up' ? index - 1 : index + 1;
+                if (newIndex < 0 || newIndex >= types.length) return state;
+                [types[index], types[newIndex]] = [types[newIndex], types[index]];
+                const updated = { ...state.settings, projectTypes: types };
+                saveSettings(updated);
+                return { settings: updated };
+            });
+        },
+
+        // --- Regions ---
+        addRegion: (label, currency = 'USD') => {
+            set(state => {
+                const id = label.toUpperCase().replace(/\s+/g, '_');
+                const updated = {
+                    ...state.settings,
+                    regions: [...state.settings.regions, { id, label, currency }],
+                };
+                saveSettings(updated);
+                return { settings: updated };
+            });
+        },
+
+        updateRegion: (id, updates) => {
+            set(state => {
+                const updated = {
+                    ...state.settings,
+                    regions: state.settings.regions.map(r =>
+                        r.id === id ? { ...r, ...updates } : r
+                    ),
+                };
+                saveSettings(updated);
+                return { settings: updated };
+            });
+        },
+
+        deleteRegion: (id) => {
+            set(state => {
+                const updated = {
+                    ...state.settings,
+                    regions: state.settings.regions.filter(r => r.id !== id),
+                };
+                saveSettings(updated);
+                return { settings: updated };
+            });
+        },
+
+        moveRegion: (id, direction) => {
+            set(state => {
+                const regions = [...state.settings.regions];
+                const index = regions.findIndex(r => r.id === id);
+                if (index === -1) return state;
+                const newIndex = direction === 'up' ? index - 1 : index + 1;
+                if (newIndex < 0 || newIndex >= regions.length) return state;
+                [regions[index], regions[newIndex]] = [regions[newIndex], regions[index]];
+                const updated = { ...state.settings, regions };
+                saveSettings(updated);
+                return { settings: updated };
+            });
         },
 
         // Export settings

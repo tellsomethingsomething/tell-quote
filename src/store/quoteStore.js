@@ -6,6 +6,23 @@ import { REGIONS } from '../data/currencies'; // Import REGIONS
 import { saveQuote, loadQuote, generateQuoteNumber } from '../utils/storage';
 import { fetchLiveRates } from '../utils/currency';
 import { useRateCardStore } from './rateCardStore'; // Import rate store for lookups
+import { useClientStore } from './clientStore'; // Import for auto-save to library
+
+// Save quote to localStorage AND auto-save to library if previously saved
+function saveQuoteWithLibrarySync(quote) {
+    // Save to localStorage (current editing session)
+    saveQuote(quote);
+
+    // Auto-save to library if quote has been saved before
+    if (!quote.id) return;
+
+    const { savedQuotes, updateQuote } = useClientStore.getState();
+    const existsInLibrary = savedQuotes.some(q => q.id === quote.id);
+
+    if (existsInLibrary) {
+        updateQuote(quote.id, quote);
+    }
+}
 
 // Create initial empty sections structure
 function createEmptySections() {
@@ -44,8 +61,10 @@ function createEmptyQuote() {
             company: '',
             contactId: null, // Link to specific contact
             contact: '',
+            role: '', // Internal only - not shown on quote
             email: '',
             phone: '',
+            notes: '', // Internal only - not shown on quote
         },
         project: {
             title: '',
@@ -115,7 +134,7 @@ export const useQuoteStore = create(
         setQuoteNumber: (quoteNumber) => {
             set(state => {
                 const updated = { ...state.quote, quoteNumber, updatedAt: new Date().toISOString() };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -124,7 +143,7 @@ export const useQuoteStore = create(
         setCurrency: (currency) => {
             set(state => {
                 const updated = { ...state.quote, currency, updatedAt: new Date().toISOString() };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -166,7 +185,7 @@ export const useQuoteStore = create(
                     sections,
                     updatedAt: new Date().toISOString()
                 };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -175,7 +194,7 @@ export const useQuoteStore = create(
         setQuoteDate: (quoteDate) => {
             set(state => {
                 const updated = { ...state.quote, quoteDate, updatedAt: new Date().toISOString() };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -184,7 +203,7 @@ export const useQuoteStore = create(
         setValidityDays: (validityDays) => {
             set(state => {
                 const updated = { ...state.quote, validityDays: parseInt(validityDays), updatedAt: new Date().toISOString() };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -197,7 +216,7 @@ export const useQuoteStore = create(
                     client: { ...state.quote.client, ...client },
                     updatedAt: new Date().toISOString()
                 };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -210,7 +229,7 @@ export const useQuoteStore = create(
                     project: { ...state.quote.project, ...project },
                     updatedAt: new Date().toISOString()
                 };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -223,7 +242,7 @@ export const useQuoteStore = create(
                     fees: { ...state.quote.fees, ...fees },
                     updatedAt: new Date().toISOString()
                 };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -236,7 +255,7 @@ export const useQuoteStore = create(
                     preparedBy: userId,
                     updatedAt: new Date().toISOString()
                 };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -276,7 +295,7 @@ export const useQuoteStore = create(
                 sections[sectionId] = sectionData;
 
                 const updated = { ...state.quote, sections, updatedAt: new Date().toISOString() };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -296,7 +315,7 @@ export const useQuoteStore = create(
                 sections[sectionId] = sectionData;
 
                 const updated = { ...state.quote, sections, updatedAt: new Date().toISOString() };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -314,7 +333,7 @@ export const useQuoteStore = create(
                 sections[sectionId] = sectionData;
 
                 const updated = { ...state.quote, sections, updatedAt: new Date().toISOString() };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -349,7 +368,7 @@ export const useQuoteStore = create(
                 }
 
                 const updated = { ...state.quote, sections, updatedAt: new Date().toISOString() };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
@@ -370,7 +389,7 @@ export const useQuoteStore = create(
 
                 sections[sectionId] = sectionData;
                 const updated = { ...state.quote, sections, updatedAt: new Date().toISOString() };
-                saveQuote(updated);
+                saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
             });
         },
