@@ -8,7 +8,7 @@ const REGIONS = [
     { id: 'CENTRAL_ASIA', label: 'Central Asia', currency: 'USD', symbol: '$' },
 ];
 
-export default function RateCardPage({ onBack }) {
+export default function RateCardPage() {
     const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults } = useRateCardStore();
     const fileInputRef = useRef(null);
     const saveTimeoutRef = useRef(null);
@@ -118,29 +118,19 @@ export default function RateCardPage({ onBack }) {
             {/* Header */}
             <div className="bg-dark-bg border-b border-dark-border p-4">
                 <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={onBack}
-                            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                        >
-                            <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <div className="flex items-center gap-3">
-                            <div>
-                                <h1 className="text-xl font-bold text-gray-100">Rate Card</h1>
-                                <p className="text-xs text-gray-500">{items.length} services</p>
-                            </div>
-                            {showSaved && (
-                                <span className="text-xs text-green-400 flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded-full">
-                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    Saved
-                                </span>
-                            )}
+                    <div className="flex items-center gap-3">
+                        <div>
+                            <h1 className="text-xl font-bold text-gray-100">Rate Card</h1>
+                            <p className="text-xs text-gray-500">{items.length} services</p>
                         </div>
+                        {showSaved && (
+                            <span className="text-xs text-green-400 flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded-full">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                Saved
+                            </span>
+                        )}
                     </div>
                     <div className="flex items-center gap-2">
                         <input

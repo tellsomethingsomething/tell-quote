@@ -118,7 +118,7 @@ function App() {
         );
       case 'rate-card':
         return (
-          <RateCardPage onBack={handleBackToClients} />
+          <RateCardPage />
         );
       case 'dashboard':
         return (
@@ -136,7 +136,7 @@ function App() {
         );
       case 'settings':
         return (
-          <SettingsPage onBack={handleBackToClients} />
+          <SettingsPage />
         );
       case 'editor':
       default:
