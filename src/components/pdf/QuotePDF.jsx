@@ -15,25 +15,24 @@ Font.register({
     ],
 });
 
-// Tell Brand Color Palette
+// Tell Brand Color Palette - Business Class
 const colors = {
-    // Primary
+    // Primary Brand
     navy: '#143642',
     teal: '#0F8B8D',
     orange: '#FE7F2D',
-    // Secondary
-    darkTeal: '#0B6062',
-    darkOrange: '#D46C26',
-    // Neutrals
-    black: '#1A1A1A',
-    darkGray: '#4A5568',
-    gray: '#718096',
-    lightGray: '#E2E8F0',
-    offWhite: '#F7F7F7',
+    // Refined Neutrals
+    charcoal: '#1E2A32',
+    slate: '#3D4F5F',
+    steel: '#5A6B78',
+    silver: '#8899A6',
+    mist: '#C4CDD5',
+    pearl: '#E8ECEF',
+    snow: '#F8F9FA',
     white: '#FFFFFF',
     // Functional
-    success: '#10B981',
-    danger: '#EF4444',
+    success: '#0F8B8D',
+    danger: '#C53030',
 };
 
 const styles = StyleSheet.create({
@@ -44,178 +43,181 @@ const styles = StyleSheet.create({
         backgroundColor: colors.white,
     },
 
-    // === HEADER SECTION ===
-    headerBar: {
-        backgroundColor: colors.navy,
-        paddingVertical: 24,
-        paddingHorizontal: 40,
+    // === HEADER ===
+    header: {
+        paddingTop: 40,
+        paddingHorizontal: 48,
+        paddingBottom: 32,
+    },
+    headerTop: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'flex-start',
+        marginBottom: 32,
     },
-    logoContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
+    logoSection: {},
     logo: {
-        width: 100,
-        height: 30,
+        width: 80,
+        height: 24,
     },
-    logoFallback: {
-        fontSize: 22,
+    logoText: {
+        fontSize: 28,
         fontWeight: 700,
-        color: colors.white,
-        letterSpacing: -0.5,
+        color: colors.navy,
+        letterSpacing: -1,
     },
-    quoteTag: {
-        backgroundColor: colors.teal,
-        paddingVertical: 6,
-        paddingHorizontal: 14,
-        borderRadius: 4,
+    documentType: {
+        alignItems: 'flex-end',
     },
-    quoteTagText: {
-        fontSize: 10,
+    documentTitle: {
+        fontSize: 11,
         fontWeight: 600,
-        color: colors.white,
+        color: colors.silver,
         textTransform: 'uppercase',
-        letterSpacing: 1.5,
-    },
-
-    // === MAIN CONTENT ===
-    content: {
-        padding: 40,
-        paddingTop: 32,
-        paddingBottom: 80,
-    },
-
-    // === QUOTE INFO STRIP ===
-    quoteInfoStrip: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 28,
-        paddingBottom: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.lightGray,
-    },
-    quoteNumberSection: {},
-    quoteLabel: {
-        fontSize: 8,
-        color: colors.gray,
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-        marginBottom: 4,
+        letterSpacing: 3,
+        marginBottom: 8,
     },
     quoteNumber: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 700,
         color: colors.navy,
         letterSpacing: -0.5,
     },
-    quoteDates: {
-        alignItems: 'flex-end',
-    },
-    dateRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 3,
-    },
-    dateLabel: {
-        fontSize: 8,
-        color: colors.gray,
-        marginRight: 8,
-    },
-    dateValue: {
-        fontSize: 9,
-        fontWeight: 500,
-        color: colors.black,
-    },
 
-    // === PROJECT CARD ===
-    projectCard: {
-        backgroundColor: colors.navy,
-        borderRadius: 8,
-        padding: 24,
-        marginBottom: 24,
-    },
-    projectTitle: {
-        fontSize: 18,
-        fontWeight: 700,
-        color: colors.white,
-        marginBottom: 16,
-        letterSpacing: -0.3,
-    },
-    projectMeta: {
+    // === META INFO BAR ===
+    metaBar: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 20,
-    },
-    projectMetaItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    projectMetaDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        backgroundColor: colors.teal,
-    },
-    projectMetaText: {
-        fontSize: 10,
-        color: colors.white,
-        opacity: 0.9,
-    },
-
-    // === CLIENT & PREPARED BY ===
-    infoRow: {
-        flexDirection: 'row',
-        gap: 24,
-        marginBottom: 28,
-    },
-    infoCard: {
-        flex: 1,
-        backgroundColor: colors.offWhite,
+        backgroundColor: colors.snow,
         borderRadius: 6,
         padding: 16,
-        borderLeftWidth: 3,
-        borderLeftColor: colors.teal,
+        marginBottom: 28,
     },
-    infoCardLabel: {
+    metaItem: {
+        flex: 1,
+        borderRightWidth: 1,
+        borderRightColor: colors.mist,
+        paddingRight: 16,
+    },
+    metaItemLast: {
+        flex: 1,
+        paddingLeft: 16,
+        borderRightWidth: 0,
+    },
+    metaLabel: {
+        fontSize: 7,
+        fontWeight: 600,
+        color: colors.silver,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 4,
+    },
+    metaValue: {
+        fontSize: 10,
+        fontWeight: 500,
+        color: colors.charcoal,
+    },
+
+    // === CONTENT ===
+    content: {
+        paddingHorizontal: 48,
+        paddingBottom: 100,
+    },
+
+    // === PROJECT BANNER ===
+    projectBanner: {
+        backgroundColor: colors.navy,
+        borderRadius: 8,
+        padding: 28,
+        marginBottom: 28,
+    },
+    projectLabel: {
+        fontSize: 8,
+        fontWeight: 600,
+        color: colors.teal,
+        textTransform: 'uppercase',
+        letterSpacing: 1.5,
+        marginBottom: 8,
+    },
+    projectTitle: {
+        fontSize: 20,
+        fontWeight: 700,
+        color: colors.white,
+        marginBottom: 20,
+        letterSpacing: -0.3,
+    },
+    projectDetails: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 24,
+    },
+    projectDetail: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    projectIcon: {
+        width: 16,
+        height: 16,
+        marginRight: 8,
+        backgroundColor: colors.teal,
+        borderRadius: 8,
+        opacity: 0.3,
+    },
+    projectDetailText: {
+        fontSize: 10,
+        color: colors.white,
+        opacity: 0.85,
+    },
+
+    // === CLIENT ROW ===
+    clientRow: {
+        flexDirection: 'row',
+        gap: 20,
+        marginBottom: 32,
+    },
+    clientCard: {
+        flex: 1,
+        padding: 20,
+        backgroundColor: colors.snow,
+        borderRadius: 6,
+    },
+    clientLabel: {
         fontSize: 7,
         fontWeight: 600,
         color: colors.teal,
         textTransform: 'uppercase',
-        letterSpacing: 1,
-        marginBottom: 8,
+        letterSpacing: 1.2,
+        marginBottom: 10,
     },
-    infoCardName: {
-        fontSize: 13,
+    clientName: {
+        fontSize: 14,
         fontWeight: 600,
         color: colors.navy,
-        marginBottom: 4,
+        marginBottom: 6,
     },
-    infoCardDetail: {
+    clientDetail: {
         fontSize: 9,
-        color: colors.darkGray,
-        marginBottom: 2,
+        color: colors.slate,
+        marginBottom: 3,
+        lineHeight: 1.4,
     },
 
     // === SECTIONS ===
     section: {
-        marginBottom: 16,
+        marginBottom: 20,
     },
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: colors.navy,
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        borderRadius: 4,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 6,
+        marginBottom: 1,
     },
-    sectionHeaderWithColor: {
+    sectionHeaderAccent: {
         borderLeftWidth: 4,
+        borderLeftColor: colors.teal,
     },
     sectionTitle: {
         fontSize: 11,
@@ -232,28 +234,26 @@ const styles = StyleSheet.create({
     // === TABLE ===
     tableHeader: {
         flexDirection: 'row',
-        paddingVertical: 10,
-        paddingHorizontal: 12,
-        backgroundColor: colors.offWhite,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.lightGray,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        backgroundColor: colors.pearl,
     },
     tableHeaderText: {
         fontSize: 7,
         fontWeight: 600,
-        color: colors.gray,
+        color: colors.steel,
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
     },
     tableRow: {
         flexDirection: 'row',
-        paddingVertical: 10,
-        paddingHorizontal: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
         borderBottomWidth: 1,
-        borderBottomColor: colors.lightGray,
+        borderBottomColor: colors.pearl,
     },
     tableRowAlt: {
-        backgroundColor: colors.offWhite,
+        backgroundColor: colors.snow,
     },
     col1: { width: '44%' },
     col2: { width: '10%', textAlign: 'center' },
@@ -262,71 +262,69 @@ const styles = StyleSheet.create({
     col5: { width: '18%', textAlign: 'right' },
     cellText: {
         fontSize: 9,
-        color: colors.black,
+        color: colors.charcoal,
     },
     cellTextMuted: {
         fontSize: 9,
-        color: colors.gray,
+        color: colors.steel,
     },
     cellTextBold: {
         fontSize: 9,
         fontWeight: 600,
-        color: colors.black,
+        color: colors.charcoal,
     },
 
     // === SUBSECTION ===
     subsectionRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
         backgroundColor: colors.white,
         borderBottomWidth: 1,
-        borderBottomColor: colors.lightGray,
+        borderBottomColor: colors.pearl,
     },
     subsectionDot: {
-        width: 4,
-        height: 4,
-        borderRadius: 2,
+        width: 5,
+        height: 5,
+        borderRadius: 3,
         backgroundColor: colors.teal,
-        marginRight: 8,
+        marginRight: 10,
     },
     subsectionTitle: {
         fontSize: 8,
         fontWeight: 600,
-        color: colors.teal,
+        color: colors.slate,
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
     },
 
     // === TOTALS ===
     totalsSection: {
-        marginTop: 24,
+        marginTop: 32,
         flexDirection: 'row',
         justifyContent: 'flex-end',
     },
     totalsCard: {
-        width: 280,
-        backgroundColor: colors.offWhite,
-        borderRadius: 8,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: colors.lightGray,
+        width: 300,
     },
     totalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.pearl,
     },
     totalLabel: {
         fontSize: 10,
-        color: colors.darkGray,
+        color: colors.slate,
     },
     totalValue: {
         fontSize: 10,
         fontWeight: 500,
-        color: colors.black,
+        color: colors.charcoal,
     },
     totalValueDiscount: {
         fontSize: 10,
@@ -337,72 +335,51 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: 12,
-        paddingTop: 14,
-        borderTopWidth: 2,
-        borderTopColor: colors.navy,
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        backgroundColor: colors.navy,
+        borderRadius: 6,
+        marginTop: 8,
     },
     grandTotalLabel: {
-        fontSize: 12,
+        fontSize: 11,
+        fontWeight: 600,
+        color: colors.white,
+        textTransform: 'uppercase',
+        letterSpacing: 1.5,
+    },
+    grandTotalValue: {
+        fontSize: 18,
+        fontWeight: 700,
+        color: colors.white,
+    },
+
+    // === NOTES SECTION ===
+    notesSection: {
+        marginTop: 40,
+        flexDirection: 'row',
+        gap: 20,
+    },
+    notesCard: {
+        flex: 1,
+        padding: 20,
+        backgroundColor: colors.snow,
+        borderRadius: 6,
+        borderTopWidth: 3,
+        borderTopColor: colors.teal,
+    },
+    notesTitle: {
+        fontSize: 8,
         fontWeight: 700,
         color: colors.navy,
         textTransform: 'uppercase',
         letterSpacing: 1,
+        marginBottom: 12,
     },
-    grandTotalValue: {
-        fontSize: 16,
-        fontWeight: 700,
-        color: colors.navy,
-    },
-
-    // === BOTTOM INFO ===
-    bottomSection: {
-        marginTop: 32,
-        flexDirection: 'row',
-        gap: 20,
-    },
-    bottomCard: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: colors.offWhite,
-        borderRadius: 6,
-    },
-    bottomCardTitle: {
+    notesText: {
         fontSize: 8,
-        fontWeight: 700,
-        color: colors.navy,
-        textTransform: 'uppercase',
-        letterSpacing: 0.8,
-        marginBottom: 10,
-        paddingBottom: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.lightGray,
-    },
-    bottomCardText: {
-        fontSize: 8,
-        color: colors.darkGray,
-        lineHeight: 1.6,
-    },
-
-    // === SIGNATURE ===
-    signatureSection: {
-        marginTop: 40,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: 40,
-    },
-    signatureBox: {
-        flex: 1,
-    },
-    signatureLine: {
-        borderBottomWidth: 1,
-        borderBottomColor: colors.darkGray,
-        marginBottom: 10,
-        height: 40,
-    },
-    signatureLabel: {
-        fontSize: 8,
-        color: colors.gray,
+        color: colors.slate,
+        lineHeight: 1.7,
     },
 
     // === FOOTER ===
@@ -411,56 +388,61 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
+        height: 50,
+    },
+    footerAccentBar: {
+        height: 4,
+        flexDirection: 'row',
+    },
+    footerAccentTeal: {
+        flex: 4,
+        backgroundColor: colors.teal,
+    },
+    footerAccentOrange: {
+        flex: 1,
+        backgroundColor: colors.orange,
+    },
+    footerContent: {
+        flex: 1,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 14,
-        paddingHorizontal: 40,
+        paddingHorizontal: 48,
         backgroundColor: colors.navy,
     },
     footerLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
     },
     footerLogo: {
-        width: 50,
-        height: 15,
+        fontSize: 12,
+        fontWeight: 700,
+        color: colors.white,
+        marginRight: 16,
+    },
+    footerDivider: {
+        width: 1,
+        height: 12,
+        backgroundColor: colors.slate,
+        marginRight: 16,
     },
     footerText: {
-        fontSize: 7,
-        color: colors.white,
-        opacity: 0.7,
+        fontSize: 8,
+        color: colors.silver,
     },
     footerRight: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 16,
     },
-    footerAccent: {
-        fontSize: 7,
-        color: colors.teal,
+    footerQuoteNum: {
+        fontSize: 8,
         fontWeight: 600,
+        color: colors.teal,
     },
-    footerDivider: {
-        width: 1,
-        height: 10,
-        backgroundColor: colors.white,
-        opacity: 0.3,
-    },
-
-    // === ACCENT BAR ===
-    accentBar: {
-        height: 4,
-        flexDirection: 'row',
-    },
-    accentBarTeal: {
-        flex: 3,
-        backgroundColor: colors.teal,
-    },
-    accentBarOrange: {
-        flex: 1,
-        backgroundColor: colors.orange,
+    footerPage: {
+        fontSize: 8,
+        color: colors.silver,
+        marginLeft: 16,
     },
 
     // === TERMS PAGE ===
@@ -470,39 +452,40 @@ const styles = StyleSheet.create({
         fontFamily: 'Inter',
         backgroundColor: colors.white,
     },
-    termsContent: {
-        padding: 40,
-        paddingTop: 32,
-        paddingBottom: 80,
-    },
     termsHeader: {
-        marginBottom: 24,
-        paddingBottom: 16,
-        borderBottomWidth: 2,
+        paddingTop: 40,
+        paddingHorizontal: 48,
+        paddingBottom: 24,
+        borderBottomWidth: 3,
         borderBottomColor: colors.teal,
+        marginBottom: 32,
     },
     termsTitle: {
-        fontSize: 18,
+        fontSize: 24,
         fontWeight: 700,
         color: colors.navy,
-        letterSpacing: -0.3,
+        letterSpacing: -0.5,
     },
     termsSubtitle: {
         fontSize: 9,
-        color: colors.gray,
-        marginTop: 4,
+        color: colors.silver,
+        marginTop: 8,
+    },
+    termsContent: {
+        paddingHorizontal: 48,
+        paddingBottom: 100,
     },
     termsColumns: {
         flexDirection: 'row',
-        gap: 24,
+        gap: 32,
     },
     termsColumn: {
         flex: 1,
     },
     termsText: {
         fontSize: 8,
-        color: colors.darkGray,
-        lineHeight: 1.7,
+        color: colors.slate,
+        lineHeight: 1.8,
         textAlign: 'justify',
     },
 });
@@ -539,68 +522,65 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
     return (
         <Document>
             <Page size="A4" style={styles.page}>
-                {/* Multi-color accent bar */}
-                <View style={styles.accentBar}>
-                    <View style={styles.accentBarTeal} />
-                    <View style={styles.accentBarOrange} />
-                </View>
-
                 {/* Header */}
-                <View style={styles.headerBar}>
-                    <View style={styles.logoContainer}>
-                        {company?.logo && pdfOptions?.showLogo ? (
-                            <Image src={company.logo} style={styles.logo} />
-                        ) : (
-                            <Text style={styles.logoFallback}>tell</Text>
-                        )}
+                <View style={styles.header}>
+                    <View style={styles.headerTop}>
+                        <View style={styles.logoSection}>
+                            {company?.logo && pdfOptions?.showLogo ? (
+                                <Image src={company.logo} style={styles.logo} />
+                            ) : (
+                                <Text style={styles.logoText}>tell</Text>
+                            )}
+                        </View>
+                        <View style={styles.documentType}>
+                            <Text style={styles.documentTitle}>Quotation</Text>
+                            <Text style={styles.quoteNumber}>{quote.quoteNumber}</Text>
+                        </View>
                     </View>
-                    <View style={styles.quoteTag}>
-                        <Text style={styles.quoteTagText}>Quotation</Text>
+
+                    {/* Meta Information Bar */}
+                    <View style={styles.metaBar}>
+                        <View style={styles.metaItem}>
+                            <Text style={styles.metaLabel}>Date</Text>
+                            <Text style={styles.metaValue}>{quoteDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                            <Text style={styles.metaLabel}>Valid Until</Text>
+                            <Text style={styles.metaValue}>{validUntil.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                            <Text style={styles.metaLabel}>Currency</Text>
+                            <Text style={styles.metaValue}>{currency}</Text>
+                        </View>
+                        <View style={styles.metaItemLast}>
+                            <Text style={styles.metaLabel}>Reference</Text>
+                            <Text style={styles.metaValue}>{quote.quoteNumber}</Text>
+                        </View>
                     </View>
                 </View>
 
                 <View style={styles.content}>
-                    {/* Quote Info Strip */}
-                    <View style={styles.quoteInfoStrip}>
-                        <View style={styles.quoteNumberSection}>
-                            <Text style={styles.quoteLabel}>Quote Number</Text>
-                            <Text style={styles.quoteNumber}>{quote.quoteNumber}</Text>
-                        </View>
-                        <View style={styles.quoteDates}>
-                            <View style={styles.dateRow}>
-                                <Text style={styles.dateLabel}>Date:</Text>
-                                <Text style={styles.dateValue}>{quoteDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</Text>
-                            </View>
-                            <View style={styles.dateRow}>
-                                <Text style={styles.dateLabel}>Valid Until:</Text>
-                                <Text style={styles.dateValue}>{validUntil.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</Text>
-                            </View>
-                        </View>
-                    </View>
-
-                    {/* Project Card */}
+                    {/* Project Banner */}
                     {project?.title && (
-                        <View style={styles.projectCard}>
+                        <View style={styles.projectBanner}>
+                            <Text style={styles.projectLabel}>Project</Text>
                             <Text style={styles.projectTitle}>{project.title}</Text>
-                            <View style={styles.projectMeta}>
+                            <View style={styles.projectDetails}>
                                 {project.venue && (
-                                    <View style={styles.projectMetaItem}>
-                                        <View style={styles.projectMetaDot} />
-                                        <Text style={styles.projectMetaText}>{project.venue}</Text>
+                                    <View style={styles.projectDetail}>
+                                        <Text style={styles.projectDetailText}>{project.venue}</Text>
                                     </View>
                                 )}
                                 {project.startDate && (
-                                    <View style={styles.projectMetaItem}>
-                                        <View style={styles.projectMetaDot} />
-                                        <Text style={styles.projectMetaText}>
+                                    <View style={styles.projectDetail}>
+                                        <Text style={styles.projectDetailText}>
                                             {project.startDate}{project.endDate && project.endDate !== project.startDate ? ` — ${project.endDate}` : ''}
                                         </Text>
                                     </View>
                                 )}
                                 {project.type && (
-                                    <View style={styles.projectMetaItem}>
-                                        <View style={styles.projectMetaDot} />
-                                        <Text style={styles.projectMetaText}>{project.type}</Text>
+                                    <View style={styles.projectDetail}>
+                                        <Text style={styles.projectDetailText}>{project.type}</Text>
                                     </View>
                                 )}
                             </View>
@@ -608,22 +588,21 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                     )}
 
                     {/* Client & Prepared By */}
-                    <View style={styles.infoRow}>
-                        <View style={styles.infoCard}>
-                            <Text style={styles.infoCardLabel}>Bill To</Text>
-                            {client?.company && <Text style={styles.infoCardName}>{client.company}</Text>}
-                            {client?.contact && <Text style={styles.infoCardDetail}>Attn: {client.contact}</Text>}
-                            {client?.email && <Text style={styles.infoCardDetail}>{client.email}</Text>}
-                            {client?.phone && <Text style={styles.infoCardDetail}>{client.phone}</Text>}
+                    <View style={styles.clientRow}>
+                        <View style={styles.clientCard}>
+                            <Text style={styles.clientLabel}>Bill To</Text>
+                            {client?.company && <Text style={styles.clientName}>{client.company}</Text>}
+                            {client?.contact && <Text style={styles.clientDetail}>Attn: {client.contact}</Text>}
+                            {client?.email && <Text style={styles.clientDetail}>{client.email}</Text>}
+                            {client?.phone && <Text style={styles.clientDetail}>{client.phone}</Text>}
                         </View>
-                        {preparedByName && (
-                            <View style={styles.infoCard}>
-                                <Text style={styles.infoCardLabel}>Prepared By</Text>
-                                <Text style={styles.infoCardName}>{preparedByName}</Text>
-                                <Text style={styles.infoCardDetail}>{company?.name}</Text>
-                                {company?.email && <Text style={styles.infoCardDetail}>{company.email}</Text>}
-                            </View>
-                        )}
+                        <View style={styles.clientCard}>
+                            <Text style={styles.clientLabel}>From</Text>
+                            <Text style={styles.clientName}>{company?.name || 'Tell'}</Text>
+                            {preparedByName && <Text style={styles.clientDetail}>Prepared by: {preparedByName}</Text>}
+                            {company?.email && <Text style={styles.clientDetail}>{company.email}</Text>}
+                            {company?.phone && <Text style={styles.clientDetail}>{company.phone}</Text>}
+                        </View>
                     </View>
 
                     {/* Sections */}
@@ -632,7 +611,6 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                         const config = SECTIONS[sectionId];
                         if (!section || !config) return null;
 
-                        // Get subsection order
                         const subsectionOrder = section.subsectionOrder ||
                             [...config.subsections, ...(section.customSubsections || [])];
 
@@ -643,14 +621,13 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
 
                         return (
                             <View key={sectionId} style={styles.section} wrap={false}>
-                                <View style={[styles.sectionHeader, styles.sectionHeaderWithColor, { borderLeftColor: config.color }]}>
+                                <View style={[styles.sectionHeader, styles.sectionHeaderAccent, { borderLeftColor: config.color }]}>
                                     <Text style={styles.sectionTitle}>{getSectionName(sectionId)}</Text>
                                     <Text style={styles.sectionTotal}>
                                         {formatCurrency(sectionTotals.totalCharge, currency)}
                                     </Text>
                                 </View>
 
-                                {/* Table Header */}
                                 <View style={styles.tableHeader}>
                                     <Text style={[styles.tableHeaderText, styles.col1]}>Description</Text>
                                     <Text style={[styles.tableHeaderText, styles.col2]}>Qty</Text>
@@ -659,12 +636,10 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                                     <Text style={[styles.tableHeaderText, styles.col5]}>Amount</Text>
                                 </View>
 
-                                {/* Subsections with items */}
                                 {subsectionOrder.map(subsectionName => {
                                     const items = section.subsections?.[subsectionName] || [];
                                     if (items.length === 0) return null;
 
-                                    // Hide "Services" header for flat sections
                                     const isFlatSection = ['creative', 'logistics', 'expenses'].includes(sectionId);
                                     const shouldHideSubsectionHeader = isFlatSection && subsectionName === 'Services';
 
@@ -754,56 +729,45 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                         </View>
                     </View>
 
-                    {/* Terms and Bank Info */}
-                    <View style={styles.bottomSection}>
-                        <View style={styles.bottomCard}>
-                            <Text style={styles.bottomCardTitle}>Terms & Conditions</Text>
-                            <Text style={styles.bottomCardText}>
-                                {quoteDefaults?.termsAndConditions || 'Payment due within 30 days of invoice date.'}
+                    {/* Notes Section */}
+                    <View style={styles.notesSection}>
+                        <View style={styles.notesCard}>
+                            <Text style={styles.notesTitle}>Terms & Conditions</Text>
+                            <Text style={styles.notesText}>
+                                {quoteDefaults?.termsAndConditions || 'Payment due within 30 days of invoice date. All prices are subject to confirmation at time of booking.'}
                             </Text>
                         </View>
 
                         {pdfOptions?.showBankDetails && bankDetails?.bankName && (
-                            <View style={styles.bottomCard}>
-                                <Text style={styles.bottomCardTitle}>Payment Details</Text>
-                                <Text style={styles.bottomCardText}>Bank: {bankDetails.bankName}</Text>
-                                <Text style={styles.bottomCardText}>Account: {bankDetails.accountName}</Text>
-                                <Text style={styles.bottomCardText}>Number: {bankDetails.accountNumber}</Text>
+                            <View style={styles.notesCard}>
+                                <Text style={styles.notesTitle}>Payment Details</Text>
+                                <Text style={styles.notesText}>Bank: {bankDetails.bankName}</Text>
+                                <Text style={styles.notesText}>Account: {bankDetails.accountName}</Text>
+                                <Text style={styles.notesText}>Number: {bankDetails.accountNumber}</Text>
                                 {bankDetails.swiftCode && (
-                                    <Text style={styles.bottomCardText}>SWIFT: {bankDetails.swiftCode}</Text>
+                                    <Text style={styles.notesText}>SWIFT: {bankDetails.swiftCode}</Text>
                                 )}
                             </View>
                         )}
-                    </View>
-
-                    {/* Signature Section */}
-                    <View style={styles.signatureSection}>
-                        <View style={styles.signatureBox}>
-                            <View style={styles.signatureLine} />
-                            <Text style={styles.signatureLabel}>Client Signature & Date</Text>
-                        </View>
-                        <View style={styles.signatureBox}>
-                            <View style={styles.signatureLine} />
-                            <Text style={styles.signatureLabel}>Authorized Signature</Text>
-                        </View>
                     </View>
                 </View>
 
                 {/* Footer */}
                 <View style={styles.footer} fixed>
-                    <View style={styles.footerLeft}>
-                        <Text style={styles.footerText}>{company?.name || 'Tell'}</Text>
-                        {company?.website && (
-                            <>
-                                <View style={styles.footerDivider} />
-                                <Text style={styles.footerText}>{company.website}</Text>
-                            </>
-                        )}
+                    <View style={styles.footerAccentBar}>
+                        <View style={styles.footerAccentTeal} />
+                        <View style={styles.footerAccentOrange} />
                     </View>
-                    <View style={styles.footerRight}>
-                        <Text style={styles.footerAccent}>{quote.quoteNumber}</Text>
-                        <View style={styles.footerDivider} />
-                        <Text style={styles.footerText}>{new Date().toLocaleDateString('en-GB')}</Text>
+                    <View style={styles.footerContent}>
+                        <View style={styles.footerLeft}>
+                            <Text style={styles.footerLogo}>tell</Text>
+                            <View style={styles.footerDivider} />
+                            <Text style={styles.footerText}>{company?.website || 'www.tell.so'}</Text>
+                        </View>
+                        <View style={styles.footerRight}>
+                            <Text style={styles.footerQuoteNum}>{quote.quoteNumber}</Text>
+                            <Text style={styles.footerPage}>Page 1</Text>
+                        </View>
                     </View>
                 </View>
             </Page>
@@ -811,25 +775,14 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
             {/* Terms & Conditions Page */}
             {includeTerms && quoteDefaults?.termsAndConditions && (
                 <Page size="A4" style={styles.termsPage}>
-                    <View style={styles.accentBar}>
-                        <View style={styles.accentBarTeal} />
-                        <View style={styles.accentBarOrange} />
-                    </View>
-
-                    <View style={styles.headerBar}>
-                        <View style={styles.logoContainer}>
-                            <Text style={styles.logoFallback}>tell</Text>
-                        </View>
+                    <View style={styles.termsHeader}>
+                        <Text style={styles.termsTitle}>Terms & Conditions</Text>
+                        <Text style={styles.termsSubtitle}>
+                            {company?.name} • Quote {quote.quoteNumber}
+                        </Text>
                     </View>
 
                     <View style={styles.termsContent}>
-                        <View style={styles.termsHeader}>
-                            <Text style={styles.termsTitle}>Terms & Conditions</Text>
-                            <Text style={styles.termsSubtitle}>
-                                {company?.name} • Quote {quote.quoteNumber}
-                            </Text>
-                        </View>
-
                         <View style={styles.termsColumns}>
                             {(() => {
                                 const terms = quoteDefaults.termsAndConditions;
@@ -853,13 +806,20 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                     </View>
 
                     <View style={styles.footer} fixed>
-                        <View style={styles.footerLeft}>
-                            <Text style={styles.footerText}>{company?.name || 'Tell'}</Text>
+                        <View style={styles.footerAccentBar}>
+                            <View style={styles.footerAccentTeal} />
+                            <View style={styles.footerAccentOrange} />
                         </View>
-                        <View style={styles.footerRight}>
-                            <Text style={styles.footerText}>Terms & Conditions</Text>
-                            <View style={styles.footerDivider} />
-                            <Text style={styles.footerText}>Page 2</Text>
+                        <View style={styles.footerContent}>
+                            <View style={styles.footerLeft}>
+                                <Text style={styles.footerLogo}>tell</Text>
+                                <View style={styles.footerDivider} />
+                                <Text style={styles.footerText}>{company?.website || 'www.tell.so'}</Text>
+                            </View>
+                            <View style={styles.footerRight}>
+                                <Text style={styles.footerQuoteNum}>{quote.quoteNumber}</Text>
+                                <Text style={styles.footerPage}>Page 2</Text>
+                            </View>
                         </View>
                     </View>
                 </Page>
