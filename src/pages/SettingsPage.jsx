@@ -709,34 +709,55 @@ export default function SettingsPage({ onBack }) {
 
                         <div className="space-y-6">
                             <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
-                                <h4 className="text-sm font-semibold text-gray-300 mb-3">Anthropic API Key</h4>
+                                <h4 className="text-sm font-semibold text-gray-300 mb-3">Anthropic API Key (Claude)</h4>
                                 <p className="text-xs text-gray-500 mb-3">
-                                    Required for AI proposal generation. Get your API key from{' '}
+                                    For AI proposal text generation. Get your key from{' '}
                                     <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" className="text-accent-primary hover:underline">
                                         console.anthropic.com
                                     </a>
                                 </p>
                                 <input
                                     type="password"
-                                    value={settings.aiSettings?.apiKey || ''}
-                                    onChange={(e) => saveAiSettings({ apiKey: e.target.value })}
+                                    value={settings.aiSettings?.anthropicKey || ''}
+                                    onChange={(e) => saveAiSettings({ anthropicKey: e.target.value })}
                                     className="input w-full font-mono text-sm"
                                     placeholder="sk-ant-api..."
                                 />
                             </div>
 
+                            <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
+                                <h4 className="text-sm font-semibold text-gray-300 mb-3">OpenAI API Key (DALL-E)</h4>
+                                <p className="text-xs text-gray-500 mb-3">
+                                    For AI cover page image generation. Get your key from{' '}
+                                    <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-accent-primary hover:underline">
+                                        platform.openai.com
+                                    </a>
+                                </p>
+                                <input
+                                    type="password"
+                                    value={settings.aiSettings?.openaiKey || ''}
+                                    onChange={(e) => saveAiSettings({ openaiKey: e.target.value })}
+                                    className="input w-full font-mono text-sm"
+                                    placeholder="sk-..."
+                                />
+                            </div>
+
                             <div className="p-4 bg-accent-primary/10 border border-accent-primary/20 rounded-lg">
-                                <h4 className="text-sm font-semibold text-accent-primary mb-2">AI Features Available</h4>
+                                <h4 className="text-sm font-semibold text-accent-primary mb-2">AI Features</h4>
                                 <ul className="text-sm text-gray-400 space-y-1">
-                                    <li>• Generate professional proposals from quote data</li>
-                                    <li>• AI-powered cover page background images (coming soon)</li>
-                                    <li>• Smart line item suggestions (coming soon)</li>
+                                    <li className="flex items-center gap-2">
+                                        <span className={settings.aiSettings?.anthropicKey ? 'text-green-400' : 'text-gray-600'}>●</span>
+                                        Generate professional proposals (Claude)
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <span className={settings.aiSettings?.openaiKey ? 'text-green-400' : 'text-gray-600'}>●</span>
+                                        AI cover page backgrounds (DALL-E)
+                                    </li>
                                 </ul>
                             </div>
 
                             <p className="text-xs text-gray-600">
-                                Your API key is stored locally and never sent to our servers.
-                                AI requests are made directly from your browser to Anthropic's API.
+                                Your API keys are stored locally in your browser and never sent to our servers.
                             </p>
                         </div>
                     </div>

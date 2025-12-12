@@ -55,8 +55,8 @@ const defaultSettings = {
     },
     // AI Settings
     aiSettings: {
-        apiKey: '',
-        provider: 'anthropic', // anthropic or openai
+        anthropicKey: '',
+        openaiKey: '',
     },
     // Project types
     projectTypes: [

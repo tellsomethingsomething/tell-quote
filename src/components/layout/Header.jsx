@@ -43,7 +43,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
         setShowProposalModal(true);
         setProposalText('Generating proposal...');
 
-        const apiKey = settings.aiSettings?.apiKey;
+        const apiKey = settings.aiSettings?.anthropicKey;
 
         if (apiKey) {
             const result = await generateAIProposal(quote, quote.currency, settings, apiKey);
