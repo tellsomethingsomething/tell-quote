@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { pdf } from '@react-pdf/renderer';
 import QuotePDF from '../pdf/QuotePDF';
 import { useQuoteStore } from '../../store/quoteStore';
@@ -9,6 +10,7 @@ import { calculateGrandTotal, calculateGrandTotalWithFees } from '../../utils/ca
 export default function LivePreview() {
     const { quote, rates } = useQuoteStore();
     const { settings } = useSettingsStore();
+    const [includeTerms, setIncludeTerms] = useState(false);
     const client = quote.client || {};
     const fees = quote.fees || {};
     const currencySymbol = CURRENCIES[quote.currency]?.symbol || '$';
@@ -27,7 +29,7 @@ export default function LivePreview() {
     // Generate PDF Link
     const generatePDF = async () => {
         const blob = await pdf(
-            <QuotePDF quote={quote} currency={quote.currency} />
+            <QuotePDF quote={quote} currency={quote.currency} includeTerms={includeTerms} />
         ).toBlob();
 
         const filename = `${client.company || 'Client'} - ${quote.project.title || 'Project'} - ${quote.quoteDate} - Quote.pdf`;
@@ -193,7 +195,16 @@ export default function LivePreview() {
             </div>
 
             {/* Overlay for PDF gen */}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[1px]">
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-[1px] gap-4">
+                <label className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-lg cursor-pointer hover:bg-white/20 transition-colors">
+                    <input
+                        type="checkbox"
+                        checked={includeTerms}
+                        onChange={(e) => setIncludeTerms(e.target.checked)}
+                        className="w-4 h-4 rounded border-white/30 text-accent-primary focus:ring-accent-primary"
+                    />
+                    <span className="text-white text-sm">Include Terms & Conditions page</span>
+                </label>
                 <button
                     onClick={generatePDF}
                     className="bg-accent-primary hover:bg-accent-secondary text-white px-6 py-3 rounded-full font-bold shadow-xl transform transition hover:scale-105 flex items-center gap-2"
