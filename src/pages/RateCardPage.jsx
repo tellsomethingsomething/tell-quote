@@ -449,9 +449,14 @@ export default function RateCardPage({ onBack }) {
             <div className="flex-1 overflow-y-auto p-4">
                 {filteredItems.length === 0 && !searchQuery ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
-                        <div className="w-8 h-8 border-2 border-accent-primary border-t-transparent rounded-full animate-spin mb-4" />
-                        <h3 className="text-lg font-medium text-gray-400 mb-2">Loading services...</h3>
-                        <p className="text-sm text-gray-600">Setting up your rate card</p>
+                        <svg className="w-16 h-16 text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <h3 className="text-lg font-medium text-gray-400 mb-2">No services yet</h3>
+                        <p className="text-sm text-gray-600 mb-4">Add your rates and services to use in quotes</p>
+                        <button onClick={() => setShowAddForm(true)} className="btn-primary">
+                            + Add Service
+                        </button>
                     </div>
                 ) : filteredItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
