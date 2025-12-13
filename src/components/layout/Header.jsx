@@ -5,6 +5,18 @@ import { useAuthStore } from '../../store/authStore';
 import Navigation from './Navigation';
 import { useToast } from '../common/Toast';
 
+// Skip Link Component for keyboard accessibility
+function SkipLink() {
+    return (
+        <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-brand-teal focus:text-white focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-dark-bg transition-all"
+        >
+            Skip to main content
+        </a>
+    );
+}
+
 export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS }) {
     const { quote, ratesLoading, refreshRates } = useQuoteStore();
     const { saveQuote } = useClientStore();
@@ -46,6 +58,8 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
         const activeTab = view;
 
         return (
+            <>
+            <SkipLink />
             <header className="min-h-[60px] bg-dark-bg/95 backdrop-blur-md border-b border-dark-border flex items-center justify-between px-3 sm:px-6 z-20 sticky top-0">
                 {/* Logo - Hidden on mobile, shown on larger screens */}
                 <div className="hidden sm:flex items-center gap-4">
@@ -122,11 +136,14 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                     )}
                 </div>
             </header>
+            </>
         );
     }
 
     // Editor view header
     return (
+        <>
+        <SkipLink />
         <header className="sticky top-0 z-50 bg-dark-bg/95 backdrop-blur-md border-b border-dark-border">
             <div className="max-w-[1920px] mx-auto px-2 sm:px-4 py-2 sm:py-3">
                 <div className="flex items-center justify-between gap-2 sm:gap-4">
@@ -198,5 +215,6 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
             </div>
 
         </header>
+        </>
     );
 }

@@ -1,20 +1,24 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import Header from './components/layout/Header';
 import EditorPanel from './components/layout/EditorPanel';
 import PreviewPanel from './components/layout/PreviewPanel';
-import ClientsPage from './pages/ClientsPage';
-import ClientDetailPage from './pages/ClientDetailPage';
-import RateCardPage from './pages/RateCardPage';
-import DashboardPage from './pages/DashboardPage';
-import QuotesPage from './pages/QuotesPage';
-import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
-import FSPage from './pages/FSPage';
+import LoadingSpinner from './components/common/LoadingSpinner';
 import { useQuoteStore } from './store/quoteStore';
 import { useClientStore } from './store/clientStore';
 import { useRateCardStore } from './store/rateCardStore';
 import { useSettingsStore } from './store/settingsStore';
 import { useAuthStore } from './store/authStore';
+import { useUnsavedChanges } from './hooks/useUnsavedChanges';
+
+// Lazy load pages for better code splitting
+const ClientsPage = lazy(() => import('./pages/ClientsPage'));
+const ClientDetailPage = lazy(() => import('./pages/ClientDetailPage'));
+const RateCardPage = lazy(() => import('./pages/RateCardPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const QuotesPage = lazy(() => import('./pages/QuotesPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const FSPage = lazy(() => import('./pages/FSPage'));
 
 // Views: 'clients' | 'client-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings'
 function App() {
@@ -30,56 +34,78 @@ function App() {
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
 
-  // Track initial quote state for change detection
-  const lastSavedQuoteRef = useRef(null);
+  // Use custom hook for unsaved changes tracking
   const quote = useQuoteStore(state => state.quote);
+  const { confirmNavigateAway, markAsSaved } = useUnsavedChanges(
+    view === 'editor',
+    quote
+  );
 
-  // Check if quote has unsaved changes
-  const hasUnsavedChanges = useCallback(() => {
-    if (view !== 'editor') return false;
-    if (!lastSavedQuoteRef.current) return false;
+  // Memoized navigation handlers to prevent unnecessary re-renders
+  // (Must be defined before early return to comply with hooks rules)
+  const handleSelectClient = useCallback((clientId) => {
+    setSelectedClientId(clientId);
+    setView('client-detail');
+  }, []);
 
-    // Compare current quote with last saved state (excluding timestamps)
-    const currentQuote = { ...quote };
-    const savedQuote = { ...lastSavedQuoteRef.current };
-    delete currentQuote.updatedAt;
-    delete savedQuote.updatedAt;
+  const handleNewQuote = useCallback((clientId = null) => {
+    resetQuote();
+    if (clientId) {
+      const client = useClientStore.getState().getClient(clientId);
+      if (client) {
+        useQuoteStore.getState().setClientDetails({
+          company: client.company,
+          contact: client.contact,
+          email: client.email,
+          phone: client.phone,
+        });
+      }
+    }
+    setView('editor');
+  }, [resetQuote]);
 
-    return JSON.stringify(currentQuote) !== JSON.stringify(savedQuote);
-  }, [quote, view]);
+  const handleEditQuote = useCallback((quote) => {
+    // If quote data is passed, load it into the editor
+    if (quote && quote.sections) {
+      loadQuoteData(quote);
+    }
+    setView('editor');
+  }, [loadQuoteData]);
 
-  // Save current quote state when entering editor or saving
+  const handleGoToClients = useCallback(() => {
+    confirmNavigateAway(() => setView('clients'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToRateCard = useCallback(() => {
+    confirmNavigateAway(() => setView('rate-card'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToDashboard = useCallback(() => {
+    confirmNavigateAway(() => setView('dashboard'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToSettings = useCallback(() => {
+    confirmNavigateAway(() => setView('settings'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToQuotes = useCallback(() => {
+    confirmNavigateAway(() => setView('quotes'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToFS = useCallback(() => {
+    confirmNavigateAway(() => setView('fs'));
+  }, [confirmNavigateAway]);
+
+  const handleToggleMobilePreview = useCallback(() => {
+    setShowMobilePreview(prev => !prev);
+  }, []);
+
+  // Mark as saved when entering editor or quote number changes
   useEffect(() => {
     if (view === 'editor' && quote.quoteNumber) {
-      lastSavedQuoteRef.current = { ...quote };
+      markAsSaved();
     }
-  }, [view]);
-
-  // Warn about unsaved changes when closing/refreshing browser
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (hasUnsavedChanges()) {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
-
-  // Helper to confirm navigation away from editor with unsaved changes
-  const confirmNavigateAway = useCallback((callback) => {
-    if (hasUnsavedChanges()) {
-      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
-        lastSavedQuoteRef.current = null;
-        callback();
-      }
-    } else {
-      callback();
-    }
-  }, [hasUnsavedChanges]);
+  }, [view, quote.quoteNumber, markAsSaved]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -95,116 +121,83 @@ function App() {
     return <LoginPage />;
   }
 
-  // Navigation handlers
-  const handleSelectClient = (clientId) => {
-    setSelectedClientId(clientId);
-    setView('client-detail');
-  };
-
-  const handleBackToClients = () => {
-    setView('clients');
-    setSelectedClientId(null);
-  };
-
-  const handleNewQuote = (clientId = null) => {
-    resetQuote();
-    if (clientId) {
-      const client = useClientStore.getState().getClient(clientId);
-      if (client) {
-        useQuoteStore.getState().setClientDetails({
-          company: client.company,
-          contact: client.contact,
-          email: client.email,
-          phone: client.phone,
-        });
-      }
-    }
-    setView('editor');
-  };
-
-  const handleEditQuote = (quote) => {
-    // If quote data is passed, load it into the editor
-    if (quote && quote.sections) {
-      loadQuoteData(quote);
-    }
-    setView('editor');
-  };
-
-  const handleGoToClients = () => {
-    confirmNavigateAway(() => setView('clients'));
-  };
-
-  const handleGoToRateCard = () => {
-    confirmNavigateAway(() => setView('rate-card'));
-  };
-
-  const handleGoToDashboard = () => {
-    confirmNavigateAway(() => setView('dashboard'));
-  };
-
-  const handleGoToSettings = () => {
-    confirmNavigateAway(() => setView('settings'));
-  };
-
-  const handleGoToQuotes = () => {
-    confirmNavigateAway(() => setView('quotes'));
-  };
-
-  const handleGoToFS = () => {
-    confirmNavigateAway(() => setView('fs'));
-  };
-
-  // Render current view
+  // Render current view with Suspense boundaries
   const renderView = () => {
     switch (view) {
       case 'clients':
         return (
-          <ClientsPage
-            onSelectClient={handleSelectClient}
-          />
+          <Suspense fallback={<LoadingSpinner text="Loading clients..." />}>
+            <main id="main-content" tabIndex="-1">
+              <ClientsPage onSelectClient={handleSelectClient} />
+            </main>
+          </Suspense>
         );
       case 'client-detail':
         return (
-          <ClientDetailPage
-            clientId={selectedClientId}
-            onBackToDashboard={handleGoToDashboard}
-            onEditQuote={handleEditQuote}
-            onNewQuote={handleNewQuote}
-          />
+          <Suspense fallback={<LoadingSpinner text="Loading client details..." />}>
+            <main id="main-content" tabIndex="-1">
+              <ClientDetailPage
+                clientId={selectedClientId}
+                onBackToDashboard={handleGoToDashboard}
+                onEditQuote={handleEditQuote}
+                onNewQuote={handleNewQuote}
+              />
+            </main>
+          </Suspense>
         );
       case 'rate-card':
         return (
-          <RateCardPage />
+          <Suspense fallback={<LoadingSpinner text="Loading rate card..." />}>
+            <main id="main-content" tabIndex="-1">
+              <RateCardPage />
+            </main>
+          </Suspense>
         );
       case 'dashboard':
         return (
-          <DashboardPage
-            onViewQuote={handleEditQuote}
-            onNewQuote={handleNewQuote}
-          />
+          <Suspense fallback={<LoadingSpinner text="Loading dashboard..." />}>
+            <main id="main-content" tabIndex="-1">
+              <DashboardPage
+                onViewQuote={handleEditQuote}
+                onNewQuote={handleNewQuote}
+              />
+            </main>
+          </Suspense>
         );
       case 'quotes':
         return (
-          <QuotesPage
-            onEditQuote={handleEditQuote}
-            onNewQuote={handleNewQuote}
-          />
+          <Suspense fallback={<LoadingSpinner text="Loading quotes..." />}>
+            <main id="main-content" tabIndex="-1">
+              <QuotesPage
+                onEditQuote={handleEditQuote}
+                onNewQuote={handleNewQuote}
+              />
+            </main>
+          </Suspense>
         );
       case 'settings':
         return (
-          <SettingsPage />
+          <Suspense fallback={<LoadingSpinner text="Loading settings..." />}>
+            <main id="main-content" tabIndex="-1">
+              <SettingsPage />
+            </main>
+          </Suspense>
         );
       case 'fs':
         return (
-          <FSPage onExit={handleGoToDashboard} />
+          <Suspense fallback={<LoadingSpinner text="Loading..." />}>
+            <main id="main-content" tabIndex="-1">
+              <FSPage onExit={handleGoToDashboard} />
+            </main>
+          </Suspense>
         );
       case 'editor':
       default:
         return (
-          <main className="flex-1 flex flex-col lg:flex-row max-w-[1920px] mx-auto w-full">
+          <main id="main-content" className="flex-1 flex flex-col lg:flex-row max-w-[1920px] mx-auto w-full" tabIndex="-1">
             {/* Mobile Preview Toggle Button */}
             <button
-              onClick={() => setShowMobilePreview(!showMobilePreview)}
+              onClick={handleToggleMobilePreview}
               className="lg:hidden fixed bottom-4 right-4 z-50 btn-primary rounded-full p-4 shadow-xl"
               aria-label={showMobilePreview ? "Show editor" : "Show preview"}
             >

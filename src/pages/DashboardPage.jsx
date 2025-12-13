@@ -10,7 +10,11 @@ import { CURRENCIES } from '../data/currencies';
 const STATUSES = [
     { id: 'draft', label: 'Drafts', color: '#9CA3AF', bgColor: 'bg-gray-400/10' },
     { id: 'sent', label: 'Sent', color: '#0F8B8D', bgColor: 'bg-[#0F8B8D]/10' },      // Brand Teal
+    { id: 'under_review', label: 'Under Review', color: '#FCD34D', bgColor: 'bg-amber-400/10' },
+    { id: 'approved', label: 'Approved', color: '#10B981', bgColor: 'bg-emerald-500/10' },
     { id: 'won', label: 'Won', color: '#22c55e', bgColor: 'bg-green-500/10' },
+    { id: 'rejected', label: 'Rejected', color: '#EF4444', bgColor: 'bg-red-500/10' },
+    { id: 'expired', label: 'Expired', color: '#6B7280', bgColor: 'bg-gray-500/10' },
     { id: 'dead', label: 'Lost', color: '#F87171', bgColor: 'bg-red-400/10' },
 ];
 
@@ -18,6 +22,33 @@ const MONTHS = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
+
+// Helper functions for quote expiry and follow-ups
+function calculateExpiryDate(quoteDate, validityDays) {
+    if (!quoteDate) return null;
+    const date = new Date(quoteDate);
+    date.setDate(date.getDate() + (parseInt(validityDays) || 30));
+    return date;
+}
+
+function isQuoteExpired(quoteDate, validityDays) {
+    const expiryDate = calculateExpiryDate(quoteDate, validityDays);
+    if (!expiryDate) return false;
+    return new Date() > expiryDate;
+}
+
+function isExpiringSoon(quoteDate, validityDays, daysThreshold = 7) {
+    const expiryDate = calculateExpiryDate(quoteDate, validityDays);
+    if (!expiryDate) return false;
+    const now = new Date();
+    const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+    return daysUntilExpiry > 0 && daysUntilExpiry <= daysThreshold;
+}
+
+function isFollowUpOverdue(nextFollowUpDate) {
+    if (!nextFollowUpDate) return false;
+    return new Date(nextFollowUpDate) < new Date();
+}
 
 export default function DashboardPage({ onViewQuote, onNewQuote }) {
     const { savedQuotes, clients, updateQuoteStatus } = useClientStore();
@@ -31,6 +62,11 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
 
     const [collapsedColumns, setCollapsedColumns] = useState({});
     const [pipelineMinimized, setPipelineMinimized] = useState(false);
+
+    // Loss reason modal state
+    const [lossReasonModal, setLossReasonModal] = useState({ open: false, quoteId: null, newStatus: null });
+    const [lossReason, setLossReason] = useState('');
+    const [lossReasonNotes, setLossReasonNotes] = useState('');
 
     // Toggle column collapse
     const toggleColumn = (statusId) => {
@@ -237,13 +273,34 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
 
         const quoteId = e.dataTransfer.getData('quoteId');
         if (quoteId) {
-            updateQuoteStatus(quoteId, newStatus);
+            // Check if new status requires loss reason
+            if (newStatus === 'rejected' || newStatus === 'expired' || newStatus === 'dead') {
+                setLossReasonModal({ open: true, quoteId, newStatus });
+            } else {
+                updateQuoteStatus(quoteId, newStatus);
+            }
         }
     };
 
     const handleDragEnd = () => {
         setDraggedQuoteId(null);
         setDragOverColumn(null);
+    };
+
+    const handleLossReasonSubmit = () => {
+        if (lossReasonModal.quoteId && lossReasonModal.newStatus) {
+            updateQuoteStatus(
+                lossReasonModal.quoteId,
+                lossReasonModal.newStatus,
+                lossReasonNotes,
+                lossReason,
+                lossReasonNotes
+            );
+        }
+        // Reset modal
+        setLossReasonModal({ open: false, quoteId: null, newStatus: null });
+        setLossReason('');
+        setLossReasonNotes('');
     };
 
     return (
@@ -255,7 +312,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                     <div>
                         <h1 className="text-lg sm:text-xl font-semibold text-gray-100">Welcome back, {userName}</h1>
-                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Pipeline Dashboard</p>
+                        <p className="text-xs sm:text-sm text-gray-400 mt-0.5">Pipeline Dashboard</p>
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-3">
@@ -275,7 +332,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                 {/* Filters - Stack on mobile */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs sm:text-sm text-gray-500 hidden sm:inline">Filters:</span>
+                        <span className="text-xs sm:text-sm text-gray-400 hidden sm:inline">Filters:</span>
                         <select
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
@@ -299,7 +356,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
 
                         {/* Dashboard Currency Selector */}
                         <div className="hidden sm:block h-4 w-px bg-dark-border mx-2"></div>
-                        <span className="text-sm text-gray-500 hidden sm:inline">View:</span>
+                        <span className="text-sm text-gray-400 hidden sm:inline">View:</span>
                         <select
                             value={dashboardCurrency}
                             onChange={(e) => setDashboardCurrency(e.target.value)}
@@ -514,16 +571,36 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                                 {!isCollapsed && (
                                     <div className="space-y-3 px-1 pb-3">
                                         {pipelineData[status.id].length === 0 ? (
-                                            <div className="text-center py-12 text-gray-500 text-sm border-2 border-dashed border-dark-border/50 rounded-xl bg-dark-bg/30">
-                                                <svg className="w-8 h-8 mx-auto mb-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <div className="text-center py-8 border-2 border-dashed border-dark-border/50 rounded-xl bg-dark-bg/30">
+                                                <svg className="w-10 h-10 mx-auto mb-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
-                                                No quotes yet
+                                                <p className="text-gray-400 text-sm mb-3">No {status.label.toLowerCase()} quotes</p>
+                                                {status.id === 'draft' && (
+                                                    <button
+                                                        onClick={() => onNewQuote && onNewQuote()}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-teal hover:text-white bg-brand-teal/10 hover:bg-brand-teal/20 rounded-lg transition-colors"
+                                                    >
+                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                        </svg>
+                                                        Create your first quote
+                                                    </button>
+                                                )}
+                                                {status.id !== 'draft' && (
+                                                    <p className="text-xs text-gray-500">Drag quotes here to update status</p>
+                                                )}
                                             </div>
                                         ) : (
                                             pipelineData[status.id].map(quote => {
                                                 const total = calculateGrandTotalWithFees(quote.sections || {}, quote.fees || {});
                                                 const displayAmount = convertCurrency(total.totalCharge, quote.currency || 'USD', dashboardCurrency, rates);
+
+                                                // Check for expiry and follow-up warnings
+                                                const expired = isQuoteExpired(quote.quoteDate, quote.validityDays);
+                                                const expiringSoon = !expired && isExpiringSoon(quote.quoteDate, quote.validityDays);
+                                                const followUpOverdue = isFollowUpOverdue(quote.nextFollowUpDate);
+                                                const needsAttention = expiringSoon || followUpOverdue;
 
                                                 return (
                                                     <div
@@ -534,6 +611,8 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                                                         onClick={() => onViewQuote && onViewQuote(quote)}
                                                         className={`w-full card text-left hover:border-white/15 transition-all cursor-move
                                                             ${draggedQuoteId === quote.id ? 'opacity-50 scale-95' : 'opacity-100'}
+                                                            ${needsAttention ? 'border-amber-500/30 bg-amber-500/5' : ''}
+                                                            ${expired ? 'border-red-500/30 bg-red-500/5 opacity-60' : ''}
                                                             active:cursor-grabbing hover:shadow-lg group relative`}
                                                     >
                                                         {/* Delete button */}
@@ -555,13 +634,36 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                                                         </div>
 
                                                         {/* Quote number and date */}
-                                                        <div className="flex justify-between items-start mb-1.5 pr-6">
+                                                        <div className="flex justify-between items-start mb-1.5 pr-6 gap-2">
                                                             <p className="text-[11px] text-gray-500 font-mono tracking-tight">{quote.quoteNumber}</p>
-                                                            {quote.project?.startDate && (
-                                                                <span className="text-[10px] bg-dark-bg/70 px-1.5 py-0.5 rounded text-gray-500">
-                                                                    {new Date(quote.project.startDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                                                                </span>
-                                                            )}
+                                                            <div className="flex gap-1 items-center flex-wrap">
+                                                                {/* Expired badge */}
+                                                                {expired && (
+                                                                    <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded font-medium" title="Quote has expired">
+                                                                        EXPIRED
+                                                                    </span>
+                                                                )}
+                                                                {/* Expiring soon badge */}
+                                                                {expiringSoon && (
+                                                                    <span className="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-medium" title="Expires within 7 days">
+                                                                        EXPIRING
+                                                                    </span>
+                                                                )}
+                                                                {/* Follow-up overdue badge */}
+                                                                {followUpOverdue && (
+                                                                    <span className="text-[9px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5" title={`Follow-up was due on ${new Date(quote.nextFollowUpDate).toLocaleDateString()}`}>
+                                                                        <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                                        </svg>
+                                                                        DUE
+                                                                    </span>
+                                                                )}
+                                                                {quote.project?.startDate && (
+                                                                    <span className="text-[10px] bg-dark-bg/70 px-1.5 py-0.5 rounded text-gray-500">
+                                                                        {new Date(quote.project.startDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                         {/* Client name */}
                                                         <p className="text-sm font-medium text-gray-200 mb-0.5 truncate">
@@ -589,6 +691,77 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                 </div>
                 )}
             </div>
+
+            {/* Loss Reason Modal */}
+            {lossReasonModal.open && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl">
+                        <h2 className="text-xl font-bold text-gray-100 mb-2">
+                            {lossReasonModal.newStatus === 'rejected' ? 'Quote Rejected' :
+                             lossReasonModal.newStatus === 'expired' ? 'Quote Expired' :
+                             'Quote Lost'}
+                        </h2>
+                        <p className="text-sm text-gray-400 mb-6">
+                            Help us track why this opportunity didn't close
+                        </p>
+
+                        <div className="space-y-4">
+                            {/* Reason dropdown */}
+                            <div>
+                                <label className="label label-required">Reason</label>
+                                <select
+                                    value={lossReason}
+                                    onChange={(e) => setLossReason(e.target.value)}
+                                    className="input"
+                                    required
+                                >
+                                    <option value="">Select reason...</option>
+                                    <option value="price">Price too high</option>
+                                    <option value="timing">Wrong timing</option>
+                                    <option value="lost_to_competitor">Lost to competitor</option>
+                                    <option value="no_budget">No budget</option>
+                                    <option value="requirements_mismatch">Requirements didn't match</option>
+                                    <option value="client_unresponsive">Client unresponsive</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            {/* Additional notes */}
+                            <div>
+                                <label className="label">Additional Notes</label>
+                                <textarea
+                                    value={lossReasonNotes}
+                                    onChange={(e) => setLossReasonNotes(e.target.value)}
+                                    placeholder="Any additional context..."
+                                    rows={3}
+                                    className="input resize-none"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-dark-border">
+                            <button
+                                onClick={() => {
+                                    setLossReasonModal({ open: false, quoteId: null, newStatus: null });
+                                    setLossReason('');
+                                    setLossReasonNotes('');
+                                }}
+                                className="btn-ghost"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleLossReasonSubmit}
+                                disabled={!lossReason}
+                                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Update Status
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

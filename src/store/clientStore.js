@@ -481,22 +481,52 @@ export const useClientStore = create(
             }
         },
 
-        updateQuoteStatus: async (quoteId, status) => {
+        updateQuoteStatus: async (quoteId, status, note = '', lostReason = null, lostReasonNotes = '') => {
             set(state => {
-                const savedQuotes = state.savedQuotes.map(q =>
-                    q.id === quoteId
-                        ? { ...q, status, updatedAt: new Date().toISOString() }
-                        : q
-                );
+                const savedQuotes = state.savedQuotes.map(q => {
+                    if (q.id !== quoteId) return q;
+
+                    // Add to status history
+                    const statusHistory = [
+                        ...(q.statusHistory || []),
+                        {
+                            status,
+                            timestamp: new Date().toISOString(),
+                            userId: 'default', // TODO: Get from auth context
+                            note,
+                        }
+                    ];
+
+                    return {
+                        ...q,
+                        status,
+                        statusHistory,
+                        lostReason: lostReason || q.lostReason,
+                        lostReasonNotes: lostReasonNotes || q.lostReasonNotes,
+                        updatedAt: new Date().toISOString()
+                    };
+                });
                 saveSavedQuotesLocal(savedQuotes);
                 return { savedQuotes };
             });
 
             if (isSupabaseConfigured()) {
                 try {
+                    const quote = get().savedQuotes.find(q => q.id === quoteId);
                     await supabase
                         .from('quotes')
-                        .update({ status })
+                        .update({
+                            status,
+                            // Store enhanced fields in project JSONB or create new columns
+                            project: {
+                                ...(quote?.project || {}),
+                                _statusHistory: quote?.statusHistory,
+                                _lostReason: quote?.lostReason,
+                                _lostReasonNotes: quote?.lostReasonNotes,
+                                _nextFollowUpDate: quote?.nextFollowUpDate,
+                                _internalNotes: quote?.internalNotes,
+                            }
+                        })
                         .eq('id', quoteId);
                 } catch (e) {
                     console.error('Failed to update quote status in DB:', e);

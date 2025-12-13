@@ -599,8 +599,9 @@ export default function ClientsPage({ onSelectClient }) {
                                 {/* Company Information Section */}
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="label label-required">Company Legal Name</label>
+                                        <label htmlFor="company-name" className="label label-required">Company Legal Name</label>
                                         <input
+                                            id="company-name"
                                             type="text"
                                             required
                                             value={newClientData.company}
@@ -610,8 +611,18 @@ export default function ClientsPage({ onSelectClient }) {
                                             }}
                                             className={`input w-full ${formErrors.company ? 'border-red-500 focus:ring-red-500' : ''}`}
                                             placeholder="e.g. Acme Corporation Ltd"
+                                            aria-invalid={formErrors.company ? 'true' : 'false'}
+                                            aria-describedby={formErrors.company ? 'company-error' : 'company-hint'}
                                         />
-                                        {formErrors.company && <p className="text-xs text-red-400 mt-1">{formErrors.company}</p>}
+                                        <p id="company-hint" className="text-xs text-gray-500 mt-1">Enter the official registered company name</p>
+                                        {formErrors.company && (
+                                            <p id="company-error" className="text-xs text-red-400 mt-1 flex items-center gap-1" role="alert">
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                {formErrors.company}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -651,8 +662,9 @@ export default function ClientsPage({ onSelectClient }) {
                                     </div>
 
                                     <div>
-                                        <label className="label">Website</label>
+                                        <label htmlFor="website" className="label">Website</label>
                                         <input
+                                            id="website"
                                             type="text"
                                             value={newClientData.website}
                                             onChange={e => {
@@ -660,9 +672,18 @@ export default function ClientsPage({ onSelectClient }) {
                                                 if (formErrors.website) setFormErrors({ ...formErrors, website: null });
                                             }}
                                             className={`input w-full ${formErrors.website ? 'border-red-500 focus:ring-red-500' : ''}`}
-                                            placeholder="acme.com"
+                                            placeholder="www.acme.com or acme.com"
+                                            aria-invalid={formErrors.website ? 'true' : 'false'}
+                                            aria-describedby={formErrors.website ? 'website-error' : undefined}
                                         />
-                                        {formErrors.website && <p className="text-xs text-red-400 mt-1">{formErrors.website}</p>}
+                                        {formErrors.website && (
+                                            <p id="website-error" className="text-xs text-red-400 mt-1 flex items-center gap-1" role="alert">
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                {formErrors.website}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -689,8 +710,9 @@ export default function ClientsPage({ onSelectClient }) {
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
-                                                <label className="label">Email Address</label>
+                                                <label htmlFor="contact-email" className="label">Email Address</label>
                                                 <input
+                                                    id="contact-email"
                                                     type="email"
                                                     value={newClientData.email}
                                                     onChange={e => {
@@ -699,22 +721,44 @@ export default function ClientsPage({ onSelectClient }) {
                                                     }}
                                                     className={`input w-full ${formErrors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
                                                     placeholder="john@acme.com"
+                                                    aria-invalid={formErrors.email ? 'true' : 'false'}
+                                                    aria-describedby={formErrors.email ? 'email-error' : undefined}
+                                                    autoComplete="email"
                                                 />
-                                                {formErrors.email && <p className="text-xs text-red-400 mt-1">{formErrors.email}</p>}
+                                                {formErrors.email && (
+                                                    <p id="email-error" className="text-xs text-red-400 mt-1 flex items-center gap-1" role="alert">
+                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        {formErrors.email}
+                                                    </p>
+                                                )}
                                             </div>
                                             <div>
-                                                <label className="label">Phone Number</label>
+                                                <label htmlFor="contact-phone" className="label">Phone Number</label>
                                                 <input
-                                                    type="text"
+                                                    id="contact-phone"
+                                                    type="tel"
                                                     value={newClientData.phone}
                                                     onChange={e => {
                                                         setNewClientData({ ...newClientData, phone: e.target.value });
                                                         if (formErrors.phone) setFormErrors({ ...formErrors, phone: null });
                                                     }}
                                                     className={`input w-full ${formErrors.phone ? 'border-red-500 focus:ring-red-500' : ''}`}
-                                                    placeholder="+65..."
+                                                    placeholder="+65 1234 5678"
+                                                    aria-invalid={formErrors.phone ? 'true' : 'false'}
+                                                    aria-describedby={formErrors.phone ? 'phone-error' : 'phone-hint'}
+                                                    autoComplete="tel"
                                                 />
-                                                {formErrors.phone && <p className="text-xs text-red-400 mt-1">{formErrors.phone}</p>}
+                                                <p id="phone-hint" className="text-xs text-gray-500 mt-1">Include country code</p>
+                                                {formErrors.phone && (
+                                                    <p id="phone-error" className="text-xs text-red-400 mt-1 flex items-center gap-1" role="alert">
+                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        {formErrors.phone}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

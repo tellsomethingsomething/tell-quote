@@ -171,6 +171,7 @@ function createEmptyQuote() {
         region: 'SEA',
         quoteDate: new Date().toISOString().split('T')[0], // Date format: YYYY-MM-DD
         validityDays: 30, // Quote valid for 30 days by default
+        status: 'draft', // Current status
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         client: {
@@ -207,6 +208,12 @@ function createEmptyQuote() {
             proposalText: '',      // AI-generated proposal text
             isGenerated: false,    // Whether content has been generated
         },
+        // Deal flow enhancements
+        statusHistory: [], // Array of { status, timestamp, userId, note }
+        nextFollowUpDate: null, // ISO date string for follow-up reminders
+        lostReason: null, // Reason for rejected/expired/lost status
+        lostReasonNotes: '', // Additional notes for lost reason
+        internalNotes: '', // Internal notes not shown in PDF
     };
 }
 
@@ -670,6 +677,70 @@ export const useQuoteStore = create(
                 const updated = {
                     ...state.quote,
                     proposal: { ...state.quote.proposal, ...proposal },
+                    updatedAt: new Date().toISOString()
+                };
+                saveQuoteWithLibrarySync(updated);
+                return { quote: updated };
+            });
+        },
+
+        // Update quote status with history tracking
+        updateQuoteStatus: (newStatus, note = '', userId = 'default') => {
+            set(state => {
+                const statusHistory = [
+                    ...(state.quote.statusHistory || []),
+                    {
+                        status: newStatus,
+                        timestamp: new Date().toISOString(),
+                        userId,
+                        note,
+                    }
+                ];
+
+                const updated = {
+                    ...state.quote,
+                    status: newStatus,
+                    statusHistory,
+                    updatedAt: new Date().toISOString()
+                };
+                saveQuoteWithLibrarySync(updated);
+                return { quote: updated };
+            });
+        },
+
+        // Update follow-up date
+        setNextFollowUpDate: (date) => {
+            set(state => {
+                const updated = {
+                    ...state.quote,
+                    nextFollowUpDate: date,
+                    updatedAt: new Date().toISOString()
+                };
+                saveQuoteWithLibrarySync(updated);
+                return { quote: updated };
+            });
+        },
+
+        // Update lost reason
+        setLostReason: (reason, notes = '') => {
+            set(state => {
+                const updated = {
+                    ...state.quote,
+                    lostReason: reason,
+                    lostReasonNotes: notes,
+                    updatedAt: new Date().toISOString()
+                };
+                saveQuoteWithLibrarySync(updated);
+                return { quote: updated };
+            });
+        },
+
+        // Update internal notes
+        setInternalNotes: (notes) => {
+            set(state => {
+                const updated = {
+                    ...state.quote,
+                    internalNotes: notes,
                     updatedAt: new Date().toISOString()
                 };
                 saveQuoteWithLibrarySync(updated);

@@ -29,23 +29,24 @@ export default function Navigation({ activeTab, onTabChange }) {
                 ))}
             </div>
 
-            {/* Mobile Navigation - Icons only */}
+            {/* Mobile Navigation - Icons with labels */}
             <div className="md:hidden inline-flex bg-gray-900/80 p-1 rounded-xl border border-gray-800/80 gap-0.5">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => onTabChange(tab.id)}
-                        className={`p-2.5 min-w-[44px] min-h-[44px] rounded-lg transition-all duration-200 flex items-center justify-center ${
+                        className={`px-2 py-1.5 min-w-[52px] min-h-[52px] rounded-lg transition-all duration-200 flex flex-col items-center justify-center gap-0.5 ${
                             activeTab === tab.id
                                 ? 'bg-accent-primary/10 text-accent-primary'
                                 : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                         }`}
                         aria-current={activeTab === tab.id ? 'page' : undefined}
-                        title={tab.label}
+                        aria-label={tab.label}
                     >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={tab.icon} />
                         </svg>
+                        <span className="text-[9px] font-medium leading-none">{tab.label}</span>
                     </button>
                 ))}
             </div>

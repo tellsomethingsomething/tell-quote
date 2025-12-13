@@ -9,7 +9,11 @@ const STATUSES = [
     { id: 'all', label: 'All Quotes', color: 'gray' },
     { id: 'draft', label: 'Draft', color: 'gray' },
     { id: 'sent', label: 'Sent', color: 'blue' },
+    { id: 'under_review', label: 'Under Review', color: 'amber' },
+    { id: 'approved', label: 'Approved', color: 'emerald' },
     { id: 'won', label: 'Won', color: 'green' },
+    { id: 'rejected', label: 'Rejected', color: 'red' },
+    { id: 'expired', label: 'Expired', color: 'gray' },
     { id: 'dead', label: 'Dead', color: 'red' },
 ];
 
@@ -34,6 +38,11 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
     // Tag management
     const [editingTagsId, setEditingTagsId] = useState(null);
     const [newTag, setNewTag] = useState('');
+
+    // Loss reason modal state
+    const [lossReasonModal, setLossReasonModal] = useState({ open: false, quoteId: null, newStatus: null });
+    const [lossReason, setLossReason] = useState('');
+    const [lossReasonNotes, setLossReasonNotes] = useState('');
 
     // Get unique clients and tags from quotes
     const uniqueClients = useMemo(() => {
@@ -154,7 +163,11 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
     const getStatusColor = (status) => {
         switch (status) {
             case 'sent': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+            case 'under_review': return 'bg-amber-400/20 text-amber-400 border-amber-400/30';
+            case 'approved': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
             case 'won': return 'bg-green-500/20 text-green-400 border-green-500/30';
+            case 'rejected': return 'bg-red-500/20 text-red-400 border-red-500/30';
+            case 'expired': return 'bg-gray-600/20 text-gray-500 border-gray-600/30';
             case 'dead': return 'bg-red-500/20 text-red-400 border-red-500/30';
             default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
         }
@@ -186,6 +199,31 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
         }
     };
 
+    // Handle status change with loss reason modal
+    const handleStatusChange = (quoteId, newStatus) => {
+        if (newStatus === 'rejected' || newStatus === 'expired' || newStatus === 'dead') {
+            setLossReasonModal({ open: true, quoteId, newStatus });
+        } else {
+            updateQuoteStatus(quoteId, newStatus);
+        }
+    };
+
+    const handleLossReasonSubmit = () => {
+        if (lossReasonModal.quoteId && lossReasonModal.newStatus) {
+            updateQuoteStatus(
+                lossReasonModal.quoteId,
+                lossReasonModal.newStatus,
+                lossReasonNotes,
+                lossReason,
+                lossReasonNotes
+            );
+        }
+        // Reset modal
+        setLossReasonModal({ open: false, quoteId: null, newStatus: null });
+        setLossReason('');
+        setLossReasonNotes('');
+    };
+
     // Calculate totals
     const totals = useMemo(() => {
         let total = 0;
@@ -210,7 +248,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <div>
                         <h1 className="text-lg sm:text-xl font-bold text-gray-100">Quotes</h1>
-                        <p className="text-xs sm:text-sm text-gray-500">{totals.count} quotes found</p>
+                        <p className="text-xs sm:text-sm text-gray-400">{totals.count} quotes found</p>
                     </div>
                     <button onClick={() => onNewQuote()} className="btn-primary min-h-[44px] text-sm sm:text-base">
                         + New Quote
@@ -342,8 +380,24 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
             {/* Mobile Card View */}
             <div className="md:hidden flex-1 overflow-auto p-3 space-y-3">
                 {filteredQuotes.length === 0 ? (
-                    <div className="py-12 text-center text-gray-500">
-                        No quotes found matching your filters
+                    <div className="py-16 text-center">
+                        <svg className="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p className="text-gray-400 mb-4">
+                            {searchTerm || statusFilter !== 'all' || clientFilter ?
+                                'No quotes match your filters' :
+                                'No quotes yet'}
+                        </p>
+                        <button
+                            onClick={() => onNewQuote()}
+                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-teal hover:bg-brand-teal-light rounded-lg transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Create your first quote
+                        </button>
                     </div>
                 ) : (
                     filteredQuotes.map(quote => {
@@ -366,14 +420,18 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                         value={quote.status || 'draft'}
                                         onChange={(e) => {
                                             e.stopPropagation();
-                                            updateQuoteStatus(quote.id, e.target.value);
+                                            handleStatusChange(quote.id, e.target.value);
                                         }}
                                         onClick={(e) => e.stopPropagation()}
                                         className={`text-xs px-2 py-1 min-h-[32px] rounded border ${getStatusColor(quote.status)}`}
                                     >
                                         <option value="draft">Draft</option>
                                         <option value="sent">Sent</option>
+                                        <option value="under_review">Under Review</option>
+                                        <option value="approved">Approved</option>
                                         <option value="won">Won</option>
+                                        <option value="rejected">Rejected</option>
+                                        <option value="expired">Expired</option>
                                         <option value="dead">Dead</option>
                                     </select>
                                 </div>
@@ -444,8 +502,24 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                     <tbody>
                         {filteredQuotes.length === 0 ? (
                             <tr>
-                                <td colSpan={9} className="py-12 text-center text-gray-500">
-                                    No quotes found matching your filters
+                                <td colSpan={9} className="py-16 text-center">
+                                    <svg className="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <p className="text-gray-400 mb-4">
+                                        {searchTerm || statusFilter !== 'all' || clientFilter ?
+                                            'No quotes match your filters' :
+                                            'No quotes yet'}
+                                    </p>
+                                    <button
+                                        onClick={() => onNewQuote()}
+                                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-teal hover:bg-brand-teal-light rounded-lg transition-colors"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        Create your first quote
+                                    </button>
                                 </td>
                             </tr>
                         ) : (
@@ -493,12 +567,16 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                         <td className="py-3 pr-4" onClick={(e) => e.stopPropagation()}>
                                             <select
                                                 value={quote.status || 'draft'}
-                                                onChange={(e) => updateQuoteStatus(quote.id, e.target.value)}
+                                                onChange={(e) => handleStatusChange(quote.id, e.target.value)}
                                                 className={`text-xs px-2 py-1 min-h-[36px] rounded border ${getStatusColor(quote.status)}`}
                                             >
                                                 <option value="draft">Draft</option>
                                                 <option value="sent">Sent</option>
+                                                <option value="under_review">Under Review</option>
+                                                <option value="approved">Approved</option>
                                                 <option value="won">Won</option>
+                                                <option value="rejected">Rejected</option>
+                                                <option value="expired">Expired</option>
                                                 <option value="dead">Dead</option>
                                             </select>
                                         </td>
@@ -589,6 +667,74 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                     </tbody>
                 </table>
             </div>
+
+            {/* Loss Reason Modal */}
+            {lossReasonModal.open && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl">
+                        <h2 className="text-xl font-bold text-gray-100 mb-2">
+                            {lossReasonModal.newStatus === 'rejected' ? 'Quote Rejected' :
+                             lossReasonModal.newStatus === 'expired' ? 'Quote Expired' :
+                             'Quote Lost'}
+                        </h2>
+                        <p className="text-sm text-gray-400 mb-6">
+                            Help us track why this opportunity didn't close
+                        </p>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="label label-required">Reason</label>
+                                <select
+                                    value={lossReason}
+                                    onChange={(e) => setLossReason(e.target.value)}
+                                    className="input"
+                                    required
+                                >
+                                    <option value="">Select reason...</option>
+                                    <option value="price">Price too high</option>
+                                    <option value="timing">Wrong timing</option>
+                                    <option value="lost_to_competitor">Lost to competitor</option>
+                                    <option value="no_budget">No budget</option>
+                                    <option value="requirements_mismatch">Requirements didn't match</option>
+                                    <option value="client_unresponsive">Client unresponsive</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="label">Additional Notes</label>
+                                <textarea
+                                    value={lossReasonNotes}
+                                    onChange={(e) => setLossReasonNotes(e.target.value)}
+                                    placeholder="Any additional context..."
+                                    rows={3}
+                                    className="input resize-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-dark-border">
+                            <button
+                                onClick={() => {
+                                    setLossReasonModal({ open: false, quoteId: null, newStatus: null });
+                                    setLossReason('');
+                                    setLossReasonNotes('');
+                                }}
+                                className="btn-ghost"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleLossReasonSubmit}
+                                disabled={!lossReason}
+                                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Update Status
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

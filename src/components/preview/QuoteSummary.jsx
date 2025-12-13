@@ -1,17 +1,18 @@
 import { useQuoteStore } from '../../store/quoteStore';
 import { formatCurrency } from '../../utils/currency';
 import { calculateGrandTotalWithFees } from '../../utils/calculations';
-import { pdf } from '@react-pdf/renderer';
-import CleanPDF from '../pdf/CleanPDF';
-import { useState } from 'react';
 import { useToast } from '../common/Toast';
+import { usePdfExport } from '../../hooks/usePdfExport';
 
 export default function QuoteSummary() {
     const { quote } = useQuoteStore();
     const toast = useToast();
 
-    const [generatingPdf, setGeneratingPdf] = useState(false);
-    const [previewingPdf, setPreviewingPdf] = useState(false);
+    // Use custom PDF export hook with dynamic imports
+    const { exportPdf, previewPdf, isGenerating, isPreviewing } = usePdfExport(
+        (message) => toast.success(message),
+        (error) => toast.error('Failed to generate PDF')
+    );
 
     // Calculate all totals
     const totals = calculateGrandTotalWithFees(quote.sections, quote.fees);
@@ -24,49 +25,12 @@ export default function QuoteSummary() {
     const profit = (totals.totalCharge || 0) - (totals.totalCost || 0);
     const marginPercent = totals.totalCharge > 0 ? (profit / totals.totalCharge) * 100 : 0;
 
-    const handlePreviewPDF = async () => {
-        setPreviewingPdf(true);
-        try {
-            const blob = await pdf(
-                <CleanPDF quote={quote} currency={quote.currency} />
-            ).toBlob();
-
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-            setTimeout(() => URL.revokeObjectURL(url), 5000);
-        } catch (e) {
-            console.error(e);
-            toast.error('Failed to generate preview');
-        } finally {
-            setPreviewingPdf(false);
-        }
+    const handlePreviewPDF = () => {
+        previewPdf(quote, quote.currency);
     };
 
-    const handleExportPDF = async () => {
-        setGeneratingPdf(true);
-        try {
-            const blob = await pdf(
-                <CleanPDF quote={quote} currency={quote.currency} />
-            ).toBlob();
-
-            const clientName = quote.client?.company || 'Client';
-            const projectTitle = quote.project?.title || 'Project';
-            const date = quote.quoteDate || new Date().toISOString().split('T')[0];
-            const filename = `${clientName} - ${projectTitle} - ${date} - Quote.pdf`;
-
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            link.click();
-            URL.revokeObjectURL(url);
-            toast.success('PDF downloaded successfully');
-        } catch (e) {
-            console.error(e);
-            toast.error('Failed to generate PDF');
-        } finally {
-            setGeneratingPdf(false);
-        }
+    const handleExportPDF = () => {
+        exportPdf(quote, quote.currency);
     };
 
     return (
@@ -76,10 +40,10 @@ export default function QuoteSummary() {
             <div className="flex gap-2">
                 <button
                     onClick={handlePreviewPDF}
-                    disabled={previewingPdf}
+                    disabled={isPreviewing}
                     className="flex-1 btn-secondary py-3"
                 >
-                    {previewingPdf ? (
+                    {isPreviewing ? (
                         <span className="flex items-center justify-center gap-2">
                             <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             Loading...
@@ -96,10 +60,10 @@ export default function QuoteSummary() {
                 </button>
                 <button
                     onClick={handleExportPDF}
-                    disabled={generatingPdf}
+                    disabled={isGenerating}
                     className="flex-1 btn-primary py-3 shadow-lg shadow-accent-primary/20"
                 >
-                    {generatingPdf ? (
+                    {isGenerating ? (
                         <span className="flex items-center justify-center gap-2">
                             <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             Generating...

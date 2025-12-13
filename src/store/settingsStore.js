@@ -1,8 +1,19 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import {
+    encryptData,
+    decryptData,
+    encryptFields,
+    decryptFields,
+    showSecurityWarning,
+    validateApiKeyFormat,
+    logSecurityEvent
+} from '../utils/encryption';
 
 const SETTINGS_KEY = 'tell_settings';
+const SENSITIVE_FIELDS = ['anthropicKey', 'openaiKey'];
+const BANK_SENSITIVE_FIELDS = ['accountNumber', 'swiftCode'];
 
 // Default settings
 const defaultSettings = {
@@ -75,16 +86,28 @@ const defaultSettings = {
     ],
 };
 
-// Load from localStorage (fallback)
-function loadSettingsLocal() {
+// Load from localStorage (fallback) with decryption
+async function loadSettingsLocal() {
     try {
         const saved = localStorage.getItem(SETTINGS_KEY);
         if (saved) {
             const parsed = JSON.parse(saved);
-            return mergeSettings(parsed);
+            const merged = mergeSettings(parsed);
+
+            // Decrypt sensitive fields
+            if (merged.aiSettings) {
+                merged.aiSettings = await decryptFields(merged.aiSettings, SENSITIVE_FIELDS);
+            }
+
+            if (merged.bankDetails) {
+                merged.bankDetails = await decryptFields(merged.bankDetails, BANK_SENSITIVE_FIELDS);
+            }
+
+            return merged;
         }
         return defaultSettings;
     } catch (e) {
+        console.error('Failed to load settings:', e);
         return defaultSettings;
     }
 }
@@ -106,10 +129,23 @@ function mergeSettings(parsed) {
     };
 }
 
-// Save to localStorage (cache)
-function saveSettingsLocal(settings) {
+// Save to localStorage (cache) with encryption
+async function saveSettingsLocal(settings) {
     try {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        // Clone settings to avoid mutating state
+        const toSave = JSON.parse(JSON.stringify(settings));
+
+        // Encrypt sensitive fields before saving
+        if (toSave.aiSettings) {
+            toSave.aiSettings = await encryptFields(toSave.aiSettings, SENSITIVE_FIELDS);
+        }
+
+        if (toSave.bankDetails) {
+            toSave.bankDetails = await encryptFields(toSave.bankDetails, BANK_SENSITIVE_FIELDS);
+        }
+
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(toSave));
+        logSecurityEvent('settings_saved', { encrypted: true });
     } catch (e) {
         console.error('Failed to save settings locally:', e);
     }
@@ -121,7 +157,14 @@ let settingsDbId = null;
 // Save to Supabase
 async function saveSettingsToDb(settings) {
     if (!isSupabaseConfigured()) return;
+
     try {
+        // Encrypt AI settings before saving to DB
+        const aiSettingsToSave = await encryptFields(
+            settings.aiSettings || {},
+            SENSITIVE_FIELDS
+        );
+
         if (settingsDbId) {
             await supabase
                 .from('settings')
@@ -130,25 +173,35 @@ async function saveSettingsToDb(settings) {
                     quote_defaults: settings.quoteDefaults,
                     terms_and_conditions: settings.quoteDefaults?.termsAndConditions || '',
                     users: settings.users,
-                    ai_settings: settings.aiSettings,
+                    ai_settings: aiSettingsToSave,
                 })
                 .eq('id', settingsDbId);
+
+            logSecurityEvent('settings_synced_to_db', { encrypted: true });
         }
     } catch (e) {
         console.error('Failed to save settings to DB:', e);
     }
 }
 
+// Initialize with async load
+let initialSettings = defaultSettings;
+loadSettingsLocal().then(loaded => {
+    initialSettings = loaded;
+    useSettingsStore.setState({ settings: loaded, loading: false });
+});
+
 export const useSettingsStore = create(
     subscribeWithSelector((set, get) => ({
-        settings: loadSettingsLocal(),
-        loading: false,
+        settings: initialSettings,
+        loading: true,
 
         // Initialize - load from Supabase (or localStorage fallback)
         initialize: async () => {
             // If Supabase not configured, just use localStorage data
             if (!isSupabaseConfigured()) {
-                set({ loading: false });
+                const localSettings = await loadSettingsLocal();
+                set({ settings: localSettings, loading: false });
                 return;
             }
 
@@ -164,8 +217,14 @@ export const useSettingsStore = create(
 
                 if (data) {
                     settingsDbId = data.id;
+
+                    // Decrypt AI settings from DB
+                    const aiSettings = data.ai_settings
+                        ? await decryptFields(data.ai_settings, SENSITIVE_FIELDS)
+                        : defaultSettings.aiSettings;
+
                     const dbSettings = {
-                        ...loadSettingsLocal(),
+                        ...await loadSettingsLocal(),
                         company: data.company || defaultSettings.company,
                         quoteDefaults: {
                             ...defaultSettings.quoteDefaults,
@@ -173,140 +232,161 @@ export const useSettingsStore = create(
                             termsAndConditions: data.terms_and_conditions || defaultSettings.quoteDefaults.termsAndConditions,
                         },
                         users: data.users || defaultSettings.users,
-                        aiSettings: data.ai_settings || defaultSettings.aiSettings,
+                        aiSettings,
                     };
+
                     const merged = mergeSettings(dbSettings);
-                    saveSettingsLocal(merged);
+                    await saveSettingsLocal(merged);
                     set({ settings: merged, loading: false });
                 } else {
-                    set({ loading: false });
+                    const localSettings = await loadSettingsLocal();
+                    set({ settings: localSettings, loading: false });
                 }
             } catch (e) {
                 console.error('Failed to load settings from DB:', e);
-                set({ loading: false });
+                const localSettings = await loadSettingsLocal();
+                set({ settings: localSettings, loading: false });
             }
         },
 
         // Update company info
-        setCompanyInfo: (company) => {
-            set(state => {
-                const updated = {
-                    ...state.settings,
-                    company: { ...state.settings.company, ...company },
-                };
-                saveSettingsLocal(updated);
-                saveSettingsToDb(updated);
-                return { settings: updated };
-            });
+        setCompanyInfo: async (company) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                company: { ...state.settings.company, ...company },
+            };
+            await saveSettingsLocal(updated);
+            saveSettingsToDb(updated);
+            set({ settings: updated });
         },
 
         // Update tax info
-        setTaxInfo: (taxInfo) => {
-            set(state => {
-                const updated = {
-                    ...state.settings,
-                    taxInfo: { ...state.settings.taxInfo, ...taxInfo },
-                };
-                saveSettingsLocal(updated);
-                return { settings: updated };
-            });
+        setTaxInfo: async (taxInfo) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                taxInfo: { ...state.settings.taxInfo, ...taxInfo },
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
         },
 
-        // Update bank details
-        setBankDetails: (bankDetails) => {
-            set(state => {
-                const updated = {
-                    ...state.settings,
-                    bankDetails: { ...state.settings.bankDetails, ...bankDetails },
-                };
-                saveSettingsLocal(updated);
-                return { settings: updated };
-            });
+        // Update bank details (encrypted)
+        setBankDetails: async (bankDetails) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                bankDetails: { ...state.settings.bankDetails, ...bankDetails },
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
+
+            logSecurityEvent('bank_details_updated', { encrypted: true });
         },
 
         // Update quote defaults
-        setQuoteDefaults: (quoteDefaults) => {
-            set(state => {
-                const updated = {
-                    ...state.settings,
-                    quoteDefaults: { ...state.settings.quoteDefaults, ...quoteDefaults },
-                };
-                saveSettingsLocal(updated);
-                saveSettingsToDb(updated);
-                return { settings: updated };
-            });
+        setQuoteDefaults: async (quoteDefaults) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                quoteDefaults: { ...state.settings.quoteDefaults, ...quoteDefaults },
+            };
+            await saveSettingsLocal(updated);
+            saveSettingsToDb(updated);
+            set({ settings: updated });
         },
 
         // Update PDF options
-        setPdfOptions: (pdfOptions) => {
-            set(state => {
-                const updated = {
-                    ...state.settings,
-                    pdfOptions: { ...state.settings.pdfOptions, ...pdfOptions },
-                };
-                saveSettingsLocal(updated);
-                return { settings: updated };
-            });
+        setPdfOptions: async (pdfOptions) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                pdfOptions: { ...state.settings.pdfOptions, ...pdfOptions },
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
         },
 
-        // Update AI settings
-        setAiSettings: (aiSettings) => {
-            set(state => {
-                const updated = {
-                    ...state.settings,
-                    aiSettings: { ...state.settings.aiSettings, ...aiSettings },
-                };
-                saveSettingsLocal(updated);
-                saveSettingsToDb(updated);
-                return { settings: updated };
+        // Update AI settings (encrypted)
+        setAiSettings: async (aiSettings) => {
+            const state = get();
+
+            // Validate API key formats and show warnings
+            if (aiSettings.anthropicKey && !validateApiKeyFormat(aiSettings.anthropicKey, 'sk-ant-')) {
+                showSecurityWarning('Invalid Anthropic API key format. Expected format: sk-ant-...');
+            }
+
+            if (aiSettings.openaiKey && !validateApiKeyFormat(aiSettings.openaiKey, 'sk-')) {
+                showSecurityWarning('Invalid OpenAI API key format. Expected format: sk-...');
+            }
+
+            // Warn about client-side API keys
+            if (aiSettings.anthropicKey || aiSettings.openaiKey) {
+                showSecurityWarning(
+                    'API keys are stored in browser localStorage (encrypted). ' +
+                    'For production use, implement a backend proxy to keep keys secure on the server.'
+                );
+            }
+
+            const updated = {
+                ...state.settings,
+                aiSettings: { ...state.settings.aiSettings, ...aiSettings },
+            };
+
+            await saveSettingsLocal(updated);
+            saveSettingsToDb(updated);
+            set({ settings: updated });
+
+            logSecurityEvent('api_keys_updated', {
+                hasAnthropicKey: !!aiSettings.anthropicKey,
+                hasOpenaiKey: !!aiSettings.openaiKey,
+                encrypted: true
             });
         },
 
         // Add user
-        addUser: (user) => {
-            set(state => {
-                const newUser = {
-                    id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-                    name: user.name || '',
-                    email: user.email || '',
-                    role: user.role || 'user',
-                };
-                const updated = {
-                    ...state.settings,
-                    users: [...state.settings.users, newUser],
-                };
-                saveSettingsLocal(updated);
-                saveSettingsToDb(updated);
-                return { settings: updated };
-            });
+        addUser: async (user) => {
+            const state = get();
+            const newUser = {
+                id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+                name: user.name || '',
+                email: user.email || '',
+                role: user.role || 'user',
+            };
+            const updated = {
+                ...state.settings,
+                users: [...state.settings.users, newUser],
+            };
+            await saveSettingsLocal(updated);
+            saveSettingsToDb(updated);
+            set({ settings: updated });
         },
 
         // Update user
-        updateUser: (userId, updates) => {
-            set(state => {
-                const updated = {
-                    ...state.settings,
-                    users: state.settings.users.map(u =>
-                        u.id === userId ? { ...u, ...updates } : u
-                    ),
-                };
-                saveSettingsLocal(updated);
-                saveSettingsToDb(updated);
-                return { settings: updated };
-            });
+        updateUser: async (userId, updates) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                users: state.settings.users.map(u =>
+                    u.id === userId ? { ...u, ...updates } : u
+                ),
+            };
+            await saveSettingsLocal(updated);
+            saveSettingsToDb(updated);
+            set({ settings: updated });
         },
 
         // Delete user
-        deleteUser: (userId) => {
-            set(state => {
-                const updated = {
-                    ...state.settings,
-                    users: state.settings.users.filter(u => u.id !== userId),
-                };
-                saveSettingsLocal(updated);
-                saveSettingsToDb(updated);
-                return { settings: updated };
-            });
+        deleteUser: async (userId) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                users: state.settings.users.filter(u => u.id !== userId),
+            };
+            await saveSettingsLocal(updated);
+            saveSettingsToDb(updated);
+            set({ settings: updated });
         },
 
         // Get user by ID
@@ -315,111 +395,122 @@ export const useSettingsStore = create(
         },
 
         // Project Types
-        addProjectType: (label) => {
-            set(state => {
-                const id = label.toLowerCase().replace(/\s+/g, '_') + '_' + Math.random().toString(36).substring(2, 7);
-                const updated = {
-                    ...state.settings,
-                    projectTypes: [...state.settings.projectTypes, { id, label }],
-                };
-                saveSettingsLocal(updated);
-                return { settings: updated };
-            });
+        addProjectType: async (label) => {
+            const state = get();
+            const id = label.toLowerCase().replace(/\s+/g, '_') + '_' + Math.random().toString(36).substring(2, 7);
+            const updated = {
+                ...state.settings,
+                projectTypes: [...state.settings.projectTypes, { id, label }],
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
         },
 
-        updateProjectType: (id, label) => {
-            set(state => {
-                const updated = {
-                    ...state.settings,
-                    projectTypes: state.settings.projectTypes.map(pt =>
-                        pt.id === id ? { ...pt, label } : pt
-                    ),
-                };
-                saveSettingsLocal(updated);
-                return { settings: updated };
-            });
+        updateProjectType: async (id, label) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                projectTypes: state.settings.projectTypes.map(pt =>
+                    pt.id === id ? { ...pt, label } : pt
+                ),
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
         },
 
-        deleteProjectType: (id) => {
-            set(state => {
-                const updated = {
-                    ...state.settings,
-                    projectTypes: state.settings.projectTypes.filter(pt => pt.id !== id),
-                };
-                saveSettingsLocal(updated);
-                return { settings: updated };
-            });
+        deleteProjectType: async (id) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                projectTypes: state.settings.projectTypes.filter(pt => pt.id !== id),
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
         },
 
-        moveProjectType: (id, direction) => {
-            set(state => {
-                const types = [...state.settings.projectTypes];
-                const index = types.findIndex(t => t.id === id);
-                if (index === -1) return state;
-                const newIndex = direction === 'up' ? index - 1 : index + 1;
-                if (newIndex < 0 || newIndex >= types.length) return state;
-                [types[index], types[newIndex]] = [types[newIndex], types[index]];
-                const updated = { ...state.settings, projectTypes: types };
-                saveSettingsLocal(updated);
-                return { settings: updated };
-            });
+        moveProjectType: async (id, direction) => {
+            const state = get();
+            const types = [...state.settings.projectTypes];
+            const index = types.findIndex(t => t.id === id);
+            if (index === -1) return;
+
+            const newIndex = direction === 'up' ? index - 1 : index + 1;
+            if (newIndex < 0 || newIndex >= types.length) return;
+
+            [types[index], types[newIndex]] = [types[newIndex], types[index]];
+            const updated = { ...state.settings, projectTypes: types };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
         },
 
         // Regions
-        addRegion: (label, currency = 'USD') => {
-            set(state => {
-                const id = label.toUpperCase().replace(/\s+/g, '_');
-                const updated = {
-                    ...state.settings,
-                    regions: [...state.settings.regions, { id, label, currency }],
-                };
-                saveSettingsLocal(updated);
-                return { settings: updated };
-            });
+        addRegion: async (label, currency = 'USD') => {
+            const state = get();
+            const id = label.toUpperCase().replace(/\s+/g, '_');
+            const updated = {
+                ...state.settings,
+                regions: [...state.settings.regions, { id, label, currency }],
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
         },
 
-        updateRegion: (id, updates) => {
-            set(state => {
-                const updated = {
-                    ...state.settings,
-                    regions: state.settings.regions.map(r =>
-                        r.id === id ? { ...r, ...updates } : r
-                    ),
-                };
-                saveSettingsLocal(updated);
-                return { settings: updated };
-            });
+        updateRegion: async (id, updates) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                regions: state.settings.regions.map(r =>
+                    r.id === id ? { ...r, ...updates } : r
+                ),
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
         },
 
-        deleteRegion: (id) => {
-            set(state => {
-                const updated = {
-                    ...state.settings,
-                    regions: state.settings.regions.filter(r => r.id !== id),
-                };
-                saveSettingsLocal(updated);
-                return { settings: updated };
-            });
+        deleteRegion: async (id) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                regions: state.settings.regions.filter(r => r.id !== id),
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
         },
 
-        moveRegion: (id, direction) => {
-            set(state => {
-                const regions = [...state.settings.regions];
-                const index = regions.findIndex(r => r.id === id);
-                if (index === -1) return state;
-                const newIndex = direction === 'up' ? index - 1 : index + 1;
-                if (newIndex < 0 || newIndex >= regions.length) return state;
-                [regions[index], regions[newIndex]] = [regions[newIndex], regions[index]];
-                const updated = { ...state.settings, regions };
-                saveSettingsLocal(updated);
-                return { settings: updated };
-            });
+        moveRegion: async (id, direction) => {
+            const state = get();
+            const regions = [...state.settings.regions];
+            const index = regions.findIndex(r => r.id === id);
+            if (index === -1) return;
+
+            const newIndex = direction === 'up' ? index - 1 : index + 1;
+            if (newIndex < 0 || newIndex >= regions.length) return;
+
+            [regions[index], regions[newIndex]] = [regions[newIndex], regions[index]];
+            const updated = { ...state.settings, regions };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
         },
 
         // Export settings
-        exportSettings: () => {
+        exportSettings: async () => {
             const { settings } = get();
-            const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+
+            // Create a sanitized export (remove encrypted keys for security)
+            const sanitized = {
+                ...settings,
+                aiSettings: {
+                    anthropicKey: settings.aiSettings.anthropicKey ? '***REDACTED***' : '',
+                    openaiKey: settings.aiSettings.openaiKey ? '***REDACTED***' : '',
+                },
+                bankDetails: {
+                    ...settings.bankDetails,
+                    accountNumber: settings.bankDetails.accountNumber ? '***REDACTED***' : '',
+                    swiftCode: settings.bankDetails.swiftCode ? '***REDACTED***' : '',
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(sanitized, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -428,12 +519,14 @@ export const useSettingsStore = create(
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+
+            logSecurityEvent('settings_exported', { sanitized: true });
         },
 
         // Reset to defaults
-        resetSettings: () => {
+        resetSettings: async () => {
             set({ settings: defaultSettings });
-            saveSettingsLocal(defaultSettings);
+            await saveSettingsLocal(defaultSettings);
         },
     }))
 );

@@ -9,7 +9,11 @@ import { validateForm, sanitizeString } from '../utils/validation';
 const STATUS_COLORS = {
     draft: 'bg-amber-400/20 text-amber-400',
     sent: 'bg-blue-400/20 text-blue-400',
+    under_review: 'bg-yellow-400/20 text-yellow-400',
+    approved: 'bg-emerald-500/20 text-emerald-500',
     won: 'bg-green-500/20 text-green-500',
+    rejected: 'bg-red-500/20 text-red-500',
+    expired: 'bg-gray-600/20 text-gray-500',
     dead: 'bg-red-500/20 text-red-500',
 };
 
@@ -68,9 +72,34 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
         }
     };
 
+    // Loss reason modal state
+    const [lossReasonModal, setLossReasonModal] = useState({ open: false, quoteId: null, newStatus: null });
+    const [lossReason, setLossReason] = useState('');
+    const [lossReasonNotes, setLossReasonNotes] = useState('');
+
     const handleStatusChange = (quoteId, status, e) => {
         e.stopPropagation();
-        updateQuoteStatus(quoteId, status);
+        if (status === 'rejected' || status === 'expired' || status === 'dead') {
+            setLossReasonModal({ open: true, quoteId, newStatus: status });
+        } else {
+            updateQuoteStatus(quoteId, status);
+        }
+    };
+
+    const handleLossReasonSubmit = () => {
+        if (lossReasonModal.quoteId && lossReasonModal.newStatus) {
+            updateQuoteStatus(
+                lossReasonModal.quoteId,
+                lossReasonModal.newStatus,
+                lossReasonNotes,
+                lossReason,
+                lossReasonNotes
+            );
+        }
+        // Reset modal
+        setLossReasonModal({ open: false, quoteId: null, newStatus: null });
+        setLossReason('');
+        setLossReasonNotes('');
     };
 
     // Client Edit Handlers
@@ -310,7 +339,11 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
                                                     >
                                                         <option value="draft">Draft</option>
                                                         <option value="sent">Sent</option>
+                                                        <option value="under_review">Under Review</option>
+                                                        <option value="approved">Approved</option>
                                                         <option value="won">Won</option>
+                                                        <option value="rejected">Rejected</option>
+                                                        <option value="expired">Expired</option>
                                                         <option value="dead">Dead</option>
                                                     </select>
                                                     {quote.project?.startDate && (
@@ -626,6 +659,74 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
                     </div>
                 )
             }
+
+            {/* Loss Reason Modal */}
+            {lossReasonModal.open && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl">
+                        <h2 className="text-xl font-bold text-gray-100 mb-2">
+                            {lossReasonModal.newStatus === 'rejected' ? 'Quote Rejected' :
+                             lossReasonModal.newStatus === 'expired' ? 'Quote Expired' :
+                             'Quote Lost'}
+                        </h2>
+                        <p className="text-sm text-gray-400 mb-6">
+                            Help us track why this opportunity didn't close
+                        </p>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="label label-required">Reason</label>
+                                <select
+                                    value={lossReason}
+                                    onChange={(e) => setLossReason(e.target.value)}
+                                    className="input"
+                                    required
+                                >
+                                    <option value="">Select reason...</option>
+                                    <option value="price">Price too high</option>
+                                    <option value="timing">Wrong timing</option>
+                                    <option value="lost_to_competitor">Lost to competitor</option>
+                                    <option value="no_budget">No budget</option>
+                                    <option value="requirements_mismatch">Requirements didn't match</option>
+                                    <option value="client_unresponsive">Client unresponsive</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="label">Additional Notes</label>
+                                <textarea
+                                    value={lossReasonNotes}
+                                    onChange={(e) => setLossReasonNotes(e.target.value)}
+                                    placeholder="Any additional context..."
+                                    rows={3}
+                                    className="input resize-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-dark-border">
+                            <button
+                                onClick={() => {
+                                    setLossReasonModal({ open: false, quoteId: null, newStatus: null });
+                                    setLossReason('');
+                                    setLossReasonNotes('');
+                                }}
+                                className="btn-ghost"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleLossReasonSubmit}
+                                disabled={!lossReason}
+                                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Update Status
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div >
     );

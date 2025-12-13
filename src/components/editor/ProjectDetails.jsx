@@ -3,7 +3,7 @@ import { useSettingsStore } from '../../store/settingsStore';
 import { CURRENCIES } from '../../data/currencies';
 
 export default function ProjectDetails({ onGoToSettings }) {
-    const { quote, setProjectDetails, setPreparedBy, setQuoteDate, setValidityDays, setRegion } = useQuoteStore();
+    const { quote, setProjectDetails, setPreparedBy, setQuoteDate, setValidityDays, setRegion, setNextFollowUpDate, setInternalNotes } = useQuoteStore();
     const { settings } = useSettingsStore();
 
     const projectTypes = settings.projectTypes || [];
@@ -205,6 +205,46 @@ export default function ProjectDetails({ onGoToSettings }) {
                         rows={2}
                         className="input resize-none"
                     />
+                </div>
+
+                {/* Follow-up Date */}
+                <div>
+                    <label className="label">
+                        <span className="flex items-center gap-2">
+                            <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            Follow-up Reminder
+                        </span>
+                    </label>
+                    <input
+                        type="date"
+                        value={quote.nextFollowUpDate || ''}
+                        onChange={(e) => setNextFollowUpDate(e.target.value || null)}
+                        className="input"
+                    />
+                    <p className="form-helper">Set a reminder date to follow up on this quote</p>
+                </div>
+
+                {/* Internal Notes */}
+                <div>
+                    <label className="label">
+                        <span className="flex items-center gap-2">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Internal Notes
+                            <span className="text-xs text-gray-500 font-normal">(Not shown in PDF)</span>
+                        </span>
+                    </label>
+                    <textarea
+                        value={quote.internalNotes || ''}
+                        onChange={(e) => setInternalNotes(e.target.value)}
+                        placeholder="Team notes, context, reminders..."
+                        rows={3}
+                        className="input resize-none"
+                    />
+                    <p className="form-helper">Useful for handoff context between team members</p>
                 </div>
             </div>
         </div>
