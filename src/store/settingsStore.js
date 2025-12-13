@@ -90,6 +90,22 @@ const defaultSettings = {
         hiddenCountries: {},   // { countryName: boolean }
         dashboardCurrency: 'USD',
     },
+    // Dashboard page preferences
+    dashboardPreferences: {
+        currency: 'USD',
+        collapsedColumns: {},  // { statusId: boolean }
+        pipelineMinimized: false,
+    },
+    // Quotes page preferences
+    quotesPreferences: {
+        displayCurrency: 'USD',
+        sortBy: 'updatedAt',
+        sortDir: 'desc',
+    },
+    // Clients page preferences
+    clientsPreferences: {
+        currency: 'USD',
+    },
 };
 
 // Load from localStorage (fallback) with decryption
@@ -130,6 +146,9 @@ function mergeSettings(parsed) {
         pdfOptions: { ...defaultSettings.pdfOptions, ...parsed.pdfOptions },
         aiSettings: { ...defaultSettings.aiSettings, ...parsed.aiSettings },
         opsPreferences: { ...defaultSettings.opsPreferences, ...parsed.opsPreferences },
+        dashboardPreferences: { ...defaultSettings.dashboardPreferences, ...parsed.dashboardPreferences },
+        quotesPreferences: { ...defaultSettings.quotesPreferences, ...parsed.quotesPreferences },
+        clientsPreferences: { ...defaultSettings.clientsPreferences, ...parsed.clientsPreferences },
         users: parsed.users || defaultSettings.users,
         projectTypes: parsed.projectTypes || defaultSettings.projectTypes,
         regions: parsed.regions || defaultSettings.regions,
@@ -182,6 +201,9 @@ async function saveSettingsToDb(settings) {
                     users: settings.users,
                     ai_settings: aiSettingsToSave,
                     ops_preferences: settings.opsPreferences,
+                    dashboard_preferences: settings.dashboardPreferences,
+                    quotes_preferences: settings.quotesPreferences,
+                    clients_preferences: settings.clientsPreferences,
                 })
                 .eq('id', settingsDbId);
 
@@ -242,6 +264,9 @@ export const useSettingsStore = create(
                         users: data.users || defaultSettings.users,
                         aiSettings,
                         opsPreferences: data.ops_preferences || defaultSettings.opsPreferences,
+                        dashboardPreferences: data.dashboard_preferences || defaultSettings.dashboardPreferences,
+                        quotesPreferences: data.quotes_preferences || defaultSettings.quotesPreferences,
+                        clientsPreferences: data.clients_preferences || defaultSettings.clientsPreferences,
                     };
 
                     const merged = mergeSettings(dbSettings);
@@ -323,6 +348,42 @@ export const useSettingsStore = create(
             const updated = {
                 ...state.settings,
                 opsPreferences: { ...state.settings.opsPreferences, ...opsPreferences },
+            };
+            await saveSettingsLocal(updated);
+            saveSettingsToDb(updated);
+            set({ settings: updated });
+        },
+
+        // Update dashboard preferences (synced to Supabase for multi-device)
+        setDashboardPreferences: async (dashboardPreferences) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                dashboardPreferences: { ...state.settings.dashboardPreferences, ...dashboardPreferences },
+            };
+            await saveSettingsLocal(updated);
+            saveSettingsToDb(updated);
+            set({ settings: updated });
+        },
+
+        // Update quotes preferences (synced to Supabase for multi-device)
+        setQuotesPreferences: async (quotesPreferences) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                quotesPreferences: { ...state.settings.quotesPreferences, ...quotesPreferences },
+            };
+            await saveSettingsLocal(updated);
+            saveSettingsToDb(updated);
+            set({ settings: updated });
+        },
+
+        // Update clients preferences (synced to Supabase for multi-device)
+        setClientsPreferences: async (clientsPreferences) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                clientsPreferences: { ...state.settings.clientsPreferences, ...clientsPreferences },
             };
             await saveSettingsLocal(updated);
             saveSettingsToDb(updated);

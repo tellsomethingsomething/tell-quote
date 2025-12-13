@@ -50,16 +50,30 @@ function isFollowUpOverdue(nextFollowUpDate) {
 export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportunities }) {
     const { savedQuotes, clients, updateQuoteStatus } = useClientStore();
     const { rates, ratesUpdated, refreshRates, ratesLoading } = useQuoteStore();
-    const { settings } = useSettingsStore();
+    const { settings, setDashboardPreferences } = useSettingsStore();
     const { opportunities } = useOpportunityStore();
     const [selectedMonth, setSelectedMonth] = useState('all');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-    const [dashboardCurrency, setDashboardCurrency] = useState('USD');
     const [draggedQuoteId, setDraggedQuoteId] = useState(null);
     const [dragOverColumn, setDragOverColumn] = useState(null);
 
-    const [collapsedColumns, setCollapsedColumns] = useState({});
-    const [pipelineMinimized, setPipelineMinimized] = useState(false);
+    // Get dashboard preferences from settings (synced via Supabase)
+    const dashboardPrefs = settings.dashboardPreferences || {};
+    const dashboardCurrency = dashboardPrefs.currency || 'USD';
+    const collapsedColumns = dashboardPrefs.collapsedColumns || {};
+    const pipelineMinimized = dashboardPrefs.pipelineMinimized || false;
+
+    // Helper functions to update preferences (synced to Supabase)
+    const setDashboardCurrency = (currency) => {
+        setDashboardPreferences({ currency });
+    };
+    const setCollapsedColumns = (updater) => {
+        const newCollapsed = typeof updater === 'function' ? updater(collapsedColumns) : updater;
+        setDashboardPreferences({ collapsedColumns: newCollapsed });
+    };
+    const setPipelineMinimized = (value) => {
+        setDashboardPreferences({ pipelineMinimized: value });
+    };
 
     // Loss reason modal state
     const [lossReasonModal, setLossReasonModal] = useState({ open: false, quoteId: null, newStatus: null });

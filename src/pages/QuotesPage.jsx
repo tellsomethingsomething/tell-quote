@@ -19,21 +19,33 @@ const STATUSES = [
 
 export default function QuotesPage({ onEditQuote, onNewQuote }) {
     const { savedQuotes, updateQuoteStatus, deleteQuote } = useClientStore();
-    const { settings } = useSettingsStore();
+    const { settings, setQuotesPreferences } = useSettingsStore();
     const { rates } = useQuoteStore();
 
-    // Filters
+    // Get quotes preferences from settings (synced via Supabase)
+    const quotesPrefs = settings.quotesPreferences || {};
+    const displayCurrency = quotesPrefs.displayCurrency || 'USD';
+    const sortBy = quotesPrefs.sortBy || 'updatedAt';
+    const sortDir = quotesPrefs.sortDir || 'desc';
+
+    // Helper functions to update preferences (synced to Supabase)
+    const setDisplayCurrency = (currency) => {
+        setQuotesPreferences({ displayCurrency: currency });
+    };
+    const setSortBy = (value) => {
+        setQuotesPreferences({ sortBy: value });
+    };
+    const setSortDir = (value) => {
+        setQuotesPreferences({ sortDir: value });
+    };
+
+    // Filters (local state - not synced)
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [clientFilter, setClientFilter] = useState('');
     const [tagFilter, setTagFilter] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
-    const [displayCurrency, setDisplayCurrency] = useState('USD');
-
-    // Sorting
-    const [sortBy, setSortBy] = useState('updatedAt');
-    const [sortDir, setSortDir] = useState('desc');
 
     // Tag management
     const [editingTagsId, setEditingTagsId] = useState(null);

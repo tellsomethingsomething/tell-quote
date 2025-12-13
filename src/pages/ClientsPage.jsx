@@ -9,10 +9,18 @@ import { validateForm, sanitizeString } from '../utils/validation';
 export default function ClientsPage({ onSelectClient }) {
     const { clients, savedQuotes, getClientQuotes, addClient, deleteClient } = useClientStore();
     const { rates } = useQuoteStore();
-    const { settings } = useSettingsStore();
+    const { settings, setClientsPreferences } = useSettingsStore();
     const projectTypes = settings.projectTypes || [];
 
-    const [dashboardCurrency, setDashboardCurrency] = useState('USD');
+    // Get clients preferences from settings (synced via Supabase)
+    const clientsPrefs = settings.clientsPreferences || {};
+    const dashboardCurrency = clientsPrefs.currency || 'USD';
+
+    // Helper function to update preferences (synced to Supabase)
+    const setDashboardCurrency = (currency) => {
+        setClientsPreferences({ currency });
+    };
+
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [selectedMonth, setSelectedMonth] = useState('all');

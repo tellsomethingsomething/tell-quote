@@ -72,6 +72,9 @@ create table settings (
   users jsonb default '[]',
   ai_settings jsonb default '{}',
   ops_preferences jsonb default '{}',
+  dashboard_preferences jsonb default '{}',
+  quotes_preferences jsonb default '{}',
+  clients_preferences jsonb default '{}',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -139,7 +142,10 @@ values (
 );
 
 -- ============================================================
--- MIGRATION: Add ops_preferences column to settings table
+-- MIGRATION: Add preferences columns to settings table
 -- Run this if you already have the settings table:
 -- ============================================================
 -- ALTER TABLE settings ADD COLUMN IF NOT EXISTS ops_preferences jsonb DEFAULT '{}';
+-- ALTER TABLE settings ADD COLUMN IF NOT EXISTS dashboard_preferences jsonb DEFAULT '{}';
+-- ALTER TABLE settings ADD COLUMN IF NOT EXISTS quotes_preferences jsonb DEFAULT '{}';
+-- ALTER TABLE settings ADD COLUMN IF NOT EXISTS clients_preferences jsonb DEFAULT '{}';
