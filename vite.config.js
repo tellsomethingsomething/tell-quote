@@ -58,9 +58,10 @@ export default defineConfig({
       'zustand',
       'recharts',
       '@supabase/supabase-js',
+      // Include @react-pdf/renderer and its CJS dependencies for proper ESM transformation
+      '@react-pdf/renderer',
+      'base64-js',
     ],
-    // Exclude PDF renderer from pre-bundling (it's lazy loaded)
-    exclude: ['@react-pdf/renderer'],
   },
 
   // Optional: Bundle analyzer (set ANALYZE=true to enable)

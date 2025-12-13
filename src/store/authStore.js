@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase, isSupabaseConfigured, useSupabaseAuth } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, shouldUseSupabaseAuth } from '../lib/supabase';
 import { logSecurityEvent } from '../utils/encryption';
 
 const AUTH_KEY = 'tell_auth_session';
@@ -411,7 +411,7 @@ export const useAuthStore = create((set, get) => ({
      * Returns false if VITE_APP_PASSWORD is set (password mode)
      */
     isSupabaseAuth: () => {
-        return useSupabaseAuth();
+        return shouldUseSupabaseAuth();
     },
 }));
 

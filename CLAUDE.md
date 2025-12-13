@@ -11,9 +11,17 @@ Quote is a quote/proposal generation tool for Tell Productions. It allows creati
 ```bash
 npm run dev      # Start development server (Vite)
 npm run build    # Production build
+npm run preview  # Preview production build locally
 npm run lint     # Run ESLint
 npm run deploy   # Build and deploy to GitHub Pages (gh-pages)
 ```
+
+## Environment Variables
+
+Copy `.env.example` to `.env.local` and configure:
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Supabase anon/public key
+- `VITE_APP_PASSWORD` - (Optional, deprecated) Simple password auth for dev only
 
 ## Architecture
 
@@ -25,7 +33,8 @@ All app state lives in `/src/store/` using Zustand with persistence:
 - **clientStore.js** - Clients list and saved quotes library
 - **rateCardStore.js** - Rate card items with regional pricing (SEA, EU, ME regions)
 - **settingsStore.js** - Company settings, users, T&Cs, AI settings
-- **authStore.js** - Simple password-based authentication
+- **authStore.js** - Authentication (supports Supabase Auth or simple password)
+- **invoiceTemplateStore.js** - Custom invoice/PDF template configurations
 
 Stores sync to both localStorage (for session persistence) and Supabase (for cloud backup).
 
@@ -44,15 +53,24 @@ Quotes have a hierarchical structure defined in `/src/data/sections.js`:
 3. Fees (management, commission, discount) are applied at quote level
 4. PDF export uses `@react-pdf/renderer` (`/src/components/pdf/`)
 
-### Pages vs Editor
+### Pages and Navigation
 
-- **Pages** (`/src/pages/`) - Full-page views (Dashboard, Clients, RateCard, Settings, Login)
+- **Pages** (`/src/pages/`) - Full-page views, lazy-loaded with React.lazy() and Suspense
 - **Editor** - Split-panel quote editor with EditorPanel and PreviewPanel
 - Navigation is state-based in App.jsx (`view` state), not URL-based
+- Views: `dashboard`, `clients`, `client-detail`, `editor`, `rate-card`, `quotes`, `settings`, `fs`
+
+### Custom Hooks
+
+- **useUnsavedChanges** - Tracks unsaved changes in editor, prompts before navigation
+- **usePdfExport** - Handles PDF generation and download
 
 ### Backend (Supabase)
 
-Schema in `supabase-schema.sql`. Tables: quotes, clients, rate_cards, rate_card_sections, settings. All use JSONB columns for flexible nested data.
+- Schema in `supabase-schema.sql`, RLS policies in `supabase-rls-policies.sql`
+- Tables: quotes, clients, rate_cards, rate_card_sections, settings
+- All use JSONB columns for flexible nested data
+- Authentication: Supabase Auth (recommended) or legacy password mode
 
 ## Styling
 

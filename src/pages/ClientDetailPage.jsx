@@ -18,14 +18,13 @@ const STATUS_COLORS = {
 };
 
 export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQuote, onNewQuote }) {
-    const { getClient, getClientQuotes, deleteQuote, updateQuoteStatus, deleteClient, updateClient, addContact, updateContact, deleteContact, getClientStats } = useClientStore();
+    const { getClient, getClientQuotes, deleteQuote, updateQuoteStatus, deleteClient, updateClient, addContact, updateContact, deleteContact } = useClientStore();
     const { loadQuoteData } = useQuoteStore();
     const { settings } = useSettingsStore();
     const users = settings.users || [];
 
     const client = getClient(clientId);
     const quotes = getClientQuotes(clientId);
-    const stats = getClientStats(clientId);
 
     const [activeTab, setActiveTab] = useState('overview'); // overview, contacts
     const [isEditingClient, setIsEditingClient] = useState(false);
@@ -36,6 +35,11 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
     const [editingContactId, setEditingContactId] = useState(null);
     const [contactForm, setContactForm] = useState({});
     const [contactFormErrors, setContactFormErrors] = useState({});
+
+    // Loss reason modal state - must be before early return to follow hooks rules
+    const [lossReasonModal, setLossReasonModal] = useState({ open: false, quoteId: null, newStatus: null });
+    const [lossReason, setLossReason] = useState('');
+    const [lossReasonNotes, setLossReasonNotes] = useState('');
 
     // Handle escape key to close modals
     useEffect(() => {
@@ -71,11 +75,6 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
             deleteQuote(quoteId);
         }
     };
-
-    // Loss reason modal state
-    const [lossReasonModal, setLossReasonModal] = useState({ open: false, quoteId: null, newStatus: null });
-    const [lossReason, setLossReason] = useState('');
-    const [lossReasonNotes, setLossReasonNotes] = useState('');
 
     const handleStatusChange = (quoteId, status, e) => {
         e.stopPropagation();

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, createElement } from 'react';
 
 /**
  * Custom hook for PDF export functionality with dynamic imports
@@ -24,8 +24,9 @@ export function usePdfExport(onSuccess, onError) {
     setIsPreviewing(true);
     try {
       const { pdf, CleanPDF } = await loadPdfDependencies();
+      // Use createElement to render the component properly
       const blob = await pdf(
-        CleanPDF({ quote, currency })
+        createElement(CleanPDF, { quote, currency })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -46,8 +47,9 @@ export function usePdfExport(onSuccess, onError) {
     setIsGenerating(true);
     try {
       const { pdf, CleanPDF } = await loadPdfDependencies();
+      // Use createElement to render the component properly
       const blob = await pdf(
-        CleanPDF({ quote, currency })
+        createElement(CleanPDF, { quote, currency })
       ).toBlob();
 
       const clientName = quote.client?.company || 'Client';
