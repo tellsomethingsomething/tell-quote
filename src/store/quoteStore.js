@@ -312,6 +312,8 @@ export const useQuoteStore = create(
         // Update currency and convert all line item values
         setCurrency: (newCurrency) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const oldCurrency = state.quote.currency;
 
                 // If same currency, just return
@@ -351,6 +353,9 @@ export const useQuoteStore = create(
 
         // Update region and refresh rates
         setRegion: (region) => {
+            // Prevent changes when locked
+            if (useQuoteStore.getState().quote.isLocked) return;
+
             const defaultCurrency = REGIONS[region]?.defaultCurrency || 'USD';
 
             // Get rate card to look up items
@@ -394,6 +399,8 @@ export const useQuoteStore = create(
         // Update quote date
         setQuoteDate: (quoteDate) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const updated = { ...state.quote, quoteDate, updatedAt: new Date().toISOString() };
                 saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
@@ -403,6 +410,8 @@ export const useQuoteStore = create(
         // Update validity days
         setValidityDays: (validityDays) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const updated = { ...state.quote, validityDays: parseInt(validityDays), updatedAt: new Date().toISOString() };
                 saveQuoteWithLibrarySync(updated);
                 return { quote: updated };
@@ -412,6 +421,8 @@ export const useQuoteStore = create(
         // Update client details
         setClientDetails: (client) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const oldClient = state.quote.client;
                 const updated = {
                     ...state.quote,
@@ -441,6 +452,8 @@ export const useQuoteStore = create(
         // Update project details
         setProjectDetails: (project) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const oldProject = state.quote.project;
                 const updated = {
                     ...state.quote,
@@ -470,6 +483,8 @@ export const useQuoteStore = create(
         // Update fee percentages
         setFees: (fees) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const oldFees = state.quote.fees;
                 const updated = {
                     ...state.quote,
@@ -499,6 +514,8 @@ export const useQuoteStore = create(
         // Update prepared by user
         setPreparedBy: (userId) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const updated = {
                     ...state.quote,
                     preparedBy: userId,
@@ -525,6 +542,8 @@ export const useQuoteStore = create(
         // Move section up or down
         moveSection: (sectionId, direction) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const order = [...(state.quote.sectionOrder || SECTION_ORDER)];
                 const index = order.indexOf(sectionId);
                 if (index === -1) return state;
@@ -548,6 +567,8 @@ export const useQuoteStore = create(
         // Update section name (custom override)
         updateSectionName: (sectionId, newName) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const sectionNames = { ...state.quote.sectionNames };
                 if (newName.trim()) {
                     sectionNames[sectionId] = newName.trim();
@@ -567,6 +588,8 @@ export const useQuoteStore = create(
         // Add line item
         addLineItem: (sectionId, subsection, item) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const sections = { ...state.quote.sections };
                 const sectionData = { ...sections[sectionId] };
                 const subsections = { ...sectionData.subsections };
@@ -604,6 +627,8 @@ export const useQuoteStore = create(
         // Update line item
         updateLineItem: (sectionId, subsection, itemId, updates) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const sections = { ...state.quote.sections };
                 const sectionData = { ...sections[sectionId] };
                 const subsections = { ...sectionData.subsections };
@@ -644,6 +669,8 @@ export const useQuoteStore = create(
         // Delete line item
         deleteLineItem: (sectionId, subsection, itemId) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const sections = { ...state.quote.sections };
                 const sectionData = { ...sections[sectionId] };
                 const subsections = { ...sectionData.subsections };
@@ -677,6 +704,8 @@ export const useQuoteStore = create(
         // Move line item
         moveLineItem: (sourceSectionId, sourceSubsection, itemId, targetSectionId, targetSubsection) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const sections = { ...state.quote.sections };
 
                 // Helper to safely get subsections
@@ -712,6 +741,8 @@ export const useQuoteStore = create(
         // Add custom subsection
         addCustomSubsection: (sectionId, subsectionName) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const sections = { ...state.quote.sections };
                 const sectionData = { ...sections[sectionId] };
 
@@ -733,6 +764,8 @@ export const useQuoteStore = create(
         // Reorder subsections within a section (for drag and drop)
         reorderSubsections: (sectionId, newOrder) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const sections = { ...state.quote.sections };
                 const sectionData = { ...sections[sectionId] };
 
@@ -752,6 +785,8 @@ export const useQuoteStore = create(
         // Rename a subsection (custom display name)
         updateSubsectionName: (sectionId, originalName, newName) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const sections = { ...state.quote.sections };
                 const sectionData = { ...sections[sectionId] };
 
@@ -788,6 +823,8 @@ export const useQuoteStore = create(
         // Update proposal data
         setProposal: (proposal) => {
             set(state => {
+                // Prevent changes when locked
+                if (state.quote.isLocked) return state;
                 const updated = {
                     ...state.quote,
                     proposal: { ...state.quote.proposal, ...proposal },
