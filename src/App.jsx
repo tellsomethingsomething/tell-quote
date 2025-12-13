@@ -22,6 +22,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const QuotesPage = lazy(() => import('./pages/QuotesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const FSPage = lazy(() => import('./pages/FSPage'));
+const CommercialTasksPage = lazy(() => import('./pages/CommercialTasksPage'));
 
 // Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings'
 function App() {
@@ -103,6 +104,10 @@ function App() {
 
   const handleGoToOpportunities = useCallback(() => {
     confirmNavigateAway(() => setView('opportunities'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToTasks = useCallback(() => {
+    confirmNavigateAway(() => setView('tasks'));
   }, [confirmNavigateAway]);
 
   const handleSelectOpportunity = useCallback((opportunityId) => {
@@ -261,6 +266,14 @@ function App() {
             </main>
           </Suspense>
         );
+      case 'tasks':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading tasks..." />}>
+            <main id="main-content" tabIndex="-1">
+              <CommercialTasksPage />
+            </main>
+          </Suspense>
+        );
       case 'fs':
         return (
           <Suspense fallback={<LoadingSpinner text="Loading..." />}>
@@ -316,6 +329,7 @@ function App() {
         onGoToSettings={handleGoToSettings}
         onGoToFS={handleGoToFS}
         onGoToOpportunities={handleGoToOpportunities}
+        onGoToTasks={handleGoToTasks}
         selectedClientId={selectedClientId}
       />
       {renderView()}
