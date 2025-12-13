@@ -159,72 +159,46 @@ export default function CommercialTasksPage() {
                 })),
             };
 
-            const prompt = `You are the Commercial Director at Tell Productions, a broadcast and streaming production company based in Malaysia, serving Southeast Asia (SEA), Gulf States (GCC), and Central Asia.
+            const prompt = `You are a commercial task generator for Tell Productions (broadcast/streaming production). Generate ACTIONABLE tasks based ONLY on the data below.
 
-TODAY'S DATE: ${new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+DATE: ${new Date().toLocaleDateString('en-GB')}
 
-YOUR BUSINESS DATA:
+DATA:
 ${JSON.stringify(compactData, null, 1)}
 
-STRATEGIC FOCUS - FOOTBALL & SPORTS BROADCASTING:
-Our growth priority is football and sports broadcasting opportunities. Key events and leagues to track:
+RULES:
+- ONLY create tasks from the actual data above - no generic suggestions
+- Every task must have a specific ACTION the user can take in the platform
+- Use actual client names, contact names, quote numbers, opportunity titles from the data
+- Focus on football/sports broadcasting opportunities
 
-SOUTHEAST ASIA:
-- AFF Championship (ASEAN Football Federation)
-- Malaysia Super League, Singapore Premier League, Thai League
-- AFC Champions League (Asian clubs)
-- SEA Games football
-- Indonesian Liga 1
+CATEGORIES & ACTIONS:
 
-GULF STATES (GCC):
-- Saudi Pro League (huge investment, international stars)
-- UAE Pro League, Qatar Stars League
-- Gulf Cup of Nations
-- AFC Asian Cup qualifiers
-- Club World Cup
+UPCOMING_DEALS - Pipeline actions:
+- "Follow up on [Quote #] sent to [Client] [X days ago]"
+- "Chase [Opportunity] - expected close [date]"
+- "Update [Opportunity] probability - currently [X]%"
+- "Send revised quote to [Client] for [Project]"
 
-CENTRAL ASIA:
-- Kazakhstan Premier League
-- Uzbekistan Super League
-- AFC competitions
+CLIENT_TASKS - Client management:
+- "Add contact details for [Client] - missing email/phone"
+- "Update [Client] notes with recent conversation"
+- "Create new opportunity for [Client] - [reason from notes]"
+- "Review [Client]'s stale opportunity - no update in [X] days"
 
-SERVICES WE OFFER:
-- Live broadcast production (OB trucks, cameras, crews)
-- Streaming/OTT platform delivery
-- Sports graphics packages (scorebugs, lower thirds, AR)
-- Remote/cloud production workflows
-- Instant replay and VAR support systems
+RESEARCH - Targeted research for YOUR clients:
+- "Research [Client]'s upcoming projects for Q1"
+- "Check [Client] news - potential new requirements"
+- "Find decision maker contact at [Client]"
+- "Research competitors mentioned in [Opportunity]"
 
-KEY CONTACTS TO TARGET (by role):
-- Broadcasters: Head of Sports, Director of Production, Technical Director
-- Federations: Commercial Director, Media Rights Manager, Broadcasting Manager
-- Clubs: Media Manager, Commercial Director, Marketing Director
-- OTT Platforms: Content Acquisition, Head of Sports, Technical Operations
+CLIENT_COMMS - Relationship actions:
+- "Schedule call with [Contact] at [Client]"
+- "Send check-in to [Client] - last contact [X] days ago"
+- "Introduce [Service] to [Client] based on [past project]"
 
-Generate 10-15 tasks across these 4 categories:
-
-1. UPCOMING_DEALS - Active opportunities to close, quotes to follow up, deals in pipeline
-2. CLIENT_TASKS - Actions for existing clients (follow-ups, renewals, upsells)
-3. RESEARCH - Market intelligence: upcoming football events, broadcast tenders, rights deals, competitor moves
-4. CLIENT_COMMS - Relationship building: check-ins, introductions, networking opportunities
-
-For each task, include WHO SPECIFICALLY to contact (name if in data, or role/title to find).
-
-Return ONLY a JSON array:
-[{
-  "id": "unique_id",
-  "category": "upcoming_deals|client_tasks|research|client_comms",
-  "priority": "high|medium|low",
-  "title": "Specific action",
-  "description": "Context, talking points, why this matters",
-  "client": "Company name or null",
-  "contact": "Specific person name/role to reach",
-  "deadline": "Today|Tomorrow|This week|Next week",
-  "event": "Related football event if applicable",
-  "value": "Potential revenue or strategic value"
-}]
-
-Be specific with names, values, dates from the data. Reference upcoming football events. Suggest specific people to contact.`;
+Generate 8-12 tasks. Return ONLY JSON array:
+[{"id":"unique","category":"upcoming_deals|client_tasks|research|client_comms","priority":"high|medium|low","title":"Action verb + specific details","description":"Why this matters","client":"From data","contact":"Name or role from data","action":"Platform action: update_quote|add_note|create_opp|send_email|schedule_call"}]`;
 
             const response = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
