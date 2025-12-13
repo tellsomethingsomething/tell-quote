@@ -89,12 +89,40 @@ create table rate_card_sections (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- Opportunities table
+create table opportunities (
+  id uuid default uuid_generate_v4() primary key,
+  title text,
+  client_id uuid references clients(id) on delete set null,
+  client jsonb default '{}',
+  region text,
+  country text,
+  status text default 'active',
+  value numeric default 0,
+  currency text default 'USD',
+  probability integer default 50,
+  source text,
+  competitors text[] default '{}',
+  contacts jsonb default '[]',
+  account_owner_id text,
+  brief text,
+  notes text,
+  next_action text,
+  next_action_date date,
+  expected_close_date date,
+  converted_to_quote_id uuid references quotes(id) on delete set null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- Create indexes for common queries
 create index quotes_quote_number_idx on quotes(quote_number);
 create index quotes_status_idx on quotes(status);
 create index quotes_created_at_idx on quotes(created_at desc);
 create index clients_company_idx on clients(company);
 create index rate_cards_section_idx on rate_cards(section);
+create index opportunities_country_idx on opportunities(country);
+create index opportunities_status_idx on opportunities(status);
 
 -- Enable Row Level Security (but allow all for now - internal tool)
 alter table quotes enable row level security;
@@ -102,6 +130,7 @@ alter table clients enable row level security;
 alter table rate_cards enable row level security;
 alter table rate_card_sections enable row level security;
 alter table settings enable row level security;
+alter table opportunities enable row level security;
 
 -- Policies to allow all operations (internal tool, no auth required initially)
 create policy "Allow all quotes" on quotes for all using (true) with check (true);
@@ -109,6 +138,7 @@ create policy "Allow all clients" on clients for all using (true) with check (tr
 create policy "Allow all rate_cards" on rate_cards for all using (true) with check (true);
 create policy "Allow all rate_card_sections" on rate_card_sections for all using (true) with check (true);
 create policy "Allow all settings" on settings for all using (true) with check (true);
+create policy "Allow all opportunities" on opportunities for all using (true) with check (true);
 
 -- Function to update updated_at timestamp
 create or replace function update_updated_at_column()
@@ -129,6 +159,8 @@ create trigger update_rate_cards_updated_at before update on rate_cards
 create trigger update_rate_card_sections_updated_at before update on rate_card_sections
   for each row execute function update_updated_at_column();
 create trigger update_settings_updated_at before update on settings
+  for each row execute function update_updated_at_column();
+create trigger update_opportunities_updated_at before update on opportunities
   for each row execute function update_updated_at_column();
 
 -- Insert default settings row
