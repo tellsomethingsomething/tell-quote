@@ -20,8 +20,11 @@ const CATEGORIES = [
 export default function CommercialTasksPage() {
     const clients = useClientStore(state => state.clients) || [];
     const quotes = useClientStore(state => state.quotes) || [];
+    const updateClient = useClientStore(state => state.updateClient);
     const opportunities = useOpportunityStore(state => state.opportunities) || [];
-    const { settings } = useSettingsStore();
+    const updateOpportunity = useOpportunityStore(state => state.updateOpportunity);
+    const addOpportunity = useOpportunityStore(state => state.addOpportunity);
+    const { addActivityLog } = useSettingsStore();
 
     const [tasks, setTasks] = useState(() => {
         const saved = localStorage.getItem('tell_commercial_tasks_v2');
@@ -45,6 +48,17 @@ export default function CommercialTasksPage() {
     const [showAddTask, setShowAddTask] = useState(false);
     const [newTask, setNewTask] = useState({ title: '', description: '', category: 'client_tasks', priority: 'medium' });
     const [activeCategory, setActiveCategory] = useState('all');
+
+    // Complete & Log modal state
+    const [showLogModal, setShowLogModal] = useState(false);
+    const [selectedTask, setSelectedTask] = useState(null);
+    const [logData, setLogData] = useState({
+        note: '',
+        clientId: '',
+        opportunityId: '',
+        createOpportunity: false,
+        newOppTitle: '',
+    });
 
     const scanIntervalRef = useRef(null);
     const hasInitialized = useRef(false);
@@ -117,6 +131,7 @@ export default function CommercialTasksPage() {
                     totalPipelineValue: opportunities.filter(o => o.status === 'active').reduce((sum, o) => sum + (o.value || 0), 0),
                 },
                 opportunities: opportunities.filter(o => o.status === 'active').map(o => ({
+                    id: o.id,
                     title: o.title,
                     client: o.client?.company,
                     clientContact: o.client?.contact,
@@ -126,36 +141,40 @@ export default function CommercialTasksPage() {
                     currency: o.currency || 'USD',
                     probability: o.probability,
                     competitors: o.competitors,
-                    brief: o.brief?.substring(0, 300),
-                    notes: o.notes?.substring(0, 200),
+                    brief: o.brief?.substring(0, 200),
+                    notes: o.notes?.substring(0, 300),
                     nextAction: o.nextAction,
                     nextActionDate: o.nextActionDate,
                     expectedCloseDate: o.expectedCloseDate,
-                    contacts: o.contacts?.map(c => ({ name: c.name, role: c.role, email: c.email })),
+                    contacts: o.contacts?.map(c => ({ name: c.name, role: c.role })),
                     daysSinceUpdate: daysSince(o.updatedAt),
                     isOverdue: o.nextActionDate && new Date(o.nextActionDate) < new Date(),
                     isStale: daysSince(o.updatedAt) > 14,
                 })),
                 clients: clients.map(c => {
                     const clientOpps = opportunities.filter(o => o.client?.company === c.company);
+                    const clientQuotes = quotes.filter(q => q.client?.company === c.company);
                     return {
+                        id: c.id,
                         company: c.company,
                         contact: c.contact,
                         email: c.email,
                         region: c.region,
-                        notes: c.notes?.substring(0, 150),
-                        contacts: c.contacts?.map(ct => ({ name: ct.name, role: ct.role, email: ct.email, phone: ct.phone })),
+                        notes: c.notes?.substring(0, 200),
+                        contacts: c.contacts?.slice(0, 3).map(ct => ({ name: ct.name, role: ct.role })),
                         activeOpportunities: clientOpps.filter(o => o.status === 'active').length,
+                        totalQuotes: clientQuotes.length,
+                        wonQuotes: clientQuotes.filter(q => q.status === 'won').length,
                         daysSinceLastContact: daysSince(c.updatedAt),
                     };
                 }),
-                recentQuotes: quotes.slice(0, 10).map(q => ({
+                recentQuotes: quotes.filter(q => q.status === 'sent').slice(0, 10).map(q => ({
                     number: q.quoteNumber,
                     client: q.client?.company,
                     project: q.project?.title,
                     status: q.status,
                     total: q.totals?.grandTotal,
-                    date: q.quoteDate,
+                    daysSinceSent: daysSince(q.quoteDate),
                 })),
             };
 
@@ -168,37 +187,34 @@ ${JSON.stringify(compactData, null, 1)}
 
 RULES:
 - ONLY create tasks from the actual data above - no generic suggestions
-- Every task must have a specific ACTION the user can take in the platform
-- Use actual client names, contact names, quote numbers, opportunity titles from the data
-- Focus on football/sports broadcasting opportunities
+- Every task must reference specific clients, opportunities, or quotes from the data
+- Use actual names, quote numbers, values, dates
+- Focus on actionable next steps
 
-CATEGORIES & ACTIONS:
+CATEGORIES & EXAMPLE TASKS:
 
-UPCOMING_DEALS - Pipeline actions:
-- "Follow up on [Quote #] sent to [Client] [X days ago]"
-- "Chase [Opportunity] - expected close [date]"
-- "Update [Opportunity] probability - currently [X]%"
-- "Send revised quote to [Client] for [Project]"
+UPCOMING_DEALS - Close pipeline:
+- "Follow up Quote #[X] to [Client] - sent [X] days ago, $[value]"
+- "Chase [Opportunity title] at [Client] - closing [date]"
+- "Revise quote for [Client] - [reason from notes]"
 
-CLIENT_TASKS - Client management:
-- "Add contact details for [Client] - missing email/phone"
-- "Update [Client] notes with recent conversation"
-- "Create new opportunity for [Client] - [reason from notes]"
-- "Review [Client]'s stale opportunity - no update in [X] days"
+CLIENT_TASKS - Manage clients:
+- "Update [Client] contact info - missing [field]"
+- "Review stale opportunity at [Client] - [X] days no update"
+- "Add notes from [Contact] conversation at [Client]"
 
-RESEARCH - Targeted research for YOUR clients:
-- "Research [Client]'s upcoming projects for Q1"
-- "Check [Client] news - potential new requirements"
-- "Find decision maker contact at [Client]"
-- "Research competitors mentioned in [Opportunity]"
+RESEARCH - Intel on YOUR clients:
+- "Research [Client]'s Q1 projects - last quote was [X] months ago"
+- "Find [role] contact at [Client] - only have [current contact]"
+- "Check competitor [name] mentioned in [Opportunity]"
 
-CLIENT_COMMS - Relationship actions:
-- "Schedule call with [Contact] at [Client]"
-- "Send check-in to [Client] - last contact [X] days ago"
-- "Introduce [Service] to [Client] based on [past project]"
+CLIENT_COMMS - Build relationships:
+- "Check in with [Contact] at [Client] - [X] days since contact"
+- "Introduce [service] to [Client] based on [past project]"
+- "Schedule call with [Client] re: [Opportunity]"
 
-Generate 8-12 tasks. Return ONLY JSON array:
-[{"id":"unique","category":"upcoming_deals|client_tasks|research|client_comms","priority":"high|medium|low","title":"Action verb + specific details","description":"Why this matters","client":"From data","contact":"Name or role from data","action":"Platform action: update_quote|add_note|create_opp|send_email|schedule_call"}]`;
+Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
+[{"id":"unique","category":"upcoming_deals|client_tasks|research|client_comms","priority":"high|medium|low","title":"Specific action from data","description":"Context and why","client":"Client name from data","clientId":"Client ID if known","opportunityId":"Opp ID if relevant","contact":"Person name/role"}]`;
 
             const response = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
@@ -286,6 +302,108 @@ Generate 8-12 tasks. Return ONLY JSON array:
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clients.length, quotes.length, opportunities.length]);
 
+    // Open log modal for a task
+    const openLogModal = (task) => {
+        setSelectedTask(task);
+        // Pre-fill with task context
+        const noteText = `[${task.category.toUpperCase()}] ${task.title}\n\nOutcome: `;
+        // Try to find matching client
+        const matchingClient = clients.find(c =>
+            c.company?.toLowerCase() === task.client?.toLowerCase() ||
+            c.id === task.clientId
+        );
+        // Try to find matching opportunity
+        const matchingOpp = opportunities.find(o =>
+            o.id === task.opportunityId ||
+            (task.client && o.client?.company?.toLowerCase() === task.client?.toLowerCase())
+        );
+
+        setLogData({
+            note: noteText,
+            clientId: matchingClient?.id || '',
+            opportunityId: matchingOpp?.id || '',
+            createOpportunity: false,
+            newOppTitle: '',
+        });
+        setShowLogModal(true);
+    };
+
+    // Complete task and log it
+    const completeAndLog = async () => {
+        if (!selectedTask) return;
+
+        const timestamp = new Date().toISOString();
+        const dateStr = new Date().toLocaleDateString('en-GB');
+
+        // Add note to opportunity if selected
+        if (logData.opportunityId) {
+            const opp = opportunities.find(o => o.id === logData.opportunityId);
+            if (opp) {
+                const existingNotes = opp.notes || '';
+                const newNote = `\n\n--- ${dateStr} ---\n${logData.note}`;
+                await updateOpportunity(logData.opportunityId, {
+                    notes: existingNotes + newNote,
+                    updatedAt: timestamp,
+                });
+            }
+        }
+        // Add note to client if selected (and no opportunity)
+        else if (logData.clientId) {
+            const client = clients.find(c => c.id === logData.clientId);
+            if (client) {
+                const existingNotes = client.notes || '';
+                const newNote = `\n\n--- ${dateStr} ---\n${logData.note}`;
+                await updateClient(logData.clientId, {
+                    notes: existingNotes + newNote,
+                    updatedAt: timestamp,
+                });
+            }
+        }
+
+        // Create new opportunity if requested
+        if (logData.createOpportunity && logData.newOppTitle && logData.clientId) {
+            const client = clients.find(c => c.id === logData.clientId);
+            if (client) {
+                await addOpportunity({
+                    title: logData.newOppTitle,
+                    client: {
+                        company: client.company,
+                        contact: client.contact,
+                        email: client.email,
+                    },
+                    status: 'active',
+                    probability: 25,
+                    source: 'Commercial Tasks',
+                    notes: `Created from task: ${selectedTask.title}\n\n${logData.note}`,
+                    region: client.region,
+                });
+            }
+        }
+
+        // Log to global activity
+        if (addActivityLog) {
+            addActivityLog({
+                action: 'task_completed',
+                category: 'commercial_task',
+                description: `Completed: ${selectedTask.title}`,
+                details: logData.note,
+                clientId: logData.clientId,
+                opportunityId: logData.opportunityId,
+            });
+        }
+
+        // Mark task as complete
+        if (selectedTask.isManual) {
+            setManualTasks(prev => prev.filter(t => t.id !== selectedTask.id));
+        } else {
+            setCompletedTasks(prev => [...prev, selectedTask.id]);
+        }
+
+        // Close modal
+        setShowLogModal(false);
+        setSelectedTask(null);
+    };
+
     const toggleTaskComplete = (taskId, isManual = false) => {
         if (isManual) {
             setManualTasks(prev => prev.filter(t => t.id !== taskId));
@@ -324,6 +442,14 @@ Generate 8-12 tasks. Return ONLY JSON array:
         return CATEGORIES.find(c => c.id === categoryId) || CATEGORIES[0];
     };
 
+    // Get opportunities for selected client
+    const clientOpportunities = logData.clientId
+        ? opportunities.filter(o => {
+            const client = clients.find(c => c.id === logData.clientId);
+            return client && o.client?.company === client.company;
+        })
+        : [];
+
     // Combine AI and manual tasks
     const allTasks = [
         ...manualTasks,
@@ -351,7 +477,7 @@ Generate 8-12 tasks. Return ONLY JSON array:
                     <div>
                         <h1 className="text-2xl font-bold text-white">Commercial Tasks</h1>
                         <p className="text-gray-400 text-sm mt-1">
-                            Football & sports broadcasting opportunities in SEA, GCC & Central Asia
+                            Actions from your pipeline, clients & opportunities
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -487,17 +613,97 @@ Generate 8-12 tasks. Return ONLY JSON array:
                                 </div>
                             </div>
                             <div className="flex justify-end gap-3 mt-6">
+                                <button onClick={() => setShowAddTask(false)} className="btn-ghost">Cancel</button>
+                                <button onClick={addManualTask} className="btn-primary">Add Task</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Complete & Log Modal */}
+                {showLogModal && selectedTask && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-lg">
+                            <h3 className="text-lg font-semibold text-white mb-2">Complete & Log</h3>
+                            <p className="text-sm text-gray-400 mb-4">{selectedTask.title}</p>
+
+                            <div className="space-y-4">
+                                {/* Note */}
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">What happened?</label>
+                                    <textarea
+                                        value={logData.note}
+                                        onChange={(e) => setLogData({ ...logData, note: e.target.value })}
+                                        className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white h-24"
+                                        placeholder="Outcome of this task..."
+                                    />
+                                </div>
+
+                                {/* Client Selection */}
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">Log to Client</label>
+                                    <select
+                                        value={logData.clientId}
+                                        onChange={(e) => setLogData({ ...logData, clientId: e.target.value, opportunityId: '' })}
+                                        className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                                    >
+                                        <option value="">Select client...</option>
+                                        {clients.map(c => (
+                                            <option key={c.id} value={c.id}>{c.company}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Opportunity Selection (if client selected) */}
+                                {logData.clientId && clientOpportunities.length > 0 && (
+                                    <div>
+                                        <label className="block text-sm text-gray-400 mb-1">Log to Opportunity (optional)</label>
+                                        <select
+                                            value={logData.opportunityId}
+                                            onChange={(e) => setLogData({ ...logData, opportunityId: e.target.value })}
+                                            className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                                        >
+                                            <option value="">Just log to client</option>
+                                            {clientOpportunities.map(o => (
+                                                <option key={o.id} value={o.id}>{o.title}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* Create New Opportunity */}
+                                {logData.clientId && (
+                                    <div className="border-t border-dark-border pt-4">
+                                        <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={logData.createOpportunity}
+                                                onChange={(e) => setLogData({ ...logData, createOpportunity: e.target.checked })}
+                                                className="rounded border-gray-600"
+                                            />
+                                            Create new opportunity from this
+                                        </label>
+                                        {logData.createOpportunity && (
+                                            <input
+                                                type="text"
+                                                value={logData.newOppTitle}
+                                                onChange={(e) => setLogData({ ...logData, newOppTitle: e.target.value })}
+                                                className="w-full mt-2 px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                                                placeholder="New opportunity title..."
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button onClick={() => setShowLogModal(false)} className="btn-ghost">Cancel</button>
                                 <button
-                                    onClick={() => setShowAddTask(false)}
-                                    className="btn-ghost"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={addManualTask}
+                                    onClick={completeAndLog}
                                     className="btn-primary"
+                                    disabled={!logData.note.trim()}
                                 >
-                                    Add Task
+                                    Complete & Log
                                 </button>
                             </div>
                         </div>
@@ -521,14 +727,13 @@ Generate 8-12 tasks. Return ONLY JSON array:
                         </div>
                         <h3 className="text-lg font-medium text-gray-300 mb-2">No tasks yet</h3>
                         <p className="text-gray-500 text-sm mb-6">
-                            Click "Refresh" to scan for opportunities or add a task manually
+                            Click "Refresh" to scan for tasks or add one manually
                         </p>
                     </div>
                 )}
 
                 {/* Tasks by Category */}
                 {activeCategory === 'all' ? (
-                    // Show grouped by category
                     CATEGORIES.map(cat => {
                         const catTasks = tasksByCategory[cat.id];
                         if (catTasks.length === 0) return null;
@@ -550,8 +755,8 @@ Generate 8-12 tasks. Return ONLY JSON array:
                                             key={task.id}
                                             task={task}
                                             onToggle={() => toggleTaskComplete(task.id, task.isManual)}
+                                            onLog={() => openLogModal(task)}
                                             getPriorityColor={getPriorityColor}
-                                            getCategoryInfo={getCategoryInfo}
                                         />
                                     ))}
                                 </div>
@@ -559,15 +764,14 @@ Generate 8-12 tasks. Return ONLY JSON array:
                         );
                     })
                 ) : (
-                    // Show filtered list
                     <div className="space-y-3">
                         {filteredTasks.map(task => (
                             <TaskCard
                                 key={task.id}
                                 task={task}
                                 onToggle={() => toggleTaskComplete(task.id, task.isManual)}
+                                onLog={() => openLogModal(task)}
                                 getPriorityColor={getPriorityColor}
-                                getCategoryInfo={getCategoryInfo}
                             />
                         ))}
                     </div>
@@ -607,9 +811,7 @@ Generate 8-12 tasks. Return ONLY JSON array:
 }
 
 // Task Card Component
-function TaskCard({ task, onToggle, getPriorityColor, getCategoryInfo }) {
-    const catInfo = getCategoryInfo(task.category);
-
+function TaskCard({ task, onToggle, onLog, getPriorityColor }) {
     return (
         <div className="bg-dark-card border border-dark-border rounded-lg p-4 hover:border-gray-700 transition-colors">
             <div className="flex items-start gap-3">
@@ -652,30 +854,19 @@ function TaskCard({ task, onToggle, getPriorityColor, getCategoryInfo }) {
                                 {task.client}
                             </span>
                         )}
-                        {task.event && (
-                            <span className="flex items-center gap-1 text-purple-400">
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                {task.event}
-                            </span>
-                        )}
-                        {task.deadline && (
-                            <span className="flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                {task.deadline}
-                            </span>
-                        )}
-                        {task.value && (
-                            <span className="flex items-center gap-1 text-green-500">
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                </svg>
-                                {task.value}
-                            </span>
-                        )}
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="mt-3 pt-3 border-t border-dark-border">
+                        <button
+                            onClick={onLog}
+                            className="text-xs text-accent-primary hover:text-accent-primary/80 flex items-center gap-1.5 transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Complete & Log to Client/Opportunity
+                        </button>
                     </div>
                 </div>
             </div>
