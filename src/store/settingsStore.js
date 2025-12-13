@@ -84,6 +84,12 @@ const defaultSettings = {
         { id: 'GULF', label: 'Gulf States', currency: 'USD' },
         { id: 'CENTRAL_ASIA', label: 'Central Asia', currency: 'USD' },
     ],
+    // Opportunities page preferences (synced across devices)
+    opsPreferences: {
+        expandedCountries: {}, // { countryName: boolean }
+        hiddenCountries: {},   // { countryName: boolean }
+        dashboardCurrency: 'USD',
+    },
 };
 
 // Load from localStorage (fallback) with decryption
@@ -123,6 +129,7 @@ function mergeSettings(parsed) {
         quoteDefaults: { ...defaultSettings.quoteDefaults, ...parsed.quoteDefaults },
         pdfOptions: { ...defaultSettings.pdfOptions, ...parsed.pdfOptions },
         aiSettings: { ...defaultSettings.aiSettings, ...parsed.aiSettings },
+        opsPreferences: { ...defaultSettings.opsPreferences, ...parsed.opsPreferences },
         users: parsed.users || defaultSettings.users,
         projectTypes: parsed.projectTypes || defaultSettings.projectTypes,
         regions: parsed.regions || defaultSettings.regions,
@@ -174,6 +181,7 @@ async function saveSettingsToDb(settings) {
                     terms_and_conditions: settings.quoteDefaults?.termsAndConditions || '',
                     users: settings.users,
                     ai_settings: aiSettingsToSave,
+                    ops_preferences: settings.opsPreferences,
                 })
                 .eq('id', settingsDbId);
 
@@ -233,6 +241,7 @@ export const useSettingsStore = create(
                         },
                         users: data.users || defaultSettings.users,
                         aiSettings,
+                        opsPreferences: data.ops_preferences || defaultSettings.opsPreferences,
                     };
 
                     const merged = mergeSettings(dbSettings);
@@ -305,6 +314,18 @@ export const useSettingsStore = create(
                 pdfOptions: { ...state.settings.pdfOptions, ...pdfOptions },
             };
             await saveSettingsLocal(updated);
+            set({ settings: updated });
+        },
+
+        // Update ops preferences (synced to Supabase for multi-device)
+        setOpsPreferences: async (opsPreferences) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                opsPreferences: { ...state.settings.opsPreferences, ...opsPreferences },
+            };
+            await saveSettingsLocal(updated);
+            saveSettingsToDb(updated);
             set({ settings: updated });
         },
 

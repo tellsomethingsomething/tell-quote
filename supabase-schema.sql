@@ -71,6 +71,7 @@ create table settings (
   terms_and_conditions text,
   users jsonb default '[]',
   ai_settings jsonb default '{}',
+  ops_preferences jsonb default '{}',
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -136,3 +137,9 @@ values (
   '[]',
   '{}'
 );
+
+-- ============================================================
+-- MIGRATION: Add ops_preferences column to settings table
+-- Run this if you already have the settings table:
+-- ============================================================
+-- ALTER TABLE settings ADD COLUMN IF NOT EXISTS ops_preferences jsonb DEFAULT '{}';

@@ -344,20 +344,37 @@ function OpportunityCard({ opportunity, onSelect, onDelete, onUpdateNotes, isExp
 export default function OpportunitiesPage({ onSelectOpportunity }) {
     const { opportunities, addOpportunity, deleteOpportunity, updateOpportunity } = useOpportunityStore();
     const { clients } = useClientStore();
-    const { settings } = useSettingsStore();
+    const { settings, setOpsPreferences } = useSettingsStore();
     const { rates } = useQuoteStore();
     const users = settings.users || [];
+
+    // Get ops preferences from settings (synced via Supabase)
+    const opsPrefs = settings.opsPreferences || {};
+
+    // Initialize expandedCountries with defaults if empty
+    const expandedCountries = useMemo(() => {
+        const saved = opsPrefs.expandedCountries || {};
+        // If no saved preferences, default all countries to expanded
+        if (Object.keys(saved).length === 0) {
+            const expanded = {};
+            ALL_COUNTRIES.forEach(country => { expanded[country] = true; });
+            return expanded;
+        }
+        return saved;
+    }, [opsPrefs.expandedCountries]);
+
+    const hiddenCountries = opsPrefs.hiddenCountries || {};
+    const dashboardCurrency = opsPrefs.dashboardCurrency || 'USD';
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRegion, setFilterRegion] = useState('all');
     const [filterStatus, setFilterStatus] = useState('active');
-    const [expandedCountries, setExpandedCountries] = useState({});
+
     const [expandedOpportunities, setExpandedOpportunities] = useState({});
     const [quickAddCountry, setQuickAddCountry] = useState(null);
     const [quickAddTitle, setQuickAddTitle] = useState('');
     const [quickAddValue, setQuickAddValue] = useState('');
     const [quickAddCurrency, setQuickAddCurrency] = useState('USD');
-    const [dashboardCurrency, setDashboardCurrency] = useState('USD');
     const [activeId, setActiveId] = useState(null);
     const [overCountry, setOverCountry] = useState(null);
     const [showNewModal, setShowNewModal] = useState(false);
@@ -369,7 +386,6 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
         probability: 50,
         accountOwnerId: '',
     });
-    const [hiddenCountries, setHiddenCountries] = useState({});
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -379,14 +395,20 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
         })
     );
 
-    // Initialize all countries as expanded
-    useEffect(() => {
-        const expanded = {};
-        ALL_COUNTRIES.forEach(country => {
-            expanded[country] = true;
-        });
-        setExpandedCountries(expanded);
-    }, []);
+    // Helper functions to update ops preferences (synced to Supabase)
+    const setExpandedCountries = (updater) => {
+        const newExpanded = typeof updater === 'function' ? updater(expandedCountries) : updater;
+        setOpsPreferences({ expandedCountries: newExpanded });
+    };
+
+    const setHiddenCountries = (updater) => {
+        const newHidden = typeof updater === 'function' ? updater(hiddenCountries) : updater;
+        setOpsPreferences({ hiddenCountries: newHidden });
+    };
+
+    const setDashboardCurrency = (currency) => {
+        setOpsPreferences({ dashboardCurrency: currency });
+    };
 
     // Filter opportunities
     const filteredOpportunities = useMemo(() => {
@@ -716,7 +738,7 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Ops</h1>
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Opportunities</h1>
                         <p className="text-xs sm:text-sm text-gray-500">Track deals across GCC, Central Asia & SEA</p>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">

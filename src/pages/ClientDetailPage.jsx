@@ -137,11 +137,9 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
     const saveContact = (e) => {
         e.preventDefault();
 
-        // Validate form
+        // Validate form - only name is required, email/phone are optional without format validation
         const { isValid, errors } = validateForm(contactForm, {
-            name: { required: true, label: 'Name', minLength: 2 },
-            email: { email: true, label: 'Email' },
-            phone: { phone: true, label: 'Phone' }
+            name: { required: true, label: 'Name', minLength: 2 }
         });
 
         if (!isValid) {
