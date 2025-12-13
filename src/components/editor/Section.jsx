@@ -231,10 +231,10 @@ const Section = memo(function Section({ sectionId, index, totalSections }) {
                     {allSubsections.map((subsectionName, idx) => (
                         <div
                             key={subsectionName}
-                            draggable
-                            onDragStart={(e) => handleSubsectionDragStart(e, subsectionName)}
-                            onDragOver={(e) => handleSubsectionDragOver(e, subsectionName)}
-                            onDrop={(e) => handleSubsectionDrop(e, subsectionName)}
+                            draggable={!quote.isLocked}
+                            onDragStart={(e) => !quote.isLocked && handleSubsectionDragStart(e, subsectionName)}
+                            onDragOver={(e) => !quote.isLocked && handleSubsectionDragOver(e, subsectionName)}
+                            onDrop={(e) => !quote.isLocked && handleSubsectionDrop(e, subsectionName)}
                             onDragEnd={handleSubsectionDragEnd}
                             className={`transition-all duration-150 ${
                                 draggedSubsection === subsectionName ? 'opacity-50 scale-[0.98]' : ''
@@ -251,58 +251,60 @@ const Section = memo(function Section({ sectionId, index, totalSections }) {
                         </div>
                     ))}
 
-                    {/* Add Subsection */}
-                    {showAddSubsection ? (
-                        <div className="flex items-center gap-2 p-2 bg-dark-bg rounded-lg">
-                            <label htmlFor={`new-subsection-${sectionId}`} className="sr-only">
-                                New subsection name
-                            </label>
-                            <input
-                                id={`new-subsection-${sectionId}`}
-                                type="text"
-                                value={newSubsectionName}
-                                onChange={(e) => setNewSubsectionName(e.target.value)}
-                                placeholder="Subsection name..."
-                                className="input-sm flex-1"
-                                autoFocus
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') handleAddSubsection();
-                                    if (e.key === 'Escape') {
+                    {/* Add Subsection - Hidden when locked */}
+                    {!quote.isLocked && (
+                        showAddSubsection ? (
+                            <div className="flex items-center gap-2 p-2 bg-dark-bg rounded-lg">
+                                <label htmlFor={`new-subsection-${sectionId}`} className="sr-only">
+                                    New subsection name
+                                </label>
+                                <input
+                                    id={`new-subsection-${sectionId}`}
+                                    type="text"
+                                    value={newSubsectionName}
+                                    onChange={(e) => setNewSubsectionName(e.target.value)}
+                                    placeholder="Subsection name..."
+                                    className="input-sm flex-1"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleAddSubsection();
+                                        if (e.key === 'Escape') {
+                                            setShowAddSubsection(false);
+                                            setNewSubsectionName('');
+                                        }
+                                    }}
+                                    aria-label="New subsection name"
+                                />
+                                <button
+                                    onClick={handleAddSubsection}
+                                    className="btn-primary text-xs py-1 px-2"
+                                    aria-label="Add subsection"
+                                >
+                                    Add
+                                </button>
+                                <button
+                                    onClick={() => {
                                         setShowAddSubsection(false);
                                         setNewSubsectionName('');
-                                    }
-                                }}
-                                aria-label="New subsection name"
-                            />
+                                    }}
+                                    className="btn-ghost text-xs py-1 px-2"
+                                    aria-label="Cancel adding subsection"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        ) : (
                             <button
-                                onClick={handleAddSubsection}
-                                className="btn-primary text-xs py-1 px-2"
-                                aria-label="Add subsection"
+                                onClick={() => setShowAddSubsection(true)}
+                                className="w-full py-2 text-sm text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                aria-label="Add new subsection"
                             >
-                                Add
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Add Subsection
                             </button>
-                            <button
-                                onClick={() => {
-                                    setShowAddSubsection(false);
-                                    setNewSubsectionName('');
-                                }}
-                                className="btn-ghost text-xs py-1 px-2"
-                                aria-label="Cancel adding subsection"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={() => setShowAddSubsection(true)}
-                            className="w-full py-2 text-sm text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center gap-1"
-                            aria-label="Add new subsection"
-                        >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            Add Subsection
-                        </button>
+                        )
                     )}
                 </div>
             )}

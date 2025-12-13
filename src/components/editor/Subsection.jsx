@@ -102,14 +102,17 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
         <div
             className="bg-dark-bg/50 rounded-md p-2 transition-colors hover:bg-dark-bg/70"
             onDragOver={(e) => {
+                if (quote.isLocked) return;
                 e.preventDefault();
                 e.currentTarget.classList.add('bg-accent-primary/10');
             }}
             onDragLeave={(e) => {
+                if (quote.isLocked) return;
                 e.preventDefault();
                 e.currentTarget.classList.remove('bg-accent-primary/10');
             }}
             onDrop={(e) => {
+                if (quote.isLocked) return;
                 e.preventDefault();
                 e.currentTarget.classList.remove('bg-accent-primary/10');
                 const data = JSON.parse(e.dataTransfer.getData('application/json'));
@@ -210,53 +213,55 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
                 </div>
             )}
 
-            {/* Add Item UI */}
-            {isAdding ? (
-                <div className="bg-dark-card rounded-lg p-2 space-y-2">
-                    {/* Quick Add from Database */}
-                    {dbItems.length > 0 && (
-                        <div>
-                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Quick Add</p>
-                            <div className="flex flex-wrap gap-2">
-                                {dbItems.slice(0, 8).map(dbItem => (
-                                    <button
-                                        key={dbItem.name}
-                                        onClick={() => handleAddItem(dbItem)}
-                                        className="text-xs px-2.5 py-1.5 bg-dark-bg hover:bg-white/10 rounded-md transition-colors text-gray-400 hover:text-gray-200 border border-dark-border hover:border-gray-600"
-                                    >
-                                        + {dbItem.name}
-                                    </button>
-                                ))}
+            {/* Add Item UI - Hidden when locked */}
+            {!quote.isLocked && (
+                isAdding ? (
+                    <div className="bg-dark-card rounded-lg p-2 space-y-2">
+                        {/* Quick Add from Database */}
+                        {dbItems.length > 0 && (
+                            <div>
+                                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Quick Add</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {dbItems.slice(0, 8).map(dbItem => (
+                                        <button
+                                            key={dbItem.name}
+                                            onClick={() => handleAddItem(dbItem)}
+                                            className="text-xs px-2.5 py-1.5 bg-dark-bg hover:bg-white/10 rounded-md transition-colors text-gray-400 hover:text-gray-200 border border-dark-border hover:border-gray-600"
+                                        >
+                                            + {dbItem.name}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => handleAddItem()}
-                            className="text-xs px-3 py-1.5 bg-accent-primary/20 hover:bg-accent-primary/30 text-accent-primary rounded transition-colors"
-                        >
-                            + Custom Item
-                        </button>
-                        <button
-                            onClick={() => setIsAdding(false)}
-                            className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-300"
-                        >
-                            Cancel
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => handleAddItem()}
+                                className="text-xs px-3 py-1.5 bg-accent-primary/20 hover:bg-accent-primary/30 text-accent-primary rounded transition-colors"
+                            >
+                                + Custom Item
+                            </button>
+                            <button
+                                onClick={() => setIsAdding(false)}
+                                className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-300"
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </div>
-                </div>
-            ) : (
-                <button
-                    onClick={() => setIsAdding(true)}
-                    className="w-full py-1.5 text-xs text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded transition-colors flex items-center justify-center gap-1"
-                    style={{ borderColor: color }}
-                >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Item
-                </button>
+                ) : (
+                    <button
+                        onClick={() => setIsAdding(true)}
+                        className="w-full py-1.5 text-xs text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded transition-colors flex items-center justify-center gap-1"
+                        style={{ borderColor: color }}
+                    >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Item
+                    </button>
+                )
             )}
         </div>
     );
