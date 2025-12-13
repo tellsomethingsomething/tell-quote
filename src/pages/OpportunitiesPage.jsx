@@ -379,12 +379,38 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
     const [overCountry, setOverCountry] = useState(null);
     const [showNewModal, setShowNewModal] = useState(false);
     const [newOppForm, setNewOppForm] = useState({
+        // Client & Contact
+        clientId: '',
+        newClientName: '',
+        clientWebsite: '',
+        clientLocation: '',
+        clientAddress: '',
+        contactName: '',
+        contactRole: '',
+        contactEmail: '',
+        contactPhone: '',
+        // Opportunity Details
         title: '',
         country: '',
+        brief: '',
+        projectType: 'broadcast',
+        venue: '',
+        // Dates
+        startDate: '',
+        endDate: '',
+        expectedCloseDate: '',
+        // Financials
         value: '',
         currency: 'USD',
         probability: 50,
+        // Sales Info
         accountOwnerId: '',
+        source: '',
+        competitors: '',
+        // Actions
+        nextAction: '',
+        nextActionDate: '',
+        notes: '',
     });
 
     const sensors = useSensors(
@@ -511,25 +537,101 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
     const handleNewOpportunity = async (e) => {
         e.preventDefault();
         if (!newOppForm.title.trim() || !newOppForm.country) return;
+        if (!newOppForm.clientId && !newOppForm.newClientName.trim()) return;
+
+        // Get or create client
+        let clientId = newOppForm.clientId;
+        let clientData = {};
+
+        if (newOppForm.clientId) {
+            const existingClient = clients.find(c => c.id === newOppForm.clientId);
+            clientData = {
+                company: existingClient?.company || '',
+                contact: newOppForm.contactName || existingClient?.contact || '',
+                email: newOppForm.contactEmail || existingClient?.email || '',
+                phone: newOppForm.contactPhone || existingClient?.phone || '',
+            };
+        } else if (newOppForm.newClientName.trim()) {
+            // Create new client
+            const newClient = await useClientStore.getState().addClient({
+                company: newOppForm.newClientName.trim(),
+                contact: newOppForm.contactName,
+                email: newOppForm.contactEmail,
+                phone: newOppForm.contactPhone,
+                website: newOppForm.clientWebsite,
+                location: newOppForm.clientLocation,
+                address: newOppForm.clientAddress,
+            });
+            clientId = newClient.id;
+            clientData = {
+                company: newOppForm.newClientName.trim(),
+                contact: newOppForm.contactName,
+                email: newOppForm.contactEmail,
+                phone: newOppForm.contactPhone,
+            };
+        }
+
+        // Build contacts array
+        const contacts = [];
+        if (newOppForm.contactName) {
+            contacts.push({
+                id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+                name: newOppForm.contactName,
+                role: newOppForm.contactRole,
+                email: newOppForm.contactEmail,
+                phone: newOppForm.contactPhone,
+                isPrimary: true,
+            });
+        }
 
         await addOpportunity({
             title: newOppForm.title.trim(),
             country: newOppForm.country,
             region: getRegionForCountry(newOppForm.country),
+            clientId,
+            client: clientData,
+            brief: newOppForm.brief,
+            contacts,
             value: parseFloat(newOppForm.value) || 0,
             currency: newOppForm.currency,
             probability: newOppForm.probability,
             accountOwnerId: newOppForm.accountOwnerId || null,
+            source: newOppForm.source,
+            competitors: newOppForm.competitors ? newOppForm.competitors.split(',').map(c => c.trim()).filter(Boolean) : [],
+            expectedCloseDate: newOppForm.expectedCloseDate || null,
+            nextAction: newOppForm.nextAction,
+            nextActionDate: newOppForm.nextActionDate || null,
+            notes: newOppForm.notes,
         });
 
         setShowNewModal(false);
         setNewOppForm({
+            clientId: '',
+            newClientName: '',
+            clientWebsite: '',
+            clientLocation: '',
+            clientAddress: '',
+            contactName: '',
+            contactRole: '',
+            contactEmail: '',
+            contactPhone: '',
             title: '',
             country: '',
+            brief: '',
+            projectType: 'broadcast',
+            venue: '',
+            startDate: '',
+            endDate: '',
+            expectedCloseDate: '',
             value: '',
             currency: 'USD',
             probability: 50,
             accountOwnerId: '',
+            source: '',
+            competitors: '',
+            nextAction: '',
+            nextActionDate: '',
+            notes: '',
         });
     };
 
@@ -895,7 +997,7 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
             {/* New Opportunity Modal */}
             {showNewModal && (
                 <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl">
+                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-xl font-bold text-gray-100">New Opportunity</h2>
                             <button
@@ -908,94 +1010,363 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                             </button>
                         </div>
 
-                        <form onSubmit={handleNewOpportunity} className="space-y-4">
-                            <div>
-                                <label className="label label-required">Title</label>
-                                <input
-                                    type="text"
-                                    value={newOppForm.title}
-                                    onChange={e => setNewOppForm({ ...newOppForm, title: e.target.value })}
-                                    className="input"
-                                    placeholder="Opportunity title..."
-                                    required
-                                    autoFocus
-                                />
-                            </div>
-
-                            <div>
-                                <label className="label label-required">Country</label>
-                                <select
-                                    value={newOppForm.country}
-                                    onChange={e => setNewOppForm({ ...newOppForm, country: e.target.value })}
-                                    className="input"
-                                    required
-                                >
-                                    <option value="">Select country...</option>
-                                    {Object.entries(REGIONS).map(([region, countries]) => (
-                                        <optgroup key={region} label={region}>
-                                            {countries.map(c => (
-                                                <option key={c} value={c}>{c}</option>
-                                            ))}
-                                        </optgroup>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
+                        <form onSubmit={handleNewOpportunity} className="space-y-6">
+                            {/* Section: Client & Contact */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                    Client & Contact
+                                </h3>
                                 <div>
-                                    <label className="label">Value</label>
-                                    <input
-                                        type="number"
-                                        value={newOppForm.value}
-                                        onChange={e => setNewOppForm({ ...newOppForm, value: e.target.value })}
+                                    <label className="label label-required">Client</label>
+                                    <select
+                                        value={newOppForm.clientId}
+                                        onChange={e => setNewOppForm({ ...newOppForm, clientId: e.target.value, newClientName: '' })}
                                         className="input"
-                                        placeholder="0"
+                                    >
+                                        <option value="">-- Select existing client or add new --</option>
+                                        {clients.map(client => (
+                                            <option key={client.id} value={client.id}>{client.company}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {!newOppForm.clientId && (
+                                    <div className="space-y-4 p-4 bg-dark-bg/30 rounded-lg border border-dark-border">
+                                        <div>
+                                            <label className="label label-required">New Client Company Name</label>
+                                            <input
+                                                type="text"
+                                                value={newOppForm.newClientName}
+                                                onChange={e => setNewOppForm({ ...newOppForm, newClientName: e.target.value })}
+                                                className="input"
+                                                placeholder="Company name..."
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="label">Website</label>
+                                                <input
+                                                    type="url"
+                                                    value={newOppForm.clientWebsite || ''}
+                                                    onChange={e => setNewOppForm({ ...newOppForm, clientWebsite: e.target.value })}
+                                                    className="input"
+                                                    placeholder="https://..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="label">Location / City</label>
+                                                <input
+                                                    type="text"
+                                                    value={newOppForm.clientLocation || ''}
+                                                    onChange={e => setNewOppForm({ ...newOppForm, clientLocation: e.target.value })}
+                                                    className="input"
+                                                    placeholder="e.g. Kuala Lumpur"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="label">Address</label>
+                                            <textarea
+                                                value={newOppForm.clientAddress || ''}
+                                                onChange={e => setNewOppForm({ ...newOppForm, clientAddress: e.target.value })}
+                                                className="input resize-none"
+                                                rows={2}
+                                                placeholder="Full address..."
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label">Contact Name</label>
+                                        <input
+                                            type="text"
+                                            value={newOppForm.contactName}
+                                            onChange={e => setNewOppForm({ ...newOppForm, contactName: e.target.value })}
+                                            className="input"
+                                            placeholder="Primary contact..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Role</label>
+                                        <input
+                                            type="text"
+                                            value={newOppForm.contactRole}
+                                            onChange={e => setNewOppForm({ ...newOppForm, contactRole: e.target.value })}
+                                            className="input"
+                                            placeholder="e.g. Producer, Director..."
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label">Email</label>
+                                        <input
+                                            type="email"
+                                            value={newOppForm.contactEmail}
+                                            onChange={e => setNewOppForm({ ...newOppForm, contactEmail: e.target.value })}
+                                            className="input"
+                                            placeholder="contact@company.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Phone</label>
+                                        <input
+                                            type="tel"
+                                            value={newOppForm.contactPhone}
+                                            onChange={e => setNewOppForm({ ...newOppForm, contactPhone: e.target.value })}
+                                            className="input"
+                                            placeholder="+60 12 345 6789"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section: Opportunity Details */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                    Opportunity Details
+                                </h3>
+                                <div>
+                                    <label className="label label-required">Title</label>
+                                    <input
+                                        type="text"
+                                        value={newOppForm.title}
+                                        onChange={e => setNewOppForm({ ...newOppForm, title: e.target.value })}
+                                        className="input"
+                                        placeholder="e.g. French Super Cup 2025"
+                                        required
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label label-required">Country</label>
+                                        <select
+                                            value={newOppForm.country}
+                                            onChange={e => setNewOppForm({ ...newOppForm, country: e.target.value })}
+                                            className="input"
+                                            required
+                                        >
+                                            <option value="">Select country...</option>
+                                            {Object.entries(REGIONS).map(([region, countries]) => (
+                                                <optgroup key={region} label={region}>
+                                                    {countries.map(c => (
+                                                        <option key={c} value={c}>{c}</option>
+                                                    ))}
+                                                </optgroup>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="label">Project Type</label>
+                                        <select
+                                            value={newOppForm.projectType}
+                                            onChange={e => setNewOppForm({ ...newOppForm, projectType: e.target.value })}
+                                            className="input"
+                                        >
+                                            <option value="broadcast">Broadcast</option>
+                                            <option value="live-event">Live Event</option>
+                                            <option value="corporate">Corporate</option>
+                                            <option value="concert">Concert</option>
+                                            <option value="sports">Sports</option>
+                                            <option value="conference">Conference</option>
+                                            <option value="exhibition">Exhibition</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="label">Venue / Location</label>
+                                    <input
+                                        type="text"
+                                        value={newOppForm.venue}
+                                        onChange={e => setNewOppForm({ ...newOppForm, venue: e.target.value })}
+                                        className="input"
+                                        placeholder="e.g. Axiata Arena, Bukit Jalil"
                                     />
                                 </div>
                                 <div>
-                                    <label className="label">Currency</label>
-                                    <select
-                                        value={newOppForm.currency}
-                                        onChange={e => setNewOppForm({ ...newOppForm, currency: e.target.value })}
-                                        className="input"
-                                    >
-                                        <option value="USD">USD</option>
-                                        <option value="GBP">GBP</option>
-                                        <option value="EUR">EUR</option>
-                                        <option value="MYR">MYR</option>
-                                        <option value="SGD">SGD</option>
-                                        <option value="AED">AED</option>
-                                        <option value="SAR">SAR</option>
-                                        <option value="QAR">QAR</option>
-                                        <option value="KWD">KWD</option>
-                                    </select>
+                                    <label className="label">Brief / Description</label>
+                                    <textarea
+                                        value={newOppForm.brief}
+                                        onChange={e => setNewOppForm({ ...newOppForm, brief: e.target.value })}
+                                        className="input resize-none"
+                                        rows={3}
+                                        placeholder="Describe the project requirements..."
+                                    />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="label">Probability (%)</label>
-                                <input
-                                    type="number"
-                                    value={newOppForm.probability}
-                                    onChange={e => setNewOppForm({ ...newOppForm, probability: parseInt(e.target.value) || 0 })}
-                                    className="input"
-                                    min="0"
-                                    max="100"
-                                />
+                            {/* Section: Dates */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                    Dates
+                                </h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="label">Project Start</label>
+                                        <input
+                                            type="date"
+                                            value={newOppForm.startDate}
+                                            onChange={e => setNewOppForm({ ...newOppForm, startDate: e.target.value })}
+                                            className="input"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Project End</label>
+                                        <input
+                                            type="date"
+                                            value={newOppForm.endDate}
+                                            onChange={e => setNewOppForm({ ...newOppForm, endDate: e.target.value })}
+                                            className="input"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Expected Close</label>
+                                        <input
+                                            type="date"
+                                            value={newOppForm.expectedCloseDate}
+                                            onChange={e => setNewOppForm({ ...newOppForm, expectedCloseDate: e.target.value })}
+                                            className="input"
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="label">Account Owner</label>
-                                <select
-                                    value={newOppForm.accountOwnerId}
-                                    onChange={e => setNewOppForm({ ...newOppForm, accountOwnerId: e.target.value })}
-                                    className="input"
-                                >
-                                    <option value="">-- Unassigned --</option>
-                                    {users.map(user => (
-                                        <option key={user.id} value={user.id}>{user.name}</option>
-                                    ))}
-                                </select>
+                            {/* Section: Financials */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                    Financials
+                                </h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="label">Estimated Value</label>
+                                        <input
+                                            type="number"
+                                            value={newOppForm.value}
+                                            onChange={e => setNewOppForm({ ...newOppForm, value: e.target.value })}
+                                            className="input"
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Currency</label>
+                                        <select
+                                            value={newOppForm.currency}
+                                            onChange={e => setNewOppForm({ ...newOppForm, currency: e.target.value })}
+                                            className="input"
+                                        >
+                                            <option value="USD">USD</option>
+                                            <option value="GBP">GBP</option>
+                                            <option value="EUR">EUR</option>
+                                            <option value="MYR">MYR</option>
+                                            <option value="SGD">SGD</option>
+                                            <option value="AED">AED</option>
+                                            <option value="SAR">SAR</option>
+                                            <option value="QAR">QAR</option>
+                                            <option value="KWD">KWD</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="label">Probability (%)</label>
+                                        <input
+                                            type="number"
+                                            value={newOppForm.probability}
+                                            onChange={e => setNewOppForm({ ...newOppForm, probability: parseInt(e.target.value) || 0 })}
+                                            className="input"
+                                            min="0"
+                                            max="100"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section: Sales Info */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                    Sales Info
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label">Account Owner</label>
+                                        <select
+                                            value={newOppForm.accountOwnerId}
+                                            onChange={e => setNewOppForm({ ...newOppForm, accountOwnerId: e.target.value })}
+                                            className="input"
+                                        >
+                                            <option value="">-- Unassigned --</option>
+                                            {users.map(user => (
+                                                <option key={user.id} value={user.id}>{user.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="label">Source</label>
+                                        <select
+                                            value={newOppForm.source}
+                                            onChange={e => setNewOppForm({ ...newOppForm, source: e.target.value })}
+                                            className="input"
+                                        >
+                                            <option value="">-- Select source --</option>
+                                            <option value="referral">Referral</option>
+                                            <option value="repeat-client">Repeat Client</option>
+                                            <option value="website">Website</option>
+                                            <option value="cold-call">Cold Call</option>
+                                            <option value="event">Event / Trade Show</option>
+                                            <option value="social-media">Social Media</option>
+                                            <option value="partner">Partner</option>
+                                            <option value="tender">Tender / RFP</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="label">Competitors</label>
+                                    <input
+                                        type="text"
+                                        value={newOppForm.competitors}
+                                        onChange={e => setNewOppForm({ ...newOppForm, competitors: e.target.value })}
+                                        className="input"
+                                        placeholder="Comma-separated, e.g. Company A, Company B"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Section: Actions & Notes */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                    Actions & Notes
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label">Next Action</label>
+                                        <input
+                                            type="text"
+                                            value={newOppForm.nextAction}
+                                            onChange={e => setNewOppForm({ ...newOppForm, nextAction: e.target.value })}
+                                            className="input"
+                                            placeholder="e.g. Send proposal, Follow up call"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Action Date</label>
+                                        <input
+                                            type="date"
+                                            value={newOppForm.nextActionDate}
+                                            onChange={e => setNewOppForm({ ...newOppForm, nextActionDate: e.target.value })}
+                                            className="input"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="label">Notes</label>
+                                    <textarea
+                                        value={newOppForm.notes}
+                                        onChange={e => setNewOppForm({ ...newOppForm, notes: e.target.value })}
+                                        className="input resize-none"
+                                        rows={3}
+                                        placeholder="Any additional notes..."
+                                    />
+                                </div>
                             </div>
 
                             <div className="flex justify-end gap-3 pt-4 border-t border-dark-border">
@@ -1006,7 +1377,11 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                                 >
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn-primary">
+                                <button
+                                    type="submit"
+                                    className="btn-primary"
+                                    disabled={!newOppForm.title.trim() || !newOppForm.country || (!newOppForm.clientId && !newOppForm.newClientName.trim())}
+                                >
                                     Create Opportunity
                                 </button>
                             </div>

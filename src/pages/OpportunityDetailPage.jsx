@@ -52,6 +52,10 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
         setEditForm({
             title: opportunity.title || '',
             clientId: opportunity.clientId || '',
+            newClientName: '',
+            clientWebsite: '',
+            clientLocation: '',
+            clientAddress: '',
             country: opportunity.country || '',
             value: opportunity.value || 0,
             currency: opportunity.currency || 'USD',
@@ -67,14 +71,37 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
         setIsEditing(true);
     };
 
-    const saveEdit = (e) => {
+    const saveEdit = async (e) => {
         e.preventDefault();
-        const client = clients.find(c => c.id === editForm.clientId);
+
+        let clientId = editForm.clientId;
+        let clientData = {};
+
+        if (editForm.clientId) {
+            const existingClient = clients.find(c => c.id === editForm.clientId);
+            clientData = {
+                company: existingClient?.company || '',
+                id: existingClient?.id,
+            };
+        } else if (editForm.newClientName?.trim()) {
+            // Create new client
+            const newClient = await useClientStore.getState().addClient({
+                company: editForm.newClientName.trim(),
+                website: editForm.clientWebsite,
+                location: editForm.clientLocation,
+                address: editForm.clientAddress,
+            });
+            clientId = newClient.id;
+            clientData = {
+                company: editForm.newClientName.trim(),
+                id: newClient.id,
+            };
+        }
 
         updateOpportunity(opportunity.id, {
             title: editForm.title,
-            clientId: editForm.clientId || null,
-            client: client ? { company: client.company, id: client.id } : {},
+            clientId: clientId || null,
+            client: clientData,
             country: editForm.country,
             region: getRegionForCountry(editForm.country),
             value: parseFloat(editForm.value) || 0,
@@ -104,18 +131,23 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
 
     const handleConvertToQuote = () => {
         // Pre-fill quote with opportunity data
-        const client = opportunity.client || {};
+        // Get full client details from clientStore if we have a clientId
+        const fullClient = opportunity.clientId
+            ? clients.find(c => c.id === opportunity.clientId)
+            : null;
+        const client = fullClient || opportunity.client || {};
         const primaryContact = opportunity.contacts?.find(c => c.isPrimary) || opportunity.contacts?.[0];
 
         // Navigate to quote editor with pre-filled data
         if (onConvertToQuote) {
             onConvertToQuote({
                 client: {
-                    ...client,
+                    company: client.company || '',
                     // Add primary contact info to client
                     contact: primaryContact?.name || client.contact || '',
                     email: primaryContact?.email || client.email || '',
                     phone: primaryContact?.phone || client.phone || '',
+                    address: client.address || '',
                 },
                 project: {
                     title: opportunity.title,
@@ -455,18 +487,88 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
 
                         <h2 className="text-xl font-bold text-gray-100 mb-6">Edit Opportunity</h2>
 
-                        <form onSubmit={saveEdit} className="space-y-4">
-                            <div>
-                                <label className="label">Title</label>
-                                <input
-                                    type="text"
-                                    value={editForm.title}
-                                    onChange={e => setEditForm({ ...editForm, title: e.target.value })}
-                                    className="input w-full"
-                                />
+                        <form onSubmit={saveEdit} className="space-y-6">
+                            {/* Client Section */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                    Client
+                                </h3>
+                                <div>
+                                    <label className="label">Select Client</label>
+                                    <select
+                                        value={editForm.clientId}
+                                        onChange={e => setEditForm({ ...editForm, clientId: e.target.value, newClientName: '' })}
+                                        className="input w-full"
+                                    >
+                                        <option value="">-- Select existing client or add new --</option>
+                                        {clients.map(c => (
+                                            <option key={c.id} value={c.id}>{c.company}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {!editForm.clientId && (
+                                    <div className="space-y-4 p-4 bg-dark-bg/30 rounded-lg border border-dark-border">
+                                        <div>
+                                            <label className="label">Or Create New Client</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.newClientName || ''}
+                                                onChange={e => setEditForm({ ...editForm, newClientName: e.target.value })}
+                                                className="input w-full"
+                                                placeholder="Company name..."
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="label">Website</label>
+                                                <input
+                                                    type="url"
+                                                    value={editForm.clientWebsite || ''}
+                                                    onChange={e => setEditForm({ ...editForm, clientWebsite: e.target.value })}
+                                                    className="input w-full"
+                                                    placeholder="https://..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="label">Location / City</label>
+                                                <input
+                                                    type="text"
+                                                    value={editForm.clientLocation || ''}
+                                                    onChange={e => setEditForm({ ...editForm, clientLocation: e.target.value })}
+                                                    className="input w-full"
+                                                    placeholder="e.g. Kuala Lumpur"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="label">Address</label>
+                                            <textarea
+                                                value={editForm.clientAddress || ''}
+                                                onChange={e => setEditForm({ ...editForm, clientAddress: e.target.value })}
+                                                className="input w-full resize-none"
+                                                rows={2}
+                                                placeholder="Full address..."
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            {/* Opportunity Details */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                    Opportunity Details
+                                </h3>
+                                <div>
+                                    <label className="label">Title</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.title}
+                                        onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+                                        className="input w-full"
+                                    />
+                                </div>
+
                                 <div>
                                     <label className="label">Country</label>
                                     <select
@@ -475,84 +577,132 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
                                         className="input w-full"
                                     >
                                         <option value="">Select country...</option>
-                                        <optgroup label="GCC">
-                                            {REGIONS.GCC.map(c => (
-                                                <option key={c} value={c}>{c}</option>
-                                            ))}
-                                        </optgroup>
-                                        <optgroup label="Central Asia">
-                                            {REGIONS['Central Asia'].map(c => (
-                                                <option key={c} value={c}>{c}</option>
-                                            ))}
-                                        </optgroup>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="label">Client</label>
-                                    <select
-                                        value={editForm.clientId}
-                                        onChange={e => setEditForm({ ...editForm, clientId: e.target.value })}
-                                        className="input w-full"
-                                    >
-                                        <option value="">No client linked</option>
-                                        {clients.map(c => (
-                                            <option key={c.id} value={c.id}>{c.company}</option>
+                                        {Object.entries(REGIONS).map(([region, countries]) => (
+                                            <optgroup key={region} label={region}>
+                                                {countries.map(c => (
+                                                    <option key={c} value={c}>{c}</option>
+                                                ))}
+                                            </optgroup>
                                         ))}
                                     </select>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label className="label">Value</label>
-                                    <input
-                                        type="number"
-                                        value={editForm.value}
-                                        onChange={e => setEditForm({ ...editForm, value: e.target.value })}
-                                        className="input w-full"
-                                    />
+                            {/* Contacts Section - show client contacts if client selected */}
+                            {editForm.clientId && (
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                        Link Contacts from Client
+                                    </h3>
+                                    {(() => {
+                                        const selectedClient = clients.find(c => c.id === editForm.clientId);
+                                        const clientContacts = selectedClient?.contacts || [];
+                                        if (clientContacts.length === 0) {
+                                            return (
+                                                <p className="text-sm text-gray-500 italic">
+                                                    No contacts on this client. Add contacts after saving.
+                                                </p>
+                                            );
+                                        }
+                                        return (
+                                            <div className="space-y-2">
+                                                <p className="text-xs text-gray-500">
+                                                    These are the contacts from the selected client. You can add them to this opportunity from the Contacts section after saving.
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {clientContacts.map(contact => (
+                                                        <span key={contact.id} className="text-xs bg-dark-bg/50 px-2 py-1 rounded text-gray-300">
+                                                            {contact.name} {contact.role ? `(${contact.role})` : ''}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
-                                <div>
-                                    <label className="label">Currency</label>
-                                    <select
-                                        value={editForm.currency}
-                                        onChange={e => setEditForm({ ...editForm, currency: e.target.value })}
-                                        className="input w-full"
-                                    >
-                                        <option value="USD">USD</option>
-                                        <option value="GBP">GBP</option>
-                                        <option value="EUR">EUR</option>
-                                        <option value="MYR">MYR</option>
-                                        <option value="SGD">SGD</option>
-                                        <option value="AED">AED</option>
-                                        <option value="SAR">SAR</option>
-                                        <option value="QAR">QAR</option>
-                                        <option value="KWD">KWD</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="label">Probability (%)</label>
-                                    <input
-                                        type="number"
-                                        value={editForm.probability}
-                                        onChange={e => setEditForm({ ...editForm, probability: parseInt(e.target.value) || 0 })}
-                                        className="input w-full"
-                                        min="0"
-                                        max="100"
-                                    />
+                            )}
+
+                            {/* Financials Section */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                    Financials
+                                </h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="label">Value</label>
+                                        <input
+                                            type="number"
+                                            value={editForm.value}
+                                            onChange={e => setEditForm({ ...editForm, value: e.target.value })}
+                                            className="input w-full"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Currency</label>
+                                        <select
+                                            value={editForm.currency}
+                                            onChange={e => setEditForm({ ...editForm, currency: e.target.value })}
+                                            className="input w-full"
+                                        >
+                                            <option value="USD">USD</option>
+                                            <option value="GBP">GBP</option>
+                                            <option value="EUR">EUR</option>
+                                            <option value="MYR">MYR</option>
+                                            <option value="SGD">SGD</option>
+                                            <option value="AED">AED</option>
+                                            <option value="SAR">SAR</option>
+                                            <option value="QAR">QAR</option>
+                                            <option value="KWD">KWD</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="label">Probability (%)</label>
+                                        <input
+                                            type="number"
+                                            value={editForm.probability}
+                                            onChange={e => setEditForm({ ...editForm, probability: parseInt(e.target.value) || 0 })}
+                                            className="input w-full"
+                                            min="0"
+                                            max="100"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">Source</label>
-                                    <input
-                                        type="text"
-                                        value={editForm.source}
-                                        onChange={e => setEditForm({ ...editForm, source: e.target.value })}
-                                        className="input w-full"
-                                        placeholder="e.g. Referral, Website"
-                                    />
+                            {/* Sales Info Section */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                    Sales Info
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label">Source</label>
+                                        <select
+                                            value={editForm.source}
+                                            onChange={e => setEditForm({ ...editForm, source: e.target.value })}
+                                            className="input w-full"
+                                        >
+                                            <option value="">-- Select source --</option>
+                                            <option value="referral">Referral</option>
+                                            <option value="repeat-client">Repeat Client</option>
+                                            <option value="website">Website</option>
+                                            <option value="cold-call">Cold Call</option>
+                                            <option value="event">Event / Trade Show</option>
+                                            <option value="social-media">Social Media</option>
+                                            <option value="partner">Partner</option>
+                                            <option value="tender">Tender / RFP</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="label">Expected Close Date</label>
+                                        <input
+                                            type="date"
+                                            value={editForm.expectedCloseDate}
+                                            onChange={e => setEditForm({ ...editForm, expectedCloseDate: e.target.value })}
+                                            className="input w-full"
+                                        />
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="label">Competitors (comma-separated)</label>
@@ -566,53 +716,54 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="label">Brief</label>
+                            {/* Brief Section */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                    Brief / Description
+                                </h3>
                                 <textarea
                                     value={editForm.brief}
                                     onChange={e => setEditForm({ ...editForm, brief: e.target.value })}
                                     className="input w-full min-h-[80px] resize-none"
+                                    placeholder="Describe the project requirements..."
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">Next Action</label>
-                                    <input
-                                        type="text"
-                                        value={editForm.nextAction}
-                                        onChange={e => setEditForm({ ...editForm, nextAction: e.target.value })}
-                                        className="input w-full"
-                                    />
+                            {/* Actions Section */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-dark-border pb-2">
+                                    Actions & Notes
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label">Next Action</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.nextAction}
+                                            onChange={e => setEditForm({ ...editForm, nextAction: e.target.value })}
+                                            className="input w-full"
+                                            placeholder="e.g. Send proposal, Follow up call"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Next Action Date</label>
+                                        <input
+                                            type="date"
+                                            value={editForm.nextActionDate}
+                                            onChange={e => setEditForm({ ...editForm, nextActionDate: e.target.value })}
+                                            className="input w-full"
+                                        />
+                                    </div>
                                 </div>
                                 <div>
-                                    <label className="label">Next Action Date</label>
-                                    <input
-                                        type="date"
-                                        value={editForm.nextActionDate}
-                                        onChange={e => setEditForm({ ...editForm, nextActionDate: e.target.value })}
-                                        className="input w-full"
+                                    <label className="label">Notes</label>
+                                    <textarea
+                                        value={editForm.notes}
+                                        onChange={e => setEditForm({ ...editForm, notes: e.target.value })}
+                                        className="input w-full min-h-[80px] resize-none"
+                                        placeholder="Any additional notes..."
                                     />
                                 </div>
-                            </div>
-
-                            <div>
-                                <label className="label">Expected Close Date</label>
-                                <input
-                                    type="date"
-                                    value={editForm.expectedCloseDate}
-                                    onChange={e => setEditForm({ ...editForm, expectedCloseDate: e.target.value })}
-                                    className="input w-full"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="label">Notes</label>
-                                <textarea
-                                    value={editForm.notes}
-                                    onChange={e => setEditForm({ ...editForm, notes: e.target.value })}
-                                    className="input w-full min-h-[80px] resize-none"
-                                />
                             </div>
 
                             <div className="flex justify-end gap-3 pt-4 border-t border-gray-800">

@@ -126,7 +126,7 @@ function App() {
 
     // Set project details
     if (opportunityData.project) {
-      useQuoteStore.getState().setProject({
+      useQuoteStore.getState().setProjectDetails({
         ...opportunityData.project,
         // Add opportunity reference
         opportunityId: opportunityData.opportunityId,
