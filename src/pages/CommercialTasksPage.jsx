@@ -47,6 +47,8 @@ export default function CommercialTasksPage() {
     const [activeCategory, setActiveCategory] = useState('all');
 
     const scanIntervalRef = useRef(null);
+    const hasInitialized = useRef(false);
+    const isGenerating = useRef(false);
 
     // Save tasks to localStorage
     useEffect(() => {
@@ -77,11 +79,21 @@ export default function CommercialTasksPage() {
             return;
         }
 
+        // Skip if already generating
+        if (isGenerating.current) return;
+        isGenerating.current = true;
+
         // Skip if recently generated (within 3 hours) unless forced
-        if (!force && lastGenerated) {
-            const timeSinceLastScan = Date.now() - new Date(lastGenerated).getTime();
-            if (timeSinceLastScan < SCAN_INTERVAL && tasks.length > 0) {
-                return;
+        if (!force) {
+            const savedTime = localStorage.getItem('tell_commercial_tasks_time');
+            const savedTasks = localStorage.getItem('tell_commercial_tasks_v2');
+            if (savedTime && savedTasks) {
+                const timeSinceLastScan = Date.now() - new Date(savedTime).getTime();
+                const hasTasks = JSON.parse(savedTasks).length > 0;
+                if (timeSinceLastScan < SCAN_INTERVAL && hasTasks) {
+                    isGenerating.current = false;
+                    return;
+                }
             }
         }
 
@@ -251,41 +263,45 @@ Be specific with names, values, dates from the data. Reference upcoming football
             setError(err.message);
         } finally {
             setLoading(false);
+            isGenerating.current = false;
         }
-    }, [clients, quotes, opportunities, tasks.length, lastGenerated]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [clients, quotes, opportunities]);
 
-    // Auto-generate on mount and set up 3-hour interval
+    // Update next scan time when lastGenerated changes
     useEffect(() => {
+        if (lastGenerated) {
+            const next = new Date(new Date(lastGenerated).getTime() + SCAN_INTERVAL);
+            setNextScan(next);
+        }
+    }, [lastGenerated]);
+
+    // Auto-generate on mount only (not on every state change)
+    useEffect(() => {
+        // Prevent multiple initializations
+        if (hasInitialized.current) return;
+
         // Wait for data to load
         if (clients.length === 0 && quotes.length === 0 && opportunities.length === 0) {
             return;
         }
 
-        // Check if we need to generate (no tasks or 3 hours passed)
-        const shouldGenerate = () => {
-            if (tasks.length === 0) return true;
-            if (!lastGenerated) return true;
-            const timeSinceLastScan = Date.now() - new Date(lastGenerated).getTime();
-            return timeSinceLastScan >= SCAN_INTERVAL;
-        };
+        hasInitialized.current = true;
 
-        // Generate on mount if needed
-        if (shouldGenerate()) {
-            generateTasks();
+        // Check if we need to generate (no tasks or 3 hours passed)
+        const savedTasks = localStorage.getItem('tell_commercial_tasks_v2');
+        const savedTime = localStorage.getItem('tell_commercial_tasks_time');
+        const hasTasks = savedTasks && JSON.parse(savedTasks).length > 0;
+        const lastScan = savedTime ? new Date(savedTime) : null;
+        const timeSinceLastScan = lastScan ? Date.now() - lastScan.getTime() : Infinity;
+
+        if (!hasTasks || timeSinceLastScan >= SCAN_INTERVAL) {
+            generateTasks(true);
         }
 
-        // Calculate and set next scan time
-        const updateNextScan = () => {
-            if (lastGenerated) {
-                const next = new Date(new Date(lastGenerated).getTime() + SCAN_INTERVAL);
-                setNextScan(next);
-            }
-        };
-        updateNextScan();
-
-        // Set up interval for automatic scanning
+        // Set up interval for automatic scanning (every 3 hours)
         scanIntervalRef.current = setInterval(() => {
-            generateTasks();
+            generateTasks(true);
         }, SCAN_INTERVAL);
 
         return () => {
@@ -293,7 +309,8 @@ Be specific with names, values, dates from the data. Reference upcoming football
                 clearInterval(scanIntervalRef.current);
             }
         };
-    }, [clients.length, quotes.length, opportunities.length, generateTasks, lastGenerated, tasks.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [clients.length, quotes.length, opportunities.length]);
 
     const toggleTaskComplete = (taskId, isManual = false) => {
         if (isManual) {
