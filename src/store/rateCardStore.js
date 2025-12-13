@@ -6,19 +6,12 @@ import { SEED_ITEMS } from '../data/rateCardSeed';
 const RATE_CARD_KEY = 'tell_rate_card';
 const RATE_CARD_SECTIONS_KEY = 'tell_rate_card_sections';
 
-// Default structure for regional pricing (legacy)
+// Default structure for regional pricing
 const createEmptyPricing = () => ({
     MALAYSIA: { cost: 0, charge: 0 },
     SEA: { cost: 0, charge: 0 },
     GULF: { cost: 0, charge: 0 },
     CENTRAL_ASIA: { cost: 0, charge: 0 },
-});
-
-// New structure for currency-based pricing
-// Each field (cost/charge) tracks its own value and base currency
-const createEmptyCurrencyPricing = () => ({
-    cost: { amount: 0, baseCurrency: 'USD' },
-    charge: { amount: 0, baseCurrency: 'USD' },
 });
 
 // Default sections - synced with Quote subsections
@@ -366,40 +359,6 @@ export const useRateCardStore = create(
                         .eq('id', itemId);
                 } catch (e) {
                     console.error('Failed to update pricing in DB:', e);
-                }
-            }
-        },
-
-        // Update currency-based pricing (per-field currency tracking)
-        updateItemCurrencyPricing: async (itemId, field, amount, currency) => {
-            let updatedItem = null;
-
-            set(state => {
-                const items = state.items.map(item => {
-                    if (item.id !== itemId) return item;
-                    updatedItem = {
-                        ...item,
-                        currencyPricing: {
-                            ...(item.currencyPricing || createEmptyCurrencyPricing()),
-                            [field]: { amount: parseFloat(amount) || 0, baseCurrency: currency },
-                        },
-                        updatedAt: new Date().toISOString(),
-                    };
-                    return updatedItem;
-                });
-                saveRateCardLocal(items);
-                return { items };
-            });
-
-            // Update in Supabase if configured
-            if (isSupabaseConfigured() && updatedItem) {
-                try {
-                    await supabase
-                        .from('rate_cards')
-                        .update({ currency_pricing: updatedItem.currencyPricing })
-                        .eq('id', itemId);
-                } catch (e) {
-                    console.error('Failed to update currency pricing in DB:', e);
                 }
             }
         },
