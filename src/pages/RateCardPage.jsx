@@ -1,16 +1,35 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRateCardStore } from '../store/rateCardStore';
+import { useQuoteStore } from '../store/quoteStore';
 import { useToast } from '../components/common/Toast';
+import { FALLBACK_RATES } from '../data/currencies';
 
+// Regions with their available currencies
 const REGIONS = [
-    { id: 'MALAYSIA', label: 'Malaysia', currency: 'MYR', symbol: 'RM' },
-    { id: 'SEA', label: 'SEA', currency: 'USD', symbol: '$' },
-    { id: 'GULF', label: 'GCC', currency: 'USD', symbol: '$' },
-    { id: 'CENTRAL_ASIA', label: 'Central Asia', currency: 'USD', symbol: '$' },
+    { id: 'MALAYSIA', label: 'Malaysia', currencies: ['MYR'], defaultCurrency: 'MYR' },
+    { id: 'SEA', label: 'SEA', currencies: ['USD', 'GBP'], defaultCurrency: 'USD' },
+    { id: 'GULF', label: 'GCC', currencies: ['USD', 'GBP'], defaultCurrency: 'USD' },
+    { id: 'CENTRAL_ASIA', label: 'Central Asia', currencies: ['USD', 'GBP'], defaultCurrency: 'USD' },
 ];
 
+const CURRENCY_SYMBOLS = {
+    MYR: 'RM',
+    USD: '$',
+    GBP: '£',
+};
+
+// Convert between currencies
+const convertCurrency = (amount, fromCurrency, toCurrency, rates) => {
+    if (!amount || fromCurrency === toCurrency) return amount;
+    const fromRate = rates[fromCurrency] || FALLBACK_RATES[fromCurrency] || 1;
+    const toRate = rates[toCurrency] || FALLBACK_RATES[toCurrency] || 1;
+    const usdAmount = amount / fromRate;
+    return usdAmount * toRate;
+};
+
 export default function RateCardPage() {
-    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults } = useRateCardStore();
+    const { items, sections, addItem, updateItem, updateItemPricing, updateItemCurrencyPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults } = useRateCardStore();
+    const { rates } = useQuoteStore();
     const toast = useToast();
     const fileInputRef = useRef(null);
     const saveTimeoutRef = useRef(null);
@@ -21,6 +40,36 @@ export default function RateCardPage() {
     const [expandedItemId, setExpandedItemId] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
     const [showSaved, setShowSaved] = useState(false);
+    const [savedField, setSavedField] = useState(null);
+
+    // Per-region currency selection (for regions with multiple currencies)
+    const [regionCurrencies, setRegionCurrencies] = useState({
+        SEA: 'USD',
+        GULF: 'USD',
+        CENTRAL_ASIA: 'USD',
+    });
+
+    // Get display value for a region/field, converting if needed
+    const getDisplayValue = (item, regionId, field) => {
+        const region = REGIONS.find(r => r.id === regionId);
+        const selectedCurrency = regionCurrencies[regionId] || region.defaultCurrency;
+        const storedCurrency = item.currencyPricing?.[regionId]?.[field]?.baseCurrency || region.defaultCurrency;
+        const storedAmount = item.currencyPricing?.[regionId]?.[field]?.amount;
+
+        // If we have currency pricing, use it
+        if (storedAmount !== undefined) {
+            return convertCurrency(storedAmount, storedCurrency, selectedCurrency, rates);
+        }
+
+        // Fallback to legacy regional pricing
+        const legacyValue = item.pricing?.[regionId]?.[field] || 0;
+        return legacyValue; // Legacy is already in the region's default currency
+    };
+
+    // Get base currency for a field
+    const getBaseCurrency = (item, regionId, field) => {
+        return item.currencyPricing?.[regionId]?.[field]?.baseCurrency;
+    };
 
     // Show saved indicator
     const triggerSaved = useCallback(() => {
@@ -113,6 +162,16 @@ export default function RateCardPage() {
     const handlePricingChange = (itemId, region, field, value) => {
         updateItemPricing(itemId, region, { [field]: parseFloat(value) || 0 });
         triggerSaved();
+    };
+
+    // Handle currency-based pricing change for a specific region
+    const handleCurrencyPricingChange = (itemId, regionId, field, value) => {
+        const region = REGIONS.find(r => r.id === regionId);
+        const selectedCurrency = regionCurrencies[regionId] || region.defaultCurrency;
+        updateItemCurrencyPricing(itemId, regionId, field, value, selectedCurrency);
+        triggerSaved();
+        setSavedField(`${itemId}-${regionId}-${field}`);
+        setTimeout(() => setSavedField(null), 2000);
     };
 
     return (
@@ -551,39 +610,85 @@ export default function RateCardPage() {
                                     <div className="mt-4 pt-4 border-t border-dark-border">
                                         <h4 className="text-xs font-medium text-gray-500 uppercase mb-3">Regional Pricing</h4>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                            {REGIONS.map(region => (
-                                                <div key={region.id} className="bg-dark-bg rounded-lg p-3">
-                                                    <p className="text-xs font-medium text-gray-400 mb-2">
-                                                        {region.label} <span className="text-gray-600">({region.currency})</span>
-                                                    </p>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <label className="text-xs text-gray-600">Cost ({region.symbol})</label>
-                                                            <div className="relative">
-                                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">{region.symbol}</span>
-                                                                <input
-                                                                    type="number"
-                                                                    value={item.pricing?.[region.id]?.cost || 0}
-                                                                    onChange={(e) => handlePricingChange(item.id, region.id, 'cost', e.target.value)}
-                                                                    className="input text-sm pl-7"
-                                                                />
-                                                            </div>
+                                            {REGIONS.map(region => {
+                                                const selectedCurrency = regionCurrencies[region.id] || region.defaultCurrency;
+                                                const symbol = CURRENCY_SYMBOLS[selectedCurrency];
+                                                const hasMultipleCurrencies = region.currencies.length > 1;
+
+                                                return (
+                                                    <div key={region.id} className="bg-dark-bg rounded-lg p-3">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <p className="text-xs font-medium text-gray-400">
+                                                                {region.label}
+                                                            </p>
+                                                            {/* Currency toggle for regions with multiple currencies */}
+                                                            {hasMultipleCurrencies ? (
+                                                                <div className="flex rounded overflow-hidden border border-dark-border">
+                                                                    {region.currencies.map(curr => (
+                                                                        <button
+                                                                            key={curr}
+                                                                            onClick={() => setRegionCurrencies(prev => ({ ...prev, [region.id]: curr }))}
+                                                                            className={`px-2 py-0.5 text-xs font-medium transition-colors ${
+                                                                                selectedCurrency === curr
+                                                                                    ? 'bg-accent-primary text-white'
+                                                                                    : 'bg-dark-card text-gray-500 hover:text-white'
+                                                                            }`}
+                                                                        >
+                                                                            {CURRENCY_SYMBOLS[curr]}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-xs text-gray-600">{symbol}</span>
+                                                            )}
                                                         </div>
-                                                        <div>
-                                                            <label className="text-xs text-gray-600">Charge ({region.symbol})</label>
-                                                            <div className="relative">
-                                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">{region.symbol}</span>
-                                                                <input
-                                                                    type="number"
-                                                                    value={item.pricing?.[region.id]?.charge || 0}
-                                                                    onChange={(e) => handlePricingChange(item.id, region.id, 'charge', e.target.value)}
-                                                                    className="input text-sm pl-7"
-                                                                />
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <div>
+                                                                <div className="flex items-center justify-between">
+                                                                    <label className="text-xs text-gray-600">Cost</label>
+                                                                    {savedField === `${item.id}-${region.id}-cost` && (
+                                                                        <span className="text-[10px] text-green-400">✓ Saved</span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="relative">
+                                                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">{symbol}</span>
+                                                                    <input
+                                                                        type="number"
+                                                                        value={Math.round(getDisplayValue(item, region.id, 'cost') * 100) / 100 || ''}
+                                                                        onChange={(e) => handleCurrencyPricingChange(item.id, region.id, 'cost', e.target.value)}
+                                                                        className="input text-sm pl-7"
+                                                                        placeholder="0"
+                                                                    />
+                                                                </div>
+                                                                {getBaseCurrency(item, region.id, 'cost') && getBaseCurrency(item, region.id, 'cost') !== selectedCurrency && (
+                                                                    <span className="text-[10px] text-amber-500/70">from {getBaseCurrency(item, region.id, 'cost')}</span>
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <div className="flex items-center justify-between">
+                                                                    <label className="text-xs text-gray-600">Charge</label>
+                                                                    {savedField === `${item.id}-${region.id}-charge` && (
+                                                                        <span className="text-[10px] text-green-400">✓ Saved</span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="relative">
+                                                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">{symbol}</span>
+                                                                    <input
+                                                                        type="number"
+                                                                        value={Math.round(getDisplayValue(item, region.id, 'charge') * 100) / 100 || ''}
+                                                                        onChange={(e) => handleCurrencyPricingChange(item.id, region.id, 'charge', e.target.value)}
+                                                                        className="input text-sm pl-7"
+                                                                        placeholder="0"
+                                                                    />
+                                                                </div>
+                                                                {getBaseCurrency(item, region.id, 'charge') && getBaseCurrency(item, region.id, 'charge') !== selectedCurrency && (
+                                                                    <span className="text-[10px] text-amber-500/70">from {getBaseCurrency(item, region.id, 'charge')}</span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
