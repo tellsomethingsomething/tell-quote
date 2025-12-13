@@ -889,7 +889,7 @@ Return ONLY JSON:
                                         {cat.label} ({catTasks.length})
                                     </h2>
                                 </div>
-                                <div className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                                     {catTasks.map(task => (
                                         <TaskCard
                                             key={task.id}
@@ -905,7 +905,7 @@ Return ONLY JSON:
                         );
                     })
                 ) : (
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                         {filteredTasks.map(task => (
                             <TaskCard
                                 key={task.id}
@@ -925,7 +925,7 @@ Return ONLY JSON:
                         <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
                             Completed ({completedTasksList.length})
                         </h2>
-                        <div className="space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
                             {completedTasksList.map((task) => (
                                 <div
                                     key={task.id}
