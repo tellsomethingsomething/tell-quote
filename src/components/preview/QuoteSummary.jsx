@@ -2,34 +2,51 @@ import { useQuoteStore } from '../../store/quoteStore';
 import { formatCurrency } from '../../utils/currency';
 import { calculateGrandTotalWithFees } from '../../utils/calculations';
 import { pdf } from '@react-pdf/renderer';
-import QuotePDF from '../pdf/QuotePDF';
+import CleanPDF from '../pdf/CleanPDF';
 import { useState } from 'react';
+import { useToast } from '../common/Toast';
 
 export default function QuoteSummary() {
     const { quote } = useQuoteStore();
+    const toast = useToast();
 
     const [generatingPdf, setGeneratingPdf] = useState(false);
+    const [previewingPdf, setPreviewingPdf] = useState(false);
 
     // Calculate all totals
     const totals = calculateGrandTotalWithFees(quote.sections, quote.fees);
 
     // Helper for display currency conversion
     const toDisplay = (amount) => {
-        // If we are showing "Profit", we should stick to Base Currency (USD) or User Preference?
-        // Usually profit is tracked in company base currency.
-        // But for quote context, user might want to see margin in Quote Currency.
-        // Let's show in Quote Currency for consistency with the editor.
         return formatCurrency(amount || 0, quote.currency);
     };
 
     const profit = (totals.totalCharge || 0) - (totals.totalCost || 0);
     const marginPercent = totals.totalCharge > 0 ? (profit / totals.totalCharge) * 100 : 0;
 
+    const handlePreviewPDF = async () => {
+        setPreviewingPdf(true);
+        try {
+            const blob = await pdf(
+                <CleanPDF quote={quote} currency={quote.currency} />
+            ).toBlob();
+
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+        } catch (e) {
+            console.error(e);
+            toast.error('Failed to generate preview');
+        } finally {
+            setPreviewingPdf(false);
+        }
+    };
+
     const handleExportPDF = async () => {
         setGeneratingPdf(true);
         try {
             const blob = await pdf(
-                <QuotePDF quote={quote} currency={quote.currency} />
+                <CleanPDF quote={quote} currency={quote.currency} />
             ).toBlob();
 
             const clientName = quote.client?.company || 'Client';
@@ -43,9 +60,10 @@ export default function QuoteSummary() {
             link.download = filename;
             link.click();
             URL.revokeObjectURL(url);
+            toast.success('PDF downloaded successfully');
         } catch (e) {
             console.error(e);
-            alert('Failed to generate PDF');
+            toast.error('Failed to generate PDF');
         } finally {
             setGeneratingPdf(false);
         }
@@ -55,26 +73,52 @@ export default function QuoteSummary() {
         <div className="space-y-6 text-gray-100 p-2">
 
             {/* Action Buttons */}
-            <button
-                onClick={handleExportPDF}
-                disabled={generatingPdf}
-                className="w-full btn-primary py-3 shadow-lg shadow-accent-primary/20"
-            >
-                {generatingPdf ? (
-                    <span className="flex items-center gap-2">
-                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        Generating PDF...
-                    </span>
-                ) : (
-                    <span className="flex items-center gap-2">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Export Quote PDF
-                    </span>
-                )}
-            </button>
+            <div className="flex gap-2">
+                <button
+                    onClick={handlePreviewPDF}
+                    disabled={previewingPdf}
+                    className="flex-1 btn-secondary py-3"
+                >
+                    {previewingPdf ? (
+                        <span className="flex items-center justify-center gap-2">
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            Loading...
+                        </span>
+                    ) : (
+                        <span className="flex items-center justify-center gap-2">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Preview
+                        </span>
+                    )}
+                </button>
+                <button
+                    onClick={handleExportPDF}
+                    disabled={generatingPdf}
+                    className="flex-1 btn-primary py-3 shadow-lg shadow-accent-primary/20"
+                >
+                    {generatingPdf ? (
+                        <span className="flex items-center justify-center gap-2">
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            Generating...
+                        </span>
+                    ) : (
+                        <span className="flex items-center justify-center gap-2">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download
+                        </span>
+                    )}
+                </button>
+            </div>
 
+            {/* Tip */}
+            <p className="text-xs text-gray-500 text-center">
+                Customize PDF colors in Settings &rarr; Quote Templates
+            </p>
 
             {/* Financial Summary Card */}
             <div className="bg-dark-card border border-dark-border rounded-xl p-5 shadow-lg">
@@ -132,8 +176,6 @@ export default function QuoteSummary() {
                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 border-b border-gray-700 pb-2">Section Breakdown</h3>
                 <div className="space-y-3">
                     {Object.values(quote.sections).map(section => {
-                        // Calculate section total locally or rely on section data if stored?
-                        // best to fast calc
                         const sectionCost = Object.values(section.subsections).flat().reduce((acc, item) => acc + (item.cost * item.quantity * item.days), 0);
                         const sectionCharge = Object.values(section.subsections).flat().reduce((acc, item) => acc + (item.charge * item.quantity * item.days), 0);
                         const isVisible = sectionCharge > 0 || sectionCost > 0;

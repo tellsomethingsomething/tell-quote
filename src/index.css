@@ -15,6 +15,16 @@
   * {
     @apply border-dark-border;
   }
+
+  /* Improve mobile touch scrolling */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent text size adjustment on iOS */
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
 }
 
 @layer components {
@@ -23,11 +33,11 @@
   }
 
   .input {
-    @apply w-full bg-dark-card border border-dark-border rounded-input px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-teal/50 focus:border-brand-teal transition-all duration-200;
+    @apply w-full bg-dark-card border border-dark-border rounded-input px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-teal/50 focus:border-brand-teal transition-all duration-200 min-h-[44px];
   }
 
   .input-sm {
-    @apply bg-dark-card border border-dark-border rounded-input px-2 py-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-teal/50 focus:border-brand-teal transition-all duration-200;
+    @apply bg-dark-card border border-dark-border rounded-input px-2 py-1.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-teal/50 focus:border-brand-teal transition-all duration-200 min-h-[40px];
   }
 
   /* Base button - 44px min height for touch targets */
@@ -37,7 +47,7 @@
 
   /* Button sizes */
   .btn-sm {
-    @apply px-3 py-1.5 text-xs min-h-[32px] gap-1.5;
+    @apply px-3 py-1.5 text-xs min-h-[36px] gap-1.5;
   }
 
   .btn-lg {
@@ -45,23 +55,23 @@
   }
 
   .btn-primary {
-    @apply btn bg-brand-teal hover:bg-brand-teal-light text-white shadow-sm shadow-brand-teal/25 hover:shadow-md hover:shadow-brand-teal/35;
+    @apply btn bg-brand-teal hover:bg-brand-teal-light text-white shadow-sm shadow-brand-teal/25 hover:shadow-md hover:shadow-brand-teal/35 active:scale-95;
   }
 
   .btn-secondary {
-    @apply btn bg-brand-navy hover:bg-brand-navy-light text-white shadow-sm shadow-brand-navy/20;
+    @apply btn bg-brand-navy hover:bg-brand-navy-light text-white shadow-sm shadow-brand-navy/20 active:scale-95;
   }
 
   .btn-accent {
-    @apply btn bg-brand-orange hover:bg-brand-orange-light text-white shadow-sm shadow-brand-orange/25;
+    @apply btn bg-brand-orange hover:bg-brand-orange-light text-white shadow-sm shadow-brand-orange/25 active:scale-95;
   }
 
   .btn-ghost {
-    @apply btn bg-transparent hover:bg-white/5 text-gray-300 border border-dark-border hover:border-gray-600;
+    @apply btn bg-transparent hover:bg-white/5 text-gray-300 border border-dark-border hover:border-gray-600 active:scale-95;
   }
 
   .btn-danger {
-    @apply btn bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40;
+    @apply btn bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40 active:scale-95;
   }
 
   .label {
@@ -95,7 +105,7 @@
 
   /* Scrollbar styling */
   ::-webkit-scrollbar {
-    @apply w-2;
+    @apply w-2 h-2;
   }
 
   ::-webkit-scrollbar-track {
@@ -104,6 +114,42 @@
 
   ::-webkit-scrollbar-thumb {
     @apply bg-gray-700 rounded-full hover:bg-gray-600;
+  }
+
+  /* Horizontal scrollbar for mobile */
+  ::-webkit-scrollbar-horizontal {
+    @apply h-2;
+  }
+}
+
+@layer utilities {
+  /* Safe area padding for notched devices */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Smooth tap highlight for mobile */
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Better text selection */
+  .select-none-touch {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
 }
 
@@ -158,12 +204,29 @@ input[type="number"] {
   animation: modalSlideIn 0.25s ease-out forwards;
 }
 
+/* Mobile keyboard handling - prevent modal from being pushed off screen */
+@supports (height: 100dvh) {
+  .modal-backdrop {
+    height: 100dvh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Ensure modals stay visible when keyboard appears */
+@media (max-width: 640px) {
+  .modal-content {
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px);
+  }
+}
+
 .dropdown-menu {
   animation: dropdownSlideIn 0.15s ease-out forwards;
 }
 
 /* Select styling for consistent branding */
-select.input {
+select.input,
+select.input-sm {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.5rem center;
   background-repeat: no-repeat;
@@ -174,6 +237,78 @@ select.input {
   appearance: none;
 }
 
-select.input:focus {
+select.input:focus,
+select.input-sm:focus {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%230F8B8D' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+/* Toast slide-in animation */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+/* Skeleton loading animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02) 0px,
+    rgba(255, 255, 255, 0.05) 40px,
+    rgba(255, 255, 255, 0.02) 80px
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn-primary {
+    @apply border-2 border-white;
+  }
+
+  .input:focus {
+    @apply border-2 border-brand-teal;
+  }
+}
+
+/* Dark mode optimization (already dark, but prepare for future light mode) */
+@media (prefers-color-scheme: dark) {
+  /* Ensure we're using proper dark mode colors */
+  :root {
+    color-scheme: dark;
+  }
 }

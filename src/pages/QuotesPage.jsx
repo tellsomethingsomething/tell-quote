@@ -206,38 +206,38 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
     return (
         <div className="flex-1 overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-4 border-b border-dark-border bg-dark-card">
-                <div className="flex items-center justify-between mb-4">
+            <div className="p-3 sm:p-4 border-b border-dark-border bg-dark-card">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
                     <div>
-                        <h1 className="text-xl font-bold text-gray-100">Quotes</h1>
-                        <p className="text-sm text-gray-500">{totals.count} quotes found</p>
+                        <h1 className="text-lg sm:text-xl font-bold text-gray-100">Quotes</h1>
+                        <p className="text-xs sm:text-sm text-gray-500">{totals.count} quotes found</p>
                     </div>
-                    <button onClick={() => onNewQuote()} className="btn-primary">
+                    <button onClick={() => onNewQuote()} className="btn-primary min-h-[44px] text-sm sm:text-base">
                         + New Quote
                     </button>
                 </div>
 
-                {/* Filters Row 1 */}
-                <div className="flex flex-wrap items-center gap-3 mb-3">
-                    {/* Search */}
-                    <div className="relative flex-1 min-w-[200px] max-w-md">
-                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search quotes, clients, tags..."
-                            className="input pl-10 w-full"
-                        />
-                    </div>
+                {/* Search - Full width on mobile */}
+                <div className="relative mb-3">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search quotes, clients, tags..."
+                        className="input pl-10 w-full min-h-[44px]"
+                    />
+                </div>
 
+                {/* Filters - Grid on mobile, flex on desktop */}
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3 mb-3">
                     {/* Status Filter */}
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="input w-36"
+                        className="input min-h-[44px] w-full sm:w-36"
                     >
                         {STATUSES.map(s => (
                             <option key={s.id} value={s.id}>{s.label}</option>
@@ -248,7 +248,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                     <select
                         value={clientFilter}
                         onChange={(e) => setClientFilter(e.target.value)}
-                        className="input w-44"
+                        className="input min-h-[44px] w-full sm:w-44"
                     >
                         <option value="">All Clients</option>
                         {uniqueClients.map(c => (
@@ -256,21 +256,34 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                         ))}
                     </select>
 
-                    {/* Tag Filter */}
+                    {/* Tag Filter - Hidden on mobile if no tags */}
                     <select
                         value={tagFilter}
                         onChange={(e) => setTagFilter(e.target.value)}
-                        className="input w-36"
+                        className="input min-h-[44px] w-full sm:w-36 hidden sm:block"
                     >
                         <option value="">All Tags</option>
                         {allTags.map(t => (
                             <option key={t} value={t}>{t}</option>
                         ))}
                     </select>
+
+                    {/* Display Currency */}
+                    <select
+                        value={displayCurrency}
+                        onChange={(e) => setDisplayCurrency(e.target.value)}
+                        className="input min-h-[44px] w-full sm:w-24"
+                    >
+                        <option value="USD">USD</option>
+                        <option value="MYR">MYR</option>
+                        <option value="SGD">SGD</option>
+                        <option value="GBP">GBP</option>
+                        <option value="AED">AED</option>
+                    </select>
                 </div>
 
-                {/* Filters Row 2 */}
-                <div className="flex flex-wrap items-center gap-3">
+                {/* Date Filters & Clear - Hidden on mobile */}
+                <div className="hidden sm:flex flex-wrap items-center gap-3">
                     {/* Date Range */}
                     <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-500">From:</span>
@@ -278,7 +291,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                             type="date"
                             value={dateFrom}
                             onChange={(e) => setDateFrom(e.target.value)}
-                            className="input w-36 text-sm"
+                            className="input w-36 text-sm min-h-[36px]"
                         />
                     </div>
                     <div className="flex items-center gap-2">
@@ -287,24 +300,8 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                             type="date"
                             value={dateTo}
                             onChange={(e) => setDateTo(e.target.value)}
-                            className="input w-36 text-sm"
+                            className="input w-36 text-sm min-h-[36px]"
                         />
-                    </div>
-
-                    {/* Display Currency */}
-                    <div className="flex items-center gap-2 ml-auto">
-                        <span className="text-xs text-gray-500">Display:</span>
-                        <select
-                            value={displayCurrency}
-                            onChange={(e) => setDisplayCurrency(e.target.value)}
-                            className="input w-24 text-sm"
-                        >
-                            <option value="USD">USD</option>
-                            <option value="MYR">MYR</option>
-                            <option value="SGD">SGD</option>
-                            <option value="GBP">GBP</option>
-                            <option value="AED">AED</option>
-                        </select>
                     </div>
 
                     {/* Clear Filters */}
@@ -318,32 +315,106 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                 setDateFrom('');
                                 setDateTo('');
                             }}
-                            className="text-xs text-gray-400 hover:text-gray-200"
+                            className="text-xs text-gray-400 hover:text-gray-200 min-h-[36px] px-2"
                         >
                             Clear filters
                         </button>
                     )}
                 </div>
 
-                {/* Summary Stats */}
-                <div className="flex gap-6 mt-4 pt-4 border-t border-dark-border">
-                    <div>
-                        <p className="text-xs text-gray-500">Total Value</p>
-                        <p className="text-lg font-bold text-gray-200">{formatCurrency(totals.total, displayCurrency)}</p>
+                {/* Summary Stats - Responsive */}
+                <div className="flex gap-4 sm:gap-6 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-dark-border">
+                    <div className="flex-1 sm:flex-none">
+                        <p className="text-[10px] sm:text-xs text-gray-500">Total</p>
+                        <p className="text-sm sm:text-lg font-bold text-gray-200">{formatCurrency(totals.total, displayCurrency)}</p>
                     </div>
-                    <div>
-                        <p className="text-xs text-gray-500">Won</p>
-                        <p className="text-lg font-bold text-green-400">{formatCurrency(totals.won, displayCurrency)}</p>
+                    <div className="flex-1 sm:flex-none">
+                        <p className="text-[10px] sm:text-xs text-gray-500">Won</p>
+                        <p className="text-sm sm:text-lg font-bold text-green-400">{formatCurrency(totals.won, displayCurrency)}</p>
                     </div>
-                    <div>
-                        <p className="text-xs text-gray-500">Pipeline</p>
-                        <p className="text-lg font-bold text-blue-400">{formatCurrency(totals.pipeline, displayCurrency)}</p>
+                    <div className="flex-1 sm:flex-none">
+                        <p className="text-[10px] sm:text-xs text-gray-500">Pipeline</p>
+                        <p className="text-sm sm:text-lg font-bold text-blue-400">{formatCurrency(totals.pipeline, displayCurrency)}</p>
                     </div>
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="flex-1 overflow-auto p-4">
+            {/* Mobile Card View */}
+            <div className="md:hidden flex-1 overflow-auto p-3 space-y-3">
+                {filteredQuotes.length === 0 ? (
+                    <div className="py-12 text-center text-gray-500">
+                        No quotes found matching your filters
+                    </div>
+                ) : (
+                    filteredQuotes.map(quote => {
+                        const total = calculateGrandTotalWithFees(quote.sections || {}, quote.fees || {}).totalCharge;
+                        const convertedTotal = convertCurrency(total, quote.currency || 'USD', displayCurrency, rates);
+
+                        return (
+                            <div
+                                key={quote.id}
+                                onClick={() => onEditQuote(quote)}
+                                className="bg-dark-card border border-dark-border rounded-lg p-4 cursor-pointer active:bg-dark-card/80 transition-colors"
+                            >
+                                {/* Header Row */}
+                                <div className="flex items-start justify-between mb-2">
+                                    <div>
+                                        <span className="font-mono text-xs text-accent-primary">{quote.quoteNumber || '-'}</span>
+                                        <h3 className="text-sm font-medium text-gray-200 mt-0.5">{quote.client?.company || '-'}</h3>
+                                    </div>
+                                    <select
+                                        value={quote.status || 'draft'}
+                                        onChange={(e) => {
+                                            e.stopPropagation();
+                                            updateQuoteStatus(quote.id, e.target.value);
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className={`text-xs px-2 py-1 min-h-[32px] rounded border ${getStatusColor(quote.status)}`}
+                                    >
+                                        <option value="draft">Draft</option>
+                                        <option value="sent">Sent</option>
+                                        <option value="won">Won</option>
+                                        <option value="dead">Dead</option>
+                                    </select>
+                                </div>
+
+                                {/* Project & Contact */}
+                                <div className="text-xs text-gray-400 mb-2">
+                                    {quote.project?.title && <p>{quote.project.title}</p>}
+                                    {quote.client?.contact && <p className="text-gray-500">{quote.client.contact}</p>}
+                                </div>
+
+                                {/* Value & Date Row */}
+                                <div className="flex items-center justify-between pt-2 border-t border-dark-border">
+                                    <span className="text-sm font-bold text-gray-200">
+                                        {formatCurrency(convertedTotal, displayCurrency)}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                        {quote.quoteDate ? new Date(quote.quoteDate).toLocaleDateString() : '-'}
+                                    </span>
+                                </div>
+
+                                {/* Tags */}
+                                {(quote.tags || []).length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-dark-border">
+                                        {quote.tags.map(tag => (
+                                            <span
+                                                key={tag}
+                                                className="px-2 py-0.5 bg-accent-primary/20 text-accent-primary text-xs rounded-full"
+                                            >
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block flex-1 overflow-auto p-4">
                 <table className="w-full">
                     <thead className="sticky top-0 bg-dark-bg">
                         <tr className="text-left text-xs text-gray-500 border-b border-dark-border">
@@ -423,7 +494,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                             <select
                                                 value={quote.status || 'draft'}
                                                 onChange={(e) => updateQuoteStatus(quote.id, e.target.value)}
-                                                className={`text-xs px-2 py-1 rounded border ${getStatusColor(quote.status)}`}
+                                                className={`text-xs px-2 py-1 min-h-[36px] rounded border ${getStatusColor(quote.status)}`}
                                             >
                                                 <option value="draft">Draft</option>
                                                 <option value="sent">Sent</option>
@@ -441,7 +512,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                                         {tag}
                                                         <button
                                                             onClick={() => handleRemoveTag(quote.id, tag)}
-                                                            className="hover:text-red-400"
+                                                            className="hover:text-red-400 min-w-[20px] min-h-[20px]"
                                                         >
                                                             ×
                                                         </button>
@@ -474,7 +545,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                                 ) : (
                                                     <button
                                                         onClick={() => setEditingTagsId(quote.id)}
-                                                        className="text-gray-600 hover:text-gray-400 text-xs"
+                                                        className="text-gray-600 hover:text-gray-400 text-xs min-h-[28px] px-2"
                                                     >
                                                         + tag
                                                     </button>
@@ -488,7 +559,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                                         e.stopPropagation();
                                                         onEditQuote(quote);
                                                     }}
-                                                    className="p-1 text-gray-600 hover:text-blue-400"
+                                                    className="p-2 min-w-[36px] min-h-[36px] text-gray-600 hover:text-blue-400"
                                                     title="Edit"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -502,7 +573,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                                             deleteQuote(quote.id);
                                                         }
                                                     }}
-                                                    className="p-1 text-gray-600 hover:text-red-400"
+                                                    className="p-2 min-w-[36px] min-h-[36px] text-gray-600 hover:text-red-400"
                                                     title="Delete"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRateCardStore } from '../store/rateCardStore';
+import { useToast } from '../components/common/Toast';
 
 const REGIONS = [
     { id: 'MALAYSIA', label: 'Malaysia', currency: 'MYR', symbol: 'RM' },
@@ -10,6 +11,7 @@ const REGIONS = [
 
 export default function RateCardPage() {
     const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults } = useRateCardStore();
+    const toast = useToast();
     const fileInputRef = useRef(null);
     const saveTimeoutRef = useRef(null);
     const [selectedSection, setSelectedSection] = useState('all');
@@ -116,11 +118,11 @@ export default function RateCardPage() {
     return (
         <div className="h-[calc(100vh-60px)] flex flex-col bg-dark-bg">
             {/* Header */}
-            <div className="bg-dark-bg border-b border-dark-border p-4">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
+            <div className="bg-dark-bg border-b border-dark-border p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div className="flex items-center justify-between sm:justify-start gap-3">
                         <div>
-                            <h1 className="text-xl font-bold text-gray-100">Rate Card</h1>
+                            <h1 className="text-lg sm:text-xl font-bold text-gray-100">Rate Card</h1>
                             <p className="text-xs text-gray-500">{items.length} services</p>
                         </div>
                         {showSaved && (
@@ -131,8 +133,15 @@ export default function RateCardPage() {
                                 Saved
                             </span>
                         )}
+                        {/* Mobile Add Service Button */}
+                        <button onClick={() => {
+                            setNewItem({ name: '', description: '', section: sections[0]?.id || 'other', unit: 'day' });
+                            setShowAddForm(true);
+                        }} className="sm:hidden btn-primary text-sm">
+                            + Add
+                        </button>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -143,47 +152,47 @@ export default function RateCardPage() {
                                 if (file) {
                                     importFromCSV(file).then(res => {
                                         if (res.success) {
-                                            alert(`Imported ${res.count} items successfully`);
+                                            toast.success(`Imported ${res.count} items successfully`);
                                             triggerSaved();
                                         } else {
-                                            alert('Import failed: ' + res.error);
+                                            toast.error('Import failed: ' + res.error);
                                         }
                                     });
                                 }
                                 e.target.value = ''; // Reset
                             }}
                         />
-                        <button onClick={() => fileInputRef.current?.click()} className="btn-ghost text-sm">
+                        <button onClick={() => fileInputRef.current?.click()} className="btn-ghost text-sm flex-shrink-0 hidden sm:flex">
                             Import CSV
                         </button>
-                        <button onClick={exportToCSV} className="btn-ghost text-sm">
-                            Export Data
+                        <button onClick={exportToCSV} className="btn-ghost text-sm flex-shrink-0 hidden sm:flex">
+                            Export
                         </button>
-                        <button onClick={() => setShowAddCategoryForm(true)} className="btn-secondary text-sm">
-                            Manage Categories
+                        <button onClick={() => setShowAddCategoryForm(true)} className="btn-secondary text-sm flex-shrink-0">
+                            <span className="hidden sm:inline">Manage </span>Categories
                         </button>
                         <button onClick={() => {
                             setNewItem({ name: '', description: '', section: sections[0]?.id || 'other', unit: 'day' });
                             setShowAddForm(true);
-                        }} className="btn-primary text-sm">
+                        }} className="hidden sm:flex btn-primary text-sm flex-shrink-0">
                             + Add Service
                         </button>
                     </div>
                 </div>
 
                 {/* Filters */}
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search services..."
-                        className="input flex-1 max-w-sm"
+                        className="input flex-1 sm:max-w-sm"
                     />
                     <select
                         value={selectedSection}
                         onChange={(e) => setSelectedSection(e.target.value)}
-                        className="input w-48"
+                        className="input w-full sm:w-48"
                     >
                         <option value="all">All Categories</option>
                         {sections.map(section => (

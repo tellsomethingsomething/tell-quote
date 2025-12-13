@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { pdf } from '@react-pdf/renderer';
-import QuotePDF from '../pdf/QuotePDF';
+import CleanPDF from '../pdf/CleanPDF';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { formatCurrency, convertFromUSD } from '../../utils/currency';
@@ -29,7 +29,7 @@ export default function LivePreview() {
     // Generate Quote PDF only
     const generateQuotePDF = async () => {
         const blob = await pdf(
-            <QuotePDF quote={quote} currency={quote.currency} includeTerms={includeTerms} />
+            <CleanPDF quote={quote} currency={quote.currency} />
         ).toBlob();
 
         const filename = `${client.company || 'Client'} - ${quote.project.title || 'Project'} - ${quote.quoteDate} - Quote.pdf`;

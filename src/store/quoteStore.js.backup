@@ -125,9 +125,6 @@ function startAutoSave() {
         syncQuoteToSupabase(quote);
     }, 30000); // 30 seconds
 
-    // Clean up on page unload to prevent memory leaks
-    window.addEventListener('beforeunload', stopAutoSave);
-
     console.log('Auto-save started (every 30s)');
 }
 
@@ -136,7 +133,6 @@ function stopAutoSave() {
     if (autoSaveInterval) {
         clearInterval(autoSaveInterval);
         autoSaveInterval = null;
-        window.removeEventListener('beforeunload', stopAutoSave);
     }
 }
 

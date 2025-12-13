@@ -265,76 +265,88 @@ export default function ClientsPage({ onSelectClient }) {
     };
 
     return (
-        <div className="h-[calc(100vh-60px)] overflow-y-auto p-6 relative">
+        <div className="h-[calc(100vh-60px)] overflow-y-auto p-3 sm:p-6 relative">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-100">Clients & Accounts</h1>
-                    <p className="text-sm text-gray-500">Manage client relationships and performance</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+                <div className="flex items-center justify-between sm:block">
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Clients & Accounts</h1>
+                        <p className="text-xs sm:text-sm text-gray-500">Manage client relationships</p>
+                    </div>
+                    {/* Add Client Button - visible on mobile in header */}
+                    <button
+                        onClick={() => setIsAddClientModalOpen(true)}
+                        className="sm:hidden btn-primary text-sm flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                    </button>
                 </div>
-                <div className="flex items-center gap-3">
-                    {/* Search Bar */}
-                    <div className="relative">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    {/* Search Bar - Full width on mobile */}
+                    <div className="relative w-full sm:w-auto">
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search clients or tags..."
-                            className="input-sm bg-dark-card border-none pl-9 w-64 focus:ring-1 focus:ring-accent-primary"
+                            placeholder="Search clients..."
+                            className="input-sm bg-dark-card border-none pl-9 w-full sm:w-64 min-h-[44px] focus:ring-1 focus:ring-accent-primary"
                         />
                         <svg className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
 
-                    {/* Date Filters Group */}
-                    <div className="flex items-center gap-1 bg-dark-bg/50 rounded-lg px-1.5 py-0.5">
+                    {/* Filters row - horizontal scroll on mobile */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+                        {/* Date Filters Group */}
+                        <div className="flex items-center gap-1 bg-dark-bg/50 rounded-lg px-1.5 py-0.5 flex-shrink-0">
+                            <select
+                                value={selectedYear}
+                                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                className="input-sm text-sm w-[72px] min-h-[40px] bg-transparent border-none focus:ring-0"
+                            >
+                                {years.length === 0 && <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>}
+                                {years.map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                            <span className="text-gray-600 text-sm">/</span>
+                            <select
+                                value={selectedMonth}
+                                onChange={(e) => setSelectedMonth(e.target.value)}
+                                className="input-sm text-sm w-28 sm:w-32 min-h-[40px] bg-transparent border-none focus:ring-0"
+                            >
+                                <option value="all">All Months</option>
+                                {MONTHS.map((m, i) => (
+                                    <option key={m} value={i}>{m}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Currency Selector */}
                         <select
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                            className="input-sm text-sm w-[72px] bg-transparent border-none focus:ring-0"
+                            value={dashboardCurrency}
+                            onChange={(e) => setDashboardCurrency(e.target.value)}
+                            className="input-sm text-sm w-20 sm:w-24 min-h-[40px] bg-dark-card border-none flex-shrink-0"
                         >
-                            {years.length === 0 && <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>}
-                            {years.map(y => (
-                                <option key={y} value={y}>{y}</option>
-                            ))}
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                            <option value="MYR">MYR</option>
                         </select>
-                        <span className="text-gray-600 text-sm">/</span>
-                        <select
-                            value={selectedMonth}
-                            onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="input-sm text-sm w-24 bg-transparent border-none focus:ring-0"
+
+                        {/* Add Client Button - Desktop only */}
+                        <button
+                            onClick={() => setIsAddClientModalOpen(true)}
+                            className="hidden sm:flex btn-primary text-sm items-center gap-2 flex-shrink-0"
                         >
-                            <option value="all">All Months</option>
-                            {MONTHS.map((m, i) => (
-                                <option key={m} value={i}>{m}</option>
-                            ))}
-                        </select>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add Client
+                        </button>
                     </div>
-
-                    {/* Separator */}
-                    <div className="w-px h-6 bg-gray-700/40" />
-
-                    {/* Currency Selector */}
-                    <select
-                        value={dashboardCurrency}
-                        onChange={(e) => setDashboardCurrency(e.target.value)}
-                        className="input-sm text-sm w-24 bg-dark-card border-none"
-                    >
-                        <option value="USD">USD ($)</option>
-                        <option value="GBP">GBP (£)</option>
-                        <option value="MYR">MYR (RM)</option>
-                    </select>
-
-                    <button
-                        onClick={() => setIsAddClientModalOpen(true)}
-                        className="btn-primary text-sm flex items-center gap-2"
-                    >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add Client
-                    </button>
                 </div>
             </div>
 
@@ -543,7 +555,7 @@ export default function ClientsPage({ onSelectClient }) {
                                     </div>
                                 </div>
                                 {/* Delete Button */}
-                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                <div className="absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10">
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
@@ -551,7 +563,7 @@ export default function ClientsPage({ onSelectClient }) {
                                                 deleteClient(client.id);
                                             }
                                         }}
-                                        className="p-1.5 text-gray-500 hover:text-red-400 bg-dark-card/80 backdrop-blur rounded-lg border border-dark-border shadow-sm hover:shadow-md transition-all"
+                                        className="p-2 min-w-[40px] min-h-[40px] text-gray-500 hover:text-red-400 bg-dark-card/80 backdrop-blur rounded-lg border border-dark-border shadow-sm hover:shadow-md transition-all flex items-center justify-center"
                                         title="Delete Client"
                                     >
                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -569,8 +581,8 @@ export default function ClientsPage({ onSelectClient }) {
             {/* Add Client Modal */}
             {
                 isAddClientModalOpen && (
-                    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-md modal-backdrop">
-                        <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-lg shadow-2xl modal-content relative">
+                    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-md modal-backdrop p-4">
+                        <div className="bg-dark-card border border-dark-border rounded-xl p-4 sm:p-6 w-full max-w-lg shadow-2xl modal-content relative max-h-[90vh] overflow-y-auto">
                             <button
                                 onClick={() => { setIsAddClientModalOpen(false); setFormErrors({}); }}
                                 className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
@@ -602,7 +614,7 @@ export default function ClientsPage({ onSelectClient }) {
                                         {formErrors.company && <p className="text-xs text-red-400 mt-1">{formErrors.company}</p>}
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="label">Charge Basis (Region)</label>
                                             <select
@@ -675,7 +687,7 @@ export default function ClientsPage({ onSelectClient }) {
                                                 placeholder="e.g. John Doe"
                                             />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="label">Email Address</label>
                                                 <input

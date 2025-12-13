@@ -129,7 +129,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
         >
             <div className="flex flex-wrap items-center gap-2">
                 {/* Item Name with Autocomplete */}
-                <div className="relative flex-1 min-w-[180px]" ref={inputRef}>
+                <div className="relative flex-1 min-w-[140px] sm:min-w-[180px]" ref={inputRef}>
                     <label htmlFor={`item-name-${item.id}`} className="sr-only">
                         Item name
                     </label>
@@ -173,7 +173,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                 </div>
 
                 {/* Quantity */}
-                <div className="w-16">
+                <div className="w-14 sm:w-16">
                     <label htmlFor={`quantity-${item.id}`} className="sr-only">
                         Quantity
                     </label>
@@ -186,13 +186,14 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         onFocus={(e) => e.target.select()}
                         min="1"
                         className="input-sm w-full text-left text-sm"
-                        title="Quantity"
+                        title="Qty"
                         aria-label="Quantity"
+                        placeholder="Qty"
                     />
                 </div>
 
                 {/* Days */}
-                <div className="w-16">
+                <div className="w-14 sm:w-16">
                     <label htmlFor={`days-${item.id}`} className="sr-only">
                         Days
                     </label>
@@ -208,6 +209,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         className="input-sm w-full text-left text-sm"
                         title="Days"
                         aria-label="Number of days"
+                        placeholder="Days"
                     />
                 </div>
 
@@ -234,7 +236,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                 </div>
 
                 {/* Charge */}
-                <div className="w-24 relative">
+                <div className="w-20 sm:w-24 relative">
                     <label htmlFor={`charge-${item.id}`} className="sr-only">
                         Charge per unit
                     </label>
@@ -248,7 +250,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                             onBlur={(e) => { if (e.target.value === '' || isNaN(item.charge)) handleChange('charge', 0); }}
                             onFocus={(e) => e.target.select()}
                             min="0"
-                            className="input-sm w-full pl-6 text-left text-sm"
+                            className="input-sm w-full pl-5 sm:pl-6 text-left text-sm"
                             title="Charge"
                             aria-label={`Charge per unit in ${quote.currency}`}
                         />
@@ -256,8 +258,8 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                 </div>
 
                 {/* Total */}
-                <div className="w-24 text-right flex items-center justify-end" role="status" aria-live="polite" aria-label={`Total: ${formatCurrency(displayCharge, quote.currency)}`}>
-                    <span className="text-sm font-semibold text-gray-100">
+                <div className="w-20 sm:w-24 text-right flex items-center justify-end" role="status" aria-live="polite" aria-label={`Total: ${formatCurrency(displayCharge, quote.currency)}`}>
+                    <span className="text-xs sm:text-sm font-semibold text-gray-100">
                         {formatCurrency(displayCharge, quote.currency)}
                     </span>
                 </div>
@@ -272,7 +274,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                 {/* Delete */}
                 <button
                     onClick={handleDelete}
-                    className="p-1 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="p-2 min-w-[36px] min-h-[36px] text-gray-600 hover:text-red-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center"
                     title="Delete item"
                     aria-label={`Delete ${item.name || 'item'}`}
                 >

@@ -3,11 +3,13 @@ import { useQuoteStore } from '../../store/quoteStore';
 import { useClientStore } from '../../store/clientStore';
 import { useAuthStore } from '../../store/authStore';
 import Navigation from './Navigation';
+import { useToast } from '../common/Toast';
 
 export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS }) {
     const { quote, ratesLoading, refreshRates } = useQuoteStore();
     const { saveQuote } = useClientStore();
     const { logout } = useAuthStore();
+    const toast = useToast();
     const [saving, setSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
@@ -26,7 +28,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 2000);
         } catch {
-            alert('Failed to save quote.');
+            toast.error('Failed to save quote.');
         } finally {
             setSaving(false);
         }
@@ -44,20 +46,20 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
         const activeTab = view;
 
         return (
-            <header className="h-[60px] bg-dark-bg/95 backdrop-blur-md border-b border-dark-border flex items-center justify-between px-6 z-20 sticky top-0">
-                <div className="flex items-center gap-4">
-                    {/* Logo - Click to go to Dashboard (Home) */}
+            <header className="min-h-[60px] bg-dark-bg/95 backdrop-blur-md border-b border-dark-border flex items-center justify-between px-3 sm:px-6 z-20 sticky top-0">
+                {/* Logo - Hidden on mobile, shown on larger screens */}
+                <div className="hidden sm:flex items-center gap-4">
                     <button
                         onClick={onGoToDashboard}
-                        className="flex items-center hover:opacity-80 transition-all duration-200"
+                        className="flex items-center hover:opacity-80 transition-all duration-200 min-h-[44px]"
                         title="Go to Dashboard"
                     >
                         <img src="/tell-logo.svg" alt="Tell" className="h-7" />
                     </button>
                 </div>
 
-                {/* Central Navigation */}
-                <div className="absolute left-1/2 transform -translate-x-1/2">
+                {/* Central Navigation - Takes full width on mobile */}
+                <div className="flex-1 flex justify-center sm:absolute sm:left-1/2 sm:transform sm:-translate-x-1/2">
                     <Navigation
                         activeTab={activeTab}
                         onTabChange={(tab) => {
@@ -71,22 +73,22 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                 </div>
 
                 {/* Right Side - FS Button & User Menu */}
-                <div className="flex items-center gap-3 relative">
-                    {/* Full Screen Analytics Button */}
+                <div className="flex items-center gap-2 sm:gap-3 relative">
+                    {/* Full Screen Analytics Button - Icon only on mobile */}
                     <button
                         onClick={onGoToFS}
-                        className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-teal-600/20 to-cyan-600/20 border border-teal-500/30 text-teal-400 text-xs font-bold hover:from-teal-600/30 hover:to-cyan-600/30 hover:border-teal-500/50 transition-all flex items-center gap-1.5"
+                        className="min-w-[44px] min-h-[44px] px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-teal-600/20 to-cyan-600/20 border border-teal-500/30 text-teal-400 text-xs font-bold hover:from-teal-600/30 hover:to-cyan-600/30 hover:border-teal-500/50 transition-all flex items-center justify-center gap-1.5"
                         title="Full Screen Analytics"
                     >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-4 h-4 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
-                        FS
+                        <span className="hidden sm:inline">FS</span>
                     </button>
 
                     <button
                         onClick={() => setShowUserMenu(!showUserMenu)}
-                        className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs text-gray-400 hover:border-gray-600 hover:text-gray-300 transition-colors"
+                        className="min-w-[44px] min-h-[44px] w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs text-gray-400 hover:border-gray-600 hover:text-gray-300 transition-colors"
                     >
                         TM
                     </button>
@@ -126,24 +128,24 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
     // Editor view header
     return (
         <header className="sticky top-0 z-50 bg-dark-bg/95 backdrop-blur-md border-b border-dark-border">
-            <div className="max-w-[1920px] mx-auto px-4 py-3">
-                <div className="flex items-center justify-between gap-4">
+            <div className="max-w-[1920px] mx-auto px-2 sm:px-4 py-2 sm:py-3">
+                <div className="flex items-center justify-between gap-2 sm:gap-4">
                     {/* Logo & Navigation */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <button
                             onClick={onGoToDashboard}
-                            className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+                            className="min-w-[44px] min-h-[44px] p-2 rounded-lg hover:bg-white/5 transition-colors flex items-center justify-center"
                             title="Back to Dashboard"
                         >
                             <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
                         </button>
-                        <div className="flex items-center gap-3">
-                            <img src="/tell-logo.svg" alt="Tell" className="h-6" />
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-mono text-accent-primary">{quote.quoteNumber}</span>
-                                <span className="text-[10px] text-gray-500 border border-gray-800 rounded px-1">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <img src="/tell-logo.svg" alt="Tell" className="h-5 sm:h-6 hidden xs:block" />
+                            <div className="flex items-center gap-1 sm:gap-2">
+                                <span className="text-[10px] sm:text-xs font-mono text-accent-primary">{quote.quoteNumber}</span>
+                                <span className="text-[10px] text-gray-500 border border-gray-800 rounded px-1 hidden sm:inline">
                                     {quote.preparedBy === 'default' ? 'Admin' : 'User'}
                                 </span>
                             </div>
@@ -151,9 +153,9 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                     </div>
 
                     {/* Right: Controls */}
-                    <div className="flex items-center gap-2">
-                        {/* Status Label (Replaces Currency) */}
-                        <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${quote.status === 'won' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        {/* Status Label */}
+                        <div className={`px-2 sm:px-3 py-1 min-h-[32px] rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border flex items-center ${quote.status === 'won' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
                             quote.status === 'sent' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
                                 quote.status === 'dead' ? 'bg-red-500/20 text-red-500 border-red-500/30' :
                                     'bg-gray-700/50 text-gray-400 border-gray-600'
@@ -161,11 +163,11 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                             {quote.status || 'Draft'}
                         </div>
 
-                        {/* Refresh Rates */}
+                        {/* Refresh Rates - Hidden on mobile */}
                         <button
                             onClick={refreshRates}
                             disabled={ratesLoading}
-                            className="btn-ghost p-2 hidden sm:flex"
+                            className="btn-ghost min-w-[44px] min-h-[44px] p-2 hidden sm:flex items-center justify-center"
                             title="Refresh exchange rates"
                         >
                             <svg className={`w-4 h-4 ${ratesLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -177,7 +179,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                         <button
                             onClick={handleSaveQuote}
                             disabled={saving}
-                            className={`btn-ghost text-sm flex items-center gap-1 ${saveSuccess ? 'text-green-400' : ''}`}
+                            className={`btn-ghost min-w-[44px] min-h-[44px] text-sm flex items-center justify-center gap-1 ${saveSuccess ? 'text-green-400' : ''}`}
                             title="Save quote to library"
                         >
                             {saveSuccess ? (

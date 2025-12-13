@@ -1,10 +1,10 @@
 import { pdf } from '@react-pdf/renderer';
-import QuotePDF from '../components/pdf/QuotePDF';
+import CleanPDF from '../components/pdf/CleanPDF';
 
 export async function exportQuoteToPDF(quote, currency) {
     try {
         // Generate PDF blob
-        const blob = await pdf(<QuotePDF quote={quote} currency={currency} />).toBlob();
+        const blob = await pdf(<CleanPDF quote={quote} currency={currency} />).toBlob();
 
         // Create download link
         const url = URL.createObjectURL(blob);

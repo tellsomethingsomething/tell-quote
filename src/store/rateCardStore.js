@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { SEED_ITEMS } from '../data/rateCardSeed';
 
 const RATE_CARD_KEY = 'tell_rate_card';
@@ -79,8 +79,14 @@ export const useRateCardStore = create(
         sections: loadSectionsLocal(),
         loading: false,
 
-        // Initialize - load from Supabase
+        // Initialize - load from Supabase (or localStorage fallback)
         initialize: async () => {
+            // If Supabase not configured, just use localStorage data
+            if (!isSupabaseConfigured()) {
+                set({ loading: false });
+                return;
+            }
+
             set({ loading: true });
             try {
                 // Load rate card items
@@ -152,15 +158,17 @@ export const useRateCardStore = create(
                 return { sections };
             });
 
-            // Save to Supabase
-            try {
-                await supabase.from('rate_card_sections').insert({
-                    id: newSection.id,
-                    name: newSection.name,
-                    sort_order: get().sections.length,
-                });
-            } catch (e) {
-                console.error('Failed to save section to DB:', e);
+            // Save to Supabase if configured
+            if (isSupabaseConfigured()) {
+                try {
+                    await supabase.from('rate_card_sections').insert({
+                        id: newSection.id,
+                        name: newSection.name,
+                        sort_order: get().sections.length,
+                    });
+                } catch (e) {
+                    console.error('Failed to save section to DB:', e);
+                }
             }
 
             return newSection;
@@ -178,10 +186,12 @@ export const useRateCardStore = create(
                     );
                     saveRateCardLocal(items);
 
-                    // Update items in DB
-                    items.filter(i => i.section === 'extras').forEach(item => {
-                        supabase.from('rate_cards').update({ section: 'extras' }).eq('id', item.id);
-                    });
+                    // Update items in DB if configured
+                    if (isSupabaseConfigured()) {
+                        items.filter(i => i.section === 'extras').forEach(item => {
+                            supabase.from('rate_cards').update({ section: 'extras' }).eq('id', item.id);
+                        });
+                    }
 
                     return { items };
                 });
@@ -193,11 +203,13 @@ export const useRateCardStore = create(
                 return { sections };
             });
 
-            // Delete from Supabase
-            try {
-                await supabase.from('rate_card_sections').delete().eq('id', sectionId);
-            } catch (e) {
-                console.error('Failed to delete section from DB:', e);
+            // Delete from Supabase if configured
+            if (isSupabaseConfigured()) {
+                try {
+                    await supabase.from('rate_card_sections').delete().eq('id', sectionId);
+                } catch (e) {
+                    console.error('Failed to delete section from DB:', e);
+                }
             }
         },
 
@@ -210,11 +222,13 @@ export const useRateCardStore = create(
                 return { sections };
             });
 
-            // Update in Supabase
-            try {
-                await supabase.from('rate_card_sections').update({ name: newName }).eq('id', sectionId);
-            } catch (e) {
-                console.error('Failed to rename section in DB:', e);
+            // Update in Supabase if configured
+            if (isSupabaseConfigured()) {
+                try {
+                    await supabase.from('rate_card_sections').update({ name: newName }).eq('id', sectionId);
+                } catch (e) {
+                    console.error('Failed to rename section in DB:', e);
+                }
             }
         },
 
@@ -230,10 +244,12 @@ export const useRateCardStore = create(
                 [sections[index], sections[newIndex]] = [sections[newIndex], sections[index]];
                 saveSectionsLocal(sections);
 
-                // Update sort_order in DB
-                sections.forEach((s, i) => {
-                    supabase.from('rate_card_sections').update({ sort_order: i }).eq('id', s.id);
-                });
+                // Update sort_order in DB if configured
+                if (isSupabaseConfigured()) {
+                    sections.forEach((s, i) => {
+                        supabase.from('rate_card_sections').update({ sort_order: i }).eq('id', s.id);
+                    });
+                }
 
                 return { sections };
             });
@@ -253,24 +269,26 @@ export const useRateCardStore = create(
                 updatedAt: new Date().toISOString(),
             };
 
-            // Save to Supabase first to get UUID
-            try {
-                const { data, error } = await supabase
-                    .from('rate_cards')
-                    .insert({
-                        name: newItem.name,
-                        description: newItem.description,
-                        section: newItem.section,
-                        unit: newItem.unit,
-                        pricing: newItem.pricing,
-                    })
-                    .select()
-                    .single();
+            // Save to Supabase first to get UUID (if configured)
+            if (isSupabaseConfigured()) {
+                try {
+                    const { data, error } = await supabase
+                        .from('rate_cards')
+                        .insert({
+                            name: newItem.name,
+                            description: newItem.description,
+                            section: newItem.section,
+                            unit: newItem.unit,
+                            pricing: newItem.pricing,
+                        })
+                        .select()
+                        .single();
 
-                if (error) throw error;
-                newItem.id = data.id;
-            } catch (e) {
-                console.error('Failed to save item to DB:', e);
+                    if (error) throw error;
+                    newItem.id = data.id;
+                } catch (e) {
+                    console.error('Failed to save item to DB:', e);
+                }
             }
 
             set(state => {
@@ -293,20 +311,22 @@ export const useRateCardStore = create(
                 return { items };
             });
 
-            // Update in Supabase
-            try {
-                const dbUpdates = {};
-                if (updates.name !== undefined) dbUpdates.name = updates.name;
-                if (updates.description !== undefined) dbUpdates.description = updates.description;
-                if (updates.section !== undefined) dbUpdates.section = updates.section;
-                if (updates.unit !== undefined) dbUpdates.unit = updates.unit;
-                if (updates.pricing !== undefined) dbUpdates.pricing = updates.pricing;
+            // Update in Supabase if configured
+            if (isSupabaseConfigured()) {
+                try {
+                    const dbUpdates = {};
+                    if (updates.name !== undefined) dbUpdates.name = updates.name;
+                    if (updates.description !== undefined) dbUpdates.description = updates.description;
+                    if (updates.section !== undefined) dbUpdates.section = updates.section;
+                    if (updates.unit !== undefined) dbUpdates.unit = updates.unit;
+                    if (updates.pricing !== undefined) dbUpdates.pricing = updates.pricing;
 
-                if (Object.keys(dbUpdates).length > 0) {
-                    await supabase.from('rate_cards').update(dbUpdates).eq('id', itemId);
+                    if (Object.keys(dbUpdates).length > 0) {
+                        await supabase.from('rate_cards').update(dbUpdates).eq('id', itemId);
+                    }
+                } catch (e) {
+                    console.error('Failed to update item in DB:', e);
                 }
-            } catch (e) {
-                console.error('Failed to update item in DB:', e);
             }
         },
 
@@ -330,8 +350,8 @@ export const useRateCardStore = create(
                 return { items };
             });
 
-            // Update in Supabase
-            if (updatedItem) {
+            // Update in Supabase if configured
+            if (isSupabaseConfigured() && updatedItem) {
                 try {
                     await supabase
                         .from('rate_cards')
@@ -350,11 +370,13 @@ export const useRateCardStore = create(
                 return { items };
             });
 
-            // Delete from Supabase
-            try {
-                await supabase.from('rate_cards').delete().eq('id', itemId);
-            } catch (e) {
-                console.error('Failed to delete item from DB:', e);
+            // Delete from Supabase if configured
+            if (isSupabaseConfigured()) {
+                try {
+                    await supabase.from('rate_cards').delete().eq('id', itemId);
+                } catch (e) {
+                    console.error('Failed to delete item from DB:', e);
+                }
             }
         },
 
@@ -396,31 +418,33 @@ export const useRateCardStore = create(
                 return { success: true, added: 0, message: 'All items already exist' };
             }
 
-            // Save to Supabase
-            try {
-                const dbItems = newItems.map(item => ({
-                    name: item.name,
-                    description: item.description,
-                    section: item.section,
-                    unit: item.unit,
-                    pricing: item.pricing,
-                }));
+            // Save to Supabase if configured
+            if (isSupabaseConfigured()) {
+                try {
+                    const dbItems = newItems.map(item => ({
+                        name: item.name,
+                        description: item.description,
+                        section: item.section,
+                        unit: item.unit,
+                        pricing: item.pricing,
+                    }));
 
-                const { data, error } = await supabase
-                    .from('rate_cards')
-                    .insert(dbItems)
-                    .select();
+                    const { data, error } = await supabase
+                        .from('rate_cards')
+                        .insert(dbItems)
+                        .select();
 
-                if (error) throw error;
+                    if (error) throw error;
 
-                // Update IDs from DB
-                if (data) {
-                    data.forEach((dbItem, i) => {
-                        if (newItems[i]) newItems[i].id = dbItem.id;
-                    });
+                    // Update IDs from DB
+                    if (data) {
+                        data.forEach((dbItem, i) => {
+                            if (newItems[i]) newItems[i].id = dbItem.id;
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to seed rate card to DB:', e);
                 }
-            } catch (e) {
-                console.error('Failed to seed rate card to DB:', e);
             }
 
             set(state => {
@@ -438,29 +462,31 @@ export const useRateCardStore = create(
 
         // Reset sections to sync with Quote subsections
         resetSectionsToDefaults: async () => {
-            try {
-                // Delete all existing sections from DB
-                await supabase.from('rate_card_sections').delete().neq('id', '');
+            // Sync to Supabase if configured
+            if (isSupabaseConfigured()) {
+                try {
+                    // Delete all existing sections from DB
+                    await supabase.from('rate_card_sections').delete().neq('id', '');
 
-                // Insert new defaults
-                for (let i = 0; i < DEFAULT_SECTIONS.length; i++) {
-                    const s = DEFAULT_SECTIONS[i];
-                    await supabase.from('rate_card_sections').upsert({
-                        id: s.id,
-                        name: s.name,
-                        sort_order: i,
-                        group_name: s.group,
-                    });
+                    // Insert new defaults
+                    for (let i = 0; i < DEFAULT_SECTIONS.length; i++) {
+                        const s = DEFAULT_SECTIONS[i];
+                        await supabase.from('rate_card_sections').upsert({
+                            id: s.id,
+                            name: s.name,
+                            sort_order: i,
+                            group_name: s.group,
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to reset sections in DB:', e);
                 }
-
-                set({ sections: DEFAULT_SECTIONS });
-                saveSectionsLocal(DEFAULT_SECTIONS);
-
-                return { success: true };
-            } catch (e) {
-                console.error('Failed to reset sections:', e);
-                return { success: false, error: e.message };
             }
+
+            set({ sections: DEFAULT_SECTIONS });
+            saveSectionsLocal(DEFAULT_SECTIONS);
+
+            return { success: true };
         },
 
         // Import from CSV
@@ -534,33 +560,36 @@ export const useRateCardStore = create(
                     }
                 }
 
-                // Save new items to Supabase
-                if (newItems.length > 0) {
-                    const dbItems = newItems.map(item => ({
-                        name: item.name,
-                        description: item.description,
-                        section: item.section,
-                        unit: item.unit,
-                        pricing: item.pricing,
-                    }));
+                // Save to Supabase if configured
+                if (isSupabaseConfigured()) {
+                    // Save new items
+                    if (newItems.length > 0) {
+                        const dbItems = newItems.map(item => ({
+                            name: item.name,
+                            description: item.description,
+                            section: item.section,
+                            unit: item.unit,
+                            pricing: item.pricing,
+                        }));
 
-                    const { data } = await supabase.from('rate_cards').insert(dbItems).select();
-                    if (data) {
-                        data.forEach((dbItem, i) => {
-                            if (newItems[i]) newItems[i].id = dbItem.id;
-                        });
+                        const { data } = await supabase.from('rate_cards').insert(dbItems).select();
+                        if (data) {
+                            data.forEach((dbItem, i) => {
+                                if (newItems[i]) newItems[i].id = dbItem.id;
+                            });
+                        }
                     }
-                }
 
-                // Update existing items in Supabase
-                for (const item of updatedItems) {
-                    await supabase.from('rate_cards').update({
-                        name: item.name,
-                        description: item.description,
-                        section: item.section,
-                        unit: item.unit,
-                        pricing: item.pricing,
-                    }).eq('id', item.id);
+                    // Update existing items
+                    for (const item of updatedItems) {
+                        await supabase.from('rate_cards').update({
+                            name: item.name,
+                            description: item.description,
+                            section: item.section,
+                            unit: item.unit,
+                            pricing: item.pricing,
+                        }).eq('id', item.id);
+                    }
                 }
 
                 set(state => {

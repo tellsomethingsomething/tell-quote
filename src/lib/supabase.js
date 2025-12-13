@@ -1,6 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://deitlnfumugxcbxqqivk.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRlaXRsbmZ1bXVneGNieHFxaXZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NDgxMzMsImV4cCI6MjA4MTEyNDEzM30.unFRnnjTCuxoaAyjfWK1UNjgubq9MYjElXbTN77mjEc';
+// Environment variables must be prefixed with VITE_ to be exposed to client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create client only if credentials are available
+export const supabase = supabaseUrl && supabaseAnonKey
+    ? createClient(supabaseUrl, supabaseAnonKey)
+    : null;
+
+// Helper to check if Supabase is configured
+export const isSupabaseConfigured = () => !!supabase;

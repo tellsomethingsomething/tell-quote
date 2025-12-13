@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Header from './components/layout/Header';
 import EditorPanel from './components/layout/EditorPanel';
 import PreviewPanel from './components/layout/PreviewPanel';
@@ -29,6 +29,57 @@ function App() {
   const [view, setView] = useState('dashboard');
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+
+  // Track initial quote state for change detection
+  const lastSavedQuoteRef = useRef(null);
+  const quote = useQuoteStore(state => state.quote);
+
+  // Check if quote has unsaved changes
+  const hasUnsavedChanges = useCallback(() => {
+    if (view !== 'editor') return false;
+    if (!lastSavedQuoteRef.current) return false;
+
+    // Compare current quote with last saved state (excluding timestamps)
+    const currentQuote = { ...quote };
+    const savedQuote = { ...lastSavedQuoteRef.current };
+    delete currentQuote.updatedAt;
+    delete savedQuote.updatedAt;
+
+    return JSON.stringify(currentQuote) !== JSON.stringify(savedQuote);
+  }, [quote, view]);
+
+  // Save current quote state when entering editor or saving
+  useEffect(() => {
+    if (view === 'editor' && quote.quoteNumber) {
+      lastSavedQuoteRef.current = { ...quote };
+    }
+  }, [view]);
+
+  // Warn about unsaved changes when closing/refreshing browser
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges()) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Helper to confirm navigation away from editor with unsaved changes
+  const confirmNavigateAway = useCallback((callback) => {
+    if (hasUnsavedChanges()) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to leave?')) {
+        lastSavedQuoteRef.current = null;
+        callback();
+      }
+    } else {
+      callback();
+    }
+  }, [hasUnsavedChanges]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -80,27 +131,27 @@ function App() {
   };
 
   const handleGoToClients = () => {
-    setView('clients');
+    confirmNavigateAway(() => setView('clients'));
   };
 
   const handleGoToRateCard = () => {
-    setView('rate-card');
+    confirmNavigateAway(() => setView('rate-card'));
   };
 
   const handleGoToDashboard = () => {
-    setView('dashboard');
+    confirmNavigateAway(() => setView('dashboard'));
   };
 
   const handleGoToSettings = () => {
-    setView('settings');
+    confirmNavigateAway(() => setView('settings'));
   };
 
   const handleGoToQuotes = () => {
-    setView('quotes');
+    confirmNavigateAway(() => setView('quotes'));
   };
 
   const handleGoToFS = () => {
-    setView('fs');
+    confirmNavigateAway(() => setView('fs'));
   };
 
   // Render current view

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const CLIENTS_STORAGE_KEY = 'tell_clients';
 const SAVED_QUOTES_KEY = 'tell_saved_quotes';
@@ -50,8 +50,14 @@ export const useClientStore = create(
         savedQuotes: loadSavedQuotesLocal(),
         loading: false,
 
-        // Initialize - load from Supabase
+        // Initialize - load from Supabase (or localStorage fallback)
         initialize: async () => {
+            // If Supabase not configured, just use localStorage data
+            if (!isSupabaseConfigured()) {
+                set({ loading: false });
+                return;
+            }
+
             set({ loading: true });
             try {
                 // Load clients
@@ -155,27 +161,29 @@ export const useClientStore = create(
                 });
             }
 
-            // Save to Supabase
-            try {
-                const { data, error } = await supabase
-                    .from('clients')
-                    .insert({
-                        company: newClient.company,
-                        contact: newClient.contact,
-                        email: newClient.email,
-                        phone: newClient.phone,
-                        address: newClient.address,
-                        notes: newClient.notes,
-                        tags: newClient.tags,
-                        contacts: newClient.contacts,
-                    })
-                    .select()
-                    .single();
+            // Save to Supabase if configured
+            if (isSupabaseConfigured()) {
+                try {
+                    const { data, error } = await supabase
+                        .from('clients')
+                        .insert({
+                            company: newClient.company,
+                            contact: newClient.contact,
+                            email: newClient.email,
+                            phone: newClient.phone,
+                            address: newClient.address,
+                            notes: newClient.notes,
+                            tags: newClient.tags,
+                            contacts: newClient.contacts,
+                        })
+                        .select()
+                        .single();
 
-                if (error) throw error;
-                newClient.id = data.id;
-            } catch (e) {
-                console.error('Failed to save client to DB:', e);
+                    if (error) throw error;
+                    newClient.id = data.id;
+                } catch (e) {
+                    console.error('Failed to save client to DB:', e);
+                }
             }
 
             set(state => {
@@ -198,23 +206,25 @@ export const useClientStore = create(
                 return { clients };
             });
 
-            // Save to Supabase
-            try {
-                await supabase
-                    .from('clients')
-                    .update({
-                        company: updates.company,
-                        contact: updates.contact,
-                        email: updates.email,
-                        phone: updates.phone,
-                        address: updates.address,
-                        notes: updates.notes,
-                        tags: updates.tags,
-                        contacts: updates.contacts,
-                    })
-                    .eq('id', clientId);
-            } catch (e) {
-                console.error('Failed to update client in DB:', e);
+            // Save to Supabase if configured
+            if (isSupabaseConfigured()) {
+                try {
+                    await supabase
+                        .from('clients')
+                        .update({
+                            company: updates.company,
+                            contact: updates.contact,
+                            email: updates.email,
+                            phone: updates.phone,
+                            address: updates.address,
+                            notes: updates.notes,
+                            tags: updates.tags,
+                            contacts: updates.contacts,
+                        })
+                        .eq('id', clientId);
+                } catch (e) {
+                    console.error('Failed to update client in DB:', e);
+                }
             }
         },
 
@@ -227,11 +237,13 @@ export const useClientStore = create(
                 return { clients, savedQuotes };
             });
 
-            // Delete from Supabase
-            try {
-                await supabase.from('clients').delete().eq('id', clientId);
-            } catch (e) {
-                console.error('Failed to delete client from DB:', e);
+            // Delete from Supabase if configured
+            if (isSupabaseConfigured()) {
+                try {
+                    await supabase.from('clients').delete().eq('id', clientId);
+                } catch (e) {
+                    console.error('Failed to delete client from DB:', e);
+                }
             }
         },
 
@@ -275,14 +287,16 @@ export const useClientStore = create(
                 });
                 saveClientsLocal(clients);
 
-                // Update in DB
-                const updatedClient = clients.find(c => c.id === clientId);
-                if (updatedClient) {
-                    supabase
-                        .from('clients')
-                        .update({ contacts: updatedClient.contacts })
-                        .eq('id', clientId)
-                        .then(() => {});
+                // Update in DB if configured
+                if (isSupabaseConfigured()) {
+                    const updatedClient = clients.find(c => c.id === clientId);
+                    if (updatedClient) {
+                        supabase
+                            .from('clients')
+                            .update({ contacts: updatedClient.contacts })
+                            .eq('id', clientId)
+                            .catch(e => console.error('Failed to sync contact to DB:', e));
+                    }
                 }
 
                 return { clients };
@@ -310,14 +324,16 @@ export const useClientStore = create(
                 });
                 saveClientsLocal(clients);
 
-                // Update in DB
-                const updatedClient = clients.find(c => c.id === clientId);
-                if (updatedClient) {
-                    supabase
-                        .from('clients')
-                        .update({ contacts: updatedClient.contacts })
-                        .eq('id', clientId)
-                        .then(() => {});
+                // Update in DB if configured
+                if (isSupabaseConfigured()) {
+                    const updatedClient = clients.find(c => c.id === clientId);
+                    if (updatedClient) {
+                        supabase
+                            .from('clients')
+                            .update({ contacts: updatedClient.contacts })
+                            .eq('id', clientId)
+                            .catch(e => console.error('Failed to sync contact update to DB:', e));
+                    }
                 }
 
                 return { clients };
@@ -337,14 +353,16 @@ export const useClientStore = create(
                 });
                 saveClientsLocal(clients);
 
-                // Update in DB
-                const updatedClient = clients.find(c => c.id === clientId);
-                if (updatedClient) {
-                    supabase
-                        .from('clients')
-                        .update({ contacts: updatedClient.contacts })
-                        .eq('id', clientId)
-                        .then(() => {});
+                // Update in DB if configured
+                if (isSupabaseConfigured()) {
+                    const updatedClient = clients.find(c => c.id === clientId);
+                    if (updatedClient) {
+                        supabase
+                            .from('clients')
+                            .update({ contacts: updatedClient.contacts })
+                            .eq('id', clientId)
+                            .catch(e => console.error('Failed to sync contact deletion to DB:', e));
+                    }
                 }
 
                 return { clients };
@@ -454,10 +472,12 @@ export const useClientStore = create(
                 return { savedQuotes };
             });
 
-            try {
-                await supabase.from('quotes').delete().eq('id', quoteId);
-            } catch (e) {
-                console.error('Failed to delete quote from DB:', e);
+            if (isSupabaseConfigured()) {
+                try {
+                    await supabase.from('quotes').delete().eq('id', quoteId);
+                } catch (e) {
+                    console.error('Failed to delete quote from DB:', e);
+                }
             }
         },
 
@@ -472,13 +492,15 @@ export const useClientStore = create(
                 return { savedQuotes };
             });
 
-            try {
-                await supabase
-                    .from('quotes')
-                    .update({ status })
-                    .eq('id', quoteId);
-            } catch (e) {
-                console.error('Failed to update quote status in DB:', e);
+            if (isSupabaseConfigured()) {
+                try {
+                    await supabase
+                        .from('quotes')
+                        .update({ status })
+                        .eq('id', quoteId);
+                } catch (e) {
+                    console.error('Failed to update quote status in DB:', e);
+                }
             }
         },
 

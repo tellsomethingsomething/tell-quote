@@ -2,9 +2,8 @@ import { create } from 'zustand';
 
 const AUTH_KEY = 'tell_auth';
 
-// The password for accessing the tool
-// Change this to your desired password
-const APP_PASSWORD = 'tell2024';
+// Password from environment variable (set VITE_APP_PASSWORD in .env)
+const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD || '';
 
 function loadAuth() {
     try {

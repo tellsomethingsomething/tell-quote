@@ -3,7 +3,7 @@ import React from 'react';
 class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { hasError: false, error: null, errorInfo: null };
+        this.state = { hasError: false, error: null, errorInfo: null, copied: false };
     }
 
     // eslint-disable-next-line no-unused-vars
@@ -74,14 +74,21 @@ class ErrorBoundary extends React.Component {
                                 onClick={() => {
                                     const errorText = `Error: ${this.state.error}\n\nStack: ${this.state.errorInfo?.componentStack}`;
                                     navigator.clipboard.writeText(errorText);
-                                    alert('Error details copied to clipboard');
+                                    this.setState({ copied: true });
+                                    setTimeout(() => this.setState({ copied: false }), 2000);
                                 }}
-                                className="flex-1 btn-ghost py-3 flex items-center justify-center gap-2"
+                                className={`flex-1 btn-ghost py-3 flex items-center justify-center gap-2 ${this.state.copied ? 'text-green-400' : ''}`}
                             >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                                Copy Error Details
+                                {this.state.copied ? (
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                )}
+                                {this.state.copied ? 'Copied!' : 'Copy Error Details'}
                             </button>
                         </div>
 

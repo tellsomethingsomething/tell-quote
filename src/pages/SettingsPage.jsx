@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSettingsStore } from '../store/settingsStore';
+import InvoiceDesigner from '../components/invoiceDesigner/InvoiceDesigner';
 
 const TABS = [
     { id: 'company', label: 'Company' },
@@ -10,6 +11,7 @@ const TABS = [
     { id: 'terms', label: 'Terms & Conditions' },
     { id: 'customize', label: 'Customization' },
     { id: 'pdf', label: 'PDF Options' },
+    { id: 'invoice', label: 'Quote Templates' },
     { id: 'ai', label: 'AI Features' },
 ];
 
@@ -75,9 +77,39 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="h-[calc(100vh-60px)] flex">
-            {/* Sidebar */}
-            <div className="w-48 bg-dark-card border-r border-dark-border p-4">
+        <div className="h-[calc(100vh-60px)] flex flex-col md:flex-row">
+            {/* Mobile Header with Dropdown */}
+            <div className="md:hidden bg-dark-card border-b border-dark-border p-3">
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-lg font-bold text-gray-100">Settings</h2>
+                    {showSaved && (
+                        <span className="text-xs text-green-400 flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Saved
+                        </span>
+                    )}
+                </div>
+                {/* Horizontal scrolling tabs on mobile */}
+                <div className="flex gap-1 overflow-x-auto pb-2 -mx-3 px-3">
+                    {TABS.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex-shrink-0 px-3 py-2 rounded-lg text-sm transition-colors min-h-[40px] ${activeTab === tab.id
+                                    ? 'bg-accent-primary/20 text-accent-primary'
+                                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                                }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Desktop Sidebar */}
+            <div className="hidden md:block w-48 bg-dark-card border-r border-dark-border p-4 flex-shrink-0">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-bold text-gray-100">Settings</h2>
                     {showSaved && (
@@ -95,7 +127,7 @@ export default function SettingsPage() {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${activeTab === tab.id
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors min-h-[44px] ${activeTab === tab.id
                                     ? 'bg-accent-primary/20 text-accent-primary'
                                     : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
                                 }`}
@@ -107,7 +139,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
                 {/* Company Tab */}
                 {activeTab === 'company' && (
                     <div className="max-w-2xl">
@@ -686,6 +718,13 @@ export default function SettingsPage() {
                                 </label>
                             ))}
                         </div>
+                    </div>
+                )}
+
+                {/* Invoice Design Tab */}
+                {activeTab === 'invoice' && (
+                    <div className="h-full -m-4 md:-m-6">
+                        <InvoiceDesigner />
                     </div>
                 )}
 

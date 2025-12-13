@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const SETTINGS_KEY = 'tell_settings';
 
@@ -47,6 +47,13 @@ const defaultSettings = {
         showTaxNumber: false,
         showBankDetails: false,
         showLogo: true,
+        // PDF Colors
+        primaryColor: '#143642',    // Headers, section titles
+        accentColor: '#0F8B8D',     // Accent elements
+        lineColor: '#143642',       // All lines and borders
+        textColor: '#374151',       // Body text
+        mutedColor: '#6B7280',      // Secondary text
+        backgroundColor: '#FFFFFF', // Page background
     },
     aiSettings: {
         anthropicKey: '',
@@ -113,6 +120,7 @@ let settingsDbId = null;
 
 // Save to Supabase
 async function saveSettingsToDb(settings) {
+    if (!isSupabaseConfigured()) return;
     try {
         if (settingsDbId) {
             await supabase
@@ -136,8 +144,14 @@ export const useSettingsStore = create(
         settings: loadSettingsLocal(),
         loading: false,
 
-        // Initialize - load from Supabase
+        // Initialize - load from Supabase (or localStorage fallback)
         initialize: async () => {
+            // If Supabase not configured, just use localStorage data
+            if (!isSupabaseConfigured()) {
+                set({ loading: false });
+                return;
+            }
+
             set({ loading: true });
             try {
                 const { data, error } = await supabase
