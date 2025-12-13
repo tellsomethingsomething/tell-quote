@@ -26,6 +26,7 @@ export default function CommercialTasksPage() {
     const updateOpportunity = useOpportunityStore(state => state.updateOpportunity);
     const addOpportunity = useOpportunityStore(state => state.addOpportunity);
     const { addActivityLog } = useSettingsStore();
+    const settings = useSettingsStore(state => state.settings);
 
     const [tasks, setTasks] = useState(() => {
         const saved = localStorage.getItem('tell_commercial_tasks_v2');
@@ -185,28 +186,30 @@ export default function CommercialTasksPage() {
                 })),
             };
 
-            const prompt = `You are a commercial task generator for Tell Productions (broadcast/streaming production in EMERGING MARKETS). Generate ACTIONABLE tasks based on the data below.
+            const companyInfo = settings?.company || {};
+            const prompt = `You are a commercial task generator for ${companyInfo.name || 'Tell Productions'} - a broadcast/streaming production company.
+
+COMPANY INFO:
+- Name: ${companyInfo.name || 'Tell Productions'}
+- Based in: ${companyInfo.country || 'Malaysia'}
+- Website: ${companyInfo.website || ''}
 
 TODAY'S DATE: ${new Date().toLocaleDateString('en-GB')} (${new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })})
 IMPORTANT: Only suggest CURRENT or FUTURE opportunities. Do not reference past events or old dates.
 
-FOCUS REGIONS (priority order):
-1. Southeast Asia (Malaysia, Indonesia, Thailand, Vietnam, Philippines, Singapore)
-2. GCC/Middle East (UAE, Saudi Arabia, Qatar, Bahrain, Kuwait, Oman)
-3. Central Asia (Kazakhstan, Uzbekistan)
-4. South Asia (India, Pakistan)
+FOCUS REGIONS: Only use regions that appear in the opportunities data below. Do not suggest regions we don't already operate in.
 
-AVOID: Western Europe, North America, Australia - these are NOT our target markets.
+SPORTS FOCUS: Football (soccer), futsal, cycling ONLY. Primarily football. No other sports.
 
 DATA:
 ${JSON.stringify(compactData, null, 1)}
 
 RULES:
-- Prioritize tasks in our focus regions above
-- Reference specific clients, opportunities, quotes from data where available
-- For research tasks: suggest SPECIFIC organizations/contacts to reach out to (broadcasters, sports federations, production companies in our regions)
+- ONLY use regions/countries that appear in our opportunities data
+- Reference specific clients, opportunities, quotes from the data
+- For research tasks: suggest SPECIFIC organizations/contacts (broadcasters, football federations, production companies)
 - Include contact suggestions with roles where possible
-- Focus on football, cricket, motorsport, esports broadcasting opportunities
+- Football/futsal/cycling opportunities ONLY - no other sports
 
 CATEGORIES & TASKS:
 
