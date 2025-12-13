@@ -169,7 +169,7 @@ UPDATE settings SET user_id = 'YOUR_USER_ID' WHERE user_id IS NULL;
 ```bash
 # Edit .env.local
 # Comment out or remove:
-# VITE_APP_PASSWORD=tell2024
+# VITE_APP_PASSWORD=your-secure-password
 
 # Keep only:
 VITE_SUPABASE_URL=https://...

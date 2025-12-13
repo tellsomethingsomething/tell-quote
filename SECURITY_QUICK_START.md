@@ -10,7 +10,7 @@ Your app currently uses **password-based auth** (VITE_APP_PASSWORD). This works 
 #### Option A: Keep Using (Not Recommended for Production)
 ```bash
 # Current setup - works but not secure
-VITE_APP_PASSWORD=tell2024
+VITE_APP_PASSWORD=your-secure-password
 
 # Features you have:
 ✓ Rate limiting (5 attempts → 15min lockout)
@@ -45,7 +45,7 @@ UPDATE rate_cards SET user_id = 'YOUR_UUID' WHERE user_id IS NULL;
 UPDATE settings SET user_id = 'YOUR_UUID' WHERE user_id IS NULL;
 
 # Step 4: Update .env.local (10 seconds)
-# → Remove: VITE_APP_PASSWORD=tell2024
+# → Remove: VITE_APP_PASSWORD=your-secure-password
 # → Keep: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
 
 # Step 5: Test (1 minute)

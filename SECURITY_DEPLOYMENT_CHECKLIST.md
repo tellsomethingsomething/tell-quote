@@ -45,7 +45,7 @@
   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 
   # REMOVE or comment out this line for production:
-  # VITE_APP_PASSWORD=tell2024
+  # VITE_APP_PASSWORD=your-secure-password
   ```
 
 - [ ] **Verify Environment Variables**
@@ -229,7 +229,7 @@ If issues occur after deployment:
 1. **Re-enable Password Auth**
    ```bash
    # Add back to .env.local:
-   VITE_APP_PASSWORD=tell2024
+   VITE_APP_PASSWORD=your-secure-password
    ```
 
 2. **Redeploy**

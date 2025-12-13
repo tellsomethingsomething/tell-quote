@@ -23,7 +23,7 @@ This application has **CRITICAL SECURITY VULNERABILITIES** that must be addresse
 
 ```javascript
 // EXPOSED IN .ENV.LOCAL
-VITE_APP_PASSWORD=tell2024
+VITE_APP_PASSWORD=your-secure-password
 
 // VULNERABLE CODE
 const APP_PASSWORD = import.meta.env.VITE_APP_PASSWORD || '';
@@ -516,7 +516,7 @@ Vite bundles all `VITE_*` variables into built JavaScript:
 
 ```javascript
 // In dist/assets/index-[hash].js you'll find:
-const APP_PASSWORD = "tell2024";
+const APP_PASSWORD = "your-secure-password";
 const SUPABASE_URL = "https://deitlnfumugxcbxqqivk.supabase.co";
 ```
 
