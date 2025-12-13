@@ -39,8 +39,18 @@ export const supabase = supabaseUrl && supabaseAnonKey
     })
     : null;
 
-// Helper to check if Supabase is configured
+// Helper to check if Supabase is configured (for data storage)
 export const isSupabaseConfigured = () => !!supabase;
+
+// Helper to check if Supabase AUTH should be used
+// If VITE_APP_PASSWORD is set, use password auth instead of Supabase Auth
+export const useSupabaseAuth = () => {
+    const hasAppPassword = !!import.meta.env.VITE_APP_PASSWORD;
+    // If password is configured, use password auth (not Supabase Auth)
+    if (hasAppPassword) return false;
+    // Otherwise, use Supabase Auth if Supabase is configured
+    return isSupabaseConfigured();
+};
 
 /**
  * Helper to get current authenticated user

@@ -73,14 +73,7 @@ export default function LoginPage() {
                         role="img"
                     />
                     <h1 className="text-xl font-bold text-white mb-2">Internal Quote Tool</h1>
-                    <p className="text-gray-500 text-sm">
-                        {useSupabase ? 'Secure Access' : 'Directors & Partners Access'}
-                    </p>
-                    {!useSupabase && (
-                        <p className="text-yellow-500 text-xs mt-2">
-                            Legacy password mode - Consider migrating to Supabase Auth
-                        </p>
-                    )}
+                    <p className="text-gray-500 text-sm">Secure Access</p>
                 </div>
 
                 {/* Login Card */}
