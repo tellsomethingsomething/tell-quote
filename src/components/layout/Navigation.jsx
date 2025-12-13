@@ -21,8 +21,8 @@ export default function Navigation({ activeTab, onTabChange }) {
                         onClick={() => onTabChange(tab.id)}
                         className={`px-5 py-2 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-200 ${
                             activeTab === tab.id
-                                ? 'bg-accent-primary/10 text-accent-primary'
-                                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                                ? 'bg-accent-primary/20 text-accent-primary border border-accent-primary/30'
+                                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5 border border-transparent'
                         }`}
                         aria-current={activeTab === tab.id ? 'page' : undefined}
                     >
@@ -39,8 +39,8 @@ export default function Navigation({ activeTab, onTabChange }) {
                         onClick={() => onTabChange(tab.id)}
                         className={`px-2 py-1.5 min-w-[52px] min-h-[52px] rounded-lg transition-all duration-200 flex flex-col items-center justify-center gap-0.5 ${
                             activeTab === tab.id
-                                ? 'bg-accent-primary/10 text-accent-primary'
-                                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                                ? 'bg-accent-primary/20 text-accent-primary border border-accent-primary/30'
+                                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5 border border-transparent'
                         }`}
                         aria-current={activeTab === tab.id ? 'page' : undefined}
                         aria-label={tab.label}
