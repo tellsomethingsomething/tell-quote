@@ -9,6 +9,14 @@ const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
 // Scan interval: 3 hours in milliseconds
 const SCAN_INTERVAL = 3 * 60 * 60 * 1000;
 
+// Task categories
+const CATEGORIES = [
+    { id: 'upcoming_deals', label: 'Upcoming Deals', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-green-400 bg-green-500/10 border-green-500/30' },
+    { id: 'client_tasks', label: 'Client Tasks', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' },
+    { id: 'research', label: 'Research', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', color: 'text-purple-400 bg-purple-500/10 border-purple-500/30' },
+    { id: 'client_comms', label: 'Client Comms', icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', color: 'text-orange-400 bg-orange-500/10 border-orange-500/30' },
+];
+
 export default function CommercialTasksPage() {
     const clients = useClientStore(state => state.clients) || [];
     const quotes = useClientStore(state => state.quotes) || [];
@@ -16,7 +24,11 @@ export default function CommercialTasksPage() {
     const { settings } = useSettingsStore();
 
     const [tasks, setTasks] = useState(() => {
-        const saved = localStorage.getItem('tell_commercial_tasks');
+        const saved = localStorage.getItem('tell_commercial_tasks_v2');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const [manualTasks, setManualTasks] = useState(() => {
+        const saved = localStorage.getItem('tell_manual_tasks');
         return saved ? JSON.parse(saved) : [];
     });
     const [loading, setLoading] = useState(false);
@@ -26,23 +38,29 @@ export default function CommercialTasksPage() {
         return saved ? new Date(saved) : null;
     });
     const [completedTasks, setCompletedTasks] = useState(() => {
-        const saved = localStorage.getItem('tell_completed_tasks');
+        const saved = localStorage.getItem('tell_completed_tasks_v2');
         return saved ? JSON.parse(saved) : [];
     });
     const [nextScan, setNextScan] = useState(null);
+    const [showAddTask, setShowAddTask] = useState(false);
+    const [newTask, setNewTask] = useState({ title: '', description: '', category: 'client_tasks', priority: 'medium' });
+    const [activeCategory, setActiveCategory] = useState('all');
 
     const scanIntervalRef = useRef(null);
 
     // Save tasks to localStorage
     useEffect(() => {
-        if (tasks.length > 0) {
-            localStorage.setItem('tell_commercial_tasks', JSON.stringify(tasks));
-        }
+        localStorage.setItem('tell_commercial_tasks_v2', JSON.stringify(tasks));
     }, [tasks]);
+
+    // Save manual tasks to localStorage
+    useEffect(() => {
+        localStorage.setItem('tell_manual_tasks', JSON.stringify(manualTasks));
+    }, [manualTasks]);
 
     // Save completed tasks to localStorage
     useEffect(() => {
-        localStorage.setItem('tell_completed_tasks', JSON.stringify(completedTasks));
+        localStorage.setItem('tell_completed_tasks_v2', JSON.stringify(completedTasks));
     }, [completedTasks]);
 
     // Save last generated time
@@ -77,197 +95,124 @@ export default function CommercialTasksPage() {
                 return Math.floor((Date.now() - new Date(dateStr)) / (1000 * 60 * 60 * 24));
             };
 
-            // Get unique client companies for market research
-            const uniqueCompanies = [...new Set([
-                ...clients.map(c => c.company).filter(Boolean),
-                ...opportunities.map(o => o.client?.company).filter(Boolean),
-            ])];
-
-            // Aggregate ALL business data - comprehensive view
-            const businessData = {
-                // === SUMMARY METRICS ===
+            // Compress data for token efficiency
+            const compactData = {
                 summary: {
                     totalClients: clients.length,
                     totalQuotes: quotes.length,
                     totalOpportunities: opportunities.length,
-                    quotesWon: quotes.filter(q => q.status === 'won').length,
-                    quotesSent: quotes.filter(q => q.status === 'sent').length,
-                    quotesDraft: quotes.filter(q => q.status === 'draft').length,
-                    quotesDead: quotes.filter(q => q.status === 'dead').length,
                     activeOpportunities: opportunities.filter(o => o.status === 'active').length,
                     totalPipelineValue: opportunities.filter(o => o.status === 'active').reduce((sum, o) => sum + (o.value || 0), 0),
-                    weightedPipelineValue: opportunities.filter(o => o.status === 'active').reduce((sum, o) => sum + ((o.value || 0) * (o.probability || 50) / 100), 0),
                 },
-
-                // === ALL OPPORTUNITIES with full details ===
-                opportunities: opportunities.map(o => ({
-                    id: o.id,
+                opportunities: opportunities.filter(o => o.status === 'active').map(o => ({
                     title: o.title,
                     client: o.client?.company,
                     clientContact: o.client?.contact,
                     country: o.country,
                     region: o.region,
-                    status: o.status,
                     value: o.value,
                     currency: o.currency || 'USD',
                     probability: o.probability,
-                    source: o.source,
                     competitors: o.competitors,
-                    brief: o.brief,
-                    notes: o.notes,
+                    brief: o.brief?.substring(0, 300),
+                    notes: o.notes?.substring(0, 200),
                     nextAction: o.nextAction,
                     nextActionDate: o.nextActionDate,
                     expectedCloseDate: o.expectedCloseDate,
                     contacts: o.contacts?.map(c => ({ name: c.name, role: c.role, email: c.email })),
                     daysSinceUpdate: daysSince(o.updatedAt),
-                    daysSinceCreated: daysSince(o.createdAt),
-                    daysUntilClose: o.expectedCloseDate ? -daysSince(o.expectedCloseDate) : null,
                     isOverdue: o.nextActionDate && new Date(o.nextActionDate) < new Date(),
-                    isStale: daysSince(o.updatedAt) > 14 && o.status === 'active',
+                    isStale: daysSince(o.updatedAt) > 14,
                 })),
-
-                // === ALL QUOTES with full details ===
-                quotes: quotes.map(q => ({
-                    number: q.quoteNumber,
-                    client: q.client?.company,
-                    clientContact: q.client?.contact,
-                    clientEmail: q.client?.email,
-                    project: q.project?.title,
-                    projectType: q.project?.type,
-                    projectDates: q.project?.dates,
-                    status: q.status,
-                    total: q.totals?.grandTotal,
-                    cost: q.totals?.totalCost,
-                    margin: q.totals?.margin,
-                    currency: q.currency,
-                    region: q.region,
-                    date: q.quoteDate,
-                    daysSinceCreated: daysSince(q.quoteDate),
-                    isLocked: q.isLocked,
-                })),
-
-                // === ALL CLIENTS with interaction history ===
                 clients: clients.map(c => {
-                    const clientQuotes = quotes.filter(q => q.client?.company === c.company);
                     const clientOpps = opportunities.filter(o => o.client?.company === c.company);
                     return {
                         company: c.company,
                         contact: c.contact,
                         email: c.email,
-                        phone: c.phone,
                         region: c.region,
-                        notes: c.notes,
-                        tags: c.tags,
-                        contacts: c.contacts?.map(ct => ({ name: ct.name, role: ct.role, email: ct.email })),
-                        totalQuotes: clientQuotes.length,
-                        wonQuotes: clientQuotes.filter(q => q.status === 'won').length,
-                        totalRevenue: clientQuotes.filter(q => q.status === 'won').reduce((sum, q) => sum + (q.totals?.grandTotal || 0), 0),
+                        notes: c.notes?.substring(0, 150),
+                        contacts: c.contacts?.map(ct => ({ name: ct.name, role: ct.role, email: ct.email, phone: ct.phone })),
                         activeOpportunities: clientOpps.filter(o => o.status === 'active').length,
-                        lastQuoteDate: clientQuotes.sort((a, b) => new Date(b.quoteDate) - new Date(a.quoteDate))[0]?.quoteDate,
-                        daysSinceLastQuote: daysSince(clientQuotes.sort((a, b) => new Date(b.quoteDate) - new Date(a.quoteDate))[0]?.quoteDate),
                         daysSinceLastContact: daysSince(c.updatedAt),
                     };
                 }),
-
-                // === URGENT ITEMS ===
-                urgent: {
-                    overdueActions: opportunities.filter(o => o.nextActionDate && new Date(o.nextActionDate) < new Date() && o.status === 'active'),
-                    staleOpportunities: opportunities.filter(o => daysSince(o.updatedAt) > 14 && o.status === 'active'),
-                    pendingQuotesOver7Days: quotes.filter(q => q.status === 'sent' && daysSince(q.quoteDate) > 7),
-                    closingThisWeek: opportunities.filter(o => {
-                        if (!o.expectedCloseDate || o.status !== 'active') return false;
-                        const daysUntil = -daysSince(o.expectedCloseDate);
-                        return daysUntil >= 0 && daysUntil <= 7;
-                    }),
-                },
-
-                // === PIPELINE ANALYSIS ===
-                pipeline: {
-                    byRegion: ['GCC', 'SEA', 'Central Asia'].map(region => ({
-                        region,
-                        count: opportunities.filter(o => o.region === region && o.status === 'active').length,
-                        value: opportunities.filter(o => o.region === region && o.status === 'active').reduce((sum, o) => sum + (o.value || 0), 0),
-                    })),
-                    byCountry: [...new Set(opportunities.map(o => o.country))].filter(Boolean).map(country => ({
-                        country,
-                        count: opportunities.filter(o => o.country === country && o.status === 'active').length,
-                        value: opportunities.filter(o => o.country === country && o.status === 'active').reduce((sum, o) => sum + (o.value || 0), 0),
-                    })),
-                    highValue: opportunities.filter(o => (o.value || 0) > 50000 && o.status === 'active'),
-                    highProbability: opportunities.filter(o => (o.probability || 0) >= 70 && o.status === 'active'),
-                },
-
-                // === CLIENT INSIGHTS ===
-                clientInsights: {
-                    topClients: clients
-                        .map(c => ({
-                            company: c.company,
-                            revenue: quotes.filter(q => q.client?.company === c.company && q.status === 'won').reduce((sum, q) => sum + (q.totals?.grandTotal || 0), 0),
-                        }))
-                        .sort((a, b) => b.revenue - a.revenue)
-                        .slice(0, 10),
-                    dormantClients: clients.filter(c => {
-                        const lastQuote = quotes.filter(q => q.client?.company === c.company).sort((a, b) => new Date(b.quoteDate) - new Date(a.quoteDate))[0];
-                        return lastQuote && daysSince(lastQuote.quoteDate) > 90;
-                    }),
-                    newClients: clients.filter(c => daysSince(c.createdAt) <= 30),
-                },
-
-                // === MARKET CONTEXT ===
-                marketContext: {
-                    regions: ['Malaysia', 'Southeast Asia', 'Gulf States (GCC)', 'Central Asia'],
-                    sectors: ['Broadcast', 'Streaming', 'Sports', 'Corporate Events', 'Technical Production'],
-                    majorCompanies: uniqueCompanies.slice(0, 20),
-                },
+                recentQuotes: quotes.slice(0, 10).map(q => ({
+                    number: q.quoteNumber,
+                    client: q.client?.company,
+                    project: q.project?.title,
+                    status: q.status,
+                    total: q.totals?.grandTotal,
+                    date: q.quoteDate,
+                })),
             };
 
-            // Compress data for token efficiency - only include relevant fields
-            const compactData = {
-                summary: businessData.summary,
-                urgent: {
-                    overdueActions: businessData.urgent.overdueActions.map(o => ({ title: o.title, client: o.client?.company, nextAction: o.nextAction, value: o.value })),
-                    staleOpps: businessData.urgent.staleOpportunities.map(o => ({ title: o.title, client: o.client?.company, days: daysSince(o.updatedAt), value: o.value })),
-                    pendingQuotes: businessData.urgent.pendingQuotesOver7Days.map(q => ({ number: q.quoteNumber, client: q.client?.company, days: daysSince(q.quoteDate), total: q.totals?.grandTotal })),
-                    closingSoon: businessData.urgent.closingThisWeek.map(o => ({ title: o.title, client: o.client?.company, value: o.value, closeDate: o.expectedCloseDate })),
-                },
-                opportunities: businessData.opportunities.filter(o => o.status === 'active').map(o => ({
-                    title: o.title, client: o.client, country: o.country, value: o.value, prob: o.probability,
-                    notes: o.notes?.substring(0, 200), nextAction: o.nextAction, stale: o.isStale, overdue: o.isOverdue,
-                })),
-                clients: businessData.clients.map(c => ({
-                    company: c.company, contact: c.contact, notes: c.notes?.substring(0, 150),
-                    quotes: c.totalQuotes, won: c.wonQuotes, revenue: c.totalRevenue, daysSince: c.daysSinceLastQuote,
-                })),
-                pipeline: businessData.pipeline,
-                topClients: businessData.clientInsights.topClients,
-                dormant: businessData.clientInsights.dormantClients.map(c => c.company),
-            };
+            const prompt = `You are the Commercial Director at Tell Productions, a broadcast and streaming production company based in Malaysia, serving Southeast Asia (SEA), Gulf States (GCC), and Central Asia.
 
-            const prompt = `You are the Commercial Director at Tell Productions (broadcast/streaming production) in Malaysia, SEA, Gulf & Central Asia.
+TODAY'S DATE: ${new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 
-TODAY'S DATE: ${new Date().toLocaleDateString()}
-
-BUSINESS DATA:
+YOUR BUSINESS DATA:
 ${JSON.stringify(compactData, null, 1)}
 
-MARKET CONTEXT TO CONSIDER:
-- Major sports events: AFC Asian Cup, SEA Games, Gulf Cup, Cricket tournaments, F1 races
-- Broadcasting trends: OTT growth, 4K/HDR adoption, cloud production, remote workflows
-- Regional dynamics: Saudi Vision 2030 entertainment investment, Malaysia's creative economy push, Singapore as APAC hub
-- Competitors: typical regional broadcast service providers
-- Seasonality: Q4 budget cycles, Ramadan scheduling, monsoon season impacts
+STRATEGIC FOCUS - FOOTBALL & SPORTS BROADCASTING:
+Our growth priority is football and sports broadcasting opportunities. Key events and leagues to track:
 
-Generate 8-12 SPECIFIC commercial tasks. Include:
-1. URGENT: Overdue actions, stale deals, pending quotes
-2. REVENUE: High-value closes, follow-ups with decision makers
-3. MARKET: Opportunities from events/trends you know about in these regions
-4. RELATIONSHIP: Key client touchpoints, dormant client reactivation
-5. GROWTH: Cross-sell, upsell based on client history
+SOUTHEAST ASIA:
+- AFF Championship (ASEAN Football Federation)
+- Malaysia Super League, Singapore Premier League, Thai League
+- AFC Champions League (Asian clubs)
+- SEA Games football
+- Indonesian Liga 1
 
-Return ONLY JSON array:
-[{"id":"unique","priority":"high|medium|low","category":"urgent|revenue|market|relationship|growth","title":"Specific action with names","description":"Context & talking points","client":"Company","deadline":"Today|Tomorrow|This week","impact":"Revenue/strategic value"}]
+GULF STATES (GCC):
+- Saudi Pro League (huge investment, international stars)
+- UAE Pro League, Qatar Stars League
+- Gulf Cup of Nations
+- AFC Asian Cup qualifiers
+- Club World Cup
 
-Be specific with actual names, values, dates from the data. Reference market events where relevant.`;
+CENTRAL ASIA:
+- Kazakhstan Premier League
+- Uzbekistan Super League
+- AFC competitions
+
+SERVICES WE OFFER:
+- Live broadcast production (OB trucks, cameras, crews)
+- Streaming/OTT platform delivery
+- Sports graphics packages (scorebugs, lower thirds, AR)
+- Remote/cloud production workflows
+- Instant replay and VAR support systems
+
+KEY CONTACTS TO TARGET (by role):
+- Broadcasters: Head of Sports, Director of Production, Technical Director
+- Federations: Commercial Director, Media Rights Manager, Broadcasting Manager
+- Clubs: Media Manager, Commercial Director, Marketing Director
+- OTT Platforms: Content Acquisition, Head of Sports, Technical Operations
+
+Generate 10-15 tasks across these 4 categories:
+
+1. UPCOMING_DEALS - Active opportunities to close, quotes to follow up, deals in pipeline
+2. CLIENT_TASKS - Actions for existing clients (follow-ups, renewals, upsells)
+3. RESEARCH - Market intelligence: upcoming football events, broadcast tenders, rights deals, competitor moves
+4. CLIENT_COMMS - Relationship building: check-ins, introductions, networking opportunities
+
+For each task, include WHO SPECIFICALLY to contact (name if in data, or role/title to find).
+
+Return ONLY a JSON array:
+[{
+  "id": "unique_id",
+  "category": "upcoming_deals|client_tasks|research|client_comms",
+  "priority": "high|medium|low",
+  "title": "Specific action",
+  "description": "Context, talking points, why this matters",
+  "client": "Company name or null",
+  "contact": "Specific person name/role to reach",
+  "deadline": "Today|Tomorrow|This week|Next week",
+  "event": "Related football event if applicable",
+  "value": "Potential revenue or strategic value"
+}]
+
+Be specific with names, values, dates from the data. Reference upcoming football events. Suggest specific people to contact.`;
 
             const response = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
@@ -307,7 +252,7 @@ Be specific with actual names, values, dates from the data. Reference market eve
         } finally {
             setLoading(false);
         }
-    }, [clients, quotes, opportunities, tasks.length]);
+    }, [clients, quotes, opportunities, tasks.length, lastGenerated]);
 
     // Auto-generate on mount and set up 3-hour interval
     useEffect(() => {
@@ -350,12 +295,29 @@ Be specific with actual names, values, dates from the data. Reference market eve
         };
     }, [clients.length, quotes.length, opportunities.length, generateTasks, lastGenerated, tasks.length]);
 
-    const toggleTaskComplete = (taskId) => {
-        setCompletedTasks(prev =>
-            prev.includes(taskId)
-                ? prev.filter(id => id !== taskId)
-                : [...prev, taskId]
-        );
+    const toggleTaskComplete = (taskId, isManual = false) => {
+        if (isManual) {
+            setManualTasks(prev => prev.filter(t => t.id !== taskId));
+        } else {
+            setCompletedTasks(prev =>
+                prev.includes(taskId)
+                    ? prev.filter(id => id !== taskId)
+                    : [...prev, taskId]
+            );
+        }
+    };
+
+    const addManualTask = () => {
+        if (!newTask.title.trim()) return;
+        const task = {
+            ...newTask,
+            id: `manual_${Date.now()}`,
+            isManual: true,
+            createdAt: new Date().toISOString(),
+        };
+        setManualTasks(prev => [task, ...prev]);
+        setNewTask({ title: '', description: '', category: 'client_tasks', priority: 'medium' });
+        setShowAddTask(false);
     };
 
     const getPriorityColor = (priority) => {
@@ -367,52 +329,62 @@ Be specific with actual names, values, dates from the data. Reference market eve
         }
     };
 
-    const getCategoryIcon = (category) => {
-        switch (category) {
-            case 'urgent':
-                return 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z';
-            case 'revenue':
-                return 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
-            case 'relationship':
-                return 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z';
-            case 'pipeline':
-                return 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z';
-            case 'growth':
-                return 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6';
-            case 'market':
-                return 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
-            default:
-                return 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2';
-        }
+    const getCategoryInfo = (categoryId) => {
+        return CATEGORIES.find(c => c.id === categoryId) || CATEGORIES[0];
     };
 
-    const activeTasks = tasks.filter(t => !completedTasks.includes(t.id));
+    // Combine AI and manual tasks
+    const allTasks = [
+        ...manualTasks,
+        ...tasks.filter(t => !completedTasks.includes(t.id))
+    ];
+
+    // Filter by category
+    const filteredTasks = activeCategory === 'all'
+        ? allTasks
+        : allTasks.filter(t => t.category === activeCategory);
+
+    // Group tasks by category for display
+    const tasksByCategory = CATEGORIES.reduce((acc, cat) => {
+        acc[cat.id] = filteredTasks.filter(t => t.category === cat.id);
+        return acc;
+    }, {});
+
     const completedTasksList = tasks.filter(t => completedTasks.includes(t.id));
 
     return (
         <div className="min-h-screen bg-dark-bg">
             <div className="max-w-6xl mx-auto px-4 py-8">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-6">
                     <div>
                         <h1 className="text-2xl font-bold text-white">Commercial Tasks</h1>
                         <p className="text-gray-400 text-sm mt-1">
-                            AI-powered tasks from your pipeline, client data & market intelligence
+                            Football & sports broadcasting opportunities in SEA, GCC & Central Asia
                         </p>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         {lastGenerated && (
-                            <div className="text-right">
+                            <div className="text-right hidden sm:block">
                                 <span className="text-xs text-gray-500 block">
                                     Last scan: {lastGenerated.toLocaleTimeString()}
                                 </span>
                                 {nextScan && (
                                     <span className="text-[10px] text-gray-600">
-                                        Next: {nextScan.toLocaleTimeString()} ({Math.round((nextScan - Date.now()) / (1000 * 60 * 60))}h)
+                                        Next: {nextScan.toLocaleTimeString()}
                                     </span>
                                 )}
                             </div>
                         )}
+                        <button
+                            onClick={() => setShowAddTask(true)}
+                            className="btn-ghost flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span className="hidden sm:inline">Add Task</span>
+                        </button>
                         <button
                             onClick={() => generateTasks(true)}
                             disabled={loading}
@@ -424,19 +396,122 @@ Be specific with actual names, values, dates from the data. Reference market eve
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    Analyzing...
+                                    <span className="hidden sm:inline">Scanning...</span>
                                 </>
                             ) : (
                                 <>
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                     </svg>
-                                    Refresh
+                                    <span className="hidden sm:inline">Refresh</span>
                                 </>
                             )}
                         </button>
                     </div>
                 </div>
+
+                {/* Category Tabs */}
+                <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                    <button
+                        onClick={() => setActiveCategory('all')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                            activeCategory === 'all'
+                                ? 'bg-accent-primary/20 text-accent-primary border border-accent-primary/30'
+                                : 'bg-gray-800 text-gray-400 hover:text-gray-200 border border-transparent'
+                        }`}
+                    >
+                        All ({allTasks.length})
+                    </button>
+                    {CATEGORIES.map(cat => {
+                        const count = allTasks.filter(t => t.category === cat.id).length;
+                        return (
+                            <button
+                                key={cat.id}
+                                onClick={() => setActiveCategory(cat.id)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
+                                    activeCategory === cat.id
+                                        ? `${cat.color}`
+                                        : 'bg-gray-800 text-gray-400 hover:text-gray-200 border border-transparent'
+                                }`}
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={cat.icon} />
+                                </svg>
+                                {cat.label} ({count})
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Add Task Modal */}
+                {showAddTask && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md">
+                            <h3 className="text-lg font-semibold text-white mb-4">Add Task</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">Title</label>
+                                    <input
+                                        type="text"
+                                        value={newTask.title}
+                                        onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                                        className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                                        placeholder="Task title..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">Description</label>
+                                    <textarea
+                                        value={newTask.description}
+                                        onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                                        className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white h-20"
+                                        placeholder="Details..."
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm text-gray-400 mb-1">Category</label>
+                                        <select
+                                            value={newTask.category}
+                                            onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
+                                            className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                                        >
+                                            {CATEGORIES.map(cat => (
+                                                <option key={cat.id} value={cat.id}>{cat.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-gray-400 mb-1">Priority</label>
+                                        <select
+                                            value={newTask.priority}
+                                            onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
+                                            className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                                        >
+                                            <option value="high">High</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="low">Low</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setShowAddTask(false)}
+                                    className="btn-ghost"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={addManualTask}
+                                    className="btn-primary"
+                                >
+                                    Add Task
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Error State */}
                 {error && (
@@ -446,128 +521,172 @@ Be specific with actual names, values, dates from the data. Reference market eve
                 )}
 
                 {/* Empty State */}
-                {!loading && tasks.length === 0 && !error && (
+                {!loading && filteredTasks.length === 0 && !error && (
                     <div className="text-center py-16">
                         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center">
                             <svg className="w-8 h-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                             </svg>
                         </div>
-                        <h3 className="text-lg font-medium text-gray-300 mb-2">No tasks generated yet</h3>
+                        <h3 className="text-lg font-medium text-gray-300 mb-2">No tasks yet</h3>
                         <p className="text-gray-500 text-sm mb-6">
-                            Click "Generate Tasks" to analyze your business data and get actionable items
+                            Click "Refresh" to scan for opportunities or add a task manually
                         </p>
-                        <div className="text-xs text-gray-600 space-y-1">
-                            <p>{clients.length} clients | {quotes.length} quotes | {opportunities.length} opportunities</p>
-                        </div>
                     </div>
                 )}
 
-                {/* Tasks List */}
-                {activeTasks.length > 0 && (
-                    <div className="space-y-4 mb-8">
-                        <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-                            Active Tasks ({activeTasks.length})
-                        </h2>
-                        {activeTasks.map((task) => (
-                            <div
-                                key={task.id}
-                                className="bg-dark-card border border-dark-border rounded-lg p-4 hover:border-gray-700 transition-colors"
-                            >
-                                <div className="flex items-start gap-4">
-                                    {/* Checkbox */}
-                                    <button
-                                        onClick={() => toggleTaskComplete(task.id)}
-                                        className="mt-1 w-5 h-5 rounded border-2 border-gray-600 hover:border-accent-primary flex items-center justify-center flex-shrink-0 transition-colors"
-                                    >
-                                        {completedTasks.includes(task.id) && (
-                                            <svg className="w-3 h-3 text-accent-primary" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                            </svg>
-                                        )}
-                                    </button>
-
-                                    {/* Category Icon */}
-                                    <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
-                                        <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={getCategoryIcon(task.category)} />
+                {/* Tasks by Category */}
+                {activeCategory === 'all' ? (
+                    // Show grouped by category
+                    CATEGORIES.map(cat => {
+                        const catTasks = tasksByCategory[cat.id];
+                        if (catTasks.length === 0) return null;
+                        return (
+                            <div key={cat.id} className="mb-8">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${cat.color}`}>
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={cat.icon} />
                                         </svg>
                                     </div>
-
-                                    {/* Content */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                            <h3 className="font-medium text-gray-200">{task.title}</h3>
-                                            <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${getPriorityColor(task.priority)}`}>
-                                                {task.priority}
-                                            </span>
-                                            <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
-                                                {task.category}
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-gray-400 mb-2">{task.description}</p>
-                                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                                            {task.client && (
-                                                <span className="flex items-center gap-1">
-                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                    </svg>
-                                                    {task.client}
-                                                </span>
-                                            )}
-                                            {task.deadline && (
-                                                <span className="flex items-center gap-1">
-                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    {task.deadline}
-                                                </span>
-                                            )}
-                                            {task.impact && (
-                                                <span className="flex items-center gap-1 text-green-500">
-                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                                    </svg>
-                                                    {task.impact}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
+                                    <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                                        {cat.label} ({catTasks.length})
+                                    </h2>
+                                </div>
+                                <div className="space-y-3">
+                                    {catTasks.map(task => (
+                                        <TaskCard
+                                            key={task.id}
+                                            task={task}
+                                            onToggle={() => toggleTaskComplete(task.id, task.isManual)}
+                                            getPriorityColor={getPriorityColor}
+                                            getCategoryInfo={getCategoryInfo}
+                                        />
+                                    ))}
                                 </div>
                             </div>
+                        );
+                    })
+                ) : (
+                    // Show filtered list
+                    <div className="space-y-3">
+                        {filteredTasks.map(task => (
+                            <TaskCard
+                                key={task.id}
+                                task={task}
+                                onToggle={() => toggleTaskComplete(task.id, task.isManual)}
+                                getPriorityColor={getPriorityColor}
+                                getCategoryInfo={getCategoryInfo}
+                            />
                         ))}
                     </div>
                 )}
 
                 {/* Completed Tasks */}
                 {completedTasksList.length > 0 && (
-                    <div className="space-y-4">
-                        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="mt-8 pt-8 border-t border-dark-border">
+                        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
                             Completed ({completedTasksList.length})
                         </h2>
-                        {completedTasksList.map((task) => (
-                            <div
-                                key={task.id}
-                                className="bg-dark-card/50 border border-dark-border/50 rounded-lg p-4 opacity-60"
-                            >
-                                <div className="flex items-start gap-4">
-                                    <button
-                                        onClick={() => toggleTaskComplete(task.id)}
-                                        className="mt-1 w-5 h-5 rounded border-2 border-green-600 bg-green-600 flex items-center justify-center flex-shrink-0"
-                                    >
-                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                        </svg>
-                                    </button>
-                                    <div className="flex-1">
-                                        <h3 className="font-medium text-gray-400 line-through">{task.title}</h3>
-                                        <p className="text-sm text-gray-500">{task.client}</p>
+                        <div className="space-y-2">
+                            {completedTasksList.map((task) => (
+                                <div
+                                    key={task.id}
+                                    className="bg-dark-card/50 border border-dark-border/50 rounded-lg p-3 opacity-60"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => toggleTaskComplete(task.id)}
+                                            className="w-5 h-5 rounded border-2 border-green-600 bg-green-600 flex items-center justify-center flex-shrink-0"
+                                        >
+                                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                        </button>
+                                        <span className="text-gray-400 line-through text-sm">{task.title}</span>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 )}
+            </div>
+        </div>
+    );
+}
+
+// Task Card Component
+function TaskCard({ task, onToggle, getPriorityColor, getCategoryInfo }) {
+    const catInfo = getCategoryInfo(task.category);
+
+    return (
+        <div className="bg-dark-card border border-dark-border rounded-lg p-4 hover:border-gray-700 transition-colors">
+            <div className="flex items-start gap-3">
+                {/* Checkbox */}
+                <button
+                    onClick={onToggle}
+                    className="mt-1 w-5 h-5 rounded border-2 border-gray-600 hover:border-accent-primary flex items-center justify-center flex-shrink-0 transition-colors"
+                />
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h3 className="font-medium text-gray-200">{task.title}</h3>
+                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${getPriorityColor(task.priority)}`}>
+                            {task.priority}
+                        </span>
+                        {task.isManual && (
+                            <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
+                                Manual
+                            </span>
+                        )}
+                    </div>
+                    {task.description && (
+                        <p className="text-sm text-gray-400 mb-2">{task.description}</p>
+                    )}
+                    <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
+                        {task.contact && (
+                            <span className="flex items-center gap-1 text-accent-primary">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                {task.contact}
+                            </span>
+                        )}
+                        {task.client && (
+                            <span className="flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                                {task.client}
+                            </span>
+                        )}
+                        {task.event && (
+                            <span className="flex items-center gap-1 text-purple-400">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {task.event}
+                            </span>
+                        )}
+                        {task.deadline && (
+                            <span className="flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {task.deadline}
+                            </span>
+                        )}
+                        {task.value && (
+                            <span className="flex items-center gap-1 text-green-500">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                {task.value}
+                            </span>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );
