@@ -105,17 +105,29 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
     const handleConvertToQuote = () => {
         // Pre-fill quote with opportunity data
         const client = opportunity.client || {};
+        const primaryContact = opportunity.contacts?.find(c => c.isPrimary) || opportunity.contacts?.[0];
 
         // Navigate to quote editor with pre-filled data
         if (onConvertToQuote) {
             onConvertToQuote({
-                client: client,
+                client: {
+                    ...client,
+                    // Add primary contact info to client
+                    contact: primaryContact?.name || client.contact || '',
+                    email: primaryContact?.email || client.email || '',
+                    phone: primaryContact?.phone || client.phone || '',
+                },
                 project: {
                     title: opportunity.title,
                     description: opportunity.brief,
+                    startDate: opportunity.expectedCloseDate,
                 },
                 opportunityId: opportunity.id,
-                estimatedValue: opportunity.value,
+                estimatedValue: opportunity.value || 0,
+                currency: opportunity.currency || 'USD',
+                country: opportunity.country,
+                region: opportunity.region,
+                contacts: opportunity.contacts || [],
             });
         }
 

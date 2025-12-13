@@ -112,14 +112,42 @@ function App() {
 
   const handleConvertOpportunityToQuote = useCallback((opportunityData) => {
     resetQuote();
+
+    // Set client with full details including contact
     if (opportunityData.client) {
       useQuoteStore.getState().setClientDetails({
-        company: opportunityData.client.company,
+        company: opportunityData.client.company || '',
+        contact: opportunityData.client.contact || '',
+        email: opportunityData.client.email || '',
+        phone: opportunityData.client.phone || '',
+        address: opportunityData.client.address || '',
       });
     }
+
+    // Set project details
     if (opportunityData.project) {
-      useQuoteStore.getState().setProject(opportunityData.project);
+      useQuoteStore.getState().setProject({
+        ...opportunityData.project,
+        // Add opportunity reference
+        opportunityId: opportunityData.opportunityId,
+      });
     }
+
+    // Set currency and region from opportunity
+    if (opportunityData.currency) {
+      useQuoteStore.getState().setCurrency(opportunityData.currency);
+    }
+    if (opportunityData.region) {
+      useQuoteStore.getState().setRegion(opportunityData.region);
+    }
+
+    // Set today's date as quote date
+    const quoteState = useQuoteStore.getState();
+    quoteState.loadQuoteData({
+      ...quoteState.quote,
+      quoteDate: new Date().toISOString().split('T')[0],
+    });
+
     setView('editor');
   }, [resetQuote]);
 
