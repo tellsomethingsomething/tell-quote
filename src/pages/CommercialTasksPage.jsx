@@ -954,40 +954,62 @@ Return ONLY JSON:
 
 // Task Card Component
 function TaskCard({ task, onToggle, onLog, onDelete, getPriorityColor }) {
+    const getCategoryGradient = (category) => {
+        switch (category) {
+            case 'upcoming_deals': return 'from-green-900/20 to-green-950/10 border-green-800/30 hover:border-green-700/50';
+            case 'client_tasks': return 'from-blue-900/20 to-blue-950/10 border-blue-800/30 hover:border-blue-700/50';
+            case 'research': return 'from-purple-900/20 to-purple-950/10 border-purple-800/30 hover:border-purple-700/50';
+            case 'client_comms': return 'from-orange-900/20 to-orange-950/10 border-orange-800/30 hover:border-orange-700/50';
+            default: return 'from-gray-900/20 to-gray-950/10 border-gray-800/30 hover:border-gray-700/50';
+        }
+    };
+
     return (
-        <div className="bg-dark-card border border-dark-border rounded-lg p-4 hover:border-gray-700 transition-colors">
-            <div className="flex items-start gap-3">
+        <div className={`card bg-gradient-to-br ${getCategoryGradient(task.category)} p-4 hover:shadow-lg transition-all group relative`}>
+            {/* Delete button - shows on hover */}
+            <div className="absolute top-3 right-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                <button
+                    onClick={onDelete}
+                    className="p-2 min-w-[32px] min-h-[32px] text-gray-500 hover:text-red-400 bg-dark-card/80 rounded-lg shadow-sm border border-dark-border flex items-center justify-center"
+                    title="Delete task"
+                >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </div>
+
+            <div className="flex items-start gap-3 pr-8">
                 {/* Checkbox */}
                 <button
                     onClick={onToggle}
-                    className="mt-1 w-5 h-5 rounded border-2 border-gray-600 hover:border-accent-primary flex items-center justify-center flex-shrink-0 transition-colors"
+                    className="mt-0.5 w-5 h-5 rounded border-2 border-gray-600 hover:border-accent-primary flex items-center justify-center flex-shrink-0 transition-colors"
                 />
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="font-medium text-gray-200">{task.title}</h3>
-                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${getPriorityColor(task.priority)}`}>
+                    {/* Priority & Manual badges */}
+                    <div className="flex items-center gap-2 mb-1.5">
+                        <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded font-medium ${getPriorityColor(task.priority)}`}>
                             {task.priority}
                         </span>
                         {task.isManual && (
-                            <span className="text-[10px] text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
+                            <span className="text-[9px] text-gray-500 bg-gray-800/50 px-1.5 py-0.5 rounded font-medium">
                                 Manual
                             </span>
                         )}
                     </div>
+
+                    {/* Title */}
+                    <h3 className="font-medium text-gray-100 text-sm leading-snug mb-1">{task.title}</h3>
+
+                    {/* Description */}
                     {task.description && (
-                        <p className="text-sm text-gray-400 mb-2">{task.description}</p>
+                        <p className="text-xs text-gray-400 mb-2 line-clamp-2">{task.description}</p>
                     )}
-                    <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
-                        {task.contact && (
-                            <span className="flex items-center gap-1 text-accent-primary">
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                {task.contact}
-                            </span>
-                        )}
+
+                    {/* Client & Contact */}
+                    <div className="flex items-center gap-3 text-[11px] text-gray-500">
                         {task.client && (
                             <span className="flex items-center gap-1">
                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -996,29 +1018,26 @@ function TaskCard({ task, onToggle, onLog, onDelete, getPriorityColor }) {
                                 {task.client}
                             </span>
                         )}
+                        {task.contact && (
+                            <span className="flex items-center gap-1 text-accent-primary/80">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                {task.contact}
+                            </span>
+                        )}
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="mt-3 pt-3 border-t border-dark-border flex items-center justify-between">
-                        <button
-                            onClick={onLog}
-                            className="text-xs text-accent-primary hover:text-accent-primary/80 flex items-center gap-1.5 transition-colors"
-                        >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Complete & Log
-                        </button>
-                        <button
-                            onClick={onDelete}
-                            className="text-xs text-gray-500 hover:text-red-400 flex items-center gap-1 transition-colors"
-                            title="Delete task"
-                        >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
-                    </div>
+                    {/* Action Button */}
+                    <button
+                        onClick={onLog}
+                        className="mt-3 text-[11px] text-accent-primary hover:text-accent-primary/80 flex items-center gap-1.5 transition-colors font-medium"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Complete & Log
+                    </button>
                 </div>
             </div>
         </div>
