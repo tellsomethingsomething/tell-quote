@@ -442,23 +442,33 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
     const preparedByUser = settings.users?.find(u => u.id === quote.preparedBy);
     const preparedByName = preparedByUser ? preparedByUser.name : '';
 
-    // Format date - dd/mm/yy
-    const formatDate = (date) => {
-        const d = new Date(date);
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = String(d.getFullYear()).slice(-2);
-        return `${day}/${month}/${year}`;
+    // Get ordinal suffix for day
+    const getOrdinalSuffix = (day) => {
+        if (day > 3 && day < 21) return 'th';
+        switch (day % 10) {
+            case 1: return 'st';
+            case 2: return 'nd';
+            case 3: return 'rd';
+            default: return 'th';
+        }
     };
 
-    // Format date long
+    // Format date - "20th Dec 2025"
+    const formatDate = (date) => {
+        const d = new Date(date);
+        const day = d.getDate();
+        const month = d.toLocaleDateString('en-GB', { month: 'short' });
+        const year = d.getFullYear();
+        return `${day}${getOrdinalSuffix(day)} ${month} ${year}`;
+    };
+
+    // Format date long - "20th December 2025"
     const formatDateLong = (date) => {
         const d = new Date(date);
-        return d.toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
+        const day = d.getDate();
+        const month = d.toLocaleDateString('en-GB', { month: 'long' });
+        const year = d.getFullYear();
+        return `${day}${getOrdinalSuffix(day)} ${month} ${year}`;
     };
 
     const getSectionName = (sectionId) => {
@@ -573,10 +583,10 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                             <View style={styles.tableContainer}>
                                 <View style={styles.tableHeader}>
                                     <Text style={[styles.thText, styles.colDesc]}>Item</Text>
-                                    <Text style={[styles.thText, styles.colQty]}>Qty</Text>
-                                    <Text style={[styles.thText, styles.colDays]}>Days</Text>
-                                    <Text style={[styles.thText, styles.colRate]}>Rate</Text>
-                                    <Text style={[styles.thText, styles.colAmount]}>Amount</Text>
+                                    <Text style={[styles.thText, styles.colQty, { textAlign: 'center' }]}>Qty</Text>
+                                    <Text style={[styles.thText, styles.colDays, { textAlign: 'center' }]}>Days</Text>
+                                    <Text style={[styles.thText, styles.colRate, { textAlign: 'right' }]}>Rate</Text>
+                                    <Text style={[styles.thText, styles.colAmount, { textAlign: 'right' }]}>Amount</Text>
                                 </View>
 
                                 {subsectionOrder.map(subsectionName => {

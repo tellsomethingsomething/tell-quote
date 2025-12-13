@@ -17,7 +17,7 @@ function SkipLink() {
     );
 }
 
-export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS }) {
+export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS, onGoToOpportunities }) {
     const { quote, ratesLoading, refreshRates } = useQuoteStore();
     const { saveQuote } = useClientStore();
     const { logout } = useAuthStore();
@@ -54,8 +54,8 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
     // Let's make it simple for dashboard similar to clients view but maybe without title if DashboardPage handles it?
     // Clients view has "Tell Productions Quote Tool".
     // Let's use the same clean header for Dashboard as for Clients view.
-    if (view === 'clients' || view === 'dashboard' || view === 'quotes' || view === 'rate-card' || view === 'settings') {
-        const activeTab = view;
+    if (view === 'clients' || view === 'dashboard' || view === 'quotes' || view === 'rate-card' || view === 'settings' || view === 'opportunities' || view === 'opportunity-detail') {
+        const activeTab = view === 'opportunity-detail' ? 'opportunities' : view;
 
         return (
             <>
@@ -80,6 +80,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                             if (tab === 'dashboard') onGoToDashboard();
                             if (tab === 'quotes') onGoToQuotes();
                             if (tab === 'clients') onGoToClients();
+                            if (tab === 'opportunities') onGoToOpportunities();
                             if (tab === 'rate-card') onGoToRateCard();
                             if (tab === 'settings') onGoToSettings();
                         }}

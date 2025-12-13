@@ -42,6 +42,36 @@ ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES auth.users(id) ON DELETE CASCAD
 ALTER TABLE settings
 ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE;
 
+-- Create opportunities table if not exists
+CREATE TABLE IF NOT EXISTS opportunities (
+    id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+    title text,
+    client_id uuid REFERENCES clients(id) ON DELETE SET NULL,
+    client jsonb DEFAULT '{}',
+    region text,
+    country text,
+    status text DEFAULT 'active',
+    value numeric DEFAULT 0,
+    currency text DEFAULT 'USD',
+    probability integer DEFAULT 50,
+    source text,
+    competitors text[] DEFAULT '{}',
+    contacts jsonb DEFAULT '[]',
+    account_owner_id text,
+    brief text,
+    notes text,
+    next_action text,
+    next_action_date date,
+    expected_close_date date,
+    converted_to_quote_id uuid REFERENCES quotes(id) ON DELETE SET NULL,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Enable RLS on opportunities
+ALTER TABLE opportunities ENABLE ROW LEVEL SECURITY;
+
 -- =====================================================
 -- STEP 2: Create indexes for performance
 -- =====================================================
@@ -51,6 +81,9 @@ CREATE INDEX IF NOT EXISTS clients_user_id_idx ON clients(user_id);
 CREATE INDEX IF NOT EXISTS rate_cards_user_id_idx ON rate_cards(user_id);
 CREATE INDEX IF NOT EXISTS rate_card_sections_user_id_idx ON rate_card_sections(user_id);
 CREATE INDEX IF NOT EXISTS settings_user_id_idx ON settings(user_id);
+CREATE INDEX IF NOT EXISTS opportunities_user_id_idx ON opportunities(user_id);
+CREATE INDEX IF NOT EXISTS opportunities_country_idx ON opportunities(country);
+CREATE INDEX IF NOT EXISTS opportunities_status_idx ON opportunities(status);
 
 -- =====================================================
 -- STEP 3: Migrate existing data (SINGLE USER MIGRATION)
@@ -211,6 +244,29 @@ CREATE POLICY "Users can delete own settings"
 ON settings FOR DELETE
 USING (auth.uid() = user_id);
 
+-- ========== OPPORTUNITIES TABLE ==========
+
+-- Users can view their own opportunities
+CREATE POLICY "Users can view own opportunities"
+ON opportunities FOR SELECT
+USING (auth.uid() = user_id);
+
+-- Users can insert their own opportunities
+CREATE POLICY "Users can insert own opportunities"
+ON opportunities FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own opportunities
+CREATE POLICY "Users can update own opportunities"
+ON opportunities FOR UPDATE
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- Users can delete their own opportunities
+CREATE POLICY "Users can delete own opportunities"
+ON opportunities FOR DELETE
+USING (auth.uid() = user_id);
+
 -- =====================================================
 -- STEP 6: Helper Functions
 -- =====================================================
@@ -255,6 +311,12 @@ CREATE TRIGGER set_user_id_rate_card_sections
 DROP TRIGGER IF EXISTS set_user_id_settings ON settings;
 CREATE TRIGGER set_user_id_settings
     BEFORE INSERT ON settings
+    FOR EACH ROW
+    EXECUTE FUNCTION set_user_id();
+
+DROP TRIGGER IF EXISTS set_user_id_opportunities ON opportunities;
+CREATE TRIGGER set_user_id_opportunities
+    BEFORE INSERT ON opportunities
     FOR EACH ROW
     EXECUTE FUNCTION set_user_id();
 

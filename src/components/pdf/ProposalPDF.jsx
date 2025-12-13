@@ -388,6 +388,25 @@ export default function ProposalPDF({
     const preparedByUser = settings.users?.find(u => u.id === quote.preparedBy);
     const preparedByName = preparedByUser?.name || 'Your Account Manager';
 
+    // Format date with ordinal suffix - "20th Dec 2025"
+    const getOrdinalSuffix = (day) => {
+        if (day > 3 && day < 21) return 'th';
+        switch (day % 10) {
+            case 1: return 'st';
+            case 2: return 'nd';
+            case 3: return 'rd';
+            default: return 'th';
+        }
+    };
+
+    const formatDate = (date) => {
+        const d = new Date(date);
+        const day = d.getDate();
+        const month = d.toLocaleDateString('en-GB', { month: 'short' });
+        const year = d.getFullYear();
+        return `${day}${getOrdinalSuffix(day)} ${month} ${year}`;
+    };
+
     // Parse proposal into paragraphs
     const proposalParagraphs = proposalText ? proposalText.split('\n\n').filter(p => p.trim()) : [];
 
@@ -436,7 +455,7 @@ export default function ProposalPDF({
 
                         <View style={styles.coverBottom}>
                             <View style={styles.coverMeta}>
-                                <Text style={styles.coverMetaValue}>{quote.quoteDate || quoteDate.toLocaleDateString()}</Text>
+                                <Text style={styles.coverMetaValue}>{quote.quoteDate || formatDate(quoteDate)}</Text>
                             </View>
                             <View style={styles.coverQuoteNumber}>
                                 <Text style={styles.coverMetaValue}>Prepared by {preparedByName}</Text>
@@ -504,7 +523,7 @@ export default function ProposalPDF({
                                     Detailed Quotation
                                 </Text>
                                 <Text style={{ fontSize: 9, color: colors.gray, marginTop: 4 }}>
-                                    {quote.quoteNumber} • {quoteDate.toLocaleDateString()}
+                                    {quote.quoteNumber} • {formatDate(quoteDate)}
                                 </Text>
                             </View>
                             <View style={{ alignItems: 'flex-end' }}>

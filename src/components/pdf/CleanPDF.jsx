@@ -59,17 +59,22 @@ export default function CleanPDF({ quote, currency }) {
             borderRadius: 4,
         },
         quotationTitle: {
-            fontSize: 20,
+            fontSize: 14,
             fontFamily: `${fontFamily}-Bold`,
             color: '#FFFFFF',
             letterSpacing: 2,
         },
         headerDetails: {
             flexDirection: 'row',
+            alignItems: 'center',
             gap: 20,
         },
         headerItem: {
             alignItems: 'flex-end',
+        },
+        headerItemVenue: {
+            alignItems: 'flex-end',
+            maxWidth: 140,
         },
         headerLabel: {
             fontSize: 7,
@@ -77,11 +82,13 @@ export default function CleanPDF({ quote, currency }) {
             opacity: 0.8,
             textTransform: 'uppercase',
             marginBottom: 2,
+            textAlign: 'right',
         },
         headerValue: {
             fontSize: 9,
             fontFamily: `${fontFamily}-Bold`,
             color: '#FFFFFF',
+            textAlign: 'right',
         },
         // Row 2: Two column - Company & Client
         twoColumn: {
@@ -312,10 +319,23 @@ export default function CleanPDF({ quote, currency }) {
     });
 
     // Helpers
+    const getOrdinalSuffix = (day) => {
+        if (day > 3 && day < 21) return 'th';
+        switch (day % 10) {
+            case 1: return 'st';
+            case 2: return 'nd';
+            case 3: return 'rd';
+            default: return 'th';
+        }
+    };
+
     const formatDate = (date) => {
         if (!date) return '-';
         const d = new Date(date);
-        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        const day = d.getDate();
+        const month = d.toLocaleDateString('en-GB', { month: 'short' });
+        const year = d.getFullYear();
+        return `${day}${getOrdinalSuffix(day)} ${month} ${year}`;
     };
 
     const formatDateRange = () => {
@@ -325,6 +345,14 @@ export default function CleanPDF({ quote, currency }) {
             return `${start} - ${formatDate(project.endDate)}`;
         }
         return start;
+    };
+
+    // Get project type label from settings
+    const getProjectTypeLabel = (typeId) => {
+        if (!typeId) return null;
+        const projectTypes = settings.projectTypes || [];
+        const typeObj = projectTypes.find(t => t.id === typeId);
+        return typeObj?.label || typeId.replace(/_/g, ' ');
     };
 
     const quoteDate = new Date(quote.createdAt || new Date());
@@ -359,7 +387,7 @@ export default function CleanPDF({ quote, currency }) {
                             <Text style={styles.headerValue}>{formatDate(validUntil)}</Text>
                         </View>
                         {project?.venue && (
-                            <View style={styles.headerItem}>
+                            <View style={styles.headerItemVenue}>
                                 <Text style={styles.headerLabel}>Venue</Text>
                                 <Text style={styles.headerValue}>{project.venue}</Text>
                             </View>
@@ -405,7 +433,7 @@ export default function CleanPDF({ quote, currency }) {
                     <View style={styles.descriptionBox}>
                         <Text style={styles.descriptionLabel}>Project</Text>
                         <Text style={styles.columnTitle}>{project?.title || '-'}</Text>
-                        {project?.type && <Text style={styles.descriptionText}>Type: {project.type}</Text>}
+                        {project?.type && <Text style={styles.descriptionText}>Type: {getProjectTypeLabel(project.type)}</Text>}
                         <Text style={styles.descriptionText}>Dates: {formatDateRange()}</Text>
                         {project?.description && (
                             <Text style={[styles.descriptionText, { marginTop: 4 }]}>{project.description}</Text>
@@ -435,10 +463,10 @@ export default function CleanPDF({ quote, currency }) {
 
                             <View style={styles.tableHeader}>
                                 <Text style={[styles.tableHeaderCell, styles.colName]}>Description</Text>
-                                <Text style={[styles.tableHeaderCell, styles.colQty]}>Qty</Text>
-                                <Text style={[styles.tableHeaderCell, styles.colDays]}>Days</Text>
-                                <Text style={[styles.tableHeaderCell, styles.colRate]}>Rate</Text>
-                                <Text style={[styles.tableHeaderCell, styles.colTotal]}>Total</Text>
+                                <Text style={[styles.tableHeaderCell, styles.colQty, { textAlign: 'center' }]}>Qty</Text>
+                                <Text style={[styles.tableHeaderCell, styles.colDays, { textAlign: 'center' }]}>Days</Text>
+                                <Text style={[styles.tableHeaderCell, styles.colRate, { textAlign: 'right' }]}>Rate</Text>
+                                <Text style={[styles.tableHeaderCell, styles.colTotal, { textAlign: 'right' }]}>Total</Text>
                             </View>
 
                             {Object.entries(section.subsections || {}).map(([subName, items]) => {

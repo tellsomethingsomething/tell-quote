@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSettingsStore } from '../store/settingsStore';
+import { useOpportunityStore, REGIONS } from '../store/opportunityStore';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { CURRENCIES } from '../data/currencies';
@@ -46,10 +47,11 @@ function isFollowUpOverdue(nextFollowUpDate) {
     return new Date(nextFollowUpDate) < new Date();
 }
 
-export default function DashboardPage({ onViewQuote, onNewQuote }) {
+export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportunities }) {
     const { savedQuotes, clients, updateQuoteStatus } = useClientStore();
     const { rates, ratesUpdated, refreshRates, ratesLoading } = useQuoteStore();
     const { settings } = useSettingsStore();
+    const { opportunities } = useOpportunityStore();
     const [selectedMonth, setSelectedMonth] = useState('all');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [dashboardCurrency, setDashboardCurrency] = useState('USD');
@@ -127,7 +129,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
     }, [pipelineData, rates, dashboardCurrency]);
 
     // Calculate Company-wide Stats includes...
-    // ... (rest of stats logic same as before, omitted for brevity if unchanged logic, but tool requires contiguous replacement)
+    // Pipeline = Drafts + Sent + Opportunities (weighted)
     const financialStats = useMemo(() => {
         // Won Stats
         let wonRevenue = 0;
@@ -135,12 +137,13 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
         let wonMargin = 0;
         let wonCount = 0;
 
-        // Pipeline Stats (Draft + Sent)
+        // Pipeline Stats (Draft + Sent + Opportunities)
         let pipelineRevenue = 0;
         let pipelineProfit = 0;
         let pipelineMargin = 0;
         let pipelineCount = 0;
 
+        // Process quotes
         filteredQuotes.forEach(q => {
             const calculations = calculateGrandTotalWithFees(q.sections || {}, q.fees || {});
             const revenue = convertCurrency(calculations.totalCharge, q.currency || 'USD', dashboardCurrency, rates);
@@ -159,6 +162,14 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
             }
         });
 
+        // Add active opportunities (weighted by probability)
+        opportunities.filter(o => o.status === 'active').forEach(opp => {
+            const value = convertCurrency(opp.value || 0, opp.currency || 'USD', dashboardCurrency, rates);
+            const weighted = value * ((opp.probability || 0) / 100);
+            pipelineRevenue += weighted;
+            pipelineCount++;
+        });
+
         return {
             won: {
                 revenue: wonRevenue,
@@ -171,10 +182,10 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                 avgMargin: pipelineCount > 0 ? (pipelineMargin / pipelineCount) : 0
             }
         };
-    }, [filteredQuotes, rates, dashboardCurrency]);
+    }, [filteredQuotes, opportunities, rates, dashboardCurrency]);
 
     // Calculate 3-month and 6-month forecasts based on project/event start dates
-    // Split into Won (confirmed) and Pipeline (potential) for overall business view
+    // Split into Won (confirmed), Pipeline (quotes), and Opportunities for overall business view
     const forecastStats = useMemo(() => {
         const now = new Date();
         const threeMonthsOut = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
@@ -184,7 +195,10 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
         let pipeline3m = { revenue: 0, profit: 0 };
         let won6m = { revenue: 0, profit: 0 };
         let pipeline6m = { revenue: 0, profit: 0 };
+        let opps3m = { revenue: 0, weighted: 0 };
+        let opps6m = { revenue: 0, weighted: 0 };
 
+        // Process quotes
         savedQuotes.forEach(q => {
             // Skip lost/dead quotes
             if (q.status === 'dead') return;
@@ -221,19 +235,96 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
             }
         });
 
+        // Process opportunities (use expectedCloseDate for forecasting)
+        opportunities.filter(o => o.status === 'active').forEach(opp => {
+            const closeDate = opp.expectedCloseDate ? new Date(opp.expectedCloseDate) : null;
+            if (!closeDate || closeDate < now) return;
+
+            const value = convertCurrency(opp.value || 0, opp.currency || 'USD', dashboardCurrency, rates);
+            const weighted = value * ((opp.probability || 0) / 100);
+
+            // 3-month
+            if (closeDate <= threeMonthsOut) {
+                opps3m.revenue += value;
+                opps3m.weighted += weighted;
+            }
+            // 6-month
+            if (closeDate <= sixMonthsOut) {
+                opps6m.revenue += value;
+                opps6m.weighted += weighted;
+            }
+        });
+
         return {
             threeMonth: {
                 won: won3m,
                 pipeline: pipeline3m,
-                total: { revenue: won3m.revenue + pipeline3m.revenue, profit: won3m.profit + pipeline3m.profit }
+                opportunities: opps3m,
+                total: {
+                    revenue: won3m.revenue + pipeline3m.revenue + opps3m.weighted,
+                    profit: won3m.profit + pipeline3m.profit
+                }
             },
             sixMonth: {
                 won: won6m,
                 pipeline: pipeline6m,
-                total: { revenue: won6m.revenue + pipeline6m.revenue, profit: won6m.profit + pipeline6m.profit }
+                opportunities: opps6m,
+                total: {
+                    revenue: won6m.revenue + pipeline6m.revenue + opps6m.weighted,
+                    profit: won6m.profit + pipeline6m.profit
+                }
             }
         };
-    }, [savedQuotes, rates, dashboardCurrency]);
+    }, [savedQuotes, opportunities, rates, dashboardCurrency]);
+
+    // Opportunity Pipeline Stats
+    const opportunityStats = useMemo(() => {
+        const active = opportunities.filter(o => o.status === 'active');
+        const totalValue = active.reduce((sum, o) => {
+            const converted = convertCurrency(o.value || 0, o.currency || 'USD', dashboardCurrency, rates);
+            return sum + converted;
+        }, 0);
+        const weightedValue = active.reduce((sum, o) => {
+            const prob = (o.probability || 0) / 100;
+            const converted = convertCurrency(o.value || 0, o.currency || 'USD', dashboardCurrency, rates);
+            return sum + converted * prob;
+        }, 0);
+
+        // Group by region
+        const byRegion = {};
+        Object.keys(REGIONS).forEach(region => {
+            const regionOpps = active.filter(o => o.region === region);
+            byRegion[region] = {
+                count: regionOpps.length,
+                value: regionOpps.reduce((sum, o) => {
+                    const converted = convertCurrency(o.value || 0, o.currency || 'USD', dashboardCurrency, rates);
+                    return sum + converted;
+                }, 0)
+            };
+        });
+
+        // Get upcoming actions (next 7 days)
+        const now = new Date();
+        const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const upcomingActions = active
+            .filter(o => {
+                if (!o.nextActionDate) return false;
+                const actionDate = new Date(o.nextActionDate);
+                return actionDate >= now && actionDate <= weekFromNow;
+            })
+            .sort((a, b) => new Date(a.nextActionDate) - new Date(b.nextActionDate))
+            .slice(0, 5);
+
+        return {
+            totalCount: active.length,
+            totalValue,
+            weightedValue,
+            wonCount: opportunities.filter(o => o.status === 'won').length,
+            lostCount: opportunities.filter(o => o.status === 'lost').length,
+            byRegion,
+            upcomingActions
+        };
+    }, [opportunities, dashboardCurrency, rates]);
 
 
     // Get client name
@@ -360,7 +451,13 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                         >
                             <option value="USD">USD</option>
                             <option value="GBP">GBP</option>
+                            <option value="EUR">EUR</option>
                             <option value="MYR">MYR</option>
+                            <option value="SGD">SGD</option>
+                            <option value="AED">AED</option>
+                            <option value="SAR">SAR</option>
+                            <option value="QAR">QAR</option>
+                            <option value="KWD">KWD</option>
                         </select>
                     </div>
 
@@ -446,11 +543,19 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                                 </p>
                             </div>
                             <div className="flex justify-between items-baseline">
-                                <p className="text-[10px] text-gray-500">Pipeline</p>
+                                <p className="text-[10px] text-gray-500">Quotes</p>
                                 <p className="text-xs font-medium text-gray-400 tabular-nums">
                                     {formatCurrency(forecastStats.threeMonth.pipeline.revenue, dashboardCurrency, 0)}
                                 </p>
                             </div>
+                            {forecastStats.threeMonth.opportunities.weighted > 0 && (
+                                <div className="flex justify-between items-baseline">
+                                    <p className="text-[10px] text-cyan-500">Opps</p>
+                                    <p className="text-xs font-medium text-cyan-400 tabular-nums">
+                                        {formatCurrency(forecastStats.threeMonth.opportunities.weighted, dashboardCurrency, 0)}
+                                    </p>
+                                </div>
+                            )}
                             <div className="flex justify-between items-baseline pt-1 border-t border-amber-800/30">
                                 <p className="text-[10px] text-amber-400">Total</p>
                                 <p className="text-sm font-semibold text-amber-400 tabular-nums">
@@ -474,11 +579,19 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                                 </p>
                             </div>
                             <div className="flex justify-between items-baseline">
-                                <p className="text-[10px] text-gray-500">Pipeline</p>
+                                <p className="text-[10px] text-gray-500">Quotes</p>
                                 <p className="text-xs font-medium text-gray-400 tabular-nums">
                                     {formatCurrency(forecastStats.sixMonth.pipeline.revenue, dashboardCurrency, 0)}
                                 </p>
                             </div>
+                            {forecastStats.sixMonth.opportunities.weighted > 0 && (
+                                <div className="flex justify-between items-baseline">
+                                    <p className="text-[10px] text-cyan-500">Opps</p>
+                                    <p className="text-xs font-medium text-cyan-400 tabular-nums">
+                                        {formatCurrency(forecastStats.sixMonth.opportunities.weighted, dashboardCurrency, 0)}
+                                    </p>
+                                </div>
+                            )}
                             <div className="flex justify-between items-baseline pt-1 border-t border-purple-800/30">
                                 <p className="text-[10px] text-purple-400">Total</p>
                                 <p className="text-sm font-semibold text-purple-400 tabular-nums">
@@ -512,6 +625,82 @@ export default function DashboardPage({ onViewQuote, onNewQuote }) {
                         </div>
                     ))}
                 </div>
+
+                {/* Opportunities Pipeline Widget */}
+                {opportunities.length > 0 && (
+                    <div className="mt-6 card bg-gradient-to-br from-cyan-900/20 to-cyan-950/10 border-cyan-800/20">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <svg className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                                <span className="text-sm font-semibold text-cyan-400">Opportunities Pipeline</span>
+                                <span className="text-xs text-gray-500">({opportunityStats.totalCount} active)</span>
+                            </div>
+                            <button
+                                onClick={() => onGoToOpportunities && onGoToOpportunities()}
+                                className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                            >
+                                View All
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                            <div className="text-center p-2 bg-dark-bg/50 rounded-lg">
+                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Pipeline</p>
+                                <p className="text-lg font-bold text-cyan-400">{formatCurrency(opportunityStats.totalValue, dashboardCurrency, 0)}</p>
+                            </div>
+                            <div className="text-center p-2 bg-dark-bg/50 rounded-lg">
+                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Weighted</p>
+                                <p className="text-lg font-bold text-amber-400">{formatCurrency(opportunityStats.weightedValue, dashboardCurrency, 0)}</p>
+                            </div>
+                            <div className="text-center p-2 bg-dark-bg/50 rounded-lg">
+                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Won</p>
+                                <p className="text-lg font-bold text-green-400">{opportunityStats.wonCount}</p>
+                            </div>
+                            <div className="text-center p-2 bg-dark-bg/50 rounded-lg">
+                                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Lost</p>
+                                <p className="text-lg font-bold text-red-400">{opportunityStats.lostCount}</p>
+                            </div>
+                        </div>
+
+                        {/* Region breakdown */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            {Object.entries(opportunityStats.byRegion).map(([region, data]) => (
+                                data.count > 0 && (
+                                    <div key={region} className="flex items-center gap-2 px-2 py-1 bg-dark-bg/30 rounded text-xs">
+                                        <span className="text-gray-400">{region}</span>
+                                        <span className="text-gray-500">({data.count})</span>
+                                        <span className="text-cyan-400 font-medium">{formatCurrency(data.value, dashboardCurrency, 0)}</span>
+                                    </div>
+                                )
+                            ))}
+                        </div>
+
+                        {/* Upcoming Actions */}
+                        {opportunityStats.upcomingActions.length > 0 && (
+                            <div className="border-t border-cyan-800/20 pt-3">
+                                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Upcoming Actions</p>
+                                <div className="space-y-1">
+                                    {opportunityStats.upcomingActions.map(opp => (
+                                        <div key={opp.id} className="flex items-center justify-between text-xs">
+                                            <span className="text-gray-300 truncate max-w-[200px]">{opp.title}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-cyan-400">{opp.nextAction}</span>
+                                                <span className="text-gray-500">
+                                                    {new Date(opp.nextActionDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
 
             </div>
 

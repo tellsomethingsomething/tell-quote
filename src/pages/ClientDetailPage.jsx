@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSettingsStore } from '../store/settingsStore';
+import { useOpportunityStore } from '../store/opportunityStore';
 import { formatCurrency } from '../utils/currency';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { validateForm, sanitizeString } from '../utils/validation';
@@ -17,14 +18,16 @@ const STATUS_COLORS = {
     dead: 'bg-red-500/20 text-red-500',
 };
 
-export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQuote, onNewQuote }) {
+export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQuote, onNewQuote, onSelectOpportunity }) {
     const { getClient, getClientQuotes, deleteQuote, updateQuoteStatus, deleteClient, updateClient, addContact, updateContact, deleteContact } = useClientStore();
     const { loadQuoteData } = useQuoteStore();
     const { settings } = useSettingsStore();
+    const { getClientOpportunities, deleteOpportunity } = useOpportunityStore();
     const users = settings.users || [];
 
     const client = getClient(clientId);
     const quotes = getClientQuotes(clientId);
+    const clientOpportunities = getClientOpportunities(clientId);
 
     const [activeTab, setActiveTab] = useState('overview'); // overview, contacts
     const [isEditingClient, setIsEditingClient] = useState(false);
@@ -300,6 +303,12 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
                         Quotes & Projects
                     </button>
                     <button
+                        onClick={() => setActiveTab('opportunities')}
+                        className={`pb-3 text-sm font-medium transition-colors border-b-2 ${activeTab === 'opportunities' ? 'border-accent-primary text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                    >
+                        Opportunities ({clientOpportunities.length})
+                    </button>
+                    <button
                         onClick={() => setActiveTab('contacts')}
                         className={`pb-3 text-sm font-medium transition-colors border-b-2 ${activeTab === 'contacts' ? 'border-accent-primary text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
                     >
@@ -379,6 +388,107 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
                                                         </svg>
                                                     </button>
                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                )
+            }
+
+            {
+                activeTab === 'opportunities' && (
+                    <div className="space-y-4">
+                        {/* Opportunities Stats */}
+                        {clientOpportunities.length > 0 && (
+                            <div className="grid grid-cols-3 gap-4 mb-6">
+                                <div className="card bg-gradient-to-br from-cyan-900/20 to-cyan-950/10 border-cyan-800/20 text-center">
+                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Active</p>
+                                    <p className="text-2xl font-bold text-cyan-400">
+                                        {clientOpportunities.filter(o => o.status === 'active').length}
+                                    </p>
+                                </div>
+                                <div className="card bg-gradient-to-br from-emerald-900/20 to-emerald-950/10 border-emerald-800/20 text-center">
+                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Pipeline</p>
+                                    <p className="text-2xl font-bold text-emerald-400">
+                                        {formatCurrency(clientOpportunities.filter(o => o.status === 'active').reduce((sum, o) => sum + (o.value || 0), 0), 'USD', 0)}
+                                    </p>
+                                </div>
+                                <div className="card bg-gradient-to-br from-amber-900/20 to-amber-950/10 border-amber-800/20 text-center">
+                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Weighted</p>
+                                    <p className="text-2xl font-bold text-amber-400">
+                                        {formatCurrency(clientOpportunities.filter(o => o.status === 'active').reduce((sum, o) => sum + (o.value || 0) * ((o.probability || 0) / 100), 0), 'USD', 0)}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Opportunities List */}
+                        {clientOpportunities.length === 0 ? (
+                            <div className="text-center py-12 border-2 border-dashed border-dark-border rounded-xl">
+                                <svg className="w-12 h-12 mx-auto mb-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                                <p className="text-gray-500 mb-4">No opportunities for this client yet</p>
+                                <p className="text-xs text-gray-600">Create opportunities from the Opportunities page</p>
+                            </div>
+                        ) : (
+                            clientOpportunities.map(opp => {
+                                const getStatusColor = (status) => {
+                                    switch (status) {
+                                        case 'won': return 'text-green-400 bg-green-500/10 border-green-500/20';
+                                        case 'lost': return 'text-red-400 bg-red-500/10 border-red-500/20';
+                                        default: return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+                                    }
+                                };
+
+                                return (
+                                    <div
+                                        key={opp.id}
+                                        onClick={() => onSelectOpportunity && onSelectOpportunity(opp.id)}
+                                        className="card hover:border-accent-primary/50 transition-colors cursor-pointer group"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-1">
+                                                    <span className="font-medium text-gray-200">
+                                                        {opp.title || 'Untitled Opportunity'}
+                                                    </span>
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${getStatusColor(opp.status)}`}>
+                                                        {opp.status}
+                                                    </span>
+                                                    {opp.probability > 0 && (
+                                                        <span className="text-xs text-amber-400">{opp.probability}%</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-4 text-xs text-gray-500">
+                                                    {opp.country && <span>{opp.country}</span>}
+                                                    {opp.nextAction && (
+                                                        <span className="text-cyan-400">→ {opp.nextAction}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="text-right flex items-center gap-4">
+                                                <p className="text-lg font-bold text-gray-200">
+                                                    {formatCurrency(opp.value || 0, opp.currency || 'USD', 0)}
+                                                </p>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (window.confirm('Delete this opportunity?')) {
+                                                            deleteOpportunity(opp.id);
+                                                        }
+                                                    }}
+                                                    className="p-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    title="Delete opportunity"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

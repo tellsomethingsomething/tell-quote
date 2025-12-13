@@ -9,29 +9,34 @@ import { useClientStore } from './store/clientStore';
 import { useRateCardStore } from './store/rateCardStore';
 import { useSettingsStore } from './store/settingsStore';
 import { useAuthStore } from './store/authStore';
+import { useOpportunityStore } from './store/opportunityStore';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
 
 // Lazy load pages for better code splitting
 const ClientsPage = lazy(() => import('./pages/ClientsPage'));
 const ClientDetailPage = lazy(() => import('./pages/ClientDetailPage'));
+const OpportunitiesPage = lazy(() => import('./pages/OpportunitiesPage'));
+const OpportunityDetailPage = lazy(() => import('./pages/OpportunityDetailPage'));
 const RateCardPage = lazy(() => import('./pages/RateCardPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const QuotesPage = lazy(() => import('./pages/QuotesPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const FSPage = lazy(() => import('./pages/FSPage'));
 
-// Views: 'clients' | 'client-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings'
+// Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings'
 function App() {
   const { isAuthenticated } = useAuthStore();
   const initializeQuote = useQuoteStore(state => state.initialize);
   const initializeClients = useClientStore(state => state.initialize);
   const initializeRateCard = useRateCardStore(state => state.initialize);
   const initializeSettings = useSettingsStore(state => state.initialize);
+  const initializeOpportunities = useOpportunityStore(state => state.initialize);
   const resetQuote = useQuoteStore(state => state.resetQuote);
   const loadQuoteData = useQuoteStore(state => state.loadQuoteData);
 
   const [view, setView] = useState('dashboard');
   const [selectedClientId, setSelectedClientId] = useState(null);
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState(null);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
 
   // Use custom hook for unsaved changes tracking
@@ -96,6 +101,28 @@ function App() {
     confirmNavigateAway(() => setView('fs'));
   }, [confirmNavigateAway]);
 
+  const handleGoToOpportunities = useCallback(() => {
+    confirmNavigateAway(() => setView('opportunities'));
+  }, [confirmNavigateAway]);
+
+  const handleSelectOpportunity = useCallback((opportunityId) => {
+    setSelectedOpportunityId(opportunityId);
+    setView('opportunity-detail');
+  }, []);
+
+  const handleConvertOpportunityToQuote = useCallback((opportunityData) => {
+    resetQuote();
+    if (opportunityData.client) {
+      useQuoteStore.getState().setClientDetails({
+        company: opportunityData.client.company,
+      });
+    }
+    if (opportunityData.project) {
+      useQuoteStore.getState().setProject(opportunityData.project);
+    }
+    setView('editor');
+  }, [resetQuote]);
+
   const handleToggleMobilePreview = useCallback(() => {
     setShowMobilePreview(prev => !prev);
   }, []);
@@ -113,8 +140,9 @@ function App() {
       initializeClients();
       initializeRateCard();
       initializeSettings();
+      initializeOpportunities();
     }
-  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings]);
+  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities]);
 
   // Show login page if not authenticated
   if (!isAuthenticated) {
@@ -141,6 +169,27 @@ function App() {
                 onBackToDashboard={handleGoToDashboard}
                 onEditQuote={handleEditQuote}
                 onNewQuote={handleNewQuote}
+                onSelectOpportunity={handleSelectOpportunity}
+              />
+            </main>
+          </Suspense>
+        );
+      case 'opportunities':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading opportunities..." />}>
+            <main id="main-content" tabIndex="-1">
+              <OpportunitiesPage onSelectOpportunity={handleSelectOpportunity} />
+            </main>
+          </Suspense>
+        );
+      case 'opportunity-detail':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading opportunity..." />}>
+            <main id="main-content" tabIndex="-1">
+              <OpportunityDetailPage
+                opportunityId={selectedOpportunityId}
+                onBack={handleGoToOpportunities}
+                onConvertToQuote={handleConvertOpportunityToQuote}
               />
             </main>
           </Suspense>
@@ -160,6 +209,7 @@ function App() {
               <DashboardPage
                 onViewQuote={handleEditQuote}
                 onNewQuote={handleNewQuote}
+                onGoToOpportunities={handleGoToOpportunities}
               />
             </main>
           </Suspense>
@@ -237,6 +287,7 @@ function App() {
         onGoToQuotes={handleGoToQuotes}
         onGoToSettings={handleGoToSettings}
         onGoToFS={handleGoToFS}
+        onGoToOpportunities={handleGoToOpportunities}
         selectedClientId={selectedClientId}
       />
       {renderView()}
