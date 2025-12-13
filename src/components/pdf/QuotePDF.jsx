@@ -3,6 +3,7 @@ import { SECTIONS, SECTION_ORDER } from '../../data/sections';
 import { calculateSectionTotal, calculateGrandTotalWithFees } from '../../utils/calculations';
 import { formatCurrency } from '../../utils/currency';
 import { useSettingsStore } from '../../store/settingsStore';
+import TermsPage from './TermsPage';
 
 // Clean Light Color Palette - Darker Text
 const colors = {
@@ -721,6 +722,14 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                     </View>
                 </View>
             </Page>
+
+            {/* Terms & Conditions Page */}
+            {includeTerms && (
+                <TermsPage
+                    quoteNumber={quote.quoteNumber}
+                    companyWebsite={company?.website}
+                />
+            )}
         </Document>
     );
 }

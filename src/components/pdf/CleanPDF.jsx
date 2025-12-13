@@ -3,6 +3,7 @@ import { calculateSectionTotal, calculateGrandTotalWithFees } from '../../utils/
 import { formatCurrency } from '../../utils/currency';
 import { useSettingsStore } from '../../store/settingsStore';
 import { SECTIONS, SECTION_ORDER } from '../../data/sections';
+import TermsPage from './TermsPage';
 
 // Helper to convert hex to rgba
 function hexToRgba(hex, alpha = 1) {
@@ -13,7 +14,7 @@ function hexToRgba(hex, alpha = 1) {
 }
 
 // Clean, professional PDF layout with specified structure
-export default function CleanPDF({ quote, currency }) {
+export default function CleanPDF({ quote, currency, includeTerms = false }) {
     const settings = useSettingsStore.getState().settings;
     const { company, bankDetails, quoteDefaults, taxInfo, pdfOptions } = settings;
     const { client, project, sections, fees } = quote;
@@ -575,6 +576,14 @@ export default function CleanPDF({ quote, currency }) {
                     </Text>
                 </View>
             </Page>
+
+            {/* Terms & Conditions Page */}
+            {includeTerms && (
+                <TermsPage
+                    quoteNumber={quote.quoteNumber}
+                    companyWebsite={company?.website}
+                />
+            )}
         </Document>
     );
 }

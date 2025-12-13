@@ -29,7 +29,7 @@ export default function LivePreview() {
     // Generate Quote PDF only
     const generateQuotePDF = async () => {
         const blob = await pdf(
-            <CleanPDF quote={quote} currency={quote.currency} />
+            <CleanPDF quote={quote} currency={quote.currency} includeTerms={includeTerms} />
         ).toBlob();
 
         const filename = `${client.company || 'Client'} - ${quote.project.title || 'Project'} - ${quote.quoteDate} - Quote.pdf`;
@@ -208,14 +208,14 @@ export default function LivePreview() {
                 </button>
 
                 {/* T&C Option */}
-                <label className="flex items-center gap-2 cursor-pointer hover:bg-white/10 px-3 py-1 rounded transition-colors">
+                <label className="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full transition-colors border border-white/20">
                     <input
                         type="checkbox"
                         checked={includeTerms}
                         onChange={(e) => setIncludeTerms(e.target.checked)}
-                        className="w-3 h-3 rounded border-white/30 text-accent-primary focus:ring-accent-primary"
+                        className="w-4 h-4 rounded border-white/50 text-accent-primary focus:ring-accent-primary accent-accent-primary"
                     />
-                    <span className="text-white/70 text-[10px]">Include T&Cs</span>
+                    <span className="text-white text-sm font-medium">Include Terms & Conditions</span>
                 </label>
             </div>
         </div>

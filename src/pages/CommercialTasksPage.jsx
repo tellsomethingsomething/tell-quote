@@ -236,7 +236,7 @@ Be specific with names, values, dates from the data. Reference upcoming football
                 },
                 body: JSON.stringify({
                     model: 'claude-sonnet-4-20250514',
-                    max_tokens: 4096,
+                    max_tokens: 2048,
                     messages: [{ role: 'user', content: prompt }],
                 }),
             });
