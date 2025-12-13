@@ -21,6 +21,7 @@ export default function CommercialTasksPage() {
     const clients = useClientStore(state => state.clients) || [];
     const quotes = useClientStore(state => state.quotes) || [];
     const updateClient = useClientStore(state => state.updateClient);
+    const addClient = useClientStore(state => state.addClient);
     const opportunities = useOpportunityStore(state => state.opportunities) || [];
     const updateOpportunity = useOpportunityStore(state => state.updateOpportunity);
     const addOpportunity = useOpportunityStore(state => state.addOpportunity);
@@ -58,6 +59,12 @@ export default function CommercialTasksPage() {
         opportunityId: '',
         createOpportunity: false,
         newOppTitle: '',
+        createClient: false,
+        newClientCompany: '',
+        newClientContact: '',
+        newClientRole: '',
+        newClientCountry: '',
+        newClientEmail: '',
     });
 
     const scanIntervalRef = useRef(null);
@@ -178,43 +185,53 @@ export default function CommercialTasksPage() {
                 })),
             };
 
-            const prompt = `You are a commercial task generator for Tell Productions (broadcast/streaming production). Generate ACTIONABLE tasks based ONLY on the data below.
+            const prompt = `You are a commercial task generator for Tell Productions (broadcast/streaming production in EMERGING MARKETS). Generate ACTIONABLE tasks based on the data below.
 
-DATE: ${new Date().toLocaleDateString('en-GB')}
+TODAY'S DATE: ${new Date().toLocaleDateString('en-GB')} (${new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })})
+IMPORTANT: Only suggest CURRENT or FUTURE opportunities. Do not reference past events or old dates.
+
+FOCUS REGIONS (priority order):
+1. Southeast Asia (Malaysia, Indonesia, Thailand, Vietnam, Philippines, Singapore)
+2. GCC/Middle East (UAE, Saudi Arabia, Qatar, Bahrain, Kuwait, Oman)
+3. Central Asia (Kazakhstan, Uzbekistan)
+4. South Asia (India, Pakistan)
+
+AVOID: Western Europe, North America, Australia - these are NOT our target markets.
 
 DATA:
 ${JSON.stringify(compactData, null, 1)}
 
 RULES:
-- ONLY create tasks from the actual data above - no generic suggestions
-- Every task must reference specific clients, opportunities, or quotes from the data
-- Use actual names, quote numbers, values, dates
-- Focus on actionable next steps
+- Prioritize tasks in our focus regions above
+- Reference specific clients, opportunities, quotes from data where available
+- For research tasks: suggest SPECIFIC organizations/contacts to reach out to (broadcasters, sports federations, production companies in our regions)
+- Include contact suggestions with roles where possible
+- Focus on football, cricket, motorsport, esports broadcasting opportunities
 
-CATEGORIES & EXAMPLE TASKS:
+CATEGORIES & TASKS:
 
-UPCOMING_DEALS - Close pipeline:
-- "Follow up Quote #[X] to [Client] - sent [X] days ago, $[value]"
-- "Chase [Opportunity title] at [Client] - closing [date]"
-- "Revise quote for [Client] - [reason from notes]"
+UPCOMING_DEALS - Close existing pipeline:
+- "Follow up Quote #[X] to [Client] - sent [X] days ago"
+- "Chase [Opportunity] at [Client] - closing [date]"
 
-CLIENT_TASKS - Manage clients:
-- "Update [Client] contact info - missing [field]"
+CLIENT_TASKS - Manage existing clients:
 - "Review stale opportunity at [Client] - [X] days no update"
-- "Add notes from [Contact] conversation at [Client]"
+- "Update contact info for [Client]"
 
-RESEARCH - Intel on YOUR clients:
-- "Research [Client]'s Q1 projects - last quote was [X] months ago"
-- "Find [role] contact at [Client] - only have [current contact]"
-- "Check competitor [name] mentioned in [Opportunity]"
+RESEARCH - New business development:
+- "Research [specific broadcaster/org] in [country] - potential for [type] coverage"
+- "Find Head of Production at [specific company] in [region]"
+- "Identify football rights holders in [SEA country]"
+- For NEW contacts: include "newClient": true and suggest company/contact details
 
-CLIENT_COMMS - Build relationships:
+CLIENT_COMMS - Relationship building:
 - "Check in with [Contact] at [Client] - [X] days since contact"
-- "Introduce [service] to [Client] based on [past project]"
-- "Schedule call with [Client] re: [Opportunity]"
+- "Introduce [service] to [Client]"
 
-Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
-[{"id":"unique","category":"upcoming_deals|client_tasks|research|client_comms","priority":"high|medium|low","title":"Specific action from data","description":"Context and why","client":"Client name from data","clientId":"Client ID if known","opportunityId":"Opp ID if relevant","contact":"Person name/role"}]`;
+Generate 8-12 tasks. For research/new business, suggest SPECIFIC companies and contacts in our focus regions.
+
+Return ONLY JSON:
+[{"id":"unique","category":"upcoming_deals|client_tasks|research|client_comms","priority":"high|medium|low","title":"Specific action","description":"Context and why","client":"Client/Company name","clientId":"ID if existing client","opportunityId":"ID if relevant","contact":"Person NAME only - no job titles/roles","newClient":true/false,"suggestedCompany":"For new prospects","suggestedContact":"Person name only","suggestedRole":"Their job title separately","suggestedCountry":"Country"}]`;
 
             const response = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
@@ -318,12 +335,21 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
             (task.client && o.client?.company?.toLowerCase() === task.client?.toLowerCase())
         );
 
+        // Check if this is a new client suggestion (research task)
+        const isNewClientTask = task.newClient || (task.category === 'research' && !matchingClient);
+
         setLogData({
             note: noteText,
             clientId: matchingClient?.id || '',
             opportunityId: matchingOpp?.id || '',
             createOpportunity: false,
             newOppTitle: '',
+            createClient: isNewClientTask,
+            newClientCompany: task.suggestedCompany || task.client || '',
+            newClientContact: task.suggestedContact || task.contact || '',
+            newClientRole: task.suggestedRole || '',
+            newClientCountry: task.suggestedCountry || '',
+            newClientEmail: '',
         });
         setShowLogModal(true);
     };
@@ -334,6 +360,27 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
 
         const timestamp = new Date().toISOString();
         const dateStr = new Date().toLocaleDateString('en-GB');
+        let newClientId = null;
+
+        // Create new client if requested
+        if (logData.createClient && logData.newClientCompany) {
+            const newClient = {
+                company: logData.newClientCompany,
+                contact: logData.newClientContact || '',
+                email: logData.newClientEmail || '',
+                region: logData.newClientCountry || '',
+                notes: `--- ${dateStr} ---\nCreated from Commercial Task: ${selectedTask.title}\n\n${logData.note}`,
+                contacts: logData.newClientContact ? [{
+                    name: logData.newClientContact,
+                    role: logData.newClientRole || '',
+                    email: logData.newClientEmail || '',
+                }] : [],
+            };
+            const created = await addClient(newClient);
+            newClientId = created?.id;
+        }
+
+        const targetClientId = newClientId || logData.clientId;
 
         // Add note to opportunity if selected
         if (logData.opportunityId) {
@@ -348,12 +395,12 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
             }
         }
         // Add note to client if selected (and no opportunity)
-        else if (logData.clientId) {
-            const client = clients.find(c => c.id === logData.clientId);
+        else if (targetClientId && !logData.createClient) {
+            const client = clients.find(c => c.id === targetClientId);
             if (client) {
                 const existingNotes = client.notes || '';
                 const newNote = `\n\n--- ${dateStr} ---\n${logData.note}`;
-                await updateClient(logData.clientId, {
+                await updateClient(targetClientId, {
                     notes: existingNotes + newNote,
                     updatedAt: timestamp,
                 });
@@ -361,21 +408,24 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
         }
 
         // Create new opportunity if requested
-        if (logData.createOpportunity && logData.newOppTitle && logData.clientId) {
-            const client = clients.find(c => c.id === logData.clientId);
+        if (logData.createOpportunity && logData.newOppTitle && targetClientId) {
+            const client = logData.createClient
+                ? { company: logData.newClientCompany, contact: logData.newClientContact, email: logData.newClientEmail }
+                : clients.find(c => c.id === targetClientId);
             if (client) {
                 await addOpportunity({
                     title: logData.newOppTitle,
                     client: {
-                        company: client.company,
-                        contact: client.contact,
-                        email: client.email,
+                        company: client.company || logData.newClientCompany,
+                        contact: client.contact || logData.newClientContact,
+                        email: client.email || logData.newClientEmail,
                     },
                     status: 'active',
                     probability: 25,
                     source: 'Commercial Tasks',
                     notes: `Created from task: ${selectedTask.title}\n\n${logData.note}`,
-                    region: client.region,
+                    region: client.region || logData.newClientCountry,
+                    country: logData.newClientCountry,
                 });
             }
         }
@@ -383,11 +433,13 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
         // Log to global activity
         if (addActivityLog) {
             addActivityLog({
-                action: 'task_completed',
+                action: logData.createClient ? 'client_created' : 'task_completed',
                 category: 'commercial_task',
-                description: `Completed: ${selectedTask.title}`,
+                description: logData.createClient
+                    ? `Created client: ${logData.newClientCompany}`
+                    : `Completed: ${selectedTask.title}`,
                 details: logData.note,
-                clientId: logData.clientId,
+                clientId: targetClientId,
                 opportunityId: logData.opportunityId,
             });
         }
@@ -413,6 +465,16 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
                     ? prev.filter(id => id !== taskId)
                     : [...prev, taskId]
             );
+        }
+    };
+
+    const deleteTask = (taskId, isManual = false) => {
+        if (isManual) {
+            setManualTasks(prev => prev.filter(t => t.id !== taskId));
+        } else {
+            // For AI tasks, add to completed so they don't reappear
+            setTasks(prev => prev.filter(t => t.id !== taskId));
+            setCompletedTasks(prev => prev.filter(id => id !== taskId));
         }
     };
 
@@ -622,8 +684,8 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
 
                 {/* Complete & Log Modal */}
                 {showLogModal && selectedTask && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-lg">
+                    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+                        <div className="bg-[#1a1f2e] border border-dark-border rounded-xl p-6 w-full max-w-lg shadow-2xl">
                             <h3 className="text-lg font-semibold text-white mb-2">Complete & Log</h3>
                             <p className="text-sm text-gray-400 mb-4">{selectedTask.title}</p>
 
@@ -639,40 +701,115 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
                                     />
                                 </div>
 
-                                {/* Client Selection */}
-                                <div>
-                                    <label className="block text-sm text-gray-400 mb-1">Log to Client</label>
-                                    <select
-                                        value={logData.clientId}
-                                        onChange={(e) => setLogData({ ...logData, clientId: e.target.value, opportunityId: '' })}
-                                        className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
-                                    >
-                                        <option value="">Select client...</option>
-                                        {clients.map(c => (
-                                            <option key={c.id} value={c.id}>{c.company}</option>
-                                        ))}
-                                    </select>
+                                {/* Create New Client Toggle */}
+                                <div className="flex items-center gap-3 p-3 bg-dark-bg rounded-lg border border-dark-border">
+                                    <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer flex-1">
+                                        <input
+                                            type="checkbox"
+                                            checked={logData.createClient}
+                                            onChange={(e) => setLogData({ ...logData, createClient: e.target.checked, clientId: '' })}
+                                            className="rounded border-gray-600"
+                                        />
+                                        Create new client/contact
+                                    </label>
                                 </div>
 
-                                {/* Opportunity Selection (if client selected) */}
-                                {logData.clientId && clientOpportunities.length > 0 && (
-                                    <div>
-                                        <label className="block text-sm text-gray-400 mb-1">Log to Opportunity (optional)</label>
-                                        <select
-                                            value={logData.opportunityId}
-                                            onChange={(e) => setLogData({ ...logData, opportunityId: e.target.value })}
-                                            className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
-                                        >
-                                            <option value="">Just log to client</option>
-                                            {clientOpportunities.map(o => (
-                                                <option key={o.id} value={o.id}>{o.title}</option>
-                                            ))}
-                                        </select>
+                                {/* New Client Form */}
+                                {logData.createClient ? (
+                                    <div className="space-y-3 p-3 bg-green-500/5 border border-green-500/20 rounded-lg">
+                                        <div>
+                                            <label className="block text-xs text-gray-500 mb-1">Company Name *</label>
+                                            <input
+                                                type="text"
+                                                value={logData.newClientCompany}
+                                                onChange={(e) => setLogData({ ...logData, newClientCompany: e.target.value })}
+                                                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white text-sm"
+                                                placeholder="Company name..."
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">Contact Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={logData.newClientContact}
+                                                    onChange={(e) => setLogData({ ...logData, newClientContact: e.target.value })}
+                                                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white text-sm"
+                                                    placeholder="Contact name..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">Role/Title</label>
+                                                <input
+                                                    type="text"
+                                                    value={logData.newClientRole}
+                                                    onChange={(e) => setLogData({ ...logData, newClientRole: e.target.value })}
+                                                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white text-sm"
+                                                    placeholder="Job title..."
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">Country/Region</label>
+                                                <input
+                                                    type="text"
+                                                    value={logData.newClientCountry}
+                                                    onChange={(e) => setLogData({ ...logData, newClientCountry: e.target.value })}
+                                                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white text-sm"
+                                                    placeholder="e.g. Malaysia"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">Email</label>
+                                                <input
+                                                    type="email"
+                                                    value={logData.newClientEmail}
+                                                    onChange={(e) => setLogData({ ...logData, newClientEmail: e.target.value })}
+                                                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white text-sm"
+                                                    placeholder="email@company.com"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
+                                ) : (
+                                    <>
+                                        {/* Client Selection */}
+                                        <div>
+                                            <label className="block text-sm text-gray-400 mb-1">Log to Client</label>
+                                            <select
+                                                value={logData.clientId}
+                                                onChange={(e) => setLogData({ ...logData, clientId: e.target.value, opportunityId: '' })}
+                                                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                                            >
+                                                <option value="">Select client...</option>
+                                                {clients.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.company}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Opportunity Selection (if client selected) */}
+                                        {logData.clientId && clientOpportunities.length > 0 && (
+                                            <div>
+                                                <label className="block text-sm text-gray-400 mb-1">Log to Opportunity (optional)</label>
+                                                <select
+                                                    value={logData.opportunityId}
+                                                    onChange={(e) => setLogData({ ...logData, opportunityId: e.target.value })}
+                                                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                                                >
+                                                    <option value="">Just log to client</option>
+                                                    {clientOpportunities.map(o => (
+                                                        <option key={o.id} value={o.id}>{o.title}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
 
                                 {/* Create New Opportunity */}
-                                {logData.clientId && (
+                                {(logData.clientId || logData.createClient) && (
                                     <div className="border-t border-dark-border pt-4">
                                         <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
                                             <input
@@ -681,7 +818,7 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
                                                 onChange={(e) => setLogData({ ...logData, createOpportunity: e.target.checked })}
                                                 className="rounded border-gray-600"
                                             />
-                                            Create new opportunity from this
+                                            Also create opportunity from this
                                         </label>
                                         {logData.createOpportunity && (
                                             <input
@@ -701,9 +838,9 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
                                 <button
                                     onClick={completeAndLog}
                                     className="btn-primary"
-                                    disabled={!logData.note.trim()}
+                                    disabled={!logData.note.trim() || (logData.createClient && !logData.newClientCompany.trim())}
                                 >
-                                    Complete & Log
+                                    {logData.createClient ? 'Create Client & Complete' : 'Complete & Log'}
                                 </button>
                             </div>
                         </div>
@@ -756,6 +893,7 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
                                             task={task}
                                             onToggle={() => toggleTaskComplete(task.id, task.isManual)}
                                             onLog={() => openLogModal(task)}
+                                            onDelete={() => deleteTask(task.id, task.isManual)}
                                             getPriorityColor={getPriorityColor}
                                         />
                                     ))}
@@ -771,6 +909,7 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
                                 task={task}
                                 onToggle={() => toggleTaskComplete(task.id, task.isManual)}
                                 onLog={() => openLogModal(task)}
+                                onDelete={() => deleteTask(task.id, task.isManual)}
                                 getPriorityColor={getPriorityColor}
                             />
                         ))}
@@ -811,7 +950,7 @@ Generate 8-10 tasks from YOUR DATA. Return ONLY JSON:
 }
 
 // Task Card Component
-function TaskCard({ task, onToggle, onLog, getPriorityColor }) {
+function TaskCard({ task, onToggle, onLog, onDelete, getPriorityColor }) {
     return (
         <div className="bg-dark-card border border-dark-border rounded-lg p-4 hover:border-gray-700 transition-colors">
             <div className="flex items-start gap-3">
@@ -856,8 +995,8 @@ function TaskCard({ task, onToggle, onLog, getPriorityColor }) {
                         )}
                     </div>
 
-                    {/* Action Button */}
-                    <div className="mt-3 pt-3 border-t border-dark-border">
+                    {/* Action Buttons */}
+                    <div className="mt-3 pt-3 border-t border-dark-border flex items-center justify-between">
                         <button
                             onClick={onLog}
                             className="text-xs text-accent-primary hover:text-accent-primary/80 flex items-center gap-1.5 transition-colors"
@@ -865,7 +1004,16 @@ function TaskCard({ task, onToggle, onLog, getPriorityColor }) {
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Complete & Log to Client/Opportunity
+                            Complete & Log
+                        </button>
+                        <button
+                            onClick={onDelete}
+                            className="text-xs text-gray-500 hover:text-red-400 flex items-center gap-1 transition-colors"
+                            title="Delete task"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                         </button>
                     </div>
                 </div>
