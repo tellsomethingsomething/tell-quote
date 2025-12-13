@@ -4,30 +4,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Quote is a quote/proposal generation tool for Tell Productions. It allows creating detailed project quotes with line items organized by sections (Production Team, Production Equipment, Creative, Logistics, Expenses), managing clients, and exporting to PDF.
+Quote is a quote/proposal generation tool for Tell Productions. It allows creating detailed project quotes with line items organized by sections (Production Team, Production Equipment, Creative, Logistics, Expenses), managing clients and opportunities, and exporting to PDF.
 
 ## Commands
 
 ```bash
-npm run dev      # Start development server (Vite)
-npm run build    # Production build
+npm run dev      # Start development server (Vite) on localhost:5173
+npm run build    # Production build with terser minification
 npm run preview  # Preview production build locally
 npm run lint     # Run ESLint
 npm run deploy   # Build and deploy to GitHub Pages (gh-pages)
 ```
 
-## Environment Variables
+## Tech Stack
 
-Copy `.env.example` to `.env.local` and configure:
-- `VITE_SUPABASE_URL` - Supabase project URL
-- `VITE_SUPABASE_ANON_KEY` - Supabase anon/public key
-- `VITE_APP_PASSWORD` - (Optional, deprecated) Simple password auth for dev only
+- React 19 with Vite 7
+- Zustand for state management
+- Tailwind CSS for styling
+- @react-pdf/renderer for PDF generation
+- @dnd-kit for drag-and-drop (section/item reordering)
+- Recharts for dashboard analytics
+- Supabase for backend (auth + PostgreSQL)
 
 ## Architecture
 
 ### State Management (Zustand)
 
-All app state lives in `/src/store/` using Zustand with persistence:
+All app state lives in `/src/store/` using Zustand with `subscribeWithSelector` middleware:
 
 - **quoteStore.js** - Current quote being edited, with auto-save to Supabase every 30 seconds
 - **clientStore.js** - Clients list and saved quotes library
@@ -35,13 +38,14 @@ All app state lives in `/src/store/` using Zustand with persistence:
 - **settingsStore.js** - Company settings, users, T&Cs, AI settings
 - **authStore.js** - Authentication (supports Supabase Auth or simple password)
 - **invoiceTemplateStore.js** - Custom invoice/PDF template configurations
+- **opportunityStore.js** - Sales opportunities/pipeline management
 
 Stores sync to both localStorage (for session persistence) and Supabase (for cloud backup).
 
 ### Quote Structure
 
 Quotes have a hierarchical structure defined in `/src/data/sections.js`:
-- **Sections** (Production Team, Production Equipment, etc.) contain **subsections**
+- **Sections** (Production Team, Production Equipment, Creative, Logistics, Expenses) contain **subsections**
 - **Subsections** contain **line items** with quantity, days, cost, charge
 - Custom subsections can be added dynamically
 - Section order and names are customizable per quote
@@ -53,17 +57,22 @@ Quotes have a hierarchical structure defined in `/src/data/sections.js`:
 3. Fees (management, commission, discount) are applied at quote level
 4. PDF export uses `@react-pdf/renderer` (`/src/components/pdf/`)
 
-### Pages and Navigation
+### Navigation
 
-- **Pages** (`/src/pages/`) - Full-page views, lazy-loaded with React.lazy() and Suspense
-- **Editor** - Split-panel quote editor with EditorPanel and PreviewPanel
-- Navigation is state-based in App.jsx (`view` state), not URL-based
-- Views: `dashboard`, `clients`, `client-detail`, `editor`, `rate-card`, `quotes`, `settings`, `fs`
+Navigation is state-based in App.jsx (`view` state), not URL-based:
+- Views: `dashboard`, `clients`, `client-detail`, `opportunities`, `opportunity-detail`, `editor`, `rate-card`, `quotes`, `settings`, `fs`
+- All pages in `/src/pages/` are lazy-loaded with React.lazy() and Suspense
+- `useUnsavedChanges` hook prompts before leaving editor with unsaved work
 
-### Custom Hooks
+### PDF Export System
 
-- **useUnsavedChanges** - Tracks unsaved changes in editor, prompts before navigation
-- **usePdfExport** - Handles PDF generation and download
+Located in `/src/components/pdf/`:
+- **QuotePDF.jsx** - Main quote document
+- **ProposalPDF.jsx** - Full proposal with cover page
+- **InvoicePDF.jsx** - Invoice generation
+- **CleanPDF.jsx** - Simplified quote format
+
+The invoice designer (`/src/components/invoiceDesigner/`) allows customizing PDF templates with drag-and-drop modules.
 
 ### Backend (Supabase)
 
@@ -72,14 +81,23 @@ Quotes have a hierarchical structure defined in `/src/data/sections.js`:
 - All use JSONB columns for flexible nested data
 - Authentication: Supabase Auth (recommended) or legacy password mode
 
+### Utilities
+
+- `/src/utils/calculations.js` - Quote totals, margins, fees
+- `/src/utils/currency.js` - Multi-currency support with live exchange rates
+- `/src/utils/encryption.js` - Client-side encryption for sensitive data (API keys)
+- `/src/utils/validation.js` - Form validation helpers
+
 ## Styling
 
 - Tailwind CSS with custom brand colors defined in `tailwind.config.js`
 - Dark theme by default (`bg-dark-bg`, `dark-card`, `dark-border`)
 - Brand colors: navy (#143642), teal (#0F8B8D), orange (#FE7F2D)
-- Section colors for visual distinction in editor
+- Section colors defined in `/src/data/sections.js` for visual distinction
 
 ## Deployment
 
 - **Vercel**: Uses base path `/`
 - **GitHub Pages**: Uses base path `/tell-quote/` (set via `GITHUB_ACTIONS` env var in vite.config.js)
+
+Build is optimized with manual chunk splitting for caching (react-vendor, zustand-vendor, pdf-vendor, charts-vendor, supabase-vendor).
