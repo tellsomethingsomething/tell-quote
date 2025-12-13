@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { useClientStore } from '../store/clientStore';
 import { useSettingsStore } from '../store/settingsStore';
+import { useOpportunityStore, REGIONS } from '../store/opportunityStore';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import {
@@ -27,6 +28,7 @@ const PIE_COLORS = [COLORS.teal, COLORS.navy, COLORS.orange, COLORS.green, COLOR
 export default function FSPage({ onExit }) {
     const { savedQuotes, clients } = useClientStore();
     const { settings } = useSettingsStore();
+    const { opportunities } = useOpportunityStore();
     const rates = settings.exchangeRates || {};
     const [currency] = useState('USD');
     const containerRef = useRef(null);
@@ -333,6 +335,81 @@ export default function FSPage({ onExit }) {
         return data;
     }, [savedQuotes, rates, currency]);
 
+    // Opportunity stats
+    const opportunityStats = useMemo(() => {
+        const active = opportunities.filter(o => o.status === 'active');
+        const won = opportunities.filter(o => o.status === 'won');
+        const lost = opportunities.filter(o => o.status === 'lost');
+
+        const totalValue = active.reduce((sum, o) => {
+            const converted = convertCurrency(o.value || 0, o.currency || 'USD', currency, rates);
+            return sum + converted;
+        }, 0);
+
+        const weightedValue = active.reduce((sum, o) => {
+            const prob = (o.probability || 0) / 100;
+            const converted = convertCurrency(o.value || 0, o.currency || 'USD', currency, rates);
+            return sum + converted * prob;
+        }, 0);
+
+        const wonValue = won.reduce((sum, o) => {
+            const converted = convertCurrency(o.value || 0, o.currency || 'USD', currency, rates);
+            return sum + converted;
+        }, 0);
+
+        // By region
+        const byRegion = {};
+        Object.keys(REGIONS).forEach(region => {
+            const regionOpps = active.filter(o => o.region === region);
+            byRegion[region] = {
+                count: regionOpps.length,
+                value: regionOpps.reduce((sum, o) => {
+                    const converted = convertCurrency(o.value || 0, o.currency || 'USD', currency, rates);
+                    return sum + converted;
+                }, 0),
+            };
+        });
+
+        // By country (top 8)
+        const byCountry = {};
+        active.forEach(o => {
+            const country = o.country || 'Other';
+            if (!byCountry[country]) byCountry[country] = { count: 0, value: 0 };
+            byCountry[country].count++;
+            byCountry[country].value += convertCurrency(o.value || 0, o.currency || 'USD', currency, rates);
+        });
+
+        const topCountries = Object.entries(byCountry)
+            .map(([name, data]) => ({ name, ...data }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 8);
+
+        return {
+            activeCount: active.length,
+            wonCount: won.length,
+            lostCount: lost.length,
+            totalValue,
+            weightedValue,
+            wonValue,
+            byRegion,
+            topCountries,
+            avgProbability: active.length > 0
+                ? Math.round(active.reduce((sum, o) => sum + (o.probability || 0), 0) / active.length)
+                : 0,
+        };
+    }, [opportunities, rates, currency]);
+
+    // Opportunity region data for chart
+    const opportunityRegionData = useMemo(() => {
+        return Object.entries(opportunityStats.byRegion)
+            .map(([name, data]) => ({
+                name,
+                value: data.value,
+                count: data.count,
+            }))
+            .filter(d => d.count > 0);
+    }, [opportunityStats]);
+
     const CustomTooltip = ({ active, payload, label }) => {
         if (!active || !payload) return null;
         return (
@@ -460,6 +537,45 @@ export default function FSPage({ onExit }) {
                     </div>
                 </div>
 
+                {/* Opportunities KPI Strip */}
+                <div className="bg-gradient-to-r from-cyan-900/20 via-teal-900/20 to-emerald-900/20 border border-cyan-800/30 rounded-xl p-4">
+                    <h3 className="text-xs font-semibold text-cyan-400 uppercase tracking-wider mb-3">Opportunities Pipeline</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+                        <div>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Active Opps</p>
+                            <p className="text-lg font-bold text-white">{opportunityStats.activeCount}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Pipeline Value</p>
+                            <p className="text-lg font-bold text-cyan-400">{formatCurrency(opportunityStats.totalValue, currency, 0)}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Weighted Value</p>
+                            <p className="text-lg font-bold text-teal-400">{formatCurrency(opportunityStats.weightedValue, currency, 0)}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Avg Probability</p>
+                            <p className="text-lg font-bold text-amber-400">{opportunityStats.avgProbability}%</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Opps Won</p>
+                            <p className="text-lg font-bold text-green-400">{opportunityStats.wonCount}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Won Value</p>
+                            <p className="text-lg font-bold text-green-400">{formatCurrency(opportunityStats.wonValue, currency, 0)}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Opps Lost</p>
+                            <p className="text-lg font-bold text-red-400">{opportunityStats.lostCount}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Total Opps</p>
+                            <p className="text-lg font-bold text-gray-300">{opportunities.length}</p>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Main Charts Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Revenue & Profit Trend */}
@@ -567,6 +683,49 @@ export default function FSPage({ onExit }) {
                                     <Tooltip content={<CustomTooltip />} />
                                 </PieChart>
                             </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Opportunities Charts Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Opportunities by Region */}
+                    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-5">
+                        <h3 className="text-sm font-semibold text-gray-300 mb-4">Opportunities by Region</h3>
+                        <div className="h-[200px]">
+                            {opportunityRegionData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={opportunityRegionData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                                        <XAxis dataKey="name" stroke="#6B7280" fontSize={11} />
+                                        <YAxis stroke="#6B7280" fontSize={11} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
+                                        <Tooltip content={<CustomTooltip />} />
+                                        <Bar dataKey="value" name="Pipeline Value" fill={COLORS.teal} radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-gray-500">No active opportunities</div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Opportunities by Country */}
+                    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-5">
+                        <h3 className="text-sm font-semibold text-gray-300 mb-4">Top Countries by Opportunity Value</h3>
+                        <div className="h-[200px]">
+                            {opportunityStats.topCountries.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={opportunityStats.topCountries} layout="vertical">
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                                        <XAxis type="number" stroke="#6B7280" fontSize={10} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
+                                        <YAxis type="category" dataKey="name" stroke="#6B7280" fontSize={10} width={100} />
+                                        <Tooltip content={<CustomTooltip />} />
+                                        <Bar dataKey="value" name="Pipeline Value" fill={COLORS.navy} radius={[0, 4, 4, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-gray-500">No active opportunities</div>
+                            )}
                         </div>
                     </div>
                 </div>
