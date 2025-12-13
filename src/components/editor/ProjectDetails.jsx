@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { CURRENCIES } from '../../data/currencies';
 
 export default function ProjectDetails({ onGoToSettings }) {
     const { quote, setProjectDetails, setPreparedBy, setQuoteDate, setValidityDays, setRegion, setNextFollowUpDate, setInternalNotes } = useQuoteStore();
+    const [showActivityLog, setShowActivityLog] = useState(false);
     const { settings } = useSettingsStore();
 
     const projectTypes = settings.projectTypes || [];
@@ -245,6 +247,86 @@ export default function ProjectDetails({ onGoToSettings }) {
                         className="input resize-none"
                     />
                     <p className="form-helper">Useful for handoff context between team members</p>
+                </div>
+
+                {/* Activity Log */}
+                <div className="border-t border-dark-border pt-4">
+                    <button
+                        onClick={() => setShowActivityLog(!showActivityLog)}
+                        className="w-full flex items-center justify-between text-sm text-gray-400 hover:text-gray-300 transition-colors"
+                    >
+                        <span className="flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Activity Log
+                            {quote.statusHistory?.length > 0 && (
+                                <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded">
+                                    {quote.statusHistory.length}
+                                </span>
+                            )}
+                        </span>
+                        <svg
+                            className={`w-4 h-4 transition-transform ${showActivityLog ? 'rotate-180' : ''}`}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    {showActivityLog && (
+                        <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                            {(!quote.statusHistory || quote.statusHistory.length === 0) ? (
+                                <p className="text-sm text-gray-500 italic">No activity recorded yet</p>
+                            ) : (
+                                [...quote.statusHistory].reverse().map((entry, idx) => {
+                                    const user = users.find(u => u.id === entry.userId);
+                                    const date = new Date(entry.timestamp);
+                                    const statusColors = {
+                                        draft: 'text-gray-400',
+                                        sent: 'text-blue-400',
+                                        under_review: 'text-amber-400',
+                                        approved: 'text-emerald-400',
+                                        won: 'text-green-400',
+                                        rejected: 'text-red-400',
+                                        expired: 'text-gray-500',
+                                        dead: 'text-red-500',
+                                    };
+
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className="flex items-start gap-3 text-sm p-2 rounded bg-dark-bg/50"
+                                        >
+                                            <div className="w-2 h-2 rounded-full bg-gray-600 mt-1.5 shrink-0" />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-gray-300">Status changed to</span>
+                                                    <span className={`font-semibold uppercase text-xs ${statusColors[entry.status] || 'text-gray-400'}`}>
+                                                        {entry.status?.replace('_', ' ')}
+                                                    </span>
+                                                </div>
+                                                {entry.note && (
+                                                    <p className="text-gray-500 text-xs mt-1">"{entry.note}"</p>
+                                                )}
+                                                <div className="text-xs text-gray-600 mt-1">
+                                                    {user?.name || 'System'} • {date.toLocaleDateString('en-GB', {
+                                                        day: 'numeric',
+                                                        month: 'short',
+                                                        year: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

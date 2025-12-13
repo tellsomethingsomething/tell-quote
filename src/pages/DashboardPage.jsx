@@ -9,13 +9,9 @@ import { CURRENCIES } from '../data/currencies';
 // Status colors aligned with brand palette for visual harmony
 const STATUSES = [
     { id: 'draft', label: 'Drafts', color: '#9CA3AF', bgColor: 'bg-gray-400/10' },
-    { id: 'sent', label: 'Sent', color: '#0F8B8D', bgColor: 'bg-[#0F8B8D]/10' },      // Brand Teal
-    { id: 'under_review', label: 'Under Review', color: '#FCD34D', bgColor: 'bg-amber-400/10' },
-    { id: 'approved', label: 'Approved', color: '#10B981', bgColor: 'bg-emerald-500/10' },
+    { id: 'sent', label: 'Sent', color: '#0F8B8D', bgColor: 'bg-[#0F8B8D]/10' },
     { id: 'won', label: 'Won', color: '#22c55e', bgColor: 'bg-green-500/10' },
-    { id: 'rejected', label: 'Rejected', color: '#EF4444', bgColor: 'bg-red-500/10' },
-    { id: 'expired', label: 'Expired', color: '#6B7280', bgColor: 'bg-gray-500/10' },
-    { id: 'dead', label: 'Lost', color: '#F87171', bgColor: 'bg-red-400/10' },
+    { id: 'dead', label: 'Dead', color: '#F87171', bgColor: 'bg-red-400/10' },
 ];
 
 const MONTHS = [
