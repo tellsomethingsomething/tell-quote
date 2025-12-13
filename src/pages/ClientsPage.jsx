@@ -589,7 +589,7 @@ export default function ClientsPage({ onSelectClient }) {
             {/* Add Client Modal */}
             {
                 isAddClientModalOpen && (
-                    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-md modal-backdrop p-4">
+                    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md modal-backdrop p-4">
                         <div className="bg-dark-card border border-dark-border rounded-xl p-4 sm:p-6 w-full max-w-lg shadow-2xl modal-content relative max-h-[90vh] overflow-y-auto">
                             <button
                                 onClick={() => { setIsAddClientModalOpen(false); setFormErrors({}); }}

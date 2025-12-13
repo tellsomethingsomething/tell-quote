@@ -44,6 +44,7 @@ export default function FeesEditor() {
                             max="100"
                             step="0.5"
                             className="input pr-8 text-center"
+                            disabled={quote.isLocked}
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
                     </div>
@@ -62,6 +63,7 @@ export default function FeesEditor() {
                             max="100"
                             step="0.5"
                             className="input pr-8 text-center"
+                            disabled={quote.isLocked}
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
                     </div>
@@ -80,6 +82,7 @@ export default function FeesEditor() {
                             max="100"
                             step="0.5"
                             className="input pr-8 text-center"
+                            disabled={quote.isLocked}
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
                     </div>
@@ -94,6 +97,7 @@ export default function FeesEditor() {
                         checked={fees.distributeFees || false}
                         onChange={(e) => setFees({ distributeFees: e.target.checked })}
                         className="checkbox border-gray-600 rounded bg-gray-900 group-hover:border-accent-primary transition-colors"
+                        disabled={quote.isLocked}
                     />
                     <div>
                         <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">Distribute Fees into Unit Rates</span>

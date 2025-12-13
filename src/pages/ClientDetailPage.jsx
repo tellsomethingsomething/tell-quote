@@ -634,7 +634,7 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
             {/* Contact Modal */}
             {
                 isContactModalOpen && (
-                    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-md modal-backdrop">
+                    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md modal-backdrop">
                         <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative">
                             <button
                                 onClick={() => { setIsContactModalOpen(false); setContactFormErrors({}); }}
@@ -769,7 +769,7 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
 
             {/* Loss Reason Modal */}
             {lossReasonModal.open && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md modal-backdrop p-4">
                     <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl">
                         <h2 className="text-xl font-bold text-gray-100 mb-2">
                             {lossReasonModal.newStatus === 'rejected' ? 'Quote Rejected' :

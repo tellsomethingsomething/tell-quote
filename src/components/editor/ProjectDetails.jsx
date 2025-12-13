@@ -4,8 +4,9 @@ import { useSettingsStore } from '../../store/settingsStore';
 import { CURRENCIES } from '../../data/currencies';
 
 export default function ProjectDetails({ onGoToSettings }) {
-    const { quote, setProjectDetails, setPreparedBy, setQuoteDate, setValidityDays, setRegion, setNextFollowUpDate, setInternalNotes } = useQuoteStore();
+    const { quote, setProjectDetails, setPreparedBy, setQuoteDate, setValidityDays, setRegion, setNextFollowUpDate, setInternalNotes, lockQuote, unlockQuote } = useQuoteStore();
     const [showActivityLog, setShowActivityLog] = useState(false);
+    const [showLockConfirm, setShowLockConfirm] = useState(false);
     const { settings } = useSettingsStore();
 
     const projectTypes = settings.projectTypes || [];
@@ -17,8 +18,41 @@ export default function ProjectDetails({ onGoToSettings }) {
         setProjectDetails({ [field]: value });
     };
 
+    const currentUser = users.find(u => u.id === quote.preparedBy) || users[0];
+    const lockedByUser = quote.lockedBy ? users.find(u => u.id === quote.lockedBy) : null;
+
+    const handleLock = () => {
+        lockQuote(currentUser?.id || 'default');
+        setShowLockConfirm(false);
+    };
+
+    const handleUnlock = () => {
+        unlockQuote(currentUser?.id || 'default');
+    };
+
     return (
         <div className="card">
+            {/* Locked Banner */}
+            {quote.isLocked && (
+                <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-amber-400">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span className="text-sm font-medium">
+                            This quote is locked
+                            {lockedByUser && <span className="text-amber-500/70"> by {lockedByUser.name}</span>}
+                            {quote.lockedAt && <span className="text-amber-500/70"> on {new Date(quote.lockedAt).toLocaleDateString()}</span>}
+                        </span>
+                    </div>
+                    <button
+                        onClick={handleUnlock}
+                        className="text-xs px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-lg transition-colors"
+                    >
+                        Unlock
+                    </button>
+                </div>
+            )}
             <h3 className="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
                 <svg className="w-4 h-4 text-accent-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
@@ -35,6 +69,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                             value={quote.preparedBy || 'default'}
                             onChange={(e) => setPreparedBy(e.target.value)}
                             className="input flex-1"
+                            disabled={quote.isLocked}
                         >
                             <option value="default" disabled>Select User</option>
                             {users.map(user => (
@@ -65,6 +100,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                             value={quote.quoteDate}
                             onChange={(e) => setQuoteDate(e.target.value)}
                             className="input"
+                            disabled={quote.isLocked}
                         />
                     </div>
                     <div>
@@ -74,6 +110,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                                 value={quote.validityDays}
                                 onChange={(e) => setValidityDays(e.target.value)}
                                 className="input flex-1"
+                                disabled={quote.isLocked}
                             >
                                 <option value="7">7 Days</option>
                                 <option value="14">14 Days</option>
@@ -102,6 +139,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                         onChange={(e) => handleChange('title', e.target.value)}
                         placeholder="e.g. Shopee Cup Semi-Final"
                         className="input"
+                        disabled={quote.isLocked}
                     />
                 </div>
 
@@ -113,6 +151,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                             value={project.type}
                             onChange={(e) => handleChange('type', e.target.value)}
                             className="input"
+                            disabled={quote.isLocked}
                         >
                             {projectTypes.map(type => (
                                 <option key={type.id} value={type.id}>
@@ -127,6 +166,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                             value={quote.region || (regions[0]?.id || 'SEA')}
                             onChange={(e) => setRegion(e.target.value)}
                             className="input"
+                            disabled={quote.isLocked}
                         >
                             {regions.map(region => (
                                 <option key={region.id} value={region.id}>
@@ -147,6 +187,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                                 useQuoteStore.getState().setCurrency(e.target.value);
                             }}
                             className="input"
+                            disabled={quote.isLocked}
                         >
                             {Object.values(CURRENCIES).map(c => (
                                 <option key={c.code} value={c.code}>
@@ -163,6 +204,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                             onChange={(e) => handleChange('venue', e.target.value)}
                             placeholder="e.g. Jalan Besar Stadium"
                             className="input"
+                            disabled={quote.isLocked}
                         />
                     </div>
                 </div>
@@ -183,6 +225,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                                 }
                             }}
                             className="input"
+                            disabled={quote.isLocked}
                         />
                     </div>
                     <div>
@@ -193,6 +236,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                             onChange={(e) => handleChange('endDate', e.target.value)}
                             min={project.startDate || ''}
                             className="input"
+                            disabled={quote.isLocked}
                         />
                     </div>
                 </div>
@@ -206,6 +250,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                         placeholder="Brief project description..."
                         rows={2}
                         className="input resize-none"
+                        disabled={quote.isLocked}
                     />
                 </div>
 
@@ -224,6 +269,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                         value={quote.nextFollowUpDate || ''}
                         onChange={(e) => setNextFollowUpDate(e.target.value || null)}
                         className="input"
+                        disabled={quote.isLocked}
                     />
                     <p className="form-helper">Set a reminder date to follow up on this quote</p>
                 </div>
@@ -245,6 +291,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                         placeholder="Team notes, context, reminders..."
                         rows={3}
                         className="input resize-none"
+                        disabled={quote.isLocked}
                     />
                     <p className="form-helper">Useful for handoff context between team members</p>
                 </div>
@@ -328,7 +375,56 @@ export default function ProjectDetails({ onGoToSettings }) {
                         </div>
                     )}
                 </div>
+
+                {/* Lock Quote Button */}
+                {!quote.isLocked && (
+                    <div className="border-t border-dark-border pt-4">
+                        <button
+                            onClick={() => setShowLockConfirm(true)}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-dark-bg/50 hover:bg-dark-bg border border-dark-border rounded-lg text-sm text-gray-400 hover:text-gray-300 transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            Lock Quote
+                        </button>
+                        <p className="form-helper text-center mt-2">Locking prevents accidental edits to this quote</p>
+                    </div>
+                )}
             </div>
+
+            {/* Lock Confirmation Modal */}
+            {showLockConfirm && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md modal-backdrop p-4">
+                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-sm shadow-2xl">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-amber-500/20 rounded-lg">
+                                <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-100">Lock Quote?</h3>
+                        </div>
+                        <p className="text-sm text-gray-400 mb-6">
+                            Locking this quote will prevent any further edits. You can unlock it later if needed.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowLockConfirm(false)}
+                                className="flex-1 px-4 py-2 bg-dark-bg hover:bg-dark-bg/80 border border-dark-border rounded-lg text-sm text-gray-300 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleLock}
+                                className="flex-1 px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 rounded-lg text-sm text-amber-400 font-medium transition-colors"
+                            >
+                                Lock Quote
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -425,7 +425,14 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                 {/* Header Row */}
                                 <div className="flex items-start justify-between mb-2">
                                     <div>
-                                        <span className="font-mono text-xs text-accent-primary">{quote.quoteNumber || '-'}</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="font-mono text-xs text-accent-primary">{quote.quoteNumber || '-'}</span>
+                                            {quote.isLocked && (
+                                                <svg className="w-3 h-3 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Locked">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                </svg>
+                                            )}
+                                        </div>
                                         <h3 className="text-sm font-medium text-gray-200 mt-0.5">{quote.client?.company || '-'}</h3>
                                     </div>
                                     <select
@@ -436,6 +443,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                         }}
                                         onClick={(e) => e.stopPropagation()}
                                         className={`text-xs px-2 py-1 min-h-[32px] rounded border ${getStatusColor(quote.status)}`}
+                                        disabled={quote.isLocked}
                                     >
                                         <option value="draft">Draft</option>
                                         <option value="sent">Sent</option>
@@ -546,7 +554,14 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                         onClick={() => onEditQuote(quote)}
                                     >
                                         <td className="py-3 pr-4">
-                                            <span className="font-mono text-sm text-gray-300">{quote.quoteNumber || '-'}</span>
+                                            <span className="font-mono text-sm text-gray-300 flex items-center gap-1.5">
+                                                {quote.quoteNumber || '-'}
+                                                {quote.isLocked && (
+                                                    <svg className="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Locked">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                    </svg>
+                                                )}
+                                            </span>
                                         </td>
                                         <td className="py-3 pr-4">
                                             <div>
@@ -581,6 +596,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                                 value={quote.status || 'draft'}
                                                 onChange={(e) => handleStatusChange(quote.id, e.target.value)}
                                                 className={`text-xs px-2 py-1 min-h-[36px] rounded border ${getStatusColor(quote.status)}`}
+                                                disabled={quote.isLocked}
                                             >
                                                 <option value="draft">Draft</option>
                                                 <option value="sent">Sent</option>
@@ -682,7 +698,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
 
             {/* Loss Reason Modal */}
             {lossReasonModal.open && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md modal-backdrop p-4">
                     <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl">
                         <h2 className="text-xl font-bold text-gray-100 mb-2">
                             {lossReasonModal.newStatus === 'rejected' ? 'Quote Rejected' :

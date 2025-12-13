@@ -204,7 +204,7 @@ export default function RateCardPage() {
 
             {/* Add Category Modal */}
             {showAddCategoryForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md modal-backdrop" onClick={() => setShowAddCategoryForm(false)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md modal-backdrop" onClick={() => setShowAddCategoryForm(false)}>
                     <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-sm shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
                         <button
                             onClick={() => setShowAddCategoryForm(false)}
@@ -326,7 +326,7 @@ export default function RateCardPage() {
 
             {/* Add Item Modal */}
             {showAddForm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md modal-backdrop" onClick={() => setShowAddForm(false)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md modal-backdrop" onClick={() => setShowAddForm(false)}>
                     <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
                         <button
                             onClick={() => setShowAddForm(false)}
@@ -400,7 +400,7 @@ export default function RateCardPage() {
 
             {/* Edit Item Modal */}
             {editingItem && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md modal-backdrop" onClick={() => setEditingItem(null)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md modal-backdrop" onClick={() => setEditingItem(null)}>
                     <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
                         <button
                             onClick={() => setEditingItem(null)}

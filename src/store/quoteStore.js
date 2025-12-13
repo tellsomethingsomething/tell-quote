@@ -7,6 +7,7 @@ import { saveQuote, loadQuote, generateQuoteNumber } from '../utils/storage';
 import { fetchLiveRates, convertCurrency } from '../utils/currency';
 import { useRateCardStore } from './rateCardStore';
 import { useClientStore } from './clientStore';
+import { useSettingsStore } from './settingsStore';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 // Auto-save interval (30 seconds)
@@ -140,6 +141,22 @@ function stopAutoSave() {
     }
 }
 
+// Helper to log activity to the settings store
+function logActivity(entry) {
+    const quote = useQuoteStore.getState().quote;
+    const { settings, addActivityLog } = useSettingsStore.getState();
+    const currentUser = settings.users?.find(u => u.id === quote.preparedBy) || settings.users?.[0];
+
+    addActivityLog({
+        userId: currentUser?.id || 'default',
+        userName: currentUser?.name || 'Unknown',
+        quoteId: quote.id,
+        quoteNumber: quote.quoteNumber,
+        projectName: quote.project?.title || '',
+        ...entry,
+    });
+}
+
 // Create initial empty sections structure
 function createEmptySections() {
     const sections = {};
@@ -214,6 +231,10 @@ function createEmptyQuote() {
         lostReason: null, // Reason for rejected/expired/lost status
         lostReasonNotes: '', // Additional notes for lost reason
         internalNotes: '', // Internal notes not shown in PDF
+        // Quote locking
+        isLocked: false,    // Whether quote is locked for editing
+        lockedAt: null,     // ISO timestamp when locked
+        lockedBy: null,     // User ID who locked it
     };
 }
 
@@ -391,12 +412,28 @@ export const useQuoteStore = create(
         // Update client details
         setClientDetails: (client) => {
             set(state => {
+                const oldClient = state.quote.client;
                 const updated = {
                     ...state.quote,
                     client: { ...state.quote.client, ...client },
                     updatedAt: new Date().toISOString()
                 };
                 saveQuoteWithLibrarySync(updated);
+
+                // Log each changed field
+                Object.keys(client).forEach(field => {
+                    if (oldClient[field] !== client[field]) {
+                        logActivity({
+                            action: 'update',
+                            category: 'client',
+                            field: `client.${field}`,
+                            oldValue: oldClient[field],
+                            newValue: client[field],
+                            description: `Changed client ${field} from "${oldClient[field] || '(empty)'}" to "${client[field] || '(empty)'}"`,
+                        });
+                    }
+                });
+
                 return { quote: updated };
             });
         },
@@ -404,12 +441,28 @@ export const useQuoteStore = create(
         // Update project details
         setProjectDetails: (project) => {
             set(state => {
+                const oldProject = state.quote.project;
                 const updated = {
                     ...state.quote,
                     project: { ...state.quote.project, ...project },
                     updatedAt: new Date().toISOString()
                 };
                 saveQuoteWithLibrarySync(updated);
+
+                // Log each changed field
+                Object.keys(project).forEach(field => {
+                    if (oldProject[field] !== project[field]) {
+                        logActivity({
+                            action: 'update',
+                            category: 'project',
+                            field: `project.${field}`,
+                            oldValue: oldProject[field],
+                            newValue: project[field],
+                            description: `Changed project ${field} from "${oldProject[field] || '(empty)'}" to "${project[field] || '(empty)'}"`,
+                        });
+                    }
+                });
+
                 return { quote: updated };
             });
         },
@@ -417,12 +470,28 @@ export const useQuoteStore = create(
         // Update fee percentages
         setFees: (fees) => {
             set(state => {
+                const oldFees = state.quote.fees;
                 const updated = {
                     ...state.quote,
                     fees: { ...state.quote.fees, ...fees },
                     updatedAt: new Date().toISOString()
                 };
                 saveQuoteWithLibrarySync(updated);
+
+                // Log each changed field
+                Object.keys(fees).forEach(field => {
+                    if (oldFees[field] !== fees[field]) {
+                        logActivity({
+                            action: 'update',
+                            category: 'fees',
+                            field: `fees.${field}`,
+                            oldValue: oldFees[field],
+                            newValue: fees[field],
+                            description: `Changed ${field} from ${oldFees[field]} to ${fees[field]}`,
+                        });
+                    }
+                });
+
                 return { quote: updated };
             });
         },
@@ -518,6 +587,16 @@ export const useQuoteStore = create(
 
                 const updated = { ...state.quote, sections, updatedAt: new Date().toISOString() };
                 saveQuoteWithLibrarySync(updated);
+
+                // Log the addition
+                logActivity({
+                    action: 'create',
+                    category: 'lineItem',
+                    field: `${sectionId}.${subsection}`,
+                    newValue: newItem,
+                    description: `Added line item "${newItem.name || 'Unnamed'}" to ${subsection}`,
+                });
+
                 return { quote: updated };
             });
         },
@@ -529,6 +608,9 @@ export const useQuoteStore = create(
                 const sectionData = { ...sections[sectionId] };
                 const subsections = { ...sectionData.subsections };
 
+                // Find the old item for logging
+                const oldItem = subsections[subsection].find(item => item.id === itemId);
+
                 subsections[subsection] = subsections[subsection].map(item =>
                     item.id === itemId ? { ...item, ...updates } : item
                 );
@@ -538,6 +620,23 @@ export const useQuoteStore = create(
 
                 const updated = { ...state.quote, sections, updatedAt: new Date().toISOString() };
                 saveQuoteWithLibrarySync(updated);
+
+                // Log each changed field
+                if (oldItem) {
+                    Object.keys(updates).forEach(field => {
+                        if (oldItem[field] !== updates[field]) {
+                            logActivity({
+                                action: 'update',
+                                category: 'lineItem',
+                                field: `lineItem.${field}`,
+                                oldValue: oldItem[field],
+                                newValue: updates[field],
+                                description: `Updated "${oldItem.name || 'Unnamed'}" ${field}: ${oldItem[field]} → ${updates[field]}`,
+                            });
+                        }
+                    });
+                }
+
                 return { quote: updated };
             });
         },
@@ -549,6 +648,9 @@ export const useQuoteStore = create(
                 const sectionData = { ...sections[sectionId] };
                 const subsections = { ...sectionData.subsections };
 
+                // Find the item for logging before deleting
+                const deletedItem = subsections[subsection].find(item => item.id === itemId);
+
                 subsections[subsection] = subsections[subsection].filter(item => item.id !== itemId);
 
                 sectionData.subsections = subsections;
@@ -556,6 +658,18 @@ export const useQuoteStore = create(
 
                 const updated = { ...state.quote, sections, updatedAt: new Date().toISOString() };
                 saveQuoteWithLibrarySync(updated);
+
+                // Log the deletion
+                if (deletedItem) {
+                    logActivity({
+                        action: 'delete',
+                        category: 'lineItem',
+                        field: `${sectionId}.${subsection}`,
+                        oldValue: deletedItem,
+                        description: `Deleted line item "${deletedItem.name || 'Unnamed'}" from ${subsection}`,
+                    });
+                }
+
                 return { quote: updated };
             });
         },
@@ -687,6 +801,7 @@ export const useQuoteStore = create(
         // Update quote status with history tracking
         updateQuoteStatus: (newStatus, note = '', userId = 'default') => {
             set(state => {
+                const oldStatus = state.quote.status;
                 const statusHistory = [
                     ...(state.quote.statusHistory || []),
                     {
@@ -704,6 +819,17 @@ export const useQuoteStore = create(
                     updatedAt: new Date().toISOString()
                 };
                 saveQuoteWithLibrarySync(updated);
+
+                // Log status change
+                logActivity({
+                    action: 'status_change',
+                    category: 'status',
+                    field: 'status',
+                    oldValue: oldStatus,
+                    newValue: newStatus,
+                    description: `Changed status from "${oldStatus}" to "${newStatus}"${note ? ` (${note})` : ''}`,
+                });
+
                 return { quote: updated };
             });
         },
@@ -744,6 +870,58 @@ export const useQuoteStore = create(
                     updatedAt: new Date().toISOString()
                 };
                 saveQuoteWithLibrarySync(updated);
+                return { quote: updated };
+            });
+        },
+
+        // Lock quote (prevent editing)
+        lockQuote: (userId = 'default') => {
+            set(state => {
+                const updated = {
+                    ...state.quote,
+                    isLocked: true,
+                    lockedAt: new Date().toISOString(),
+                    lockedBy: userId,
+                    updatedAt: new Date().toISOString()
+                };
+                saveQuoteWithLibrarySync(updated);
+
+                // Log the lock action
+                logActivity({
+                    action: 'lock',
+                    category: 'lock',
+                    field: 'isLocked',
+                    oldValue: false,
+                    newValue: true,
+                    description: `Locked quote for editing`,
+                });
+
+                return { quote: updated };
+            });
+        },
+
+        // Unlock quote (allow editing)
+        unlockQuote: (userId = 'default') => {
+            set(state => {
+                const updated = {
+                    ...state.quote,
+                    isLocked: false,
+                    lockedAt: null,
+                    lockedBy: null,
+                    updatedAt: new Date().toISOString()
+                };
+                saveQuoteWithLibrarySync(updated);
+
+                // Log the unlock action
+                logActivity({
+                    action: 'unlock',
+                    category: 'lock',
+                    field: 'isLocked',
+                    oldValue: true,
+                    newValue: false,
+                    description: `Unlocked quote for editing`,
+                });
+
                 return { quote: updated };
             });
         },

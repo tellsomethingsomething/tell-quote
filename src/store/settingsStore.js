@@ -106,6 +106,8 @@ const defaultSettings = {
     clientsPreferences: {
         currency: 'USD',
     },
+    // Activity log for tracking all changes
+    activityLog: [],
 };
 
 // Load from localStorage (fallback) with decryption
@@ -152,6 +154,7 @@ function mergeSettings(parsed) {
         users: parsed.users || defaultSettings.users,
         projectTypes: parsed.projectTypes || defaultSettings.projectTypes,
         regions: parsed.regions || defaultSettings.regions,
+        activityLog: parsed.activityLog || defaultSettings.activityLog,
     };
 }
 
@@ -603,6 +606,72 @@ export const useSettingsStore = create(
             URL.revokeObjectURL(url);
 
             logSecurityEvent('settings_exported', { sanitized: true });
+        },
+
+        // Activity Log - Add entry
+        addActivityLog: async (entry) => {
+            const state = get();
+            const newEntry = {
+                id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+                timestamp: new Date().toISOString(),
+                ...entry,
+            };
+            const updated = {
+                ...state.settings,
+                activityLog: [newEntry, ...(state.settings.activityLog || [])].slice(0, 1000), // Keep last 1000 entries
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
+        },
+
+        // Activity Log - Clear all
+        clearActivityLog: async () => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                activityLog: [],
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
+        },
+
+        // Activity Log - Export to CSV
+        exportActivityLog: () => {
+            const { settings } = get();
+            const logs = settings.activityLog || [];
+
+            if (logs.length === 0) {
+                alert('No activity logs to export');
+                return;
+            }
+
+            const headers = ['Timestamp', 'User', 'Quote #', 'Action', 'Category', 'Field', 'Description', 'Old Value', 'New Value'];
+            const rows = logs.map(log => [
+                log.timestamp,
+                log.userName || log.userId || '',
+                log.quoteNumber || '',
+                log.action || '',
+                log.category || '',
+                log.field || '',
+                log.description || '',
+                typeof log.oldValue === 'object' ? JSON.stringify(log.oldValue) : (log.oldValue || ''),
+                typeof log.newValue === 'object' ? JSON.stringify(log.newValue) : (log.newValue || ''),
+            ]);
+
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `activity-log-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         },
 
         // Reset to defaults

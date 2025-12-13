@@ -114,8 +114,9 @@ export default function LineItem({ item, sectionId, subsectionName }) {
 
     return (
         <div
-            draggable
+            draggable={!quote.isLocked}
             onDragStart={(e) => {
+                if (quote.isLocked) return;
                 e.dataTransfer.setData('application/json', JSON.stringify({
                     sectionId,
                     subsectionName,
@@ -123,7 +124,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                 }));
                 e.dataTransfer.effectAllowed = 'move';
             }}
-            className="group bg-dark-card border border-dark-border rounded-lg p-2 hover:border-gray-700 transition-colors cursor-move"
+            className={`group bg-dark-card border border-dark-border rounded-lg p-2 hover:border-gray-700 transition-colors ${quote.isLocked ? 'cursor-default opacity-75' : 'cursor-move'}`}
             role="article"
             aria-label={`Line item: ${item.name || 'Unnamed item'}`}
         >
@@ -144,6 +145,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         aria-autocomplete="list"
                         aria-controls={showAutocomplete ? `autocomplete-${item.id}` : undefined}
                         aria-expanded={showAutocomplete}
+                        disabled={quote.isLocked}
                     />
 
                     {/* Autocomplete Dropdown */}
@@ -189,6 +191,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         title="Qty"
                         aria-label="Quantity"
                         placeholder="Qty"
+                        disabled={quote.isLocked}
                     />
                 </div>
 
@@ -210,6 +213,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         title="Days"
                         aria-label="Number of days"
                         placeholder="Days"
+                        disabled={quote.isLocked}
                     />
                 </div>
 
@@ -231,6 +235,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                             className="input-sm w-full pl-6 text-left text-sm text-gray-500"
                             title="Cost"
                             aria-label={`Cost per unit in ${quote.currency}`}
+                            disabled={quote.isLocked}
                         />
                     </div>
                 </div>
@@ -253,6 +258,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                             className="input-sm w-full pl-5 sm:pl-6 text-left text-sm"
                             title="Charge"
                             aria-label={`Charge per unit in ${quote.currency}`}
+                            disabled={quote.isLocked}
                         />
                     </div>
                 </div>
@@ -272,6 +278,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                 </div>
 
                 {/* Delete */}
+                {!quote.isLocked && (
                 <button
                     onClick={handleDelete}
                     className="p-2 min-w-[36px] min-h-[36px] text-gray-600 hover:text-red-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center"
@@ -282,6 +289,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                 </button>
+                )}
             </div>
 
             {/* Mobile: Show additional info */}

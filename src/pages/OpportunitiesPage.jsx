@@ -996,7 +996,7 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
 
             {/* New Opportunity Modal */}
             {showNewModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md modal-backdrop p-4">
                     <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-xl font-bold text-gray-100">New Opportunity</h2>
@@ -1020,7 +1020,22 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                                     <label className="label label-required">Client</label>
                                     <select
                                         value={newOppForm.clientId}
-                                        onChange={e => setNewOppForm({ ...newOppForm, clientId: e.target.value, newClientName: '' })}
+                                        onChange={e => {
+                                            const selectedClientId = e.target.value;
+                                            const selectedClient = clients.find(c => c.id === selectedClientId);
+                                            // Pre-fill contact info from existing client
+                                            const primaryContact = selectedClient?.contacts?.find(c => c.isPrimary) || selectedClient?.contacts?.[0];
+                                            setNewOppForm({
+                                                ...newOppForm,
+                                                clientId: selectedClientId,
+                                                newClientName: '',
+                                                // Pre-fill from primary contact or main client contact
+                                                contactName: primaryContact?.name || selectedClient?.contact || '',
+                                                contactRole: primaryContact?.role || '',
+                                                contactEmail: primaryContact?.email || selectedClient?.email || '',
+                                                contactPhone: primaryContact?.phone || selectedClient?.phone || '',
+                                            });
+                                        }}
                                         className="input"
                                     >
                                         <option value="">-- Select existing client or add new --</option>

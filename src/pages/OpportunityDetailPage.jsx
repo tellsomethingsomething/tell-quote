@@ -474,7 +474,7 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
 
             {/* Edit Modal */}
             {isEditing && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-md p-4">
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md modal-backdrop p-4">
                     <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
                         <button
                             onClick={() => setIsEditing(false)}
@@ -781,7 +781,7 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
 
             {/* Contact Modal */}
             {isContactModalOpen && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-md p-4">
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md modal-backdrop p-4">
                     <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl">
                         <h2 className="text-xl font-bold text-gray-100 mb-4">
                             {editingContactId ? 'Edit Contact' : 'Add Contact'}

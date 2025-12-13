@@ -103,9 +103,10 @@ export default function ClientDetails() {
                         type="text"
                         value={client.company}
                         onChange={(e) => handleChange('company', e.target.value)}
-                        onFocus={() => setShowDropdown(true)}
+                        onFocus={() => !quote.isLocked && setShowDropdown(true)}
                         placeholder="Type to search or add new client..."
                         className="input"
+                        disabled={quote.isLocked}
                     />
 
                     {/* Client Dropdown */}
@@ -148,6 +149,7 @@ export default function ClientDetails() {
                                 value={client.contactId || ''}
                                 onChange={(e) => handleSelectContact(e.target.value)}
                                 className="input flex-1"
+                                disabled={quote.isLocked}
                             >
                                 <option value="">Select Contact...</option>
                                 {clientData.contacts.map(c => (
@@ -162,6 +164,7 @@ export default function ClientDetails() {
                                 onChange={(e) => handleChange('contact', e.target.value)}
                                 placeholder="Or type name..."
                                 className="input w-1/3"
+                                disabled={quote.isLocked}
                             />
                         </div>
                     ) : (
@@ -171,6 +174,7 @@ export default function ClientDetails() {
                             onChange={(e) => handleChange('contact', e.target.value)}
                             placeholder="e.g. Ahmad Rahman"
                             className="input"
+                            disabled={quote.isLocked}
                         />
                     )}
                 </div>
@@ -183,6 +187,7 @@ export default function ClientDetails() {
                         onChange={(e) => handleChange('role', e.target.value)}
                         placeholder="e.g. Executive Producer, Client Liaison"
                         className="input"
+                        disabled={quote.isLocked}
                     />
                 </div>
 
@@ -195,6 +200,7 @@ export default function ClientDetails() {
                             onChange={(e) => handleContactFieldChange('email', e.target.value)}
                             placeholder="email@company.com"
                             className="input"
+                            disabled={quote.isLocked}
                         />
                     </div>
 
@@ -206,6 +212,7 @@ export default function ClientDetails() {
                             onChange={(e) => handleContactFieldChange('phone', e.target.value)}
                             placeholder="+65 9123 4567"
                             className="input"
+                            disabled={quote.isLocked}
                         />
                     </div>
                 </div>
@@ -222,6 +229,7 @@ export default function ClientDetails() {
                         placeholder="Notes about this contact..."
                         rows={2}
                         className="input resize-none text-sm"
+                        disabled={quote.isLocked}
                     />
                 </div>
 
@@ -235,14 +243,16 @@ export default function ClientDetails() {
                                 className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent-primary/20 text-accent-primary rounded text-xs"
                             >
                                 {tag}
-                                <button
-                                    onClick={() => handleRemoveTag(tag)}
-                                    className="hover:text-white transition-colors"
-                                >
-                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+                                {!quote.isLocked && (
+                                    <button
+                                        onClick={() => handleRemoveTag(tag)}
+                                        className="hover:text-white transition-colors"
+                                    >
+                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                )}
                             </span>
                         ))}
                     </div>
@@ -253,6 +263,7 @@ export default function ClientDetails() {
                         onKeyDown={handleAddTag}
                         placeholder="Type and press Enter to add..."
                         className="input text-sm"
+                        disabled={quote.isLocked}
                     />
                 </div>
             </div>
