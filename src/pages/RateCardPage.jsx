@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRateCardStore } from '../store/rateCardStore';
+import { useQuoteStore } from '../store/quoteStore';
 import { useToast } from '../components/common/Toast';
+import { FALLBACK_RATES } from '../data/currencies';
 
 const REGIONS = [
     { id: 'MALAYSIA', label: 'Malaysia', currency: 'MYR', symbol: 'RM' },
@@ -9,8 +11,26 @@ const REGIONS = [
     { id: 'CENTRAL_ASIA', label: 'Central Asia', currency: 'USD', symbol: '$' },
 ];
 
+// Currencies available for editing
+const EDIT_CURRENCIES = [
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+    { code: 'MYR', symbol: 'RM', name: 'Malaysian Ringgit' },
+];
+
+// Convert between currencies using rates
+const convertCurrency = (amount, fromCurrency, toCurrency, rates) => {
+    if (!amount || fromCurrency === toCurrency) return amount;
+    const fromRate = rates[fromCurrency] || FALLBACK_RATES[fromCurrency] || 1;
+    const toRate = rates[toCurrency] || FALLBACK_RATES[toCurrency] || 1;
+    // Convert to USD first, then to target
+    const usdAmount = amount / fromRate;
+    return usdAmount * toRate;
+};
+
 export default function RateCardPage() {
-    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults } = useRateCardStore();
+    const { items, sections, addItem, updateItem, updateItemPricing, updateItemCurrencyPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults } = useRateCardStore();
+    const { rates } = useQuoteStore();
     const toast = useToast();
     const fileInputRef = useRef(null);
     const saveTimeoutRef = useRef(null);
@@ -21,6 +41,28 @@ export default function RateCardPage() {
     const [expandedItemId, setExpandedItemId] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
     const [showSaved, setShowSaved] = useState(false);
+    const [editCurrency, setEditCurrency] = useState('USD');
+    const [savedField, setSavedField] = useState(null); // Track which field was just saved
+
+    // Get current currency info
+    const currentCurrencyInfo = EDIT_CURRENCIES.find(c => c.code === editCurrency) || EDIT_CURRENCIES[0];
+
+    // Get display value for a field (convert if needed)
+    const getDisplayValue = (item, field) => {
+        const currencyPricing = item.currencyPricing?.[field];
+        if (currencyPricing && currencyPricing.amount !== undefined) {
+            // Convert from stored currency to display currency
+            return convertCurrency(currencyPricing.amount, currencyPricing.baseCurrency, editCurrency, rates);
+        }
+        // Fallback to legacy regional pricing (use MALAYSIA as base)
+        const legacyValue = item.pricing?.MALAYSIA?.[field] || 0;
+        return convertCurrency(legacyValue, 'MYR', editCurrency, rates);
+    };
+
+    // Get the base currency indicator for a field
+    const getBaseCurrency = (item, field) => {
+        return item.currencyPricing?.[field]?.baseCurrency || 'MYR';
+    };
 
     // Show saved indicator
     const triggerSaved = useCallback(() => {
@@ -115,6 +157,15 @@ export default function RateCardPage() {
         triggerSaved();
     };
 
+    // Handle currency-based pricing change
+    const handleCurrencyPricingChange = (itemId, field, value) => {
+        updateItemCurrencyPricing(itemId, field, value, editCurrency);
+        triggerSaved();
+        // Show saved indicator next to this specific field
+        setSavedField(`${itemId}-${field}`);
+        setTimeout(() => setSavedField(null), 2000);
+    };
+
     return (
         <div className="h-[calc(100vh-60px)] flex flex-col bg-dark-bg">
             {/* Header */}
@@ -199,6 +250,27 @@ export default function RateCardPage() {
                             <option key={section.id} value={section.id}>{section.name}</option>
                         ))}
                     </select>
+
+                    {/* Currency Selector */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">Edit in:</span>
+                        <div className="flex rounded-lg overflow-hidden border border-dark-border">
+                            {EDIT_CURRENCIES.map(currency => (
+                                <button
+                                    key={currency.code}
+                                    onClick={() => setEditCurrency(currency.code)}
+                                    className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                                        editCurrency === currency.code
+                                            ? 'bg-accent-primary text-white'
+                                            : 'bg-dark-card text-gray-400 hover:text-white hover:bg-dark-bg'
+                                    }`}
+                                    title={currency.name}
+                                >
+                                    {currency.symbol} {currency.code}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -546,44 +618,99 @@ export default function RateCardPage() {
                                     </div>
                                 </div>
 
-                                {/* Expanded: Regional Pricing */}
+                                {/* Expanded: Currency-Based Pricing */}
                                 {expandedItemId === item.id && (
                                     <div className="mt-4 pt-4 border-t border-dark-border">
-                                        <h4 className="text-xs font-medium text-gray-500 uppercase mb-3">Regional Pricing</h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                            {REGIONS.map(region => (
-                                                <div key={region.id} className="bg-dark-bg rounded-lg p-3">
-                                                    <p className="text-xs font-medium text-gray-400 mb-2">
-                                                        {region.label} <span className="text-gray-600">({region.currency})</span>
-                                                    </p>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <label className="text-xs text-gray-600">Cost ({region.symbol})</label>
-                                                            <div className="relative">
-                                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">{region.symbol}</span>
-                                                                <input
-                                                                    type="number"
-                                                                    value={item.pricing?.[region.id]?.cost || 0}
-                                                                    onChange={(e) => handlePricingChange(item.id, region.id, 'cost', e.target.value)}
-                                                                    className="input text-sm pl-7"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-xs text-gray-600">Charge ({region.symbol})</label>
-                                                            <div className="relative">
-                                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">{region.symbol}</span>
-                                                                <input
-                                                                    type="number"
-                                                                    value={item.pricing?.[region.id]?.charge || 0}
-                                                                    onChange={(e) => handlePricingChange(item.id, region.id, 'charge', e.target.value)}
-                                                                    className="input text-sm pl-7"
-                                                                />
-                                                            </div>
-                                                        </div>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h4 className="text-xs font-medium text-gray-500 uppercase">
+                                                Pricing in {currentCurrencyInfo.name} ({currentCurrencyInfo.symbol})
+                                            </h4>
+                                            <span className="text-xs text-gray-600">
+                                                Values convert automatically when switching currencies
+                                            </span>
+                                        </div>
+                                        <div className="bg-dark-bg rounded-lg p-4">
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div>
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <label className="text-xs text-gray-500">
+                                                            Cost
+                                                            {getBaseCurrency(item, 'cost') !== editCurrency && (
+                                                                <span className="ml-2 text-amber-500/70">
+                                                                    (from {getBaseCurrency(item, 'cost')})
+                                                                </span>
+                                                            )}
+                                                        </label>
+                                                        {savedField === `${item.id}-cost` && (
+                                                            <span className="text-xs text-green-400 flex items-center gap-1 animate-pulse">
+                                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                                Saved in {editCurrency}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-medium">{currentCurrencyInfo.symbol}</span>
+                                                        <input
+                                                            type="number"
+                                                            value={Math.round(getDisplayValue(item, 'cost') * 100) / 100 || ''}
+                                                            onChange={(e) => handleCurrencyPricingChange(item.id, 'cost', e.target.value)}
+                                                            className="input text-lg pl-10 font-medium"
+                                                            placeholder="0"
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-gray-600 mt-1">Your internal cost</p>
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <label className="text-xs text-gray-500">
+                                                            Charge
+                                                            {getBaseCurrency(item, 'charge') !== editCurrency && (
+                                                                <span className="ml-2 text-amber-500/70">
+                                                                    (from {getBaseCurrency(item, 'charge')})
+                                                                </span>
+                                                            )}
+                                                        </label>
+                                                        {savedField === `${item.id}-charge` && (
+                                                            <span className="text-xs text-green-400 flex items-center gap-1 animate-pulse">
+                                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                                Saved in {editCurrency}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-medium">{currentCurrencyInfo.symbol}</span>
+                                                        <input
+                                                            type="number"
+                                                            value={Math.round(getDisplayValue(item, 'charge') * 100) / 100 || ''}
+                                                            onChange={(e) => handleCurrencyPricingChange(item.id, 'charge', e.target.value)}
+                                                            className="input text-lg pl-10 font-medium"
+                                                            placeholder="0"
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-gray-600 mt-1">Client-facing rate</p>
+                                                </div>
+                                            </div>
+                                            {/* Margin indicator */}
+                                            {getDisplayValue(item, 'charge') > 0 && (
+                                                <div className="mt-4 pt-3 border-t border-dark-border/50">
+                                                    <div className="flex items-center justify-between text-sm">
+                                                        <span className="text-gray-500">Margin</span>
+                                                        <span className={`font-medium ${
+                                                            ((getDisplayValue(item, 'charge') - getDisplayValue(item, 'cost')) / getDisplayValue(item, 'charge') * 100) >= 30
+                                                                ? 'text-green-400'
+                                                                : ((getDisplayValue(item, 'charge') - getDisplayValue(item, 'cost')) / getDisplayValue(item, 'charge') * 100) >= 15
+                                                                    ? 'text-amber-400'
+                                                                    : 'text-red-400'
+                                                        }`}>
+                                                            {((getDisplayValue(item, 'charge') - getDisplayValue(item, 'cost')) / getDisplayValue(item, 'charge') * 100).toFixed(0)}%
+                                                        </span>
                                                     </div>
                                                 </div>
-                                            ))}
+                                            )}
                                         </div>
                                     </div>
                                 )}
