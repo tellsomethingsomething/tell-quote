@@ -2,14 +2,16 @@ import { useState, useMemo, useEffect } from 'react';
 import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSettingsStore } from '../store/settingsStore';
+import { useActivityStore } from '../store/activityStore';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { validateForm, sanitizeString } from '../utils/validation';
 
 export default function ClientsPage({ onSelectClient }) {
-    const { clients, savedQuotes, getClientQuotes, addClient, deleteClient } = useClientStore();
+    const { clients, savedQuotes, getClientQuotes, getClientHealth, addClient, deleteClient } = useClientStore();
     const { rates } = useQuoteStore();
     const { settings, setClientsPreferences } = useSettingsStore();
+    const activities = useActivityStore(state => state.activities);
     const projectTypes = settings.projectTypes || [];
 
     // Get clients preferences from settings (synced via Supabase)
@@ -22,11 +24,33 @@ export default function ClientsPage({ onSelectClient }) {
     };
 
     const [searchQuery, setSearchQuery] = useState('');
+    const [filterIndustry, setFilterIndustry] = useState('all');
+    const [filterRegion, setFilterRegion] = useState('all');
+    const [filterPaymentTerms, setFilterPaymentTerms] = useState('all');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [selectedMonth, setSelectedMonth] = useState('all');
     const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
 
     const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // Helper function to generate initials from name
+    const getInitials = (name) => {
+        if (!name) return '?';
+        const parts = name.trim().split(/\s+/);
+        if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+        return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    };
+
+    // Helper function to get consistent avatar color from name
+    const AVATAR_COLORS = [
+        'bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-orange-500',
+        'bg-pink-500', 'bg-cyan-500', 'bg-amber-500', 'bg-indigo-500'
+    ];
+    const getAvatarColor = (name) => {
+        if (!name) return AVATAR_COLORS[0];
+        const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+    };
 
     // Get available years from quotes
     const years = useMemo(() => {
@@ -37,6 +61,26 @@ export default function ClientsPage({ onSelectClient }) {
         });
         return Array.from(yearSet).sort((a, b) => b - a);
     }, [savedQuotes]);
+
+    // Get unique filter options from clients
+    const filterOptions = useMemo(() => {
+        const industries = new Set();
+        const regions = new Set();
+        const paymentTermsList = new Set();
+
+        clients.forEach(client => {
+            if (client.industry) industries.add(client.industry);
+            if (client.region) regions.add(client.region);
+            if (client.paymentTerms) paymentTermsList.add(client.paymentTerms);
+        });
+
+        return {
+            industries: Array.from(industries).sort(),
+            regions: Array.from(regions).sort(),
+            paymentTerms: Array.from(paymentTermsList).sort(),
+        };
+    }, [clients]);
+
     const [newClientData, setNewClientData] = useState({
         company: '',
         website: '',
@@ -102,6 +146,9 @@ export default function ClientsPage({ onSelectClient }) {
             const winRate = totalClosed > 0 ? Math.round((wonCount / totalClosed) * 100) : 0;
             const avgMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100) : 0;
 
+            // Calculate health score
+            const health = getClientHealth(client.id, activities, savedQuotes);
+
             return {
                 ...client,
                 totalRevenue,
@@ -110,10 +157,13 @@ export default function ClientsPage({ onSelectClient }) {
                 winRate,
                 quoteCount: quotes.length,
                 wonCount,
-                contactCount: client.contacts?.length || (client.contact ? 1 : 0)
+                lostCount,
+                contactCount: client.contacts?.length || (client.contact ? 1 : 0),
+                health,
+                daysSinceActivity: health.factors.daysSinceActivity,
             };
         });
-    }, [clients, getClientQuotes, dashboardCurrency, rates, selectedYear, selectedMonth]);
+    }, [clients, getClientQuotes, getClientHealth, activities, savedQuotes, dashboardCurrency, rates, selectedYear, selectedMonth]);
 
     // Calculate Advanced Global Stats
     const stats = useMemo(() => {
@@ -138,14 +188,19 @@ export default function ClientsPage({ onSelectClient }) {
         const topPayingClient = sortedByRevenue[0] || null;
         const topMarginClient = sortedByMargin[0] || null; // Highest avg margin
 
-        // Calculate average win rate and margin across all clients with data
-        const clientsWithWinRate = clientMetrics.filter(c => c.winRate > 0 || c.wonCount > 0 || c.quoteCount > 0);
-        const avgWinRate = clientsWithWinRate.length > 0
-            ? clientsWithWinRate.reduce((sum, c) => sum + c.winRate, 0) / clientsWithWinRate.length
+        // Calculate aggregate win rate (total won / total closed) - not average of percentages
+        const totalWonCount = clientMetrics.reduce((sum, c) => sum + (c.wonCount || 0), 0);
+        const totalLostCount = clientMetrics.reduce((sum, c) => sum + (c.lostCount || 0), 0);
+        const totalClosedCount = totalWonCount + totalLostCount;
+        const avgWinRate = totalClosedCount > 0
+            ? Math.round((totalWonCount / totalClosedCount) * 100)
             : 0;
-        const clientsWithMargin = clientMetrics.filter(c => c.avgMargin > 0);
-        const avgMargin = clientsWithMargin.length > 0
-            ? clientsWithMargin.reduce((sum, c) => sum + c.avgMargin, 0) / clientsWithMargin.length
+
+        // Calculate weighted average margin (by revenue, not simple average)
+        const totalRevenueAll = clientMetrics.reduce((sum, c) => sum + (c.totalRevenue || 0), 0);
+        const totalProfitAll = clientMetrics.reduce((sum, c) => sum + (c.totalProfit || 0), 0);
+        const avgMargin = totalRevenueAll > 0
+            ? (totalProfitAll / totalRevenueAll) * 100
             : 0;
 
         // 3. Project Type Performance (using filtered quotes)
@@ -347,6 +402,54 @@ export default function ClientsPage({ onSelectClient }) {
                             <option value="MYR">MYR</option>
                         </select>
 
+                        {/* Advanced Filters */}
+                        {filterOptions.industries.length > 0 && (
+                            <select
+                                value={filterIndustry}
+                                onChange={(e) => setFilterIndustry(e.target.value)}
+                                className="input-sm text-sm w-28 sm:w-32 min-h-[40px] bg-dark-card border-none flex-shrink-0"
+                                title="Filter by Industry"
+                            >
+                                <option value="all">All Industries</option>
+                                {filterOptions.industries.map(ind => (
+                                    <option key={ind} value={ind}>{ind}</option>
+                                ))}
+                            </select>
+                        )}
+
+                        {filterOptions.regions.length > 0 && (
+                            <select
+                                value={filterRegion}
+                                onChange={(e) => setFilterRegion(e.target.value)}
+                                className="input-sm text-sm w-28 sm:w-32 min-h-[40px] bg-dark-card border-none flex-shrink-0"
+                                title="Filter by Region"
+                            >
+                                <option value="all">All Regions</option>
+                                {filterOptions.regions.map(reg => (
+                                    <option key={reg} value={reg}>{reg}</option>
+                                ))}
+                            </select>
+                        )}
+
+                        {filterOptions.paymentTerms.length > 1 && (
+                            <select
+                                value={filterPaymentTerms}
+                                onChange={(e) => setFilterPaymentTerms(e.target.value)}
+                                className="input-sm text-sm w-24 sm:w-28 min-h-[40px] bg-dark-card border-none flex-shrink-0"
+                                title="Filter by Payment Terms"
+                            >
+                                <option value="all">All Terms</option>
+                                {filterOptions.paymentTerms.map(term => (
+                                    <option key={term} value={term}>
+                                        {term === 'net30' ? 'Net 30' :
+                                         term === 'net45' ? 'Net 45' :
+                                         term === 'net60' ? 'Net 60' :
+                                         term === 'immediate' ? 'Immediate' : term}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+
                         {/* Add Client Button - Desktop only */}
                         <button
                             onClick={() => setIsAddClientModalOpen(true)}
@@ -486,11 +589,19 @@ export default function ClientsPage({ onSelectClient }) {
             {/* Filtered Clients */}
             {(() => {
                 const filteredClients = clientMetrics.filter(client => {
+                    // Text search
                     const query = searchQuery.toLowerCase();
                     const nameMatch = client.company?.toLowerCase().includes(query);
                     const tagMatch = client.tags?.some(tag => tag.toLowerCase().includes(query));
                     const contactMatch = client.contacts?.some(c => c.name.toLowerCase().includes(query));
-                    return nameMatch || tagMatch || contactMatch;
+                    const textMatch = nameMatch || tagMatch || contactMatch;
+
+                    // Advanced filters
+                    const industryMatch = filterIndustry === 'all' || client.industry === filterIndustry;
+                    const regionMatch = filterRegion === 'all' || client.region === filterRegion;
+                    const paymentTermsMatch = filterPaymentTerms === 'all' || client.paymentTerms === filterPaymentTerms;
+
+                    return textMatch && industryMatch && regionMatch && paymentTermsMatch;
                 });
 
                 return (
@@ -503,13 +614,40 @@ export default function ClientsPage({ onSelectClient }) {
                             >
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded bg-[#2D3748] flex items-center justify-center text-sm font-bold text-gray-300 shrink-0">
-                                            {client.company?.substring(0, 2).toUpperCase()}
+                                        <div className="relative">
+                                            <div className="w-10 h-10 rounded bg-[#2D3748] flex items-center justify-center text-sm font-bold text-gray-300 shrink-0">
+                                                {client.company?.substring(0, 2).toUpperCase()}
+                                            </div>
+                                            {/* Health Indicator Dot */}
+                                            <div
+                                                className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-dark-card ${
+                                                    client.health?.status === 'good' ? 'bg-emerald-500' :
+                                                    client.health?.status === 'warning' ? 'bg-amber-500' :
+                                                    'bg-red-500'
+                                                }`}
+                                                title={`Health: ${client.health?.status || 'unknown'} (${client.health?.score || 0}/100)`}
+                                            />
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-gray-100 group-hover:text-accent-primary transition-colors truncate max-w-[180px]">
                                                 {client.company}
                                             </h3>
+                                            {/* Industry Badge */}
+                                            {client.industry && (
+                                                <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] mt-1 ${
+                                                    client.industry.toLowerCase().includes('tech') ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                                                    client.industry.toLowerCase().includes('finance') || client.industry.toLowerCase().includes('bank') ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                                                    client.industry.toLowerCase().includes('health') || client.industry.toLowerCase().includes('pharma') ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                                                    client.industry.toLowerCase().includes('media') || client.industry.toLowerCase().includes('entertainment') ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
+                                                    client.industry.toLowerCase().includes('retail') || client.industry.toLowerCase().includes('ecommerce') ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+                                                    client.industry.toLowerCase().includes('energy') || client.industry.toLowerCase().includes('oil') ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                                                    client.industry.toLowerCase().includes('education') ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' :
+                                                    client.industry.toLowerCase().includes('government') || client.industry.toLowerCase().includes('public') ? 'bg-slate-500/20 text-slate-400 border border-slate-500/30' :
+                                                    'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                                                }`}>
+                                                    {client.industry}
+                                                </span>
+                                            )}
                                             {client.tags && client.tags.length > 0 && (
                                                 <div className="flex flex-wrap gap-1 mt-1">
                                                     {client.tags.slice(0, 3).map((tag, idx) => (
@@ -530,17 +668,22 @@ export default function ClientsPage({ onSelectClient }) {
                                 <div className="mb-6">
                                     <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Primary Contact</p>
                                     {client.contacts && client.contacts.find(c => c.isPrimary) ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-full bg-[#2D3748] flex items-center justify-center text-xs text-gray-400">
-                                                {client.contacts.find(c => c.isPrimary).name.charAt(0)}
-                                            </div>
-                                            <span className="text-sm text-gray-300">{client.contacts.find(c => c.isPrimary).name}</span>
-                                        </div>
+                                        (() => {
+                                            const primaryContact = client.contacts.find(c => c.isPrimary);
+                                            return (
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-6 h-6 rounded-full ${getAvatarColor(primaryContact.name)} flex items-center justify-center text-[10px] font-bold text-white`}>
+                                                        {getInitials(primaryContact.name)}
+                                                    </div>
+                                                    <span className="text-sm text-gray-300">{primaryContact.name}</span>
+                                                </div>
+                                            );
+                                        })()
                                     ) : (
                                         client.contact ? (
                                             <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-[#2D3748] flex items-center justify-center text-xs text-gray-400">
-                                                    {client.contact.charAt(0)}
+                                                <div className={`w-6 h-6 rounded-full ${getAvatarColor(client.contact)} flex items-center justify-center text-[10px] font-bold text-white`}>
+                                                    {getInitials(client.contact)}
                                                 </div>
                                                 <span className="text-sm text-gray-300">{client.contact}</span>
                                             </div>
@@ -563,6 +706,24 @@ export default function ClientsPage({ onSelectClient }) {
                                     <div className="text-right">
                                         <p className="text-[10px] text-gray-500 uppercase mb-1">Quotes</p>
                                         <p className="text-sm font-medium text-gray-200">{client.quoteCount}</p>
+                                    </div>
+                                </div>
+
+                                {/* Last Activity */}
+                                <div className="mt-3 pt-3 border-t border-gray-800/50">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-gray-500 uppercase">Last Activity</span>
+                                        <span className={`text-xs font-medium ${
+                                            client.daysSinceActivity === null ? 'text-gray-500' :
+                                            client.daysSinceActivity <= 7 ? 'text-emerald-400' :
+                                            client.daysSinceActivity <= 30 ? 'text-amber-400' :
+                                            'text-red-400'
+                                        }`}>
+                                            {client.daysSinceActivity === null ? 'No activity' :
+                                             client.daysSinceActivity === 0 ? 'Today' :
+                                             client.daysSinceActivity === 1 ? 'Yesterday' :
+                                             `${client.daysSinceActivity} days ago`}
+                                        </span>
                                     </div>
                                 </div>
                                 {/* Delete Button */}

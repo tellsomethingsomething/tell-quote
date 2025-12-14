@@ -5,6 +5,25 @@ import { SEED_ITEMS } from '../data/rateCardSeed';
 
 const RATE_CARD_KEY = 'tell_rate_card';
 const RATE_CARD_SECTIONS_KEY = 'tell_rate_card_sections';
+const SYNC_QUEUE_KEY = 'tell_rate_card_sync_queue';
+
+// Sync queue for failed operations
+function loadSyncQueue() {
+    try {
+        const saved = localStorage.getItem(SYNC_QUEUE_KEY);
+        return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveSyncQueue(queue) {
+    try {
+        localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
+    } catch (e) {
+        console.error('Failed to save sync queue:', e);
+    }
+}
 
 // Default structure for regional pricing (legacy)
 const createEmptyPricing = () => ({
@@ -82,16 +101,64 @@ export const useRateCardStore = create(
         items: loadRateCardLocal(),
         sections: loadSectionsLocal(),
         loading: false,
+        syncStatus: 'idle', // 'idle' | 'syncing' | 'error' | 'success'
+        syncError: null,
+        pendingSyncCount: loadSyncQueue().length,
+
+        // Add to sync queue for retry
+        addToSyncQueue: (action, id, data) => {
+            const queue = loadSyncQueue();
+            queue.push({ action, id, data, timestamp: Date.now() });
+            saveSyncQueue(queue);
+            set(state => ({ pendingSyncCount: state.pendingSyncCount + 1 }));
+        },
+
+        // Process pending sync operations
+        processSyncQueue: async () => {
+            if (!isSupabaseConfigured()) return;
+
+            const queue = loadSyncQueue();
+            if (queue.length === 0) return;
+
+            const newQueue = [];
+            for (const item of queue) {
+                try {
+                    if (item.action === 'insert') {
+                        await supabase.from('rate_cards').insert(item.data);
+                    } else if (item.action === 'update') {
+                        await supabase.from('rate_cards').update(item.data).eq('id', item.id);
+                    } else if (item.action === 'delete') {
+                        await supabase.from('rate_cards').delete().eq('id', item.id);
+                    }
+                } catch (e) {
+                    console.error('Sync queue item failed:', e);
+                    newQueue.push({ ...item, retries: (item.retries || 0) + 1, lastError: e.message });
+                }
+            }
+
+            saveSyncQueue(newQueue);
+            set({ pendingSyncCount: newQueue.length });
+        },
+
+        // Get unsynced count
+        getUnsyncedCount: () => {
+            return get().items.filter(i => !i._synced).length;
+        },
+
+        // Clear sync error
+        clearSyncError: () => {
+            set({ syncError: null, syncStatus: 'idle' });
+        },
 
         // Initialize - load from Supabase (or localStorage fallback)
         initialize: async () => {
             // If Supabase not configured, just use localStorage data
             if (!isSupabaseConfigured()) {
-                set({ loading: false });
+                set({ loading: false, syncStatus: 'idle' });
                 return;
             }
 
-            set({ loading: true });
+            set({ loading: true, syncStatus: 'syncing' });
             try {
                 // Load rate card items
                 const { data: itemsData, error: itemsError } = await supabase
@@ -120,6 +187,7 @@ export const useRateCardStore = create(
                     currencyPricing: item.currency_pricing || createEmptyCurrencyPricing(),
                     createdAt: item.created_at,
                     updatedAt: item.updated_at,
+                    _synced: true,
                 }));
 
                 // Use sections from DB or defaults
@@ -142,10 +210,13 @@ export const useRateCardStore = create(
 
                 saveRateCardLocal(items);
                 saveSectionsLocal(sections);
-                set({ items, sections, loading: false });
+                set({ items, sections, loading: false, syncStatus: 'success', syncError: null });
+
+                // Process any pending sync queue
+                await get().processSyncQueue();
             } catch (e) {
                 console.error('Failed to load rate card from DB:', e);
-                set({ loading: false });
+                set({ loading: false, syncStatus: 'error', syncError: e.message });
             }
         },
 
@@ -659,10 +730,19 @@ export const useRateCardStore = create(
             const { items } = get();
             const regions = ['MALAYSIA', 'SEA', 'GULF', 'CENTRAL_ASIA'];
 
+            // Build headers: basic fields + legacy pricing + currency pricing
             const headers = ['id', 'section', 'name', 'description', 'unit'];
+            // Legacy pricing columns
             regions.forEach(r => {
                 headers.push(`${r}_cost`);
                 headers.push(`${r}_charge`);
+            });
+            // Currency pricing columns (new format)
+            regions.forEach(r => {
+                headers.push(`${r}_cost_amount`);
+                headers.push(`${r}_cost_currency`);
+                headers.push(`${r}_charge_amount`);
+                headers.push(`${r}_charge_currency`);
             });
 
             let csvContent = headers.join(',') + '\n';
@@ -676,10 +756,20 @@ export const useRateCardStore = create(
                     item.unit || 'day'
                 ];
 
+                // Legacy pricing
                 regions.forEach(r => {
                     const price = item.pricing?.[r] || { cost: 0, charge: 0 };
                     row.push(price.cost || 0);
                     row.push(price.charge || 0);
+                });
+
+                // Currency pricing (new format)
+                regions.forEach(r => {
+                    const currPrice = item.currencyPricing?.[r];
+                    row.push(currPrice?.cost?.amount || '');
+                    row.push(currPrice?.cost?.currency || '');
+                    row.push(currPrice?.charge?.amount || '');
+                    row.push(currPrice?.charge?.currency || '');
                 });
 
                 csvContent += row.join(',') + '\n';

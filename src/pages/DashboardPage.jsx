@@ -3,6 +3,7 @@ import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useOpportunityStore, REGIONS } from '../store/opportunityStore';
+import { useActivityStore } from '../store/activityStore';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { CURRENCIES } from '../data/currencies';
@@ -52,6 +53,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
     const { rates, ratesUpdated, refreshRates, ratesLoading } = useQuoteStore();
     const { settings, setDashboardPreferences } = useSettingsStore();
     const { opportunities } = useOpportunityStore();
+    const { getOverdueFollowUps, activities } = useActivityStore();
     const [selectedMonth, setSelectedMonth] = useState('all');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [draggedQuoteId, setDraggedQuoteId] = useState(null);
@@ -339,6 +341,44 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
             upcomingActions
         };
     }, [opportunities, dashboardCurrency, rates]);
+
+    // Action Items - Expiring Quotes and Overdue Follow-ups
+    const actionItems = useMemo(() => {
+        const now = new Date();
+
+        // Find quotes expiring within 7 days (sent quotes only - they need action)
+        const expiringQuotes = savedQuotes
+            .filter(q => {
+                if (q.status !== 'sent') return false;
+                const expiryDate = calculateExpiryDate(q.quoteDate, q.validityDays);
+                if (!expiryDate) return false;
+                const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+                return daysUntilExpiry > 0 && daysUntilExpiry <= 7;
+            })
+            .map(q => {
+                const expiryDate = calculateExpiryDate(q.quoteDate, q.validityDays);
+                const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+                return { ...q, daysUntilExpiry, expiryDate };
+            })
+            .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
+
+        // Get overdue follow-ups from activity store
+        const overdueFollowUps = getOverdueFollowUps().map(activity => {
+            const client = clients.find(c => c.id === activity.clientId);
+            const daysOverdue = Math.floor((now - new Date(activity.followUpDate)) / (1000 * 60 * 60 * 24));
+            return {
+                ...activity,
+                clientName: client?.company || 'Unknown Client',
+                daysOverdue,
+            };
+        });
+
+        return {
+            expiringQuotes,
+            overdueFollowUps,
+            totalCount: expiringQuotes.length + overdueFollowUps.length,
+        };
+    }, [savedQuotes, clients, getOverdueFollowUps]);
 
 
     // Get client name
@@ -639,6 +679,119 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
                         </div>
                     ))}
                 </div>
+
+                {/* Action Items Widget - Expiring Quotes & Overdue Follow-ups */}
+                {actionItems.totalCount > 0 && (
+                    <div className="mt-6 card bg-gradient-to-br from-red-900/20 to-orange-950/10 border-red-800/20">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <span className="text-sm font-semibold text-red-400">Action Required</span>
+                                    <span className="text-xs text-gray-500 ml-2">({actionItems.totalCount} items)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Expiring Quotes */}
+                            {actionItems.expiringQuotes.length > 0 && (
+                                <div className="bg-dark-bg/50 rounded-lg p-3">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span className="text-xs font-medium text-amber-400 uppercase tracking-wide">Expiring Soon</span>
+                                        <span className="text-xs text-gray-500">({actionItems.expiringQuotes.length})</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {actionItems.expiringQuotes.slice(0, 5).map(quote => (
+                                            <button
+                                                key={quote.id}
+                                                onClick={() => onViewQuote && onViewQuote(quote)}
+                                                className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors text-left group"
+                                            >
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-sm text-gray-200 truncate group-hover:text-white">
+                                                        {quote.quoteNumber}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 truncate">
+                                                        {getClientName(quote)}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-2 ml-2">
+                                                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                                                        quote.daysUntilExpiry <= 2
+                                                            ? 'bg-red-500/20 text-red-400'
+                                                            : 'bg-amber-500/20 text-amber-400'
+                                                    }`}>
+                                                        {quote.daysUntilExpiry === 1 ? '1 day' : `${quote.daysUntilExpiry} days`}
+                                                    </span>
+                                                    <svg className="w-4 h-4 text-gray-600 group-hover:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </div>
+                                            </button>
+                                        ))}
+                                        {actionItems.expiringQuotes.length > 5 && (
+                                            <p className="text-xs text-gray-500 text-center pt-1">
+                                                +{actionItems.expiringQuotes.length - 5} more
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Overdue Follow-ups */}
+                            {actionItems.overdueFollowUps.length > 0 && (
+                                <div className="bg-dark-bg/50 rounded-lg p-3">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <svg className="w-4 h-4 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                        </svg>
+                                        <span className="text-xs font-medium text-orange-400 uppercase tracking-wide">Overdue Follow-ups</span>
+                                        <span className="text-xs text-gray-500">({actionItems.overdueFollowUps.length})</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {actionItems.overdueFollowUps.slice(0, 5).map(activity => (
+                                            <div
+                                                key={activity.id}
+                                                className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors"
+                                            >
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-sm text-gray-200 truncate">
+                                                        {activity.title || 'Follow-up'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 truncate">
+                                                        {activity.clientName}
+                                                    </p>
+                                                </div>
+                                                <span className={`text-xs font-medium px-2 py-0.5 rounded ml-2 ${
+                                                    activity.daysOverdue > 7
+                                                        ? 'bg-red-500/20 text-red-400'
+                                                        : 'bg-orange-500/20 text-orange-400'
+                                                }`}>
+                                                    {activity.daysOverdue === 0 ? 'Today' :
+                                                     activity.daysOverdue === 1 ? '1 day ago' :
+                                                     `${activity.daysOverdue}d overdue`}
+                                                </span>
+                                            </div>
+                                        ))}
+                                        {actionItems.overdueFollowUps.length > 5 && (
+                                            <p className="text-xs text-gray-500 text-center pt-1">
+                                                +{actionItems.overdueFollowUps.length - 5} more
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Opportunities Pipeline Widget */}
                 {opportunities.length > 0 && (

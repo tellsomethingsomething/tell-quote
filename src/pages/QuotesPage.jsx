@@ -4,6 +4,7 @@ import { useSettingsStore } from '../store/settingsStore';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { useQuoteStore } from '../store/quoteStore';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
+import { generateQuoteNumber } from '../utils/storage';
 
 const STATUSES = [
     { id: 'all', label: 'All Quotes', color: 'gray' },
@@ -234,6 +235,35 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
         setLossReasonModal({ open: false, quoteId: null, newStatus: null });
         setLossReason('');
         setLossReasonNotes('');
+    };
+
+    // Duplicate a quote
+    const handleDuplicateQuote = (quote, e) => {
+        if (e) e.stopPropagation();
+
+        // Create duplicated quote with new ID, number, and dates
+        const duplicatedQuote = {
+            ...quote,
+            id: undefined, // Will be generated when saved
+            quoteNumber: generateQuoteNumber(),
+            status: 'draft',
+            quoteDate: new Date().toISOString().split('T')[0],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            statusHistory: [],
+            lostReason: null,
+            lostReasonNotes: '',
+            isLocked: false,
+            tags: [...(quote.tags || [])], // Copy tags
+            // Update project title to indicate it's a copy
+            project: {
+                ...quote.project,
+                title: quote.project?.title ? `${quote.project.title} (Copy)` : 'Copy',
+            },
+        };
+
+        // Open in editor
+        onEditQuote(duplicatedQuote);
     };
 
     // Calculate totals
@@ -485,6 +515,33 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                         ))}
                                     </div>
                                 )}
+
+                                {/* Actions */}
+                                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-dark-border">
+                                    <button
+                                        onClick={(e) => handleDuplicateQuote(quote, e)}
+                                        className="flex-1 py-2 text-xs text-gray-400 hover:text-brand-teal hover:bg-brand-teal/10 rounded transition-colors flex items-center justify-center gap-1"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        Duplicate
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (confirm('Delete this quote?')) {
+                                                deleteQuote(quote.id);
+                                            }
+                                        }}
+                                        className="flex-1 py-2 text-xs text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors flex items-center justify-center gap-1"
+                                    >
+                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete
+                                    </button>
+                                </div>
                             </div>
                         );
                     })
@@ -516,7 +573,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                 Status <SortIcon field="status" />
                             </th>
                             <th className="pb-3 pr-4">Tags</th>
-                            <th className="pb-3 w-20"></th>
+                            <th className="pb-3 w-28"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -670,6 +727,15 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                                 >
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDuplicateQuote(quote, e)}
+                                                    className="p-2 min-w-[36px] min-h-[36px] text-gray-600 hover:text-brand-teal"
+                                                    title="Duplicate"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                                     </svg>
                                                 </button>
                                                 <button

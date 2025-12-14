@@ -17,6 +17,35 @@ export default function LineItem({ item, sectionId, subsectionName }) {
     const margin = calculateLineMargin(item);
     const marginColor = getMarginColor(margin);
 
+    // Check if item is linked to rate card and if pricing differs
+    const linkedRateCardItem = item.rateCardItemId
+        ? rateCardItems.find(rc => rc.id === item.rateCardItemId)
+        : null;
+
+    const getRateCardPricing = () => {
+        if (!linkedRateCardItem) return null;
+        const currencyPricing = linkedRateCardItem?.currencyPricing?.[quote.region];
+        const legacyPricing = linkedRateCardItem?.pricing?.[quote.region];
+        return {
+            cost: currencyPricing?.cost?.amount ?? legacyPricing?.cost ?? 0,
+            charge: currencyPricing?.charge?.amount ?? legacyPricing?.charge ?? 0,
+        };
+    };
+
+    const rateCardPricing = getRateCardPricing();
+    const priceDiffers = rateCardPricing && (
+        item.cost !== rateCardPricing.cost || item.charge !== rateCardPricing.charge
+    );
+
+    const handleRefreshFromRateCard = () => {
+        if (rateCardPricing) {
+            updateLineItem(sectionId, subsectionName, item.id, {
+                cost: rateCardPricing.cost,
+                charge: rateCardPricing.charge,
+            });
+        }
+    };
+
     // Convert for display
     const regionCurrency = getRegionCurrency(quote.region);
     const displayCharge = quote.region === 'MALAYSIA'
@@ -54,11 +83,18 @@ export default function LineItem({ item, sectionId, subsectionName }) {
     };
 
     const handleSelectItem = (rcItem) => {
-        const pricing = rcItem.pricing?.[quote.region] || { cost: 0, charge: 0 };
+        // Check currencyPricing first (new format), then fall back to legacy pricing
+        const currencyPricing = rcItem?.currencyPricing?.[quote.region];
+        const legacyPricing = rcItem?.pricing?.[quote.region];
+
+        const cost = currencyPricing?.cost?.amount ?? legacyPricing?.cost ?? 0;
+        const charge = currencyPricing?.charge?.amount ?? legacyPricing?.charge ?? 0;
+
         updateLineItem(sectionId, subsectionName, item.id, {
             name: rcItem.name,
-            cost: pricing.cost,
-            charge: pricing.charge,
+            cost,
+            charge,
+            rateCardItemId: rcItem.id,
         });
         setShowAutocomplete(false);
         setSelectedIndex(-1);
@@ -171,6 +207,20 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                                 </button>
                             ))}
                         </div>
+                    )}
+
+                    {/* Price Differs Indicator */}
+                    {priceDiffers && !quote.isLocked && (
+                        <button
+                            onClick={handleRefreshFromRateCard}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 rounded transition-colors"
+                            title={`Price differs from rate card (Cost: ${getCurrencySymbol(quote.currency)}${rateCardPricing.cost}, Charge: ${getCurrencySymbol(quote.currency)}${rateCardPricing.charge}). Click to refresh.`}
+                            aria-label="Refresh price from rate card"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
                     )}
                 </div>
 

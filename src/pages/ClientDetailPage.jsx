@@ -3,9 +3,12 @@ import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useOpportunityStore } from '../store/opportunityStore';
+import { useActivityStore } from '../store/activityStore';
 import { formatCurrency } from '../utils/currency';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { validateForm, sanitizeString } from '../utils/validation';
+import ActivityTimeline from '../components/crm/ActivityTimeline';
+import LogActivityModal from '../components/crm/LogActivityModal';
 
 const STATUS_COLORS = {
     draft: 'bg-amber-400/20 text-amber-400',
@@ -18,18 +21,39 @@ const STATUS_COLORS = {
     dead: 'bg-red-500/20 text-red-500',
 };
 
+// Avatar helper functions
+const AVATAR_COLORS = [
+    'bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-orange-500',
+    'bg-pink-500', 'bg-cyan-500', 'bg-amber-500', 'bg-indigo-500'
+];
+
+const getInitials = (name) => {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
+const getAvatarColor = (name) => {
+    if (!name) return AVATAR_COLORS[0];
+    const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+};
+
 export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQuote, onNewQuote, onSelectOpportunity }) {
     const { getClient, getClientQuotes, deleteQuote, updateQuoteStatus, deleteClient, updateClient, addContact, updateContact, deleteContact } = useClientStore();
     const { loadQuoteData } = useQuoteStore();
     const { settings } = useSettingsStore();
     const { getClientOpportunities, deleteOpportunity } = useOpportunityStore();
+    const { getClientActivities, deleteActivity, completeFollowUp } = useActivityStore();
     const users = settings.users || [];
 
     const client = getClient(clientId);
     const quotes = getClientQuotes(clientId);
     const clientOpportunities = getClientOpportunities(clientId);
+    const clientActivities = getClientActivities(clientId);
 
-    const [activeTab, setActiveTab] = useState('overview'); // overview, contacts
+    const [activeTab, setActiveTab] = useState('overview'); // overview, contacts, activities
     const [isEditingClient, setIsEditingClient] = useState(false);
     const [clientForm, setClientForm] = useState({});
 
@@ -38,6 +62,9 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
     const [editingContactId, setEditingContactId] = useState(null);
     const [contactForm, setContactForm] = useState({});
     const [contactFormErrors, setContactFormErrors] = useState({});
+
+    // Activity State
+    const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
 
     // Loss reason modal state - must be before early return to follow hooks rules
     const [lossReasonModal, setLossReasonModal] = useState({ open: false, quoteId: null, newStatus: null });
@@ -93,7 +120,7 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
             updateQuoteStatus(
                 lossReasonModal.quoteId,
                 lossReasonModal.newStatus,
-                lossReasonNotes,
+                '', // note for status history (auto-generated from reason)
                 lossReason,
                 lossReasonNotes
             );
@@ -358,6 +385,12 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
                     >
                         Contacts ({client.contacts?.length || (client.contact ? 1 : 0)})
                     </button>
+                    <button
+                        onClick={() => setActiveTab('activities')}
+                        className={`pb-3 text-sm font-medium transition-colors border-b-2 ${activeTab === 'activities' ? 'border-accent-primary text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}
+                    >
+                        Activities ({clientActivities.length})
+                    </button>
                 </div>
             </div>
 
@@ -582,8 +615,8 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
                                         </div>
 
                                         <div className="flex items-center gap-3 mb-2">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${contact.isPrimary ? 'bg-accent-primary text-white' : 'bg-gray-700 text-gray-300'}`}>
-                                                {contact.name.charAt(0)}
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white ${contact.isPrimary ? 'ring-2 ring-accent-primary ring-offset-2 ring-offset-dark-card' : ''} ${getAvatarColor(contact.name)}`}>
+                                                {getInitials(contact.name)}
                                             </div>
                                             <div>
                                                 <p className="font-semibold text-gray-200">
@@ -665,8 +698,8 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
                             {client.contacts?.length === 0 && client.contact && (
                                 <div className="card border-dashed border-gray-700 opacity-70">
                                     <div className="flex items-center gap-3 mb-2">
-                                        <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-300">
-                                            {client.contact.charAt(0)}
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white ${getAvatarColor(client.contact)}`}>
+                                            {getInitials(client.contact)}
                                         </div>
                                         <div>
                                             <p className="font-semibold text-gray-200">{client.contact}</p>
@@ -681,6 +714,32 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
                                 </div>
                             )}
                         </div>
+                    </div>
+                )
+            }
+
+            {
+                activeTab === 'activities' && (
+                    <div>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-semibold text-gray-200">Activity History</h3>
+                            <button
+                                onClick={() => setIsActivityModalOpen(true)}
+                                className="btn-primary text-sm flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Log Activity
+                            </button>
+                        </div>
+
+                        <ActivityTimeline
+                            activities={clientActivities}
+                            onDelete={deleteActivity}
+                            onCompleteFollowUp={completeFollowUp}
+                            emptyMessage="No activities logged yet. Start tracking your interactions with this client."
+                        />
                     </div>
                 )
             }
@@ -904,6 +963,14 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
                     </div>
                 </div>
             )}
+
+            {/* Log Activity Modal */}
+            <LogActivityModal
+                isOpen={isActivityModalOpen}
+                onClose={() => setIsActivityModalOpen(false)}
+                clientId={clientId}
+                contacts={client.contacts || []}
+            />
 
         </div >
     );

@@ -4,12 +4,17 @@ import EditorPanel from './components/layout/EditorPanel';
 import PreviewPanel from './components/layout/PreviewPanel';
 import LoginPage from './pages/LoginPage';
 import LoadingSpinner from './components/common/LoadingSpinner';
+import PWAStatus from './components/pwa/PWAStatus';
+import TemplatePickerModal from './components/templates/TemplatePickerModal';
 import { useQuoteStore } from './store/quoteStore';
 import { useClientStore } from './store/clientStore';
 import { useRateCardStore } from './store/rateCardStore';
 import { useSettingsStore } from './store/settingsStore';
 import { useAuthStore } from './store/authStore';
 import { useOpportunityStore } from './store/opportunityStore';
+import { useActivityStore } from './store/activityStore';
+import { useQuoteTemplateStore } from './store/quoteTemplateStore';
+import { useDealContextStore } from './store/dealContextStore';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
 
 // Lazy load pages for better code splitting
@@ -32,6 +37,9 @@ function App() {
   const initializeRateCard = useRateCardStore(state => state.initialize);
   const initializeSettings = useSettingsStore(state => state.initialize);
   const initializeOpportunities = useOpportunityStore(state => state.initialize);
+  const initializeActivities = useActivityStore(state => state.initialize);
+  const initializeTemplates = useQuoteTemplateStore(state => state.initialize);
+  const initializeDealContext = useDealContextStore(state => state.initialize);
   const resetQuote = useQuoteStore(state => state.resetQuote);
   const loadQuoteData = useQuoteStore(state => state.loadQuoteData);
 
@@ -39,6 +47,8 @@ function App() {
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState(null);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [pendingNewQuoteClientId, setPendingNewQuoteClientId] = useState(null);
 
   // Use custom hook for unsaved changes tracking
   const quote = useQuoteStore(state => state.quote);
@@ -55,7 +65,13 @@ function App() {
   }, []);
 
   const handleNewQuote = useCallback((clientId = null) => {
-    resetQuote();
+    // Store the client ID for later use when template is selected or blank is chosen
+    setPendingNewQuoteClientId(clientId);
+    setShowTemplatePicker(true);
+  }, []);
+
+  // Helper function to apply client details to quote
+  const applyClientToQuote = useCallback((clientId) => {
     if (clientId) {
       const client = useClientStore.getState().getClient(clientId);
       if (client) {
@@ -67,8 +83,54 @@ function App() {
         });
       }
     }
+  }, []);
+
+  // Handle selecting a template
+  const handleSelectTemplate = useCallback((template) => {
+    resetQuote();
+
+    // Load template data into the quote
+    const quoteData = {
+      sections: template.sections || {},
+      currency: template.currency || 'USD',
+      region: template.region || 'SEA',
+      managementFee: template.fees?.managementFee || 0,
+      commissionFee: template.fees?.commissionFee || 0,
+      discountPercent: template.fees?.discountPercent || 0,
+      // Apply project defaults if any
+      ...(template.projectDefaults || {}),
+    };
+
+    loadQuoteData(quoteData);
+
+    // Apply client details if creating quote for a specific client
+    applyClientToQuote(pendingNewQuoteClientId);
+
+    // Increment usage count
+    useQuoteTemplateStore.getState().incrementUsageCount(template.id);
+
+    setShowTemplatePicker(false);
+    setPendingNewQuoteClientId(null);
     setView('editor');
-  }, [resetQuote]);
+  }, [resetQuote, loadQuoteData, applyClientToQuote, pendingNewQuoteClientId]);
+
+  // Handle starting with blank quote
+  const handleStartBlank = useCallback(() => {
+    resetQuote();
+
+    // Apply client details if creating quote for a specific client
+    applyClientToQuote(pendingNewQuoteClientId);
+
+    setShowTemplatePicker(false);
+    setPendingNewQuoteClientId(null);
+    setView('editor');
+  }, [resetQuote, applyClientToQuote, pendingNewQuoteClientId]);
+
+  // Handle closing template picker without action
+  const handleCloseTemplatePicker = useCallback(() => {
+    setShowTemplatePicker(false);
+    setPendingNewQuoteClientId(null);
+  }, []);
 
   const handleEditQuote = useCallback((quote) => {
     // If quote data is passed, load it into the editor
@@ -174,8 +236,11 @@ function App() {
       initializeRateCard();
       initializeSettings();
       initializeOpportunities();
+      initializeActivities();
+      initializeTemplates();
+      initializeDealContext();
     }
-  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities]);
+  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities, initializeActivities, initializeTemplates, initializeDealContext]);
 
   // Show login page if not authenticated
   if (!isAuthenticated) {
@@ -320,6 +385,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-dark-bg flex flex-col">
+      <PWAStatus />
       <Header
         view={view}
         onGoToClients={handleGoToClients}
@@ -333,6 +399,14 @@ function App() {
         selectedClientId={selectedClientId}
       />
       {renderView()}
+
+      {/* Template Picker Modal */}
+      <TemplatePickerModal
+        isOpen={showTemplatePicker}
+        onClose={handleCloseTemplatePicker}
+        onSelectTemplate={handleSelectTemplate}
+        onStartBlank={handleStartBlank}
+      />
     </div>
   );
 }

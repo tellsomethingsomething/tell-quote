@@ -375,15 +375,25 @@ export const useQuoteStore = create(
                     const section = sections[sectionId];
                     Object.keys(section.subsections).forEach(subId => {
                         section.subsections[subId] = section.subsections[subId].map(item => {
-                            // Find original item in rate card (by name match for now, ideally ID but we store copies)
-                            // Better if we stored sourceItemId in the quote item
-                            const rateCardItem = rateCardItems.find(r => r.name === item.name);
+                            // Find original item in rate card - prefer ID match, fall back to name
+                            const rateCardItem = item.rateCardItemId
+                                ? rateCardItems.find(r => r.id === item.rateCardItemId)
+                                : rateCardItems.find(r => r.name === item.name);
 
-                            if (rateCardItem && rateCardItem.pricing && rateCardItem.pricing[region]) {
+                            if (rateCardItem) {
+                                // Check currencyPricing first (new format), then fall back to legacy pricing
+                                const currencyPricing = rateCardItem.currencyPricing?.[region];
+                                const legacyPricing = rateCardItem.pricing?.[region];
+
+                                const cost = currencyPricing?.cost?.amount ?? legacyPricing?.cost ?? item.cost;
+                                const charge = currencyPricing?.charge?.amount ?? legacyPricing?.charge ?? item.charge;
+
                                 return {
                                     ...item,
-                                    cost: rateCardItem.pricing[region].cost || 0,
-                                    charge: rateCardItem.pricing[region].charge || 0,
+                                    cost,
+                                    charge,
+                                    // Store the ID if we matched by name
+                                    rateCardItemId: item.rateCardItemId || rateCardItem.id,
                                 };
                             }
                             return item;

@@ -46,6 +46,7 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
     const [isAdding, setIsAdding] = useState(false);
     const [isEditingName, setIsEditingName] = useState(false);
     const [editedName, setEditedName] = useState('');
+    const [quickAddSearch, setQuickAddSearch] = useState('');
     const nameInputRef = useRef(null);
 
     // Get custom name or fall back to original
@@ -79,6 +80,25 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
     const rateCardSectionId = getRateCardSectionId(sectionId, subsectionName);
     const dbItems = rateCardItems.filter(item => item.section === rateCardSectionId);
 
+    // Filter and highlight quick add items based on search
+    const filteredDbItems = quickAddSearch.trim()
+        ? dbItems.filter(item =>
+            item.name.toLowerCase().includes(quickAddSearch.toLowerCase())
+        )
+        : dbItems.slice(0, 8);
+
+    // Highlight matching text in item name
+    const highlightMatch = (text, search) => {
+        if (!search.trim()) return text;
+        const regex = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        const parts = text.split(regex);
+        return parts.map((part, i) =>
+            regex.test(part)
+                ? <mark key={i} className="bg-accent-primary/30 text-accent-primary px-0.5 rounded">{part}</mark>
+                : part
+        );
+    };
+
     const handleAddItem = (dbItem = null) => {
         const region = quote.region;
 
@@ -97,6 +117,7 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
             days: 1,
             isPercentage: dbItem?.isPercentage || false,
             percentValue: dbItem?.percentValue || 0,
+            rateCardItemId: dbItem?.id || null,
         });
         setIsAdding(false);
     };
@@ -226,17 +247,31 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
                         {/* Quick Add from Database */}
                         {dbItems.length > 0 && (
                             <div>
-                                <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">Quick Add</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {dbItems.slice(0, 8).map(dbItem => (
+                                <div className="flex items-center gap-2 mb-2">
+                                    <p className="text-[10px] text-gray-500 uppercase tracking-wider">Quick Add</p>
+                                    {dbItems.length > 8 && (
+                                        <input
+                                            type="text"
+                                            value={quickAddSearch}
+                                            onChange={(e) => setQuickAddSearch(e.target.value)}
+                                            placeholder="Search items..."
+                                            className="input-sm text-xs py-0.5 px-2 w-32"
+                                        />
+                                    )}
+                                </div>
+                                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                                    {filteredDbItems.map(dbItem => (
                                         <button
                                             key={dbItem.name}
                                             onClick={() => handleAddItem(dbItem)}
                                             className="text-xs px-2.5 py-1.5 bg-dark-bg hover:bg-white/10 rounded-md transition-colors text-gray-400 hover:text-gray-200 border border-dark-border hover:border-gray-600"
                                         >
-                                            + {dbItem.name}
+                                            + {highlightMatch(dbItem.name, quickAddSearch)}
                                         </button>
                                     ))}
+                                    {quickAddSearch && filteredDbItems.length === 0 && (
+                                        <span className="text-xs text-gray-500 italic">No matching items</span>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -249,7 +284,7 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
                                 + Custom Item
                             </button>
                             <button
-                                onClick={() => setIsAdding(false)}
+                                onClick={() => { setIsAdding(false); setQuickAddSearch(''); }}
                                 className="text-xs px-3 py-1.5 text-gray-500 hover:text-gray-300"
                             >
                                 Cancel

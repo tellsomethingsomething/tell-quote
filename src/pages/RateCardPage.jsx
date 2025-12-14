@@ -89,6 +89,12 @@ export default function RateCardPage() {
     // New Category state
     const [newCategoryName, setNewCategoryName] = useState('');
 
+    // Bulk Markup state
+    const [showBulkMarkup, setShowBulkMarkup] = useState(false);
+    const [bulkMarkupCategory, setBulkMarkupCategory] = useState('all');
+    const [bulkMarkupPercent, setBulkMarkupPercent] = useState(0);
+    const [bulkMarkupFields, setBulkMarkupFields] = useState({ cost: true, charge: true });
+
     // Handle escape key to close modals
     useEffect(() => {
         const handleEscape = (e) => {
@@ -96,6 +102,7 @@ export default function RateCardPage() {
                 if (editingItem) setEditingItem(null);
                 else if (showAddForm) setShowAddForm(false);
                 else if (showAddCategoryForm) setShowAddCategoryForm(false);
+                else if (showBulkMarkup) setShowBulkMarkup(false);
             }
         };
         window.addEventListener('keydown', handleEscape);
@@ -174,6 +181,57 @@ export default function RateCardPage() {
         setTimeout(() => setSavedField(null), 2000);
     };
 
+    // Apply bulk markup to items
+    const handleApplyBulkMarkup = () => {
+        if (bulkMarkupPercent === 0) {
+            toast.error('Please enter a markup percentage');
+            return;
+        }
+
+        // Filter items by category
+        const targetItems = bulkMarkupCategory === 'all'
+            ? items
+            : items.filter(item => item.section === bulkMarkupCategory);
+
+        if (targetItems.length === 0) {
+            toast.error('No items found in selected category');
+            return;
+        }
+
+        const multiplier = 1 + (bulkMarkupPercent / 100);
+        let updatedCount = 0;
+
+        targetItems.forEach(item => {
+            // Update each region's pricing
+            REGIONS.forEach(region => {
+                const regionId = region.id;
+                const selectedCurrency = regionCurrencies[regionId] || region.defaultCurrency;
+
+                if (bulkMarkupFields.cost) {
+                    const currentCost = getDisplayValue(item, regionId, 'cost') || 0;
+                    if (currentCost > 0) {
+                        const newCost = Math.round(currentCost * multiplier * 100) / 100;
+                        updateItemCurrencyPricing(item.id, regionId, 'cost', newCost, selectedCurrency);
+                    }
+                }
+
+                if (bulkMarkupFields.charge) {
+                    const currentCharge = getDisplayValue(item, regionId, 'charge') || 0;
+                    if (currentCharge > 0) {
+                        const newCharge = Math.round(currentCharge * multiplier * 100) / 100;
+                        updateItemCurrencyPricing(item.id, regionId, 'charge', newCharge, selectedCurrency);
+                    }
+                }
+            });
+            updatedCount++;
+        });
+
+        toast.success(`Applied ${bulkMarkupPercent}% markup to ${updatedCount} items`);
+        setShowBulkMarkup(false);
+        setBulkMarkupPercent(0);
+        triggerSaved();
+    };
+
     return (
         <div className="h-[calc(100vh-60px)] flex flex-col bg-dark-bg">
             {/* Header */}
@@ -226,6 +284,15 @@ export default function RateCardPage() {
                         </button>
                         <button onClick={exportToCSV} className="btn-ghost text-sm flex-shrink-0 hidden sm:flex">
                             Export
+                        </button>
+                        <button
+                            onClick={() => setShowBulkMarkup(true)}
+                            className="btn-ghost text-sm flex-shrink-0 hidden sm:flex items-center gap-1"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Bulk Markup
                         </button>
                         <button onClick={() => setShowAddCategoryForm(true)} className="btn-secondary text-sm flex-shrink-0">
                             <span className="hidden sm:inline">Manage </span>Categories
@@ -525,6 +592,106 @@ export default function RateCardPage() {
                         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-dark-border">
                             <button onClick={() => setEditingItem(null)} className="btn-ghost">Cancel</button>
                             <button onClick={handleSaveEdit} className="btn-primary">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Markup Modal */}
+            {showBulkMarkup && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md modal-backdrop" onClick={() => setShowBulkMarkup(false)}>
+                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => setShowBulkMarkup(false)}
+                            className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <h2 className="text-lg font-bold text-gray-100 mb-4">Bulk Markup</h2>
+                        <p className="text-sm text-gray-400 mb-4">Apply a percentage increase or decrease to multiple items at once.</p>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="label">Category</label>
+                                <select
+                                    value={bulkMarkupCategory}
+                                    onChange={(e) => setBulkMarkupCategory(e.target.value)}
+                                    className="input"
+                                >
+                                    <option value="all">All Categories ({items.length} items)</option>
+                                    {sections.map(section => {
+                                        const count = items.filter(i => i.section === section.id).length;
+                                        return (
+                                            <option key={section.id} value={section.id}>
+                                                {section.name} ({count} items)
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="label">Markup Percentage</label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        value={bulkMarkupPercent}
+                                        onChange={(e) => setBulkMarkupPercent(parseFloat(e.target.value) || 0)}
+                                        className="input"
+                                        placeholder="e.g. 10 for 10% increase"
+                                        step="0.1"
+                                    />
+                                    <span className="text-gray-400">%</span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Use negative values to decrease prices (e.g. -10 for 10% discount)
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="label">Apply To</label>
+                                <div className="flex items-center gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={bulkMarkupFields.cost}
+                                            onChange={(e) => setBulkMarkupFields({ ...bulkMarkupFields, cost: e.target.checked })}
+                                            className="rounded border-gray-600 bg-dark-bg text-accent-primary focus:ring-accent-primary"
+                                        />
+                                        <span className="text-sm text-gray-300">Cost</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={bulkMarkupFields.charge}
+                                            onChange={(e) => setBulkMarkupFields({ ...bulkMarkupFields, charge: e.target.checked })}
+                                            className="rounded border-gray-600 bg-dark-bg text-accent-primary focus:ring-accent-primary"
+                                        />
+                                        <span className="text-sm text-gray-300">Charge</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {bulkMarkupPercent !== 0 && (
+                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+                                    <p className="text-sm text-amber-400">
+                                        {bulkMarkupPercent > 0 ? 'Increase' : 'Decrease'} {bulkMarkupFields.cost && bulkMarkupFields.charge ? 'cost and charge' : bulkMarkupFields.cost ? 'cost only' : 'charge only'} by {Math.abs(bulkMarkupPercent)}% for {bulkMarkupCategory === 'all' ? 'all items' : sections.find(s => s.id === bulkMarkupCategory)?.name || bulkMarkupCategory}.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-dark-border">
+                            <button onClick={() => setShowBulkMarkup(false)} className="btn-ghost">Cancel</button>
+                            <button
+                                onClick={handleApplyBulkMarkup}
+                                disabled={bulkMarkupPercent === 0 || (!bulkMarkupFields.cost && !bulkMarkupFields.charge)}
+                                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Apply Markup
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -17,6 +17,8 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@react-pdf/renderer": "^4.3.1",
     "@supabase/supabase-js": "^2.87.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.561.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "recharts": "^3.5.1",
@@ -35,8 +37,11 @@
     "globals": "^16.5.0",
     "playwright": "^1.57.0",
     "postcss": "^8.5.6",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.19",
     "terser": "^5.44.1",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vite-plugin-pwa": "^1.2.0",
+    "workbox-window": "^7.4.0"
   }
 }

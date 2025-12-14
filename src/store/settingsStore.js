@@ -183,9 +183,9 @@ async function saveSettingsLocal(settings) {
 // Database ID for settings (single row)
 let settingsDbId = null;
 
-// Save to Supabase
-async function saveSettingsToDb(settings) {
-    if (!isSupabaseConfigured()) return;
+// Save to Supabase with error tracking
+async function saveSettingsToDb(settings, setSync) {
+    if (!isSupabaseConfigured()) return { success: true };
 
     try {
         // Encrypt AI settings before saving to DB
@@ -195,7 +195,7 @@ async function saveSettingsToDb(settings) {
         );
 
         if (settingsDbId) {
-            await supabase
+            const { error } = await supabase
                 .from('settings')
                 .update({
                     company: settings.company,
@@ -210,10 +210,17 @@ async function saveSettingsToDb(settings) {
                 })
                 .eq('id', settingsDbId);
 
+            if (error) throw error;
+
             logSecurityEvent('settings_synced_to_db', { encrypted: true });
+            if (setSync) setSync({ syncStatus: 'success', syncError: null });
+            return { success: true };
         }
+        return { success: true };
     } catch (e) {
         console.error('Failed to save settings to DB:', e);
+        if (setSync) setSync({ syncStatus: 'error', syncError: e.message });
+        return { success: false, error: e.message };
     }
 }
 
@@ -228,17 +235,23 @@ export const useSettingsStore = create(
     subscribeWithSelector((set, get) => ({
         settings: initialSettings,
         loading: true,
+        syncStatus: 'idle', // 'idle' | 'syncing' | 'error' | 'success'
+        syncError: null,
+
+        clearSyncError: () => {
+            set({ syncError: null, syncStatus: 'idle' });
+        },
 
         // Initialize - load from Supabase (or localStorage fallback)
         initialize: async () => {
             // If Supabase not configured, just use localStorage data
             if (!isSupabaseConfigured()) {
                 const localSettings = await loadSettingsLocal();
-                set({ settings: localSettings, loading: false });
+                set({ settings: localSettings, loading: false, syncStatus: 'idle' });
                 return;
             }
 
-            set({ loading: true });
+            set({ loading: true, syncStatus: 'syncing' });
             try {
                 const { data, error } = await supabase
                     .from('settings')
@@ -274,15 +287,15 @@ export const useSettingsStore = create(
 
                     const merged = mergeSettings(dbSettings);
                     await saveSettingsLocal(merged);
-                    set({ settings: merged, loading: false });
+                    set({ settings: merged, loading: false, syncStatus: 'success', syncError: null });
                 } else {
                     const localSettings = await loadSettingsLocal();
-                    set({ settings: localSettings, loading: false });
+                    set({ settings: localSettings, loading: false, syncStatus: 'success', syncError: null });
                 }
             } catch (e) {
                 console.error('Failed to load settings from DB:', e);
                 const localSettings = await loadSettingsLocal();
-                set({ settings: localSettings, loading: false });
+                set({ settings: localSettings, loading: false, syncStatus: 'error', syncError: e.message });
             }
         },
 

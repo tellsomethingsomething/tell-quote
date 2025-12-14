@@ -342,7 +342,18 @@ function OpportunityCard({ opportunity, onSelect, onDelete, onUpdateNotes, isExp
 }
 
 export default function OpportunitiesPage({ onSelectOpportunity }) {
-    const { opportunities, addOpportunity, deleteOpportunity, updateOpportunity } = useOpportunityStore();
+    const {
+        opportunities,
+        addOpportunity,
+        deleteOpportunity,
+        updateOpportunity,
+        syncStatus,
+        syncError,
+        pendingSyncCount,
+        syncAllToSupabase,
+        clearSyncError,
+        getUnsyncedCount
+    } = useOpportunityStore();
     const { clients } = useClientStore();
     const { settings, setOpsPreferences } = useSettingsStore();
     const { rates } = useQuoteStore();
@@ -837,6 +848,57 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
             onDragEnd={handleDragEnd}
         >
             <div className="h-[calc(100vh-60px)] overflow-y-auto p-3 sm:p-6">
+                {/* Sync Status Banner */}
+                {(syncError || pendingSyncCount > 0 || getUnsyncedCount() > 0) && (
+                    <div className={`mb-4 p-3 rounded-lg flex items-center justify-between ${
+                        syncError ? 'bg-red-500/10 border border-red-500/30' : 'bg-amber-500/10 border border-amber-500/30'
+                    }`}>
+                        <div className="flex items-center gap-3">
+                            {syncStatus === 'syncing' ? (
+                                <svg className="w-5 h-5 text-amber-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : syncError ? (
+                                <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            ) : (
+                                <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            )}
+                            <div>
+                                <p className={`text-sm font-medium ${syncError ? 'text-red-400' : 'text-amber-400'}`}>
+                                    {syncError ? 'Sync Error' : `${getUnsyncedCount()} unsynced opportunities`}
+                                </p>
+                                {syncError && (
+                                    <p className="text-xs text-red-300/70">{syncError}</p>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={syncAllToSupabase}
+                                disabled={syncStatus === 'syncing'}
+                                className="text-xs px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white transition-colors disabled:opacity-50"
+                            >
+                                {syncStatus === 'syncing' ? 'Syncing...' : 'Sync Now'}
+                            </button>
+                            {syncError && (
+                                <button
+                                    onClick={clearSyncError}
+                                    className="p-1 text-gray-400 hover:text-white"
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>

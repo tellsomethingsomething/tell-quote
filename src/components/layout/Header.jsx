@@ -4,6 +4,7 @@ import { useClientStore } from '../../store/clientStore';
 import { useAuthStore } from '../../store/authStore';
 import Navigation from './Navigation';
 import { useToast } from '../common/Toast';
+import SaveAsTemplateModal from '../templates/SaveAsTemplateModal';
 
 // Skip Link Component for keyboard accessibility
 function SkipLink() {
@@ -30,6 +31,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
     const [saving, setSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [showTemplateModal, setShowTemplateModal] = useState(false);
 
     const handleSaveQuote = () => {
         setSaving(true);
@@ -200,6 +202,18 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                             </svg>
                         </button>
 
+                        {/* Save as Template */}
+                        <button
+                            onClick={() => setShowTemplateModal(true)}
+                            className="btn-ghost min-w-[44px] min-h-[44px] text-sm flex items-center justify-center gap-1"
+                            title="Save as template"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                            </svg>
+                            <span className="hidden sm:inline">Template</span>
+                        </button>
+
                         {/* Save Quote */}
                         <button
                             onClick={handleSaveQuote}
@@ -223,6 +237,17 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
             </div>
 
         </header>
+
+        {/* Save as Template Modal */}
+        <SaveAsTemplateModal
+            isOpen={showTemplateModal}
+            onClose={(success) => {
+                setShowTemplateModal(false);
+                if (success) {
+                    toast.success('Template saved successfully!');
+                }
+            }}
+        />
         </>
     );
 }

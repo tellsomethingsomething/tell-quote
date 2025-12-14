@@ -3,6 +3,7 @@ import { useOpportunityStore, REGIONS, getRegionForCountry } from '../store/oppo
 import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { formatCurrency } from '../utils/currency';
+import SmartTasksWidget from '../components/opportunities/SmartTasksWidget';
 
 const STATUS_COLORS = {
     active: 'bg-blue-400/20 text-blue-400',
@@ -395,6 +396,9 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
 
                 {/* Sidebar */}
                 <div className="space-y-6">
+                    {/* Smart Tasks Widget */}
+                    <SmartTasksWidget opportunity={opportunity} />
+
                     {/* Details */}
                     <div className="card">
                         <h2 className="text-lg font-semibold text-gray-200 mb-4">Details</h2>
