@@ -8,6 +8,7 @@ import { fetchLiveRates, convertCurrency } from '../utils/currency';
 import { useRateCardStore } from './rateCardStore';
 import { useClientStore } from './clientStore';
 import { useSettingsStore } from './settingsStore';
+import { useAuthStore } from './authStore';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 // Auto-save interval (30 seconds)
@@ -144,12 +145,18 @@ function stopAutoSave() {
 // Helper to log activity to the settings store
 function logActivity(entry) {
     const quote = useQuoteStore.getState().quote;
-    const { settings, addActivityLog } = useSettingsStore.getState();
-    const currentUser = settings.users?.find(u => u.id === quote.preparedBy) || settings.users?.[0];
+    const { addActivityLog } = useSettingsStore.getState();
+    const { user } = useAuthStore.getState();
+
+    // Use authenticated user from authStore
+    const currentUser = user?.profile || {
+        id: user?.userId || 'unknown',
+        name: user?.email?.split('@')[0] || 'Unknown User',
+    };
 
     addActivityLog({
-        userId: currentUser?.id || 'default',
-        userName: currentUser?.name || 'Unknown',
+        userId: currentUser.id,
+        userName: currentUser.name,
         quoteId: quote.id,
         quoteNumber: quote.quoteNumber,
         projectName: quote.project?.title || '',

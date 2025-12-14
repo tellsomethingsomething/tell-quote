@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 export default function LoginPage() {
     const {
         login,
+        signup,
         error,
         clearError,
         isLoading,
@@ -13,8 +14,12 @@ export default function LoginPage() {
         isSupabaseAuth
     } = useAuthStore();
 
+    const [mode, setMode] = useState('login'); // 'login' or 'signup'
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [signupSuccess, setSignupSuccess] = useState(false);
     const [lockoutTimer, setLockoutTimer] = useState(0);
     const useSupabase = isSupabaseAuth();
 
@@ -41,6 +46,19 @@ export default function LoginPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (mode === 'signup' && useSupabase) {
+            // Signup mode
+            if (!name || !email || !password || !confirmPassword) return;
+            if (password !== confirmPassword) {
+                return; // Show validation error instead
+            }
+            const result = await signup(name, email, password);
+            if (result) {
+                setSignupSuccess(true);
+            }
+            return;
+        }
+
         if (useSupabase) {
             // Supabase mode: email + password
             if (!email || !password) return;
@@ -51,6 +69,14 @@ export default function LoginPage() {
             await login(password);
         }
     };
+
+    const switchMode = () => {
+        setMode(mode === 'login' ? 'signup' : 'login');
+        setSignupSuccess(false);
+        clearError();
+    };
+
+    const passwordsMatch = !confirmPassword || password === confirmPassword;
 
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
@@ -73,12 +99,70 @@ export default function LoginPage() {
                         role="img"
                     />
                     <h1 className="text-xl font-bold text-white mb-2">Internal Quote Tool</h1>
-                    <p className="text-gray-500 text-sm">Secure Access</p>
+                    <p className="text-gray-500 text-sm">
+                        {mode === 'login' ? 'Secure Access' : 'Request Access'}
+                    </p>
                 </div>
 
                 {/* Login Card */}
                 <div className="bg-dark-card border border-dark-border rounded-xl p-6 shadow-2xl">
+                    {/* Signup Success Message */}
+                    {signupSuccess ? (
+                        <div className="text-center py-4">
+                            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <h2 className="text-lg font-semibold text-white mb-2">Request Submitted</h2>
+                            <p className="text-gray-400 text-sm mb-4">
+                                Your access request has been submitted. An administrator will review and approve your account.
+                            </p>
+                            <p className="text-gray-500 text-xs mb-6">
+                                You will be able to sign in once your account is approved.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSignupSuccess(false);
+                                    setMode('login');
+                                    setName('');
+                                    setEmail('');
+                                    setPassword('');
+                                    setConfirmPassword('');
+                                }}
+                                className="btn-primary px-6 py-2"
+                            >
+                                Back to Sign In
+                            </button>
+                        </div>
+                    ) : (
                     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+                        {/* Name field (Signup only) */}
+                        {useSupabase && mode === 'signup' && (
+                            <div>
+                                <label htmlFor="name" className="label">
+                                    Full Name
+                                </label>
+                                <input
+                                    id="name"
+                                    name="name"
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => {
+                                        setName(e.target.value);
+                                        if (error) clearError();
+                                    }}
+                                    placeholder="Your full name"
+                                    className="input"
+                                    autoFocus
+                                    autoComplete="name"
+                                    disabled={rateLimited}
+                                    required
+                                />
+                            </div>
+                        )}
+
                         {/* Email field (Supabase only) */}
                         {useSupabase && (
                             <div>
@@ -96,7 +180,7 @@ export default function LoginPage() {
                                     }}
                                     placeholder="your.email@tellproductions.com"
                                     className="input"
-                                    autoFocus
+                                    autoFocus={mode === 'login'}
                                     autoComplete="email"
                                     disabled={rateLimited}
                                     required
@@ -118,16 +202,43 @@ export default function LoginPage() {
                                     setPassword(e.target.value);
                                     if (error) clearError();
                                 }}
-                                placeholder={useSupabase ? 'Enter your password' : 'Enter access password'}
+                                placeholder={mode === 'signup' ? 'Create a password' : (useSupabase ? 'Enter your password' : 'Enter access password')}
                                 className={useSupabase ? 'input' : 'input text-center text-lg tracking-widest'}
                                 autoFocus={!useSupabase}
-                                autoComplete="current-password"
+                                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                                 disabled={rateLimited}
                                 aria-invalid={error ? 'true' : 'false'}
                                 aria-describedby={error ? 'password-error' : undefined}
                                 required
                             />
                         </div>
+
+                        {/* Confirm Password field (Signup only) */}
+                        {useSupabase && mode === 'signup' && (
+                            <div>
+                                <label htmlFor="confirmPassword" className="label">
+                                    Confirm Password
+                                </label>
+                                <input
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => {
+                                        setConfirmPassword(e.target.value);
+                                        if (error) clearError();
+                                    }}
+                                    placeholder="Confirm your password"
+                                    className={`input ${!passwordsMatch ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                                    autoComplete="new-password"
+                                    disabled={rateLimited}
+                                    required
+                                />
+                                {!passwordsMatch && (
+                                    <p className="mt-1 text-xs text-red-400">Passwords do not match</p>
+                                )}
+                            </div>
+                        )}
 
                         {/* Rate limit warning */}
                         {showAttemptWarning && !rateLimited && (
@@ -168,7 +279,7 @@ export default function LoginPage() {
 
                         <button
                             type="submit"
-                            disabled={isLoading || rateLimited || (useSupabase ? !email || !password : !password)}
+                            disabled={isLoading || rateLimited || (mode === 'signup' ? !name || !email || !password || !confirmPassword || !passwordsMatch : (useSupabase ? !email || !password : !password))}
                             className="btn-primary w-full py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
                             aria-busy={isLoading}
                         >
@@ -178,34 +289,57 @@ export default function LoginPage() {
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <span>Signing in...</span>
+                                    <span>{mode === 'signup' ? 'Submitting...' : 'Signing in...'}</span>
                                     <span className="sr-only">Please wait</span>
                                 </span>
                             ) : rateLimited ? (
                                 'Account Locked'
+                            ) : mode === 'signup' ? (
+                                'Request Access'
                             ) : (
                                 'Sign In'
                             )}
                         </button>
 
-                        {/* Forgot password link (Supabase only) */}
+                        {/* Forgot password / Switch mode links (Supabase only) */}
                         {useSupabase && (
-                            <div className="text-center">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        // TODO: Implement password reset flow
-                                        alert('Password reset feature coming soon. Contact admin for assistance.');
-                                    }}
-                                    className="text-sm text-brand-teal hover:text-brand-teal-light transition-colors"
-                                >
-                                    Forgot password?
-                                </button>
+                            <div className="flex items-center justify-between text-sm">
+                                {mode === 'login' ? (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                // TODO: Implement password reset flow
+                                                alert('Password reset feature coming soon. Contact admin for assistance.');
+                                            }}
+                                            className="text-gray-500 hover:text-gray-400 transition-colors"
+                                        >
+                                            Forgot password?
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={switchMode}
+                                            className="text-brand-teal hover:text-brand-teal-light transition-colors"
+                                        >
+                                            Request access
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={switchMode}
+                                        className="text-brand-teal hover:text-brand-teal-light transition-colors w-full text-center"
+                                    >
+                                        Already have an account? Sign in
+                                    </button>
+                                )}
                             </div>
                         )}
                     </form>
+                    )}
 
                     {/* Security info */}
+                    {!signupSuccess && (
                     <div className="mt-6 pt-6 border-t border-dark-border">
                         <div className="flex items-start gap-2 text-xs text-gray-500">
                             <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -222,6 +356,7 @@ export default function LoginPage() {
                             </div>
                         </div>
                     </div>
+                    )}
                 </div>
 
                 {/* Footer */}

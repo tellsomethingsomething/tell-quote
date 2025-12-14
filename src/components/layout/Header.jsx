@@ -20,8 +20,13 @@ function SkipLink() {
 export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS, onGoToOpportunities, onGoToTasks }) {
     const { quote, ratesLoading, refreshRates } = useQuoteStore();
     const { saveQuote } = useClientStore();
-    const { logout } = useAuthStore();
+    const { logout, user } = useAuthStore();
     const toast = useToast();
+
+    // Get user display info
+    const userName = user?.profile?.name || user?.email?.split('@')[0] || 'User';
+    const userRole = user?.profile?.role === 'admin' ? 'Administrator' : 'User';
+    const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
     const [saving, setSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
@@ -105,8 +110,9 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                     <button
                         onClick={() => setShowUserMenu(!showUserMenu)}
                         className="min-w-[44px] min-h-[44px] w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs text-gray-400 hover:border-gray-600 hover:text-gray-300 transition-colors"
+                        title={userName}
                     >
-                        TM
+                        {userInitials}
                     </button>
 
                     {/* User Dropdown Menu */}
@@ -116,10 +122,10 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                                 className="fixed inset-0 z-40"
                                 onClick={() => setShowUserMenu(false)}
                             />
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-dark-card border border-dark-border rounded-lg shadow-2xl z-50 dropdown-menu overflow-hidden">
+                            <div className="absolute right-0 top-full mt-2 w-52 bg-[#1a1f2e] border border-dark-border rounded-lg shadow-2xl z-50 dropdown-menu overflow-hidden">
                                 <div className="px-4 py-3 border-b border-dark-border">
-                                    <p className="text-sm font-medium text-gray-200">Signed in as</p>
-                                    <p className="text-xs text-gray-500">Director / Partner</p>
+                                    <p className="text-sm font-medium text-gray-200 truncate">{userName}</p>
+                                    <p className="text-xs text-gray-500">{userRole}</p>
                                 </div>
                                 <button
                                     onClick={() => {

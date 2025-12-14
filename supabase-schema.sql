@@ -181,3 +181,40 @@ values (
 -- ALTER TABLE settings ADD COLUMN IF NOT EXISTS dashboard_preferences jsonb DEFAULT '{}';
 -- ALTER TABLE settings ADD COLUMN IF NOT EXISTS quotes_preferences jsonb DEFAULT '{}';
 -- ALTER TABLE settings ADD COLUMN IF NOT EXISTS clients_preferences jsonb DEFAULT '{}';
+
+-- ============================================================
+-- User Profiles table (links to Supabase auth.users)
+-- ============================================================
+create table user_profiles (
+  id uuid default uuid_generate_v4() primary key,
+  auth_user_id uuid references auth.users(id) on delete cascade,
+  name text not null,
+  email text not null,
+  role text default 'user' check (role in ('admin', 'user')),
+  tab_permissions text[] default array['dashboard', 'quotes', 'clients', 'opportunities', 'tasks', 'rate-card'],
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(auth_user_id)
+);
+
+-- Index for fast lookups by auth user id
+create index user_profiles_auth_user_id_idx on user_profiles(auth_user_id);
+
+-- Enable RLS
+alter table user_profiles enable row level security;
+
+-- RLS Policies for user_profiles
+-- All authenticated users can read profiles (internal tool)
+create policy "Authenticated users can read profiles" on user_profiles
+  for select using (auth.role() = 'authenticated');
+
+-- Users can update their own name only
+create policy "Users can update own name" on user_profiles
+  for update using (auth.uid() = auth_user_id)
+  with check (auth.uid() = auth_user_id);
+
+-- Insert/Delete managed by service role via Edge Functions (bypasses RLS)
+
+-- Trigger for updated_at
+create trigger update_user_profiles_updated_at before update on user_profiles
+  for each row execute function update_updated_at_column();

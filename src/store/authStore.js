@@ -129,6 +129,39 @@ function getRemainingLockoutTime() {
     return Math.max(0, Math.ceil(remaining / 1000)); // seconds
 }
 
+/**
+ * Fetch user profile from user_profiles table
+ */
+async function fetchUserProfile(authUserId) {
+    if (!isSupabaseConfigured()) return null;
+
+    try {
+        const { data, error } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('auth_user_id', authUserId)
+            .single();
+
+        if (error) {
+            console.error('Failed to fetch user profile:', error);
+            return null;
+        }
+
+        return {
+            id: data.id,
+            authUserId: data.auth_user_id,
+            name: data.name,
+            email: data.email,
+            role: data.role,
+            status: data.status || 'active',
+            tabPermissions: data.tab_permissions || [],
+        };
+    } catch (e) {
+        console.error('Failed to fetch user profile:', e);
+        return null;
+    }
+}
+
 export const useAuthStore = create((set, get) => ({
     isAuthenticated: !!loadAuthSession(),
     user: loadAuthSession(),
@@ -151,11 +184,15 @@ export const useAuthStore = create((set, get) => ({
             const { data: { session } } = await supabase.auth.getSession();
 
             if (session) {
+                // Fetch user profile
+                const profile = await fetchUserProfile(session.user.id);
+
                 const authSession = {
                     email: session.user.email,
                     userId: session.user.id,
                     expiresAt: new Date(Date.now() + SESSION_DURATION).toISOString(),
                     provider: 'supabase',
+                    profile: profile,
                 };
 
                 saveAuthSession(authSession);
@@ -169,13 +206,17 @@ export const useAuthStore = create((set, get) => ({
             }
 
             // Listen for auth changes
-            supabase.auth.onAuthStateChange((event, session) => {
+            supabase.auth.onAuthStateChange(async (event, session) => {
                 if (event === 'SIGNED_IN' && session) {
+                    // Fetch user profile
+                    const profile = await fetchUserProfile(session.user.id);
+
                     const authSession = {
                         email: session.user.email,
                         userId: session.user.id,
                         expiresAt: new Date(Date.now() + SESSION_DURATION).toISOString(),
                         provider: 'supabase',
+                        profile: profile,
                     };
 
                     saveAuthSession(authSession);
@@ -195,6 +236,70 @@ export const useAuthStore = create((set, get) => ({
             });
         } catch (e) {
             console.error('Failed to initialize Supabase auth:', e);
+        }
+    },
+
+    /**
+     * Signup with Supabase Auth (creates user with pending status)
+     */
+    signup: async (name, email, password) => {
+        set({ isLoading: true, error: null });
+
+        try {
+            // 1. Create auth user
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        name: name,
+                    },
+                },
+            });
+
+            if (error) {
+                set({
+                    error: error.message || 'Signup failed',
+                    isLoading: false
+                });
+                return false;
+            }
+
+            if (data.user) {
+                // 2. Create user profile with pending status
+                const { error: profileError } = await supabase
+                    .from('user_profiles')
+                    .insert({
+                        auth_user_id: data.user.id,
+                        name: name,
+                        email: email,
+                        role: 'user',
+                        status: 'pending',
+                        tab_permissions: [], // No permissions until approved
+                    });
+
+                if (profileError) {
+                    console.error('Failed to create user profile:', profileError);
+                    // Profile creation failed, but auth user exists
+                    // Admin will need to manually create profile
+                }
+
+                // 3. Sign out immediately (user needs admin approval)
+                await supabase.auth.signOut();
+
+                set({ isLoading: false });
+                logSecurityEvent('signup_request', { email });
+                return true;
+            }
+
+            return false;
+        } catch (e) {
+            console.error('Signup error:', e);
+            set({
+                error: 'An error occurred during signup',
+                isLoading: false
+            });
+            return false;
         }
     },
 
@@ -231,6 +336,32 @@ export const useAuthStore = create((set, get) => ({
             }
 
             if (data.session) {
+                // Fetch user profile
+                const profile = await fetchUserProfile(data.user.id);
+
+                // Check if user account is approved
+                if (profile) {
+                    if (profile.status === 'pending') {
+                        // Sign out and show pending message
+                        await supabase.auth.signOut();
+                        set({
+                            error: 'Your account is pending approval. Please wait for an administrator to activate your account.',
+                            isLoading: false
+                        });
+                        return false;
+                    }
+
+                    if (profile.status === 'suspended') {
+                        // Sign out and show suspended message
+                        await supabase.auth.signOut();
+                        set({
+                            error: 'Your account has been suspended. Please contact an administrator.',
+                            isLoading: false
+                        });
+                        return false;
+                    }
+                }
+
                 recordLoginAttempt(true);
 
                 const authSession = {
@@ -238,6 +369,7 @@ export const useAuthStore = create((set, get) => ({
                     userId: data.user.id,
                     expiresAt: new Date(Date.now() + SESSION_DURATION).toISOString(),
                     provider: 'supabase',
+                    profile: profile,
                 };
 
                 saveAuthSession(authSession);
@@ -412,6 +544,57 @@ export const useAuthStore = create((set, get) => ({
      */
     isSupabaseAuth: () => {
         return shouldUseSupabaseAuth();
+    },
+
+    /**
+     * Check if current user has permission to access a tab
+     */
+    hasPermission: (tabId) => {
+        const { user } = get();
+
+        // No user = no access
+        if (!user?.profile) {
+            // Fallback for password auth mode (no profiles)
+            if (user?.provider === 'password') return true;
+            return false;
+        }
+
+        // Admins have access to everything
+        if (user.profile.role === 'admin') return true;
+
+        // Check tab permissions
+        return user.profile.tabPermissions?.includes(tabId) ?? false;
+    },
+
+    /**
+     * Check if current user is admin
+     */
+    isAdmin: () => {
+        const { user } = get();
+        return user?.profile?.role === 'admin' || user?.provider === 'password';
+    },
+
+    /**
+     * Get current user profile
+     */
+    getCurrentUserProfile: () => {
+        const { user } = get();
+        return user?.profile || null;
+    },
+
+    /**
+     * Refresh user profile from database
+     */
+    refreshProfile: async () => {
+        const { user } = get();
+        if (!user?.userId || user.provider === 'password') return;
+
+        const profile = await fetchUserProfile(user.userId);
+        if (profile) {
+            const updatedUser = { ...user, profile };
+            saveAuthSession(updatedUser);
+            set({ user: updatedUser });
+        }
     },
 }));
 
