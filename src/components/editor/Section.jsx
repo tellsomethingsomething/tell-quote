@@ -122,9 +122,17 @@ const Section = memo(function Section({ sectionId, index, totalSections }) {
             aria-labelledby={`section-${sectionId}-title`}
         >
             {/* Section Header */}
-            <button
-                className="section-header -m-4 mb-0 w-full"
+            <div
+                role="button"
+                tabIndex={0}
+                className="section-header -m-4 mb-0 w-full cursor-pointer"
                 onClick={() => toggleSection(sectionId)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleSection(sectionId);
+                    }
+                }}
                 aria-expanded={section.isExpanded}
                 aria-controls={`section-${sectionId}-content`}
             >
@@ -223,7 +231,7 @@ const Section = memo(function Section({ sectionId, index, totalSections }) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                 </div>
-            </button>
+            </div>
 
             {/* Section Content */}
             {section.isExpanded && (

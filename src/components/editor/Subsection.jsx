@@ -81,12 +81,18 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
 
     const handleAddItem = (dbItem = null) => {
         const region = quote.region;
-        const pricing = dbItem?.pricing?.[region] || { cost: 0, charge: 0 };
+
+        // Check currencyPricing first (new format), then fall back to legacy pricing
+        const currencyPricing = dbItem?.currencyPricing?.[region];
+        const legacyPricing = dbItem?.pricing?.[region];
+
+        const cost = currencyPricing?.cost?.amount ?? legacyPricing?.cost ?? 0;
+        const charge = currencyPricing?.charge?.amount ?? legacyPricing?.charge ?? 0;
 
         addLineItem(sectionId, subsectionName, {
             name: dbItem?.name || '',
-            cost: pricing.cost,
-            charge: pricing.charge,
+            cost,
+            charge,
             quantity: 1,
             days: 1,
             isPercentage: dbItem?.isPercentage || false,

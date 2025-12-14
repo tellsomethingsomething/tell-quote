@@ -117,6 +117,7 @@ export const useRateCardStore = create(
                     section: item.section,
                     unit: item.unit || 'day',
                     pricing: item.pricing || createEmptyPricing(),
+                    currencyPricing: item.currency_pricing || createEmptyCurrencyPricing(),
                     createdAt: item.created_at,
                     updatedAt: item.updated_at,
                 }));
