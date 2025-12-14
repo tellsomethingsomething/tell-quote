@@ -56,19 +56,9 @@ All critical bugs fixed and deployed.
 
 ---
 
-## DATABASE MIGRATIONS NEEDED
+## DATABASE MIGRATIONS
 
-### Quote Templates Table
-```sql
--- File: supabase/migrations/005_quote_templates.sql
--- Status: Created, needs to be run in Supabase
-```
-
-### Activity Logs Foreign Key
-```sql
--- File: supabase/migrations/004_activity_logs.sql
--- Status: Modified to remove user_profiles FK, needs verification
-```
+All migrations have been run in Supabase.
 
 ---
 
@@ -100,6 +90,8 @@ All critical bugs fixed and deployed.
 - [x] Contact Avatar Initials (two-letter initials, consistent colors across displays)
 - [x] Rate Card Export Currency Pricing (added currencyPricing columns to CSV export)
 - [x] Legacy Contact Migration (auto-creates contact from legacy fields on initialize)
+- [x] Database Migration: activity_logs table (CRM activity tracking)
+- [x] Database Migration: quote_templates table (reusable templates)
 
 ---
 
