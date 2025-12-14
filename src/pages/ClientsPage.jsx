@@ -47,6 +47,9 @@ export default function ClientsPage({ onSelectClient }) {
         email: '',
         phone: '',
         tags: [],
+        paymentTerms: 'net30',
+        preferredCurrency: 'USD',
+        industry: '',
     });
     const [formErrors, setFormErrors] = useState({});
 
@@ -692,6 +695,52 @@ export default function ClientsPage({ onSelectClient }) {
                                                 {formErrors.website}
                                             </p>
                                         )}
+                                    </div>
+
+                                    <div>
+                                        <label className="label">Industry / Sector</label>
+                                        <input
+                                            type="text"
+                                            value={newClientData.industry}
+                                            onChange={e => setNewClientData({ ...newClientData, industry: e.target.value })}
+                                            className="input w-full"
+                                            placeholder="e.g. Technology, Healthcare, Finance"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="label">Payment Terms</label>
+                                            <select
+                                                value={newClientData.paymentTerms || 'net30'}
+                                                onChange={e => setNewClientData({ ...newClientData, paymentTerms: e.target.value })}
+                                                className="input w-full"
+                                            >
+                                                <option value="immediate">Immediate</option>
+                                                <option value="net7">Net 7</option>
+                                                <option value="net14">Net 14</option>
+                                                <option value="net30">Net 30</option>
+                                                <option value="net45">Net 45</option>
+                                                <option value="net60">Net 60</option>
+                                                <option value="net90">Net 90</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="label">Preferred Currency</label>
+                                            <select
+                                                value={newClientData.preferredCurrency || 'USD'}
+                                                onChange={e => setNewClientData({ ...newClientData, preferredCurrency: e.target.value })}
+                                                className="input w-full"
+                                            >
+                                                <option value="USD">USD - US Dollar</option>
+                                                <option value="MYR">MYR - Malaysian Ringgit</option>
+                                                <option value="SGD">SGD - Singapore Dollar</option>
+                                                <option value="GBP">GBP - British Pound</option>
+                                                <option value="EUR">EUR - Euro</option>
+                                                <option value="AED">AED - UAE Dirham</option>
+                                                <option value="SAR">SAR - Saudi Riyal</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
 

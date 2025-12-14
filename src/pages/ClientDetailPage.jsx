@@ -111,7 +111,10 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
             website: client.website,
             location: client.location,
             region: client.region || 'MALAYSIA',
-            notes: client.notes
+            notes: client.notes,
+            paymentTerms: client.paymentTerms || 'net30',
+            preferredCurrency: client.preferredCurrency || 'USD',
+            industry: client.industry || '',
         });
         setIsEditingClient(true);
     };
@@ -129,7 +132,7 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
             setContactForm({ ...contact });
         } else {
             setEditingContactId(null);
-            setContactForm({ name: '', role: '', email: '', phone: '', notes: '', isPrimary: false, accountHolderId: '' });
+            setContactForm({ name: '', role: '', email: '', phone: '', linkedIn: '', notes: '', isPrimary: false, accountHolderId: '' });
         }
         setIsContactModalOpen(true);
     };
@@ -254,6 +257,49 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
             </div>
 
             {/* Tags Management */}
+            {/* Business Details */}
+            {(client.industry || client.paymentTerms || client.preferredCurrency) && (
+                <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {client.industry && (
+                        <div className="card bg-dark-bg/50">
+                            <p className="text-xs text-gray-500 mb-1">Industry</p>
+                            <p className="text-sm text-gray-200">{client.industry}</p>
+                        </div>
+                    )}
+                    {client.paymentTerms && (
+                        <div className="card bg-dark-bg/50">
+                            <p className="text-xs text-gray-500 mb-1">Payment Terms</p>
+                            <p className="text-sm text-gray-200">
+                                {client.paymentTerms === 'immediate' ? 'Immediate' :
+                                 client.paymentTerms === 'net7' ? 'Net 7' :
+                                 client.paymentTerms === 'net14' ? 'Net 14' :
+                                 client.paymentTerms === 'net30' ? 'Net 30' :
+                                 client.paymentTerms === 'net45' ? 'Net 45' :
+                                 client.paymentTerms === 'net60' ? 'Net 60' :
+                                 client.paymentTerms === 'net90' ? 'Net 90' :
+                                 client.paymentTerms}
+                            </p>
+                        </div>
+                    )}
+                    {client.preferredCurrency && (
+                        <div className="card bg-dark-bg/50">
+                            <p className="text-xs text-gray-500 mb-1">Preferred Currency</p>
+                            <p className="text-sm text-gray-200">{client.preferredCurrency}</p>
+                        </div>
+                    )}
+                    <div className="card bg-dark-bg/50">
+                        <p className="text-xs text-gray-500 mb-1">Region</p>
+                        <p className="text-sm text-gray-200">
+                            {client.region === 'MALAYSIA' ? 'Malaysia' :
+                             client.region === 'SEA' ? 'South East Asia' :
+                             client.region === 'GULF' ? 'Gulf' :
+                             client.region === 'CENTRAL_ASIA' ? 'Central Asia' :
+                             client.region || 'Not set'}
+                        </p>
+                    </div>
+                </div>
+            )}
+
             <div className="mb-8">
                 <h3 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">Tags</h3>
                 <div className="flex flex-wrap gap-2 mb-3">
@@ -597,6 +643,14 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
                                                     <span>{contact.phone}</span>
                                                 </div>
                                             )}
+                                            {contact.linkedIn && (
+                                                <div className="flex items-center gap-2">
+                                                    <svg className="w-4 h-4 text-[#0A66C2]" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                                    </svg>
+                                                    <a href={contact.linkedIn.startsWith('http') ? contact.linkedIn : `https://${contact.linkedIn}`} target="_blank" rel="noopener noreferrer" className="hover:text-[#0A66C2] transition-colors">{contact.linkedIn.replace(/^https?:\/\/(www\.)?/, '')}</a>
+                                                </div>
+                                            )}
                                             {contact.notes && (
                                                 <div className="mt-2 pt-2 border-t border-white/5">
                                                     <p className="text-xs text-gray-500 italic">{contact.notes}</p>
@@ -705,6 +759,22 @@ export default function ClientDetailPage({ clientId, onBackToDashboard, onEditQu
                                         />
                                         {contactFormErrors.phone && <p className="text-xs text-red-400 mt-1">{contactFormErrors.phone}</p>}
                                     </div>
+                                </div>
+
+                                <div>
+                                    <label className="label flex items-center gap-2">
+                                        <svg className="w-4 h-4 text-[#0A66C2]" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                        </svg>
+                                        LinkedIn Profile
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={contactForm.linkedIn || ''}
+                                        onChange={e => setContactForm({ ...contactForm, linkedIn: e.target.value })}
+                                        className="input"
+                                        placeholder="linkedin.com/in/username"
+                                    />
                                 </div>
 
                                 <div>
