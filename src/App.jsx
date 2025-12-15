@@ -75,11 +75,15 @@ function App() {
     if (clientId) {
       const client = useClientStore.getState().getClient(clientId);
       if (client) {
+        // Get primary contact from contacts array, fallback to legacy fields
+        const primaryContact = client.contacts?.find(c => c.isPrimary) || client.contacts?.[0];
         useQuoteStore.getState().setClientDetails({
+          clientId: client.id,
           company: client.company,
-          contact: client.contact,
-          email: client.email,
-          phone: client.phone,
+          contactId: primaryContact?.id || null,
+          contact: primaryContact?.name || client.contact || '',
+          email: primaryContact?.email || client.email || '',
+          phone: primaryContact?.phone || client.phone || '',
         });
       }
     }
@@ -183,7 +187,9 @@ function App() {
     // Set client with full details including contact
     if (opportunityData.client) {
       useQuoteStore.getState().setClientDetails({
+        clientId: opportunityData.clientId || opportunityData.client.clientId || null,
         company: opportunityData.client.company || '',
+        contactId: opportunityData.client.contactId || null,
         contact: opportunityData.client.contact || '',
         email: opportunityData.client.email || '',
         phone: opportunityData.client.phone || '',

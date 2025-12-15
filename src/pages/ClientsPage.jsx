@@ -31,6 +31,10 @@ export default function ClientsPage({ onSelectClient }) {
     const [selectedMonth, setSelectedMonth] = useState('all');
     const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 24; // Show 24 clients per page (8 rows x 3 cols)
+
     const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     // Helper function to generate initials from name
@@ -299,6 +303,39 @@ export default function ClientsPage({ onSelectClient }) {
         // Sort by won count desc - top 5
         return allContacts.sort((a, b) => b.wonCount - a.wonCount).slice(0, 5);
     }, [clients, clientMetrics]);
+
+    // Memoized filtered clients (separate from metrics calculation)
+    const filteredClients = useMemo(() => {
+        return clientMetrics.filter(client => {
+            // Text search
+            const query = searchQuery.toLowerCase();
+            const nameMatch = client.company?.toLowerCase().includes(query);
+            const tagMatch = client.tags?.some(tag => tag.toLowerCase().includes(query));
+            const contactMatch = client.contacts?.some(c => c.name?.toLowerCase().includes(query));
+            const textMatch = !query || nameMatch || tagMatch || contactMatch;
+
+            // Advanced filters
+            const industryMatch = filterIndustry === 'all' || client.industry === filterIndustry;
+            const regionMatch = filterRegion === 'all' || client.region === filterRegion;
+            const paymentTermsMatch = filterPaymentTerms === 'all' || client.paymentTerms === filterPaymentTerms;
+
+            return textMatch && industryMatch && regionMatch && paymentTermsMatch;
+        });
+    }, [clientMetrics, searchQuery, filterIndustry, filterRegion, filterPaymentTerms]);
+
+    // Paginated clients
+    const paginatedClients = useMemo(() => {
+        const startIndex = (currentPage - 1) * pageSize;
+        return filteredClients.slice(startIndex, startIndex + pageSize);
+    }, [filteredClients, currentPage, pageSize]);
+
+    const totalPages = Math.ceil(filteredClients.length / pageSize);
+
+    // Reset to page 1 when filters change
+    const handleFilterChange = (setter) => (value) => {
+        setter(value);
+        setCurrentPage(1);
+    };
 
     const handleAddClient = (e) => {
         e.preventDefault();
@@ -582,31 +619,18 @@ export default function ClientsPage({ onSelectClient }) {
 
 
             {/* Clients Section Title */}
-            <div className="mb-6">
-                <h2 className="text-lg font-bold text-gray-200">Clients</h2>
+            <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-200">
+                    Clients
+                    <span className="text-sm font-normal text-gray-500 ml-2">
+                        ({filteredClients.length} total{filteredClients.length !== clients.length && `, ${clients.length - filteredClients.length} filtered out`})
+                    </span>
+                </h2>
             </div>
 
-            {/* Filtered Clients */}
-            {(() => {
-                const filteredClients = clientMetrics.filter(client => {
-                    // Text search
-                    const query = searchQuery.toLowerCase();
-                    const nameMatch = client.company?.toLowerCase().includes(query);
-                    const tagMatch = client.tags?.some(tag => tag.toLowerCase().includes(query));
-                    const contactMatch = client.contacts?.some(c => c.name.toLowerCase().includes(query));
-                    const textMatch = nameMatch || tagMatch || contactMatch;
-
-                    // Advanced filters
-                    const industryMatch = filterIndustry === 'all' || client.industry === filterIndustry;
-                    const regionMatch = filterRegion === 'all' || client.region === filterRegion;
-                    const paymentTermsMatch = filterPaymentTerms === 'all' || client.paymentTerms === filterPaymentTerms;
-
-                    return textMatch && industryMatch && regionMatch && paymentTermsMatch;
-                });
-
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredClients.map(client => (
+            {/* Paginated Clients */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paginatedClients.map(client => (
                             <button
                                 key={client.id}
                                 onClick={() => onSelectClient(client.id)}
@@ -745,10 +769,54 @@ export default function ClientsPage({ onSelectClient }) {
                                 </div>
                             </button>
                         ))}
+            </div>
 
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-center gap-2">
+                    <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1.5 text-sm rounded-lg bg-dark-card border border-dark-border text-gray-400 hover:text-white hover:border-accent-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        Previous
+                    </button>
+                    <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                                pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                                pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                            } else {
+                                pageNum = currentPage - 2 + i;
+                            }
+                            return (
+                                <button
+                                    key={pageNum}
+                                    onClick={() => setCurrentPage(pageNum)}
+                                    className={`w-8 h-8 text-sm rounded-lg transition-colors ${
+                                        currentPage === pageNum
+                                            ? 'bg-accent-primary text-white'
+                                            : 'bg-dark-card border border-dark-border text-gray-400 hover:text-white hover:border-accent-primary/50'
+                                    }`}
+                                >
+                                    {pageNum}
+                                </button>
+                            );
+                        })}
                     </div>
-                );
-            })()}
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1.5 text-sm rounded-lg bg-dark-card border border-dark-border text-gray-400 hover:text-white hover:border-accent-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
 
             {/* Add Client Modal */}
             {

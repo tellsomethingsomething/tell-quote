@@ -28,7 +28,7 @@ const convertCurrency = (amount, fromCurrency, toCurrency, rates) => {
 };
 
 export default function RateCardPage() {
-    const { items, sections, addItem, updateItem, updateItemPricing, updateItemCurrencyPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults } = useRateCardStore();
+    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults } = useRateCardStore();
     const { rates } = useQuoteStore();
     const toast = useToast();
     const fileInputRef = useRef(null);
@@ -53,22 +53,20 @@ export default function RateCardPage() {
     const getDisplayValue = (item, regionId, field) => {
         const region = REGIONS.find(r => r.id === regionId);
         const selectedCurrency = regionCurrencies[regionId] || region.defaultCurrency;
-        const storedCurrency = item.currencyPricing?.[regionId]?.[field]?.baseCurrency || region.defaultCurrency;
-        const storedAmount = item.currencyPricing?.[regionId]?.[field]?.amount;
+        const storedCurrency = item.pricing?.[regionId]?.[field]?.baseCurrency || region.defaultCurrency;
+        const storedAmount = item.pricing?.[regionId]?.[field]?.amount;
 
-        // If we have currency pricing, use it
+        // If we have pricing, use it with currency conversion
         if (storedAmount !== undefined) {
             return convertCurrency(storedAmount, storedCurrency, selectedCurrency, rates);
         }
 
-        // Fallback to legacy regional pricing
-        const legacyValue = item.pricing?.[regionId]?.[field] || 0;
-        return legacyValue; // Legacy is already in the region's default currency
+        return 0;
     };
 
     // Get base currency for a field
     const getBaseCurrency = (item, regionId, field) => {
-        return item.currencyPricing?.[regionId]?.[field]?.baseCurrency;
+        return item.pricing?.[regionId]?.[field]?.baseCurrency;
     };
 
     // Show saved indicator
@@ -166,16 +164,11 @@ export default function RateCardPage() {
         triggerSaved();
     };
 
-    const handlePricingChange = (itemId, region, field, value) => {
-        updateItemPricing(itemId, region, { [field]: parseFloat(value) || 0 });
-        triggerSaved();
-    };
-
-    // Handle currency-based pricing change for a specific region
-    const handleCurrencyPricingChange = (itemId, regionId, field, value) => {
+    // Handle pricing change with unified format
+    const handlePricingChange = (itemId, regionId, field, value) => {
         const region = REGIONS.find(r => r.id === regionId);
         const selectedCurrency = regionCurrencies[regionId] || region.defaultCurrency;
-        updateItemCurrencyPricing(itemId, regionId, field, value, selectedCurrency);
+        updateItemPricing(itemId, regionId, field, value, selectedCurrency);
         triggerSaved();
         setSavedField(`${itemId}-${regionId}-${field}`);
         setTimeout(() => setSavedField(null), 2000);
@@ -211,7 +204,7 @@ export default function RateCardPage() {
                     const currentCost = getDisplayValue(item, regionId, 'cost') || 0;
                     if (currentCost > 0) {
                         const newCost = Math.round(currentCost * multiplier * 100) / 100;
-                        updateItemCurrencyPricing(item.id, regionId, 'cost', newCost, selectedCurrency);
+                        updateItemPricing(item.id, regionId, 'cost', newCost, selectedCurrency);
                     }
                 }
 
@@ -219,7 +212,7 @@ export default function RateCardPage() {
                     const currentCharge = getDisplayValue(item, regionId, 'charge') || 0;
                     if (currentCharge > 0) {
                         const newCharge = Math.round(currentCharge * multiplier * 100) / 100;
-                        updateItemCurrencyPricing(item.id, regionId, 'charge', newCharge, selectedCurrency);
+                        updateItemPricing(item.id, regionId, 'charge', newCharge, selectedCurrency);
                     }
                 }
             });
@@ -822,7 +815,7 @@ export default function RateCardPage() {
                                                                     <input
                                                                         type="number"
                                                                         value={Math.round(getDisplayValue(item, region.id, 'cost') * 100) / 100 || ''}
-                                                                        onChange={(e) => handleCurrencyPricingChange(item.id, region.id, 'cost', e.target.value)}
+                                                                        onChange={(e) => handlePricingChange(item.id, region.id, 'cost', e.target.value)}
                                                                         className="input text-sm pl-7"
                                                                         placeholder="0"
                                                                     />
@@ -843,7 +836,7 @@ export default function RateCardPage() {
                                                                     <input
                                                                         type="number"
                                                                         value={Math.round(getDisplayValue(item, region.id, 'charge') * 100) / 100 || ''}
-                                                                        onChange={(e) => handleCurrencyPricingChange(item.id, region.id, 'charge', e.target.value)}
+                                                                        onChange={(e) => handlePricingChange(item.id, region.id, 'charge', e.target.value)}
                                                                         className="input text-sm pl-7"
                                                                         placeholder="0"
                                                                     />

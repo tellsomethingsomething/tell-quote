@@ -181,10 +181,15 @@ export const useClientStore = create(
                 }
 
                 const dbQuotes = (quotesData || []).map(q => {
-                    const clientCompany = q.client?.company?.toLowerCase();
-                    const matchedClient = clientCompany
-                        ? migratedClients.find(c => c.company?.toLowerCase() === clientCompany)
-                        : null;
+                    // Match client by ID first, then fallback to company name
+                    let matchedClient = null;
+                    if (q.client?.clientId) {
+                        matchedClient = migratedClients.find(c => c.id === q.client.clientId);
+                    }
+                    if (!matchedClient && q.client?.company) {
+                        const clientCompany = q.client.company.toLowerCase();
+                        matchedClient = migratedClients.find(c => c.company?.toLowerCase() === clientCompany);
+                    }
 
                     return {
                         id: q.id,
@@ -196,7 +201,7 @@ export const useClientStore = create(
                         region: q.region,
                         preparedBy: q.prepared_by,
                         client: q.client || {},
-                        clientId: matchedClient?.id || null,
+                        clientId: matchedClient?.id || q.client?.clientId || null,
                         project: q.project || {},
                         sections: q.sections || {},
                         fees: q.fees || {},
@@ -734,9 +739,10 @@ export const useClientStore = create(
 
         getOrCreateClient: async (clientData) => {
             const { clients } = get();
-            const existing = clients.find(
-                c => c.company.toLowerCase() === clientData.company?.toLowerCase()
-            );
+            // Check by ID first, then fallback to company name match
+            const existing = clientData.clientId
+                ? clients.find(c => c.id === clientData.clientId)
+                : clients.find(c => c.company?.toLowerCase() === clientData.company?.toLowerCase());
             if (existing) return existing;
             return await get().addClient(clientData);
         },
@@ -810,7 +816,8 @@ export const useClientStore = create(
         saveQuote: async (quote, clientId = null) => {
             const { getOrCreateClient } = get();
 
-            let finalClientId = clientId;
+            // Priority: explicit clientId > quote.client.clientId > lookup by company
+            let finalClientId = clientId || quote.client?.clientId;
             if (!finalClientId && quote.client?.company) {
                 const client = await getOrCreateClient(quote.client);
                 finalClientId = client.id;

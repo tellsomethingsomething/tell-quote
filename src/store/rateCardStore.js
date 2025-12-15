@@ -25,17 +25,37 @@ function saveSyncQueue(queue) {
     }
 }
 
-// Default structure for regional pricing (legacy)
-const createEmptyPricing = () => ({
-    MALAYSIA: { cost: 0, charge: 0 },
-    SEA: { cost: 0, charge: 0 },
-    GULF: { cost: 0, charge: 0 },
-    CENTRAL_ASIA: { cost: 0, charge: 0 },
-});
+// Default currencies per region
+const REGION_DEFAULT_CURRENCY = {
+    MALAYSIA: 'MYR',
+    SEA: 'USD',
+    GULF: 'USD',
+    CENTRAL_ASIA: 'USD',
+};
 
-// New structure for per-region, per-field currency pricing
-// Example: { GULF: { cost: { amount: 500, baseCurrency: 'GBP' }, charge: { amount: 750, baseCurrency: 'USD' } } }
-const createEmptyCurrencyPricing = () => ({});
+// Unified pricing structure with currency info
+// Format: { REGION: { cost: { amount, baseCurrency }, charge: { amount, baseCurrency } } }
+const createEmptyPricing = () => ({});
+
+// Migrate legacy pricing { cost: number, charge: number } to new format
+const migrateLegacyPricing = (legacyPricing, currencyPricing) => {
+    if (!legacyPricing) return currencyPricing || {};
+
+    const migrated = { ...(currencyPricing || {}) };
+
+    Object.entries(legacyPricing).forEach(([region, values]) => {
+        // Only migrate if currencyPricing doesn't already have this region
+        if (!migrated[region] && values && (values.cost || values.charge)) {
+            const defaultCurrency = REGION_DEFAULT_CURRENCY[region] || 'USD';
+            migrated[region] = {
+                cost: { amount: values.cost || 0, baseCurrency: defaultCurrency },
+                charge: { amount: values.charge || 0, baseCurrency: defaultCurrency },
+            };
+        }
+    });
+
+    return migrated;
+};
 
 // Default sections - synced with Quote subsections
 const DEFAULT_SECTIONS = [
@@ -176,19 +196,22 @@ export const useRateCardStore = create(
 
                 if (sectionsError) throw sectionsError;
 
-                // Map DB format to app format
-                const items = (itemsData || []).map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    description: item.description || '',
-                    section: item.section,
-                    unit: item.unit || 'day',
-                    pricing: item.pricing || createEmptyPricing(),
-                    currencyPricing: item.currency_pricing || createEmptyCurrencyPricing(),
-                    createdAt: item.created_at,
-                    updatedAt: item.updated_at,
-                    _synced: true,
-                }));
+                // Map DB format to app format with pricing migration
+                const items = (itemsData || []).map(item => {
+                    // Migrate legacy pricing to unified format
+                    const pricing = migrateLegacyPricing(item.pricing, item.currency_pricing);
+                    return {
+                        id: item.id,
+                        name: item.name,
+                        description: item.description || '',
+                        section: item.section,
+                        unit: item.unit || 'day',
+                        pricing, // Unified format
+                        createdAt: item.created_at,
+                        updatedAt: item.updated_at,
+                        _synced: true,
+                    };
+                });
 
                 // Use sections from DB or defaults
                 const sections = sectionsData && sectionsData.length > 0
@@ -334,13 +357,18 @@ export const useRateCardStore = create(
         // --- Items Actions ---
 
         addItem: async (itemData) => {
+            // Migrate any legacy pricing format to unified format
+            const pricing = itemData.pricing
+                ? migrateLegacyPricing(itemData.pricing, null)
+                : createEmptyPricing();
+
             const newItem = {
                 id: generateId(),
                 name: itemData.name || '',
                 description: itemData.description || '',
                 section: itemData.section || 'extras',
                 unit: itemData.unit || 'day',
-                pricing: itemData.pricing || createEmptyPricing(),
+                pricing, // Unified format
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             };
@@ -355,7 +383,7 @@ export const useRateCardStore = create(
                             description: newItem.description,
                             section: newItem.section,
                             unit: newItem.unit,
-                            pricing: newItem.pricing,
+                            currency_pricing: newItem.pricing, // Save to currency_pricing column
                         })
                         .select()
                         .single();
@@ -406,56 +434,24 @@ export const useRateCardStore = create(
             }
         },
 
-        updateItemPricing: async (itemId, region, pricing) => {
+        // Update pricing for a region/field with unified format
+        updateItemPricing: async (itemId, regionId, field, amount, currency) => {
             let updatedItem = null;
+            const defaultCurrency = currency || REGION_DEFAULT_CURRENCY[regionId] || 'USD';
 
             set(state => {
                 const items = state.items.map(item => {
                     if (item.id !== itemId) return item;
+
+                    const currentRegionPricing = item.pricing?.[regionId] || {};
+
                     updatedItem = {
                         ...item,
                         pricing: {
-                            ...item.pricing,
-                            [region]: { ...item.pricing[region], ...pricing },
-                        },
-                        updatedAt: new Date().toISOString(),
-                    };
-                    return updatedItem;
-                });
-                saveRateCardLocal(items);
-                return { items };
-            });
-
-            // Update in Supabase if configured
-            if (isSupabaseConfigured() && updatedItem) {
-                try {
-                    await supabase
-                        .from('rate_cards')
-                        .update({ pricing: updatedItem.pricing })
-                        .eq('id', itemId);
-                } catch (e) {
-                    console.error('Failed to update pricing in DB:', e);
-                }
-            }
-        },
-
-        // Update per-region, per-field currency pricing
-        updateItemCurrencyPricing: async (itemId, regionId, field, amount, currency) => {
-            let updatedItem = null;
-
-            set(state => {
-                const items = state.items.map(item => {
-                    if (item.id !== itemId) return item;
-
-                    const currentRegionPricing = item.currencyPricing?.[regionId] || {};
-
-                    updatedItem = {
-                        ...item,
-                        currencyPricing: {
-                            ...(item.currencyPricing || {}),
+                            ...(item.pricing || {}),
                             [regionId]: {
                                 ...currentRegionPricing,
-                                [field]: { amount: parseFloat(amount) || 0, baseCurrency: currency },
+                                [field]: { amount: parseFloat(amount) || 0, baseCurrency: defaultCurrency },
                             },
                         },
                         updatedAt: new Date().toISOString(),
@@ -471,10 +467,10 @@ export const useRateCardStore = create(
                 try {
                     await supabase
                         .from('rate_cards')
-                        .update({ currency_pricing: updatedItem.currencyPricing })
+                        .update({ currency_pricing: updatedItem.pricing })
                         .eq('id', itemId);
                 } catch (e) {
-                    console.error('Failed to update currency pricing in DB:', e);
+                    console.error('Failed to update pricing in DB:', e);
                 }
             }
         },
@@ -526,6 +522,8 @@ export const useRateCardStore = create(
                 .map(item => ({
                     ...item,
                     id: generateId(),
+                    // Migrate any legacy pricing in seed data to unified format
+                    pricing: migrateLegacyPricing(item.pricing, item.currencyPricing),
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                 }));
@@ -542,7 +540,7 @@ export const useRateCardStore = create(
                         description: item.description,
                         section: item.section,
                         unit: item.unit,
-                        pricing: item.pricing,
+                        currency_pricing: item.pricing, // Save to unified column
                     }));
 
                     const { data, error } = await supabase
@@ -657,13 +655,35 @@ export const useRateCardStore = create(
                         updatedAt: new Date().toISOString()
                     };
 
+                    // Import pricing in unified format
                     regions.forEach(r => {
+                        const defaultCurrency = REGION_DEFAULT_CURRENCY[r] || 'USD';
                         const costIdx = getIdx(`${r}_cost`);
                         const chargeIdx = getIdx(`${r}_charge`);
-                        if (costIdx !== -1 && chargeIdx !== -1) {
+                        // Also check for new format columns
+                        const costAmountIdx = getIdx(`${r}_cost_amount`);
+                        const costCurrencyIdx = getIdx(`${r}_cost_currency`);
+                        const chargeAmountIdx = getIdx(`${r}_charge_amount`);
+                        const chargeCurrencyIdx = getIdx(`${r}_charge_currency`);
+
+                        // Prefer new format, fallback to legacy
+                        const costAmount = costAmountIdx !== -1 && values[costAmountIdx]
+                            ? parseFloat(values[costAmountIdx]) || 0
+                            : (costIdx !== -1 ? parseFloat(values[costIdx]) || 0 : 0);
+                        const costCurrency = costCurrencyIdx !== -1 && values[costCurrencyIdx]
+                            ? values[costCurrencyIdx]
+                            : defaultCurrency;
+                        const chargeAmount = chargeAmountIdx !== -1 && values[chargeAmountIdx]
+                            ? parseFloat(values[chargeAmountIdx]) || 0
+                            : (chargeIdx !== -1 ? parseFloat(values[chargeIdx]) || 0 : 0);
+                        const chargeCurrency = chargeCurrencyIdx !== -1 && values[chargeCurrencyIdx]
+                            ? values[chargeCurrencyIdx]
+                            : defaultCurrency;
+
+                        if (costAmount || chargeAmount) {
                             item.pricing[r] = {
-                                cost: parseFloat(values[costIdx]) || 0,
-                                charge: parseFloat(values[chargeIdx]) || 0
+                                cost: { amount: costAmount, baseCurrency: costCurrency },
+                                charge: { amount: chargeAmount, baseCurrency: chargeCurrency },
                             };
                         }
                     });
@@ -685,7 +705,7 @@ export const useRateCardStore = create(
                             description: item.description,
                             section: item.section,
                             unit: item.unit,
-                            pricing: item.pricing,
+                            currency_pricing: item.pricing, // Save to unified column
                         }));
 
                         const { data } = await supabase.from('rate_cards').insert(dbItems).select();
@@ -703,7 +723,7 @@ export const useRateCardStore = create(
                             description: item.description,
                             section: item.section,
                             unit: item.unit,
-                            pricing: item.pricing,
+                            currency_pricing: item.pricing, // Save to unified column
                         }).eq('id', item.id);
                     }
                 }
@@ -725,19 +745,19 @@ export const useRateCardStore = create(
             }
         },
 
-        // Export to CSV
+        // Export to CSV (unified format)
         exportToCSV: () => {
             const { items } = get();
             const regions = ['MALAYSIA', 'SEA', 'GULF', 'CENTRAL_ASIA'];
 
-            // Build headers: basic fields + legacy pricing + currency pricing
+            // Build headers: basic fields + unified pricing columns
             const headers = ['id', 'section', 'name', 'description', 'unit'];
-            // Legacy pricing columns
+            // Legacy columns for backwards compatibility
             regions.forEach(r => {
                 headers.push(`${r}_cost`);
                 headers.push(`${r}_charge`);
             });
-            // Currency pricing columns (new format)
+            // Full currency pricing columns
             regions.forEach(r => {
                 headers.push(`${r}_cost_amount`);
                 headers.push(`${r}_cost_currency`);
@@ -756,20 +776,21 @@ export const useRateCardStore = create(
                     item.unit || 'day'
                 ];
 
-                // Legacy pricing
+                // Export unified pricing to both legacy and new columns
                 regions.forEach(r => {
-                    const price = item.pricing?.[r] || { cost: 0, charge: 0 };
-                    row.push(price.cost || 0);
-                    row.push(price.charge || 0);
+                    const regionPricing = item.pricing?.[r];
+                    // Legacy columns (just amounts for backwards compatibility)
+                    row.push(regionPricing?.cost?.amount || 0);
+                    row.push(regionPricing?.charge?.amount || 0);
                 });
 
-                // Currency pricing (new format)
+                // Full currency pricing columns
                 regions.forEach(r => {
-                    const currPrice = item.currencyPricing?.[r];
-                    row.push(currPrice?.cost?.amount || '');
-                    row.push(currPrice?.cost?.currency || '');
-                    row.push(currPrice?.charge?.amount || '');
-                    row.push(currPrice?.charge?.currency || '');
+                    const regionPricing = item.pricing?.[r];
+                    row.push(regionPricing?.cost?.amount || '');
+                    row.push(regionPricing?.cost?.baseCurrency || '');
+                    row.push(regionPricing?.charge?.amount || '');
+                    row.push(regionPricing?.charge?.baseCurrency || '');
                 });
 
                 csvContent += row.join(',') + '\n';

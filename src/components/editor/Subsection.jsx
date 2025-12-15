@@ -102,12 +102,10 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
     const handleAddItem = (dbItem = null) => {
         const region = quote.region;
 
-        // Check currencyPricing first (new format), then fall back to legacy pricing
-        const currencyPricing = dbItem?.currencyPricing?.[region];
-        const legacyPricing = dbItem?.pricing?.[region];
-
-        const cost = currencyPricing?.cost?.amount ?? legacyPricing?.cost ?? 0;
-        const charge = currencyPricing?.charge?.amount ?? legacyPricing?.charge ?? 0;
+        // Read from unified pricing format
+        const regionPricing = dbItem?.pricing?.[region];
+        const cost = regionPricing?.cost?.amount ?? 0;
+        const charge = regionPricing?.charge?.amount ?? 0;
 
         addLineItem(sectionId, subsectionName, {
             name: dbItem?.name || '',

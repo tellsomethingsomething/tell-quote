@@ -46,19 +46,27 @@ export default function ClientDetails() {
     };
 
     const handleSelectClient = (selectedClient) => {
+        // Get primary contact from contacts array, fallback to legacy fields
+        const primaryContact = selectedClient.contacts?.find(c => c.isPrimary)
+            || selectedClient.contacts?.[0];
+
+        // Store clientId (UUID) for reliable linking
         setClientDetails({
+            clientId: selectedClient.id,
             company: selectedClient.company,
-            contact: selectedClient.contact,
-            email: selectedClient.email,
-            phone: selectedClient.phone,
+            contactId: primaryContact?.id || null,
+            contact: primaryContact?.name || selectedClient.contact || '',
+            email: primaryContact?.email || selectedClient.email || '',
+            phone: primaryContact?.phone || selectedClient.phone || '',
+            role: primaryContact?.role || '',
         });
         setShowDropdown(false);
     };
 
-    // Find full client data to access contacts
-    const clientData = clients.find(c =>
-        c?.company?.toLowerCase() === client?.company?.toLowerCase()
-    );
+    // Find full client data - prefer ID match, fallback to company name
+    const clientData = client?.clientId
+        ? clients.find(c => c.id === client.clientId)
+        : clients.find(c => c?.company?.toLowerCase() === client?.company?.toLowerCase());
 
     const handleSelectContact = (contactId) => {
         if (!clientData) return;

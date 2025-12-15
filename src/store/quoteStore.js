@@ -381,12 +381,10 @@ export const useQuoteStore = create(
                                 : rateCardItems.find(r => r.name === item.name);
 
                             if (rateCardItem) {
-                                // Check currencyPricing first (new format), then fall back to legacy pricing
-                                const currencyPricing = rateCardItem.currencyPricing?.[region];
-                                const legacyPricing = rateCardItem.pricing?.[region];
-
-                                const cost = currencyPricing?.cost?.amount ?? legacyPricing?.cost ?? item.cost;
-                                const charge = currencyPricing?.charge?.amount ?? legacyPricing?.charge ?? item.charge;
+                                // Read from unified pricing format
+                                const regionPricing = rateCardItem.pricing?.[region];
+                                const cost = regionPricing?.cost?.amount ?? item.cost;
+                                const charge = regionPricing?.charge?.amount ?? item.charge;
 
                                 return {
                                     ...item,

@@ -24,11 +24,10 @@ export default function LineItem({ item, sectionId, subsectionName }) {
 
     const getRateCardPricing = () => {
         if (!linkedRateCardItem) return null;
-        const currencyPricing = linkedRateCardItem?.currencyPricing?.[quote.region];
-        const legacyPricing = linkedRateCardItem?.pricing?.[quote.region];
+        const regionPricing = linkedRateCardItem?.pricing?.[quote.region];
         return {
-            cost: currencyPricing?.cost?.amount ?? legacyPricing?.cost ?? 0,
-            charge: currencyPricing?.charge?.amount ?? legacyPricing?.charge ?? 0,
+            cost: regionPricing?.cost?.amount ?? 0,
+            charge: regionPricing?.charge?.amount ?? 0,
         };
     };
 
@@ -83,12 +82,10 @@ export default function LineItem({ item, sectionId, subsectionName }) {
     };
 
     const handleSelectItem = (rcItem) => {
-        // Check currencyPricing first (new format), then fall back to legacy pricing
-        const currencyPricing = rcItem?.currencyPricing?.[quote.region];
-        const legacyPricing = rcItem?.pricing?.[quote.region];
-
-        const cost = currencyPricing?.cost?.amount ?? legacyPricing?.cost ?? 0;
-        const charge = currencyPricing?.charge?.amount ?? legacyPricing?.charge ?? 0;
+        // Read from unified pricing format
+        const regionPricing = rcItem?.pricing?.[quote.region];
+        const cost = regionPricing?.cost?.amount ?? 0;
+        const charge = regionPricing?.charge?.amount ?? 0;
 
         updateLineItem(sectionId, subsectionName, item.id, {
             name: rcItem.name,

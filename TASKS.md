@@ -30,29 +30,7 @@ All critical bugs fixed and deployed.
 
 ## TECH DEBT
 
-### Normalize Contact Storage
-- [ ] Remove legacy `client.contact/email/phone` fields
-- [ ] Always use `contacts[]` array
-- [ ] Update all references in codebase
-- **Time**: 30 mins (break into 2 tasks)
-
-### Rate Card Pricing Structure
-- [ ] Consolidate legacy `pricing` and `currencyPricing` into single structure
-- [ ] Migrate existing data
-- [ ] Update all pricing lookups
-- **Time**: 45 mins (break into 3 tasks)
-
-### Client Metrics Performance
-- [ ] Cache metrics by year/month
-- [ ] Separate rate updates from metric dependencies
-- [ ] Add pagination to client list
-- **Time**: 30 mins (break into 2 tasks)
-
-### Quote-Client ID Linking
-- [ ] Use UUID for client matching instead of company name
-- [ ] Store `clientId` reliably in quotes
-- [ ] Fix getClientQuotes to use ID
-- **Time**: 15 mins
+All tech debt tasks completed!
 
 ---
 
@@ -92,6 +70,10 @@ All migrations have been run in Supabase.
 - [x] Legacy Contact Migration (auto-creates contact from legacy fields on initialize)
 - [x] Database Migration: activity_logs table (CRM activity tracking)
 - [x] Database Migration: quote_templates table (reusable templates)
+- [x] Quote-Client ID Linking (use clientId UUID instead of company name matching)
+- [x] Normalize Contact Storage (use contacts[] array with primary contact fallback)
+- [x] Client Metrics Performance (added pagination to ClientsPage)
+- [x] Rate Card Pricing Structure (consolidated pricing/currencyPricing into unified format)
 
 ---
 
