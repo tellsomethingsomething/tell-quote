@@ -218,3 +218,31 @@ create policy "Users can update own name" on user_profiles
 -- Trigger for updated_at
 create trigger update_user_profiles_updated_at before update on user_profiles
   for each row execute function update_updated_at_column();
+
+-- ============================================================
+-- Google OAuth Tokens table
+-- ============================================================
+create table google_tokens (
+  id uuid default uuid_generate_v4() primary key,
+  user_id text not null,
+  access_token text not null,
+  refresh_token text not null,
+  expires_at timestamp with time zone not null,
+  scopes text[] not null,
+  email text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Index for fast lookups
+create index google_tokens_user_id_idx on google_tokens(user_id);
+
+-- Enable RLS
+alter table google_tokens enable row level security;
+
+-- Allow all (internal tool)
+create policy "Allow all google_tokens" on google_tokens for all using (true) with check (true);
+
+-- Trigger for updated_at
+create trigger update_google_tokens_updated_at before update on google_tokens
+  for each row execute function update_updated_at_column();
