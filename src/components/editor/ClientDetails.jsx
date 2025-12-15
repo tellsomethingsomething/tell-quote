@@ -111,14 +111,14 @@ export default function ClientDetails() {
 
                     {/* Client Dropdown */}
                     {showDropdown && filteredClients.length > 0 && (
-                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-dark-card border border-dark-border rounded-lg shadow-xl max-h-64 overflow-y-auto dropdown-menu">
+                        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[#1a1a24] border border-dark-border rounded-lg shadow-xl max-h-64 overflow-y-auto">
                             {filteredClients.map((c, index) => (
                                 <button
                                     key={c.id}
                                     onClick={() => handleSelectClient(c)}
-                                    className={`w-full px-3 py-2.5 text-left hover:bg-accent-primary/10 transition-colors flex items-center gap-3 ${index !== filteredClients.length - 1 ? 'border-b border-dark-border/50' : ''}`}
+                                    className={`w-full px-3 py-2.5 text-left hover:bg-accent-primary/20 transition-colors flex items-center gap-3 ${index !== filteredClients.length - 1 ? 'border-b border-dark-border/50' : ''}`}
                                 >
-                                    <div className="w-8 h-8 rounded-md bg-gray-800 flex items-center justify-center text-xs font-bold text-gray-400 shrink-0">
+                                    <div className="w-8 h-8 rounded-md bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-300 shrink-0">
                                         {c.company.substring(0, 2).toUpperCase()}
                                     </div>
                                     <div className="flex-1 min-w-0">
