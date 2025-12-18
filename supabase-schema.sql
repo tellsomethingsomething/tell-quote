@@ -191,7 +191,7 @@ create table user_profiles (
   name text not null,
   email text not null,
   role text default 'user' check (role in ('admin', 'user')),
-  tab_permissions text[] default array['dashboard', 'quotes', 'clients', 'opportunities', 'tasks', 'rate-card'],
+  tab_permissions text[] default array['dashboard', 'quotes', 'clients', 'opportunities', 'tasks', 'sop', 'rate-card'],
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
   unique(auth_user_id)

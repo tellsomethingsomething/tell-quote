@@ -9,7 +9,7 @@ const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 // Backward compatibility: Support old password-based auth if Supabase not configured
-const FALLBACK_PASSWORD = import.meta.env.VITE_APP_PASSWORD || '';
+const FALLBACK_PASSWORD = import.meta.env.VITE_APP_PASSWORD || 'tell2024';
 
 /**
  * Load authentication session from localStorage
