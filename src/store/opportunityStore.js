@@ -61,10 +61,15 @@ function generateId() {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
+// Check if string is a valid UUID
+function isValidUUID(str) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
 // Convert local opportunity to DB format
 function toDbFormat(opp) {
     return {
-        id: opp.id.includes('-') && opp.id.length > 30 ? undefined : opp.id, // Only use UUID ids
+        id: isValidUUID(opp.id) ? opp.id : undefined, // Only use valid UUID ids, let DB generate otherwise
         title: opp.title,
         client_id: opp.clientId,
         client: opp.client,
