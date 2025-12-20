@@ -480,5 +480,67 @@ export const useTimelineStore = create(
         clearError: () => {
             set({ error: null });
         },
+
+        // Convert a research event to an opportunity
+        // Returns the created opportunity data to be used by opportunityStore.addOpportunity
+        prepareOpportunityFromEvent: (event) => {
+            const metadata = event.metadata || {};
+
+            // Build opportunity data from research event
+            const opportunityData = {
+                title: metadata.title || event.title || 'New Opportunity',
+                country: metadata.country || '',
+                region: metadata.region || '',
+                source: `Research: ${event.title}`,
+                brief: metadata.description || event.description || '',
+                notes: `Converted from research finding on ${new Date(event.timestamp).toLocaleDateString('en-GB')}.\n\n${metadata.summary || ''}\n\nRecommended Action: ${metadata.recommendedAction || 'Follow up'}`,
+                value: metadata.budgetRange?.min || metadata.estimatedValue || 0,
+                currency: metadata.currency || 'USD',
+                probability: metadata.urgency ? Math.min(metadata.urgency * 10, 90) : 30,
+                status: 'active',
+                nextAction: metadata.recommendedAction || 'Initial contact',
+                nextActionDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 week from now
+                competitors: metadata.competitors || [],
+                contacts: metadata.contacts || [],
+                // Link back to the research event
+                researchEventId: event.id,
+            };
+
+            // Add client info if available
+            if (metadata.organization) {
+                opportunityData.client = {
+                    company: metadata.organization,
+                    contact: metadata.contactName || '',
+                    email: metadata.contactEmail || '',
+                };
+            }
+
+            return opportunityData;
+        },
+
+        // Mark an event as converted to opportunity
+        markEventAsConverted: async (eventId, opportunityId) => {
+            // Update the original memory record if it exists
+            if (eventId.startsWith('memory-')) {
+                const memoryId = eventId.replace('memory-', '');
+                try {
+                    await supabase
+                        .from('agent_memory')
+                        .update({ related_opportunity_id: opportunityId })
+                        .eq('id', memoryId);
+                } catch (e) {
+                    console.error('Failed to update memory with opportunity ID:', e);
+                }
+            }
+
+            // Update local state to reflect the conversion
+            set((state) => ({
+                events: state.events.map(e =>
+                    e.id === eventId
+                        ? { ...e, relatedOpportunityId: opportunityId, convertedToOpportunity: true }
+                        : e
+                ),
+            }));
+        },
     }))
 );

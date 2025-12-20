@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useTimelineStore, EVENT_TYPES, EVENT_CONFIGS } from '../../store/timelineStore';
+import { useOpportunityStore } from '../../store/opportunityStore';
 
 // Icon component for timeline events
 function EventIcon({ type }) {
@@ -30,9 +31,29 @@ function EventIcon({ type }) {
 }
 
 // Individual timeline event card
-function TimelineEventCard({ event, onExpand }) {
+function TimelineEventCard({ event, onExpand, onConvert }) {
     const config = EVENT_CONFIGS[event.type] || EVENT_CONFIGS[EVENT_TYPES.RESEARCH_FINDING];
     const [expanded, setExpanded] = useState(false);
+    const [converting, setConverting] = useState(false);
+
+    const isResearchType = [
+        EVENT_TYPES.RESEARCH_FINDING,
+        EVENT_TYPES.MARKET_INTEL,
+        EVENT_TYPES.COMPETITOR_UPDATE,
+    ].includes(event.type);
+
+    const canConvert = isResearchType && !event.convertedToOpportunity && !event.relatedOpportunityId;
+
+    const handleConvert = async (e) => {
+        e.stopPropagation();
+        if (!canConvert || converting) return;
+        setConverting(true);
+        try {
+            await onConvert(event);
+        } finally {
+            setConverting(false);
+        }
+    };
 
     const formattedDate = new Date(event.timestamp).toLocaleDateString('en-US', {
         month: 'short',
@@ -160,6 +181,39 @@ function TimelineEventCard({ event, onExpand }) {
                             <div className="mt-2 p-2 bg-violet-500/10 rounded-lg">
                                 <p className="text-[10px] text-violet-400 uppercase tracking-wide mb-1">Recommended Action</p>
                                 <p className="text-xs text-gray-300">{event.metadata.recommendedAction}</p>
+                            </div>
+                        )}
+
+                        {/* Convert to Opportunity Button */}
+                        {canConvert && (
+                            <button
+                                onClick={handleConvert}
+                                disabled={converting}
+                                className="mt-3 w-full py-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 rounded-lg text-green-400 text-sm font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                            >
+                                {converting ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-green-400/30 border-t-green-400 rounded-full animate-spin" />
+                                        Converting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                        </svg>
+                                        Convert to Opportunity
+                                    </>
+                                )}
+                            </button>
+                        )}
+
+                        {/* Already converted indicator */}
+                        {(event.convertedToOpportunity || event.relatedOpportunityId) && isResearchType && (
+                            <div className="mt-3 py-2 bg-gray-700/50 rounded-lg text-gray-400 text-sm text-center flex items-center justify-center gap-2">
+                                <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                Converted to Opportunity
                             </div>
                         )}
                     </div>
@@ -372,7 +426,7 @@ function AddResearchForm({ onClose, onSubmit }) {
 }
 
 // Main Timeline Component
-export default function ResearcherTimeline() {
+export default function ResearcherTimeline({ onNavigateToOpportunity }) {
     const {
         events,
         loading,
@@ -383,10 +437,48 @@ export default function ResearcherTimeline() {
         getFilteredEvents,
         getStats,
         addResearchFinding,
+        prepareOpportunityFromEvent,
+        markEventAsConverted,
     } = useTimelineStore();
+
+    const { addOpportunity } = useOpportunityStore();
 
     const [showAddForm, setShowAddForm] = useState(false);
     const [selectedTypes, setSelectedTypes] = useState([]);
+    const [conversionSuccess, setConversionSuccess] = useState(null);
+
+    // Handle converting research event to opportunity
+    const handleConvertToOpportunity = async (event) => {
+        try {
+            // Prepare opportunity data from the event
+            const oppData = prepareOpportunityFromEvent(event);
+
+            // Create the opportunity
+            const newOpp = await addOpportunity(oppData);
+
+            if (newOpp) {
+                // Mark the event as converted
+                await markEventAsConverted(event.id, newOpp.id);
+
+                // Show success message
+                setConversionSuccess({
+                    eventTitle: event.title,
+                    opportunityId: newOpp.id,
+                    opportunityTitle: newOpp.title,
+                });
+
+                // Clear success message after 5 seconds
+                setTimeout(() => setConversionSuccess(null), 5000);
+
+                // Navigate to opportunity if callback provided
+                if (onNavigateToOpportunity) {
+                    onNavigateToOpportunity(newOpp.id);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to convert to opportunity:', e);
+        }
+    };
 
     const filteredEvents = useMemo(() => getFilteredEvents(), [events, filters]);
     const stats = useMemo(() => getStats(), [events]);
@@ -519,6 +611,33 @@ export default function ResearcherTimeline() {
                 </div>
             )}
 
+            {/* Conversion Success Toast */}
+            {conversionSuccess && (
+                <div className="card bg-green-500/10 border-green-500/30 p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p className="text-sm text-green-400 font-medium">Opportunity Created</p>
+                            <p className="text-xs text-gray-400">
+                                "{conversionSuccess.eventTitle}" converted to "{conversionSuccess.opportunityTitle}"
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setConversionSuccess(null)}
+                        className="text-gray-400 hover:text-white p-1"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            )}
+
             {dateKeys.length === 0 ? (
                 <div className="card bg-dark-card text-center py-12">
                     <svg className="w-12 h-12 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -546,7 +665,11 @@ export default function ResearcherTimeline() {
                             </div>
                             <div className="space-y-0">
                                 {eventsByDate[date].map((event) => (
-                                    <TimelineEventCard key={event.id} event={event} />
+                                    <TimelineEventCard
+                                        key={event.id}
+                                        event={event}
+                                        onConvert={handleConvertToOpportunity}
+                                    />
                                 ))}
                             </div>
                         </div>
