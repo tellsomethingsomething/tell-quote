@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useKnowledgeStore, FRAGMENT_TYPES, AGENTS } from '../store/knowledgeStore';
 import { useTimelineStore } from '../store/timelineStore';
-import { useSportsResearchStore, SPORTS, SPORTS_CONFIG, TARGET_REGIONS } from '../store/sportsResearchStore';
+import { useSportsResearchStore, SPORTS, SPORTS_CONFIG, TARGET_REGIONS, RESEARCH_PROMPT } from '../store/sportsResearchStore';
 import { useOpportunityStore, REGIONS } from '../store/opportunityStore';
 import ResearcherTimeline from '../components/timeline/ResearcherTimeline';
 
@@ -469,6 +469,11 @@ function SportsResearchTab() {
         dismissEvent,
         convertToOpportunity,
         getStats,
+        getUpcomingEvents,
+        getEventsByCountry,
+        getEventsBySport,
+        getEventsByRegion,
+        updateEvent,
     } = useSportsResearchStore();
 
     const { addOpportunity } = useOpportunityStore();
@@ -476,7 +481,11 @@ function SportsResearchTab() {
     const [filterSport, setFilterSport] = useState('all');
     const [filterRegion, setFilterRegion] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [groupBy, setGroupBy] = useState('date'); // 'date' | 'country' | 'sport' | 'region'
+    const [showPrompt, setShowPrompt] = useState(false);
     const [conversionSuccess, setConversionSuccess] = useState(null);
+    const [editingComment, setEditingComment] = useState(null);
+    const [commentText, setCommentText] = useState('');
 
     useEffect(() => {
         initialize();
@@ -484,14 +493,69 @@ function SportsResearchTab() {
 
     const stats = useMemo(() => getStats(), [events]);
 
+    // Get upcoming events (1-2 years out, excluding past)
+    const upcomingEvents = useMemo(() => getUpcomingEvents(), [events]);
+
     const filteredEvents = useMemo(() => {
-        return events.filter(e => {
+        return upcomingEvents.filter(e => {
             if (filterSport !== 'all' && e.sport !== filterSport) return false;
             if (filterRegion !== 'all' && e.region !== filterRegion) return false;
             if (filterStatus !== 'all' && e.researchStatus !== filterStatus) return false;
             return true;
         });
-    }, [events, filterSport, filterRegion, filterStatus]);
+    }, [upcomingEvents, filterSport, filterRegion, filterStatus]);
+
+    // Group events based on selected grouping
+    const groupedEvents = useMemo(() => {
+        if (groupBy === 'date') {
+            // Group by year-month
+            const grouped = {};
+            filteredEvents.forEach(e => {
+                const key = e.startDate ? e.startDate.substring(0, 7) : 'No Date';
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(e);
+            });
+            return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
+        } else if (groupBy === 'country') {
+            const grouped = {};
+            filteredEvents.forEach(e => {
+                const key = e.country || 'Unknown';
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(e);
+            });
+            return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
+        } else if (groupBy === 'sport') {
+            const grouped = {};
+            filteredEvents.forEach(e => {
+                const key = e.sport || 'Unknown';
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(e);
+            });
+            return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
+        } else if (groupBy === 'region') {
+            const grouped = {};
+            filteredEvents.forEach(e => {
+                const key = e.region || 'Other';
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(e);
+            });
+            return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
+        }
+        return [['All', filteredEvents]];
+    }, [filteredEvents, groupBy]);
+
+    // Handle adding/updating comment
+    const handleSaveComment = async (eventId) => {
+        if (!commentText.trim()) return;
+        const event = events.find(e => e.id === eventId);
+        const existingNotes = event?.notes || '';
+        const updatedNotes = existingNotes
+            ? `${existingNotes}\n\n[${new Date().toLocaleDateString()}] ${commentText}`
+            : `[${new Date().toLocaleDateString()}] ${commentText}`;
+        await updateEvent(eventId, { notes: updatedNotes });
+        setEditingComment(null);
+        setCommentText('');
+    };
 
     const handleConvert = async (event) => {
         // Create opportunity from sports event
@@ -519,6 +583,14 @@ function SportsResearchTab() {
             setConversionSuccess({ eventName: event.eventName, oppId: newOpp.id });
             setTimeout(() => setConversionSuccess(null), 3000);
         }
+    };
+
+    // Format date for display
+    const formatGroupDate = (dateStr) => {
+        if (dateStr === 'No Date') return dateStr;
+        const [year, month] = dateStr.split('-');
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `${months[parseInt(month) - 1]} ${year}`;
     };
 
     if (loading) {
@@ -557,11 +629,40 @@ function SportsResearchTab() {
                 </div>
             )}
 
+            {/* Research Prompt Toggle */}
+            <div className="mb-6">
+                <button
+                    onClick={() => setShowPrompt(!showPrompt)}
+                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 transition-colors"
+                >
+                    <svg className={`w-4 h-4 transition-transform ${showPrompt ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                    Research Prompt (for AI Assistant)
+                </button>
+                {showPrompt && (
+                    <div className="mt-3 p-4 bg-dark-card border border-dark-border rounded-lg">
+                        <pre className="text-xs text-gray-400 whitespace-pre-wrap font-mono overflow-x-auto">
+                            {RESEARCH_PROMPT}
+                        </pre>
+                        <button
+                            onClick={() => navigator.clipboard.writeText(RESEARCH_PROMPT)}
+                            className="mt-3 btn-ghost btn-sm flex items-center gap-1"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Copy Prompt
+                        </button>
+                    </div>
+                )}
+            </div>
+
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
                 <div className="card text-center">
-                    <div className="text-2xl font-bold text-brand-teal">{stats.total}</div>
-                    <div className="text-xs text-gray-500">Total Events</div>
+                    <div className="text-2xl font-bold text-brand-teal">{upcomingEvents.length}</div>
+                    <div className="text-xs text-gray-500">Upcoming (1-2yr)</div>
                 </div>
                 <div className="card text-center">
                     <div className="text-2xl font-bold text-amber-400">{stats.new}</div>
@@ -582,7 +683,7 @@ function SportsResearchTab() {
             </div>
 
             {/* Sport Breakdown */}
-            <div className="grid grid-cols-5 gap-2 mb-6">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-6">
                 {Object.entries(SPORTS).map(([key, sport]) => {
                     const config = SPORTS_CONFIG[sport];
                     const count = stats.bySport[sport] || 0;
@@ -602,8 +703,24 @@ function SportsResearchTab() {
                 })}
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3 mb-4">
+            {/* Filters and Grouping */}
+            <div className="flex flex-wrap gap-3 mb-4 items-center">
+                <div className="flex items-center gap-2 bg-dark-card border border-dark-border rounded-lg p-1">
+                    <span className="text-xs text-gray-500 px-2">Group by:</span>
+                    {['date', 'country', 'sport', 'region'].map(g => (
+                        <button
+                            key={g}
+                            onClick={() => setGroupBy(g)}
+                            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                groupBy === g
+                                    ? 'bg-brand-teal/20 text-brand-teal'
+                                    : 'text-gray-400 hover:text-gray-200'
+                            }`}
+                        >
+                            {g.charAt(0).toUpperCase() + g.slice(1)}
+                        </button>
+                    ))}
+                </div>
                 <select
                     value={filterRegion}
                     onChange={(e) => setFilterRegion(e.target.value)}
@@ -613,6 +730,7 @@ function SportsResearchTab() {
                     {Object.keys(TARGET_REGIONS).map(region => (
                         <option key={region} value={region}>{region}</option>
                     ))}
+                    <option value="Other">Other</option>
                 </select>
                 <select
                     value={filterStatus}
@@ -639,30 +757,82 @@ function SportsResearchTab() {
                 )}
             </div>
 
-            {/* Events List */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {filteredEvents.length === 0 ? (
-                    <div className="col-span-full card text-center py-12">
-                        <svg className="w-12 h-12 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <h3 className="text-lg font-medium text-gray-400 mb-2">No events found</h3>
-                        <p className="text-sm text-gray-500">
-                            Adjust filters or wait for auto-research to discover events.
-                        </p>
-                    </div>
-                ) : (
-                    filteredEvents.map(event => (
-                        <SportsEventCard
-                            key={event.id}
-                            event={event}
-                            onMarkReviewed={markReviewed}
-                            onDismiss={dismissEvent}
-                            onConvert={handleConvert}
-                        />
-                    ))
-                )}
-            </div>
+            {/* Grouped Events List */}
+            {filteredEvents.length === 0 ? (
+                <div className="card text-center py-12">
+                    <svg className="w-12 h-12 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <h3 className="text-lg font-medium text-gray-400 mb-2">No upcoming events found</h3>
+                    <p className="text-sm text-gray-500">
+                        Adjust filters or add new events from research.
+                    </p>
+                </div>
+            ) : (
+                <div className="space-y-6">
+                    {groupedEvents.map(([groupKey, groupEvents]) => (
+                        <div key={groupKey}>
+                            <div className="flex items-center gap-3 mb-3">
+                                <h3 className="text-sm font-medium text-gray-300">
+                                    {groupBy === 'date' ? formatGroupDate(groupKey) : groupKey}
+                                </h3>
+                                <span className="text-xs px-2 py-0.5 bg-gray-700 text-gray-400 rounded">
+                                    {groupEvents.length} event{groupEvents.length !== 1 ? 's' : ''}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                {groupEvents.map(event => (
+                                    <div key={event.id}>
+                                        <SportsEventCard
+                                            event={event}
+                                            onMarkReviewed={markReviewed}
+                                            onDismiss={dismissEvent}
+                                            onConvert={handleConvert}
+                                        />
+                                        {/* Comment Section */}
+                                        <div className="mt-2 ml-4">
+                                            {editingComment === event.id ? (
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={commentText}
+                                                        onChange={(e) => setCommentText(e.target.value)}
+                                                        placeholder="Add a comment..."
+                                                        className="input-sm flex-1"
+                                                        autoFocus
+                                                    />
+                                                    <button
+                                                        onClick={() => handleSaveComment(event.id)}
+                                                        className="btn-primary btn-sm"
+                                                    >
+                                                        Save
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { setEditingComment(null); setCommentText(''); }}
+                                                        className="btn-ghost btn-sm"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => setEditingComment(event.id)}
+                                                    className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1"
+                                                >
+                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                    </svg>
+                                                    Add Comment
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

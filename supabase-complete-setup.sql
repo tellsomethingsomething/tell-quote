@@ -10,16 +10,21 @@
 CREATE TABLE IF NOT EXISTS knowledge_fragments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   fragment_type text NOT NULL, -- pricing, preference, requirement, process, relationship, market_intel
-  title text NOT NULL,
+  title text,
   content text NOT NULL,
-  source text, -- deal_outcome, user_input, research, client_feedback
+  source text DEFAULT 'human_input', -- deal_outcome, user_input, research, client_feedback
   confidence numeric(3,2) DEFAULT 0.5, -- 0-1
   verified boolean DEFAULT false,
+  needs_review boolean DEFAULT false,
   region text,
   country text,
   deal_type text,
   client_id uuid,
   tags text[] DEFAULT '{}',
+  applied_to_agents text[] DEFAULT '{}',
+  impact_score numeric(5,2) DEFAULT 0,
+  usage_count integer DEFAULT 0,
+  last_used_at timestamptz,
   metadata jsonb DEFAULT '{}',
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),
@@ -395,6 +400,41 @@ $$ LANGUAGE plpgsql;
 -- 9. knowledge_fragments.client_id -> clients.id (Client knowledge)
 --
 -- =====================================================
+
+-- =====================================================
+-- 15. COMMERCIAL TASKS TABLE
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS commercial_tasks (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text,
+  task_type text NOT NULL DEFAULT 'research', -- research, outreach, proposal, follow_up, meeting, contract
+  status text DEFAULT 'pending', -- pending, in_progress, completed, cancelled
+  priority text DEFAULT 'medium', -- low, medium, high, urgent
+  start_date date,
+  due_date date,
+  completed_date date,
+
+  -- Links
+  opportunity_id uuid REFERENCES opportunities(id) ON DELETE SET NULL,
+  event_id uuid REFERENCES sports_events(id) ON DELETE SET NULL,
+  assigned_to text,
+
+  -- Comments/feedback for evolving prompts
+  comments jsonb DEFAULT '[]',
+
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_commercial_tasks_status ON commercial_tasks(status);
+CREATE INDEX IF NOT EXISTS idx_commercial_tasks_type ON commercial_tasks(task_type);
+CREATE INDEX IF NOT EXISTS idx_commercial_tasks_due ON commercial_tasks(due_date);
+CREATE INDEX IF NOT EXISTS idx_commercial_tasks_opp ON commercial_tasks(opportunity_id);
+CREATE INDEX IF NOT EXISTS idx_commercial_tasks_event ON commercial_tasks(event_id);
+
+ALTER TABLE commercial_tasks DISABLE ROW LEVEL SECURITY;
 
 -- =====================================================
 -- SUCCESS MESSAGE

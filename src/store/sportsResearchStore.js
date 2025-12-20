@@ -9,6 +9,7 @@ export const SPORTS = {
     HANDBALL: 'Handball',
     VOLLEYBALL: 'Volleyball',
     BASKETBALL: 'Basketball',
+    CYCLING: 'Cycling',
 };
 
 export const SPORTS_CONFIG = {
@@ -17,76 +18,78 @@ export const SPORTS_CONFIG = {
     [SPORTS.HANDBALL]: { icon: '🤾', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
     [SPORTS.VOLLEYBALL]: { icon: '🏐', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
     [SPORTS.BASKETBALL]: { icon: '🏀', color: 'bg-red-500/20 text-red-400 border-red-500/30' },
+    [SPORTS.CYCLING]: { icon: '🚴', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
 };
 
 // Regions we cover
 export const TARGET_REGIONS = {
     SEA: ['Malaysia', 'Singapore', 'Indonesia', 'Thailand', 'Vietnam', 'Philippines', 'Myanmar', 'Cambodia', 'Laos', 'Brunei'],
-    Gulf: ['Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman'],
-    Levant: ['Jordan', 'Lebanon', 'Syria', 'Palestine', 'Iraq'],
-    'Central Asia': ['Kazakhstan', 'Uzbekistan', 'Turkmenistan', 'Tajikistan', 'Kyrgyzstan'],
-    Afghanistan: ['Afghanistan'],
+    GCC: ['Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman'],
+    Levant: ['Jordan', 'Lebanon', 'Iraq', 'Syria'],
+    'Central Asia': ['Kazakhstan', 'Uzbekistan', 'Turkmenistan', 'Tajikistan', 'Kyrgyzstan', 'Afghanistan'],
 };
 
-// Known major events/leagues per sport and region (seed data)
-const KNOWN_EVENTS = [
-    // SEA Football
-    { sport: SPORTS.FOOTBALL, event_name: 'Malaysian Super League', organization: 'Football Malaysia', country: 'Malaysia', region: 'SEA', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'AFF Championship', organization: 'ASEAN Football Federation', country: 'Regional', region: 'SEA', event_type: 'tournament', tier: 'international' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Thai League 1', organization: 'Thai League', country: 'Thailand', region: 'SEA', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Liga 1 Indonesia', organization: 'PSSI', country: 'Indonesia', region: 'SEA', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'V.League 1', organization: 'VFF', country: 'Vietnam', region: 'SEA', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Singapore Premier League', organization: 'FAS', country: 'Singapore', region: 'SEA', event_type: 'league', tier: 'national' },
+// Research prompt for AI assistant
+export const RESEARCH_PROMPT = `**Sports Event Research Assistant**
 
-    // Gulf Football
-    { sport: SPORTS.FOOTBALL, event_name: 'Saudi Pro League', organization: 'SAFF', country: 'Saudi Arabia', region: 'Gulf', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'UAE Pro League', organization: 'UAE FA', country: 'UAE', region: 'Gulf', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Qatar Stars League', organization: 'QFA', country: 'Qatar', region: 'Gulf', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Kuwait Premier League', organization: 'KFA', country: 'Kuwait', region: 'Gulf', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Bahrain Premier League', organization: 'BFA', country: 'Bahrain', region: 'Gulf', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Oman Professional League', organization: 'OFA', country: 'Oman', region: 'Gulf', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Gulf Cup of Nations', organization: 'Gulf Football Federation', country: 'Regional', region: 'Gulf', event_type: 'tournament', tier: 'international' },
+You are a market research assistant for Tell Productions, a sports production company specialising in broadcast graphics and stadium visuals.
 
-    // Levant Football
-    { sport: SPORTS.FOOTBALL, event_name: 'Jordan Pro League', organization: 'JFA', country: 'Jordan', region: 'Levant', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Lebanese Premier League', organization: 'LFA', country: 'Lebanon', region: 'Levant', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Iraqi Premier League', organization: 'IFA', country: 'Iraq', region: 'Levant', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'West Bank Premier League', organization: 'PFA', country: 'Palestine', region: 'Levant', event_type: 'league', tier: 'national' },
+**Your task:** Identify upcoming sporting events that represent production opportunities.
 
-    // Central Asia Football
-    { sport: SPORTS.FOOTBALL, event_name: 'Kazakhstan Premier League', organization: 'KFF', country: 'Kazakhstan', region: 'Central Asia', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Uzbekistan Super League', organization: 'UFA', country: 'Uzbekistan', region: 'Central Asia', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Turkmenistan Higher League', organization: 'FFT', country: 'Turkmenistan', region: 'Central Asia', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Tajikistan Higher League', organization: 'TFF', country: 'Tajikistan', region: 'Central Asia', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FOOTBALL, event_name: 'Kyrgyzstan Premier League', organization: 'KFU', country: 'Kyrgyzstan', region: 'Central Asia', event_type: 'league', tier: 'national' },
+**Geographic scope:**
+- GCC (UAE, Saudi, Kuwait, Qatar, Bahrain, Oman)
+- Levant (Jordan, Lebanon, Iraq, Syria)
+- Central Asia (Kazakhstan, Uzbekistan, Kyrgyzstan, Tajikistan, Turkmenistan, Afghanistan)
+- Southeast Asia (Malaysia, Thailand, Indonesia, Singapore, Vietnam, Philippines, Cambodia, Laos, Brunei)
 
-    // Afghanistan Football
-    { sport: SPORTS.FOOTBALL, event_name: 'Afghan Premier League', organization: 'AFF', country: 'Afghanistan', region: 'Afghanistan', event_type: 'league', tier: 'national' },
+**Sports:** Football, Volleyball, Basketball, Futsal, Handball, Cycling
 
-    // Futsal
-    { sport: SPORTS.FUTSAL, event_name: 'AFF Futsal Championship', organization: 'ASEAN Football Federation', country: 'Regional', region: 'SEA', event_type: 'tournament', tier: 'international' },
-    { sport: SPORTS.FUTSAL, event_name: 'Malaysia Futsal League', organization: 'Football Malaysia', country: 'Malaysia', region: 'SEA', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FUTSAL, event_name: 'Thai Futsal League', organization: 'Thai FA', country: 'Thailand', region: 'SEA', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.FUTSAL, event_name: 'AFC Futsal Asian Cup', organization: 'AFC', country: 'Regional', region: 'Gulf', event_type: 'tournament', tier: 'international' },
+**Event types to find:**
+- Multi-sport events (Asian Games, SEA Games, Islamic Solidarity Games, GCC Games, etc.)
+- International tournaments and championships
+- Federation-organised tournaments (AFC, AFF, AVC, FIBA Asia, etc.)
+- Regional tournaments and cups
+- Youth tournaments (U17, U19, U21, U23)
+- Cup finals
+- Exhibition matches and friendlies
+- New/inaugural events
 
-    // Handball
-    { sport: SPORTS.HANDBALL, event_name: 'Asian Handball Championship', organization: 'AHF', country: 'Regional', region: 'SEA', event_type: 'tournament', tier: 'international' },
-    { sport: SPORTS.HANDBALL, event_name: 'Gulf Handball Championship', organization: 'GHF', country: 'Regional', region: 'Gulf', event_type: 'tournament', tier: 'international' },
-    { sport: SPORTS.HANDBALL, event_name: 'Saudi Handball League', organization: 'SAHF', country: 'Saudi Arabia', region: 'Gulf', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.HANDBALL, event_name: 'Kuwait Handball League', organization: 'KHF', country: 'Kuwait', region: 'Gulf', event_type: 'league', tier: 'national' },
+**Exclude:** Regular domestic league fixtures
 
-    // Volleyball
-    { sport: SPORTS.VOLLEYBALL, event_name: 'AVC Cup', organization: 'Asian Volleyball Confederation', country: 'Regional', region: 'SEA', event_type: 'tournament', tier: 'international' },
-    { sport: SPORTS.VOLLEYBALL, event_name: 'Thai Volleyball League', organization: 'TVA', country: 'Thailand', region: 'SEA', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.VOLLEYBALL, event_name: 'Indonesia Proliga', organization: 'PBVSI', country: 'Indonesia', region: 'SEA', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.VOLLEYBALL, event_name: 'Gulf Volleyball Championship', organization: 'GVF', country: 'Regional', region: 'Gulf', event_type: 'tournament', tier: 'international' },
+**For each event, provide:**
+- Event name and dates
+- Host city/venue
+- Organising body/federation
+- Key decision makers (names, titles, contact details where available)
+- Current production partner (if known)
+- Opportunity assessment
 
-    // Basketball
-    { sport: SPORTS.BASKETBALL, event_name: 'ASEAN Basketball League', organization: 'ABL', country: 'Regional', region: 'SEA', event_type: 'league', tier: 'international' },
-    { sport: SPORTS.BASKETBALL, event_name: 'Philippines Basketball Association', organization: 'PBA', country: 'Philippines', region: 'SEA', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.BASKETBALL, event_name: 'Malaysia Basketball League', organization: 'MABA', country: 'Malaysia', region: 'SEA', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.BASKETBALL, event_name: 'Thai Basketball League', organization: 'TBL', country: 'Thailand', region: 'SEA', event_type: 'league', tier: 'national' },
-    { sport: SPORTS.BASKETBALL, event_name: 'FIBA Asia Cup', organization: 'FIBA Asia', country: 'Regional', region: 'Gulf', event_type: 'tournament', tier: 'international' },
+**Reference sources:**
+- Our existing quotes and opportunities data
+- Federation websites and announcements
+- Sports news and calendars
+- Your own market analysis
+
+Present findings in a table format, prioritised by date and opportunity size.`;
+
+// Key upcoming events (tournaments, championships - NOT leagues)
+// These are events 1-2 years out that represent real opportunities
+const KEY_EVENTS = [
+    // 2025 Events
+    { sport: SPORTS.FOOTBALL, event_name: 'FIFA Club World Cup 2025', organization: 'FIFA', country: 'USA', region: 'Other', event_type: 'tournament', tier: 'international', start_date: '2025-06-15', end_date: '2025-07-13', venue: 'Multiple US cities', notes: 'New expanded 32-team format. Asian clubs participating.' },
+    { sport: SPORTS.FOOTBALL, event_name: 'SEA Games 2025', organization: 'SEAGF', country: 'Thailand', region: 'SEA', event_type: 'multi-sport', tier: 'international', start_date: '2025-12-09', end_date: '2025-12-20', venue: 'Bangkok, Chonburi', notes: '33rd SEA Games. Football, volleyball, basketball, futsal, handball.' },
+
+    // 2026 Events
+    { sport: SPORTS.FOOTBALL, event_name: 'AFC U-23 Asian Cup 2026', organization: 'AFC', country: 'Saudi Arabia', region: 'GCC', event_type: 'tournament', tier: 'international', start_date: '2026-01-07', end_date: '2026-01-25', venue: 'Jeddah', notes: 'Olympic qualifier pathway' },
+    { sport: SPORTS.HANDBALL, event_name: 'Asian Men\'s Handball Championship 2026', organization: 'Asian Handball Federation', country: 'Kuwait', region: 'GCC', event_type: 'tournament', tier: 'international', start_date: '2026-01-15', end_date: '2026-01-29', venue: 'Sabah Al-Salem, Kuwait', notes: 'Qualifies top 4 for 2027 World Championship' },
+    { sport: SPORTS.FUTSAL, event_name: 'AFC Futsal Asian Cup 2026', organization: 'AFC', country: 'Indonesia', region: 'SEA', event_type: 'tournament', tier: 'international', start_date: '2026-01-27', end_date: '2026-02-08', venue: 'TBD Indonesia', notes: 'Indonesia hosting for 2nd time' },
+    { sport: SPORTS.BASKETBALL, event_name: 'FIBA 3x3 Asia Cup 2026', organization: 'FIBA', country: 'Singapore', region: 'SEA', event_type: 'tournament', tier: 'international', start_date: '2026-04-01', end_date: '2026-04-05', venue: 'Singapore Sports Hub', notes: 'Part of 3 FIBA events in Singapore 2026-27' },
+    { sport: SPORTS.FOOTBALL, event_name: 'ASEAN Hyundai Cup 2026', organization: 'ASEAN Football Federation', country: 'Regional', region: 'SEA', event_type: 'tournament', tier: 'international', start_date: '2026-07-24', end_date: '2026-08-26', venue: 'Multiple venues across ASEAN', notes: '30th Anniversary edition. Draw: Jan 15, 2026 Jakarta.' },
+    { sport: SPORTS.FOOTBALL, event_name: 'Asian Games 2026', organization: 'OCA', country: 'Japan', region: 'Other', event_type: 'multi-sport', tier: 'international', start_date: '2026-09-19', end_date: '2026-10-04', venue: 'Aichi-Nagoya', notes: '41 sports, 53 venues. Football, basketball, handball, volleyball included.' },
+
+    // 2027 Events
+    { sport: SPORTS.FOOTBALL, event_name: 'AFC Asian Cup 2027', organization: 'AFC', country: 'Saudi Arabia', region: 'GCC', event_type: 'tournament', tier: 'international', start_date: '2027-01-01', end_date: '2027-02-01', venue: 'Multiple venues Saudi Arabia', notes: 'First time Saudi hosts. 24 teams. Major opportunity.' },
+    { sport: SPORTS.BASKETBALL, event_name: 'FIBA Asia Cup 2027', organization: 'FIBA', country: 'Qatar', region: 'GCC', event_type: 'tournament', tier: 'international', start_date: '2027-08-01', end_date: '2027-08-15', venue: 'Doha', notes: 'Top Asian basketball championship' },
 ];
 
 // Convert DB format
@@ -119,23 +122,23 @@ function fromDbFormat(record) {
 function toDbFormat(event) {
     return {
         sport: event.sport,
-        event_name: event.eventName,
+        event_name: event.eventName || event.event_name,
         organization: event.organization,
         country: event.country,
         region: event.region,
-        start_date: event.startDate || null,
-        end_date: event.endDate || null,
+        start_date: event.startDate || event.start_date || null,
+        end_date: event.endDate || event.end_date || null,
         venue: event.venue,
-        event_type: event.eventType,
+        event_type: event.eventType || event.event_type,
         tier: event.tier,
-        broadcast_status: event.broadcastStatus,
-        estimated_value: event.estimatedValue || null,
+        broadcast_status: event.broadcastStatus || event.broadcast_status,
+        estimated_value: event.estimatedValue || event.estimated_value || null,
         currency: event.currency || 'USD',
-        source_url: event.sourceUrl,
+        source_url: event.sourceUrl || event.source_url,
         notes: event.notes,
         contacts: event.contacts || [],
         converted_to_opportunity_id: event.convertedToOpportunityId || null,
-        research_status: event.researchStatus || 'new',
+        research_status: event.researchStatus || event.research_status || 'new',
     };
 }
 
@@ -159,15 +162,15 @@ export const useSportsResearchStore = create(
                 const { data, error } = await supabase
                     .from('sports_events')
                     .select('*')
-                    .order('discovered_at', { ascending: false });
+                    .order('start_date', { ascending: true });
 
                 if (error) throw error;
 
                 if (data && data.length > 0) {
                     set({ events: data.map(fromDbFormat), loading: false });
                 } else {
-                    // Seed with known events if table is empty
-                    await get().seedKnownEvents();
+                    // Seed with key events if table is empty
+                    await get().seedKeyEvents();
                 }
             } catch (e) {
                 console.error('Failed to load sports events:', e);
@@ -175,21 +178,12 @@ export const useSportsResearchStore = create(
             }
         },
 
-        // Seed the database with known events
-        seedKnownEvents: async () => {
+        // Seed the database with key upcoming events
+        seedKeyEvents: async () => {
             if (!isSupabaseConfigured()) return;
 
             try {
-                const eventsToInsert = KNOWN_EVENTS.map(e => ({
-                    ...toDbFormat({
-                        ...e,
-                        eventName: e.event_name,
-                        eventType: e.event_type,
-                        researchStatus: 'new',
-                    }),
-                    event_name: e.event_name,
-                    event_type: e.event_type,
-                }));
+                const eventsToInsert = KEY_EVENTS.map(e => toDbFormat(e));
 
                 const { data, error } = await supabase
                     .from('sports_events')
@@ -231,6 +225,28 @@ export const useSportsResearchStore = create(
             } catch (e) {
                 console.error('Failed to add event:', e);
                 return null;
+            }
+        },
+
+        // Update event
+        updateEvent: async (eventId, updates) => {
+            if (!isSupabaseConfigured()) return;
+
+            try {
+                const { error } = await supabase
+                    .from('sports_events')
+                    .update({ ...toDbFormat(updates), updated_at: new Date().toISOString() })
+                    .eq('id', eventId);
+
+                if (error) throw error;
+
+                set((state) => ({
+                    events: state.events.map(e =>
+                        e.id === eventId ? { ...e, ...updates } : e
+                    ),
+                }));
+            } catch (e) {
+                console.error('Failed to update event:', e);
             }
         },
 
@@ -284,14 +300,58 @@ export const useSportsResearchStore = create(
             }
         },
 
-        // Get events by sport
-        getEventsBySport: (sport) => {
-            return get().events.filter(e => e.sport === sport);
+        // Get events filtered by date range (future only, 1-2 years out)
+        getUpcomingEvents: () => {
+            const events = get().events;
+            const now = new Date();
+            const twoYearsOut = new Date();
+            twoYearsOut.setFullYear(twoYearsOut.getFullYear() + 2);
+
+            return events.filter(e => {
+                if (!e.startDate) return true; // Include events without dates
+                const eventDate = new Date(e.startDate);
+                return eventDate >= now && eventDate <= twoYearsOut;
+            }).sort((a, b) => {
+                if (!a.startDate) return 1;
+                if (!b.startDate) return -1;
+                return new Date(a.startDate) - new Date(b.startDate);
+            });
         },
 
-        // Get events by region
-        getEventsByRegion: (region) => {
-            return get().events.filter(e => e.region === region);
+        // Get events grouped by country
+        getEventsByCountry: () => {
+            const events = get().getUpcomingEvents();
+            const grouped = {};
+            events.forEach(e => {
+                const country = e.country || 'Unknown';
+                if (!grouped[country]) grouped[country] = [];
+                grouped[country].push(e);
+            });
+            return grouped;
+        },
+
+        // Get events grouped by sport
+        getEventsBySport: () => {
+            const events = get().getUpcomingEvents();
+            const grouped = {};
+            events.forEach(e => {
+                const sport = e.sport || 'Unknown';
+                if (!grouped[sport]) grouped[sport] = [];
+                grouped[sport].push(e);
+            });
+            return grouped;
+        },
+
+        // Get events grouped by region
+        getEventsByRegion: () => {
+            const events = get().getUpcomingEvents();
+            const grouped = {};
+            events.forEach(e => {
+                const region = e.region || 'Other';
+                if (!grouped[region]) grouped[region] = [];
+                grouped[region].push(e);
+            });
+            return grouped;
         },
 
         // Get events by status
@@ -307,6 +367,7 @@ export const useSportsResearchStore = create(
         // Get stats
         getStats: () => {
             const events = get().events;
+            const upcoming = get().getUpcomingEvents();
             const bySport = {};
             const byRegion = {};
             const byStatus = {};
@@ -319,6 +380,7 @@ export const useSportsResearchStore = create(
 
             return {
                 total: events.length,
+                upcoming: upcoming.length,
                 new: byStatus['new'] || 0,
                 reviewed: byStatus['reviewed'] || 0,
                 converted: byStatus['converted'] || 0,

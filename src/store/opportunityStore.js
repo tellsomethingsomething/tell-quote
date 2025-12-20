@@ -5,20 +5,18 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 // Regions and countries
 export const REGIONS = {
     SEA: ['Malaysia', 'Singapore', 'Indonesia', 'Thailand', 'Vietnam', 'Philippines', 'Myanmar', 'Cambodia', 'Laos', 'Brunei'],
-    Gulf: ['Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman'],
-    Levant: ['Jordan', 'Lebanon', 'Syria', 'Palestine', 'Iraq'],
-    'Central Asia': ['Kazakhstan', 'Uzbekistan', 'Turkmenistan', 'Tajikistan', 'Kyrgyzstan'],
-    Afghanistan: ['Afghanistan'],
+    GCC: ['Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman'],
+    Levant: ['Jordan', 'Lebanon', 'Iraq', 'Syria'],
+    'Central Asia': ['Kazakhstan', 'Uzbekistan', 'Turkmenistan', 'Tajikistan', 'Kyrgyzstan', 'Afghanistan'],
 };
 
-export const ALL_COUNTRIES = [...REGIONS.SEA, ...REGIONS.Gulf, ...REGIONS.Levant, ...REGIONS['Central Asia'], ...REGIONS.Afghanistan];
+export const ALL_COUNTRIES = [...REGIONS.SEA, ...REGIONS.GCC, ...REGIONS.Levant, ...REGIONS['Central Asia']];
 
 export const getRegionForCountry = (country) => {
     if (REGIONS.SEA.includes(country)) return 'SEA';
-    if (REGIONS.Gulf.includes(country)) return 'Gulf';
+    if (REGIONS.GCC.includes(country)) return 'GCC';
     if (REGIONS.Levant.includes(country)) return 'Levant';
     if (REGIONS['Central Asia'].includes(country)) return 'Central Asia';
-    if (REGIONS.Afghanistan.includes(country)) return 'Afghanistan';
     return 'Other';
 };
 

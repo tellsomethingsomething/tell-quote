@@ -917,6 +917,7 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                             >
                                 <option value="all">All Regions</option>
                                 <option value="GCC">GCC</option>
+                                <option value="Levant">Levant</option>
                                 <option value="Central Asia">Central Asia</option>
                                 <option value="SEA">SEA</option>
                             </select>
