@@ -57,6 +57,35 @@ const migrateLegacyPricing = (legacyPricing, currencyPricing) => {
     return migrated;
 };
 
+// Item types for filtering
+export const ITEM_TYPES = {
+    SERVICE: 'service',
+    EQUIPMENT: 'equipment',
+    EXPENSE: 'expense',
+};
+
+// Map sections to item types
+const SECTION_TO_TYPE = {
+    prod_production: ITEM_TYPES.SERVICE,
+    prod_technical: ITEM_TYPES.SERVICE,
+    prod_management: ITEM_TYPES.SERVICE,
+    equip_video: ITEM_TYPES.EQUIPMENT,
+    equip_audio: ITEM_TYPES.EQUIPMENT,
+    equip_cameras: ITEM_TYPES.EQUIPMENT,
+    equip_graphics: ITEM_TYPES.EQUIPMENT,
+    equip_vt: ITEM_TYPES.EQUIPMENT,
+    equip_cabling: ITEM_TYPES.EQUIPMENT,
+    equip_other: ITEM_TYPES.EQUIPMENT,
+    creative: ITEM_TYPES.SERVICE,
+    logistics: ITEM_TYPES.SERVICE,
+    expenses: ITEM_TYPES.EXPENSE,
+};
+
+// Get item type from section (for backwards compatibility)
+export const getItemTypeFromSection = (section) => {
+    return SECTION_TO_TYPE[section] || ITEM_TYPES.SERVICE;
+};
+
 // Default sections - synced with Quote subsections
 const DEFAULT_SECTIONS = [
     // Production Team subsections
@@ -362,12 +391,15 @@ export const useRateCardStore = create(
                 ? migrateLegacyPricing(itemData.pricing, null)
                 : createEmptyPricing();
 
+            const section = itemData.section || 'extras';
             const newItem = {
                 id: generateId(),
                 name: itemData.name || '',
                 description: itemData.description || '',
-                section: itemData.section || 'extras',
+                section,
                 unit: itemData.unit || 'day',
+                itemType: itemData.itemType || getItemTypeFromSection(section),
+                kitItemId: itemData.kitItemId || null, // Link to kit item for bi-di sync
                 pricing, // Unified format
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
@@ -471,6 +503,21 @@ export const useRateCardStore = create(
                         .eq('id', itemId);
                 } catch (e) {
                     console.error('Failed to update pricing in DB:', e);
+                }
+            }
+
+            // Sync back to kit item if linked (bi-directional sync)
+            if (updatedItem?.kitItemId && field === 'cost') {
+                try {
+                    // Use dynamic import to avoid circular dependency
+                    const { useKitStore } = await import('./kitStore');
+                    const kitStore = useKitStore.getState();
+                    const dayRate = updatedItem.pricing?.[regionId]?.cost?.amount;
+                    if (dayRate !== undefined) {
+                        kitStore.updateItem(updatedItem.kitItemId, { dayRate });
+                    }
+                } catch (e) {
+                    console.error('Failed to sync to kit item:', e);
                 }
             }
         },

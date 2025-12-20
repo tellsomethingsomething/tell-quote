@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useRateCardStore } from '../store/rateCardStore';
+import { useRateCardStore, ITEM_TYPES, getItemTypeFromSection } from '../store/rateCardStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useToast } from '../components/common/Toast';
 import { FALLBACK_RATES } from '../data/currencies';
@@ -34,6 +34,7 @@ export default function RateCardPage() {
     const fileInputRef = useRef(null);
     const saveTimeoutRef = useRef(null);
     const [selectedSection, setSelectedSection] = useState('all');
+    const [selectedType, setSelectedType] = useState('all'); // 'all', 'service', 'equipment', 'expense'
     const [searchQuery, setSearchQuery] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [showAddCategoryForm, setShowAddCategoryForm] = useState(false);
@@ -144,7 +145,10 @@ export default function RateCardPage() {
         const matchesSearch = !searchQuery ||
             item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             item.description?.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesSection && matchesSearch;
+        // Get item type - use stored itemType or infer from section
+        const itemType = item.itemType || getItemTypeFromSection(item.section);
+        const matchesType = selectedType === 'all' || itemType === selectedType;
+        return matchesSection && matchesSearch && matchesType;
     });
 
     const handleAddItem = () => {
@@ -342,6 +346,16 @@ export default function RateCardPage() {
                         placeholder="Search services..."
                         className="input flex-1 sm:max-w-sm"
                     />
+                    <select
+                        value={selectedType}
+                        onChange={(e) => setSelectedType(e.target.value)}
+                        className="input w-full sm:w-40"
+                    >
+                        <option value="all">All Types</option>
+                        <option value={ITEM_TYPES.SERVICE}>🧑‍💼 Services</option>
+                        <option value={ITEM_TYPES.EQUIPMENT}>📦 Equipment</option>
+                        <option value={ITEM_TYPES.EXPENSE}>💰 Expenses</option>
+                    </select>
                     <select
                         value={selectedSection}
                         onChange={(e) => setSelectedSection(e.target.value)}

@@ -1,6 +1,73 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured, uploadKitImage, deleteKitImage } from '../lib/supabase';
+import { useRateCardStore, ITEM_TYPES } from './rateCardStore';
+
+// Map kit categories to rate card sections
+const KIT_CATEGORY_TO_RATE_SECTION = {
+    'Camera': 'equip_cameras',
+    'Lens': 'equip_cameras',
+    'Tripod': 'equip_other',
+    'Audio': 'equip_audio',
+    'Comms': 'equip_audio',
+    'Graphics': 'equip_graphics',
+    'Switching': 'equip_video',
+    'Streaming': 'equip_video',
+    'Cabling': 'equip_cabling',
+    'Power': 'equip_other',
+    'Lighting': 'equip_other',
+    'Monitors': 'equip_video',
+    'Storage': 'equip_other',
+    'Rigging': 'equip_other',
+    'Network': 'equip_other',
+    'Other': 'equip_other',
+};
+
+// Helper to sync kit item to rate card
+const syncKitToRateCard = async (kitItem, categoryName) => {
+    const rateCardStore = useRateCardStore.getState();
+    const section = KIT_CATEGORY_TO_RATE_SECTION[categoryName] || 'equip_other';
+
+    // Only sync if kit item has rates
+    if (!kitItem.dayRate && !kitItem.weekRate && !kitItem.monthRate) {
+        return null;
+    }
+
+    // Check if already linked to a rate card item
+    if (kitItem.rateCardItemId) {
+        // Update existing rate card item
+        const existingItem = rateCardStore.items.find(i => i.id === kitItem.rateCardItemId);
+        if (existingItem) {
+            // Build pricing from kit rates (use SEA region as default for equipment)
+            const pricing = {
+                SEA: {
+                    cost: { amount: kitItem.dayRate || 0, baseCurrency: kitItem.rateCurrency || 'USD' },
+                    charge: { amount: Math.round((kitItem.dayRate || 0) * 1.3), baseCurrency: kitItem.rateCurrency || 'USD' },
+                },
+            };
+            rateCardStore.updateItem(kitItem.rateCardItemId, { pricing });
+            return kitItem.rateCardItemId;
+        }
+    }
+
+    // Create new rate card item
+    const newRateItem = await rateCardStore.addItem({
+        name: kitItem.name,
+        description: `${kitItem.manufacturer || ''} ${kitItem.model || ''}`.trim() || kitItem.name,
+        section,
+        unit: 'day',
+        itemType: ITEM_TYPES.EQUIPMENT,
+        kitItemId: kitItem.id,
+        pricing: {
+            SEA: {
+                cost: { amount: kitItem.dayRate || 0, baseCurrency: kitItem.rateCurrency || 'USD' },
+                charge: { amount: Math.round((kitItem.dayRate || 0) * 1.3), baseCurrency: kitItem.rateCurrency || 'USD' },
+            },
+        },
+    });
+
+    return newRateItem?.id || null;
+};
 
 // Kit status options
 export const KIT_STATUS = {
@@ -273,6 +340,19 @@ export const useKitStore = create(
                     error: null,
                 }));
 
+                // Sync to rate card if item has rates
+                if (newItem.dayRate || newItem.weekRate || newItem.monthRate) {
+                    const categoryName = itemData.categoryName || get().categories.find(c => c.id === newItem.categoryId)?.name;
+                    const rateCardItemId = await syncKitToRateCard(newItem, categoryName);
+                    if (rateCardItemId && !newItem.rateCardItemId) {
+                        // Update kit item with rate card link
+                        await supabase.from('kit_items').update({ rate_card_item_id: rateCardItemId }).eq('id', newItem.id);
+                        set((state) => ({
+                            items: state.items.map(i => i.id === newItem.id ? { ...i, rateCardItemId } : i),
+                        }));
+                    }
+                }
+
                 return newItem;
             } catch (e) {
                 console.error('Failed to add kit item:', e);
@@ -304,6 +384,22 @@ export const useKitStore = create(
                     ),
                     error: null,
                 }));
+
+                // Sync to rate card if rates were updated
+                if (updates.dayRate !== undefined || updates.weekRate !== undefined || updates.monthRate !== undefined) {
+                    const updatedItem = get().items.find(i => i.id === itemId);
+                    if (updatedItem) {
+                        const categoryName = updatedItem.categoryName || get().categories.find(c => c.id === updatedItem.categoryId)?.name;
+                        const rateCardItemId = await syncKitToRateCard(updatedItem, categoryName);
+                        if (rateCardItemId && !updatedItem.rateCardItemId) {
+                            // Update kit item with rate card link
+                            await supabase.from('kit_items').update({ rate_card_item_id: rateCardItemId }).eq('id', itemId);
+                            set((state) => ({
+                                items: state.items.map(i => i.id === itemId ? { ...i, rateCardItemId } : i),
+                            }));
+                        }
+                    }
+                }
             } catch (e) {
                 console.error('Failed to update kit item:', e);
                 set({ error: e.message });
