@@ -17,6 +17,7 @@ const BANK_SENSITIVE_FIELDS = ['accountNumber', 'swiftCode'];
 
 // Default settings
 const defaultSettings = {
+    theme: 'dark', // 'dark' | 'light'
     company: {
         name: 'Tell Productions Sdn Bhd',
         address: '',
@@ -141,6 +142,7 @@ function mergeSettings(parsed) {
     return {
         ...defaultSettings,
         ...parsed,
+        theme: parsed.theme || defaultSettings.theme,
         company: { ...defaultSettings.company, ...parsed.company },
         taxInfo: { ...defaultSettings.taxInfo, ...parsed.taxInfo },
         bankDetails: { ...defaultSettings.bankDetails, ...parsed.bankDetails },
@@ -240,6 +242,25 @@ export const useSettingsStore = create(
 
         clearSyncError: () => {
             set({ syncError: null, syncStatus: 'idle' });
+        },
+
+        // Set theme (dark/light)
+        setTheme: async (theme) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                theme: theme,
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
+            // Apply theme to document
+            if (theme === 'light') {
+                document.documentElement.classList.add('light');
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+                document.documentElement.classList.remove('light');
+            }
         },
 
         // Initialize - load from Supabase (or localStorage fallback)

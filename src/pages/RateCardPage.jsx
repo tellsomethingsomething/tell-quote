@@ -28,7 +28,7 @@ const convertCurrency = (amount, fromCurrency, toCurrency, rates) => {
 };
 
 export default function RateCardPage() {
-    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults } = useRateCardStore();
+    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults, exportPublicRateCard } = useRateCardStore();
     const { rates } = useQuoteStore();
     const toast = useToast();
     const fileInputRef = useRef(null);
@@ -275,9 +275,43 @@ export default function RateCardPage() {
                         <button onClick={() => fileInputRef.current?.click()} className="btn-ghost text-sm flex-shrink-0 hidden sm:flex">
                             Import CSV
                         </button>
-                        <button onClick={exportToCSV} className="btn-ghost text-sm flex-shrink-0 hidden sm:flex">
-                            Export
-                        </button>
+                        <div className="relative group hidden sm:block">
+                            <button className="btn-ghost text-sm flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Export
+                            </button>
+                            <div className="hidden group-hover:block absolute right-0 top-full mt-1 bg-dark-card border border-dark-border rounded-lg shadow-xl z-20 min-w-52">
+                                <button
+                                    onClick={exportToCSV}
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-dark-bg transition-colors"
+                                >
+                                    Full Rate Card (CSV)
+                                </button>
+                                <div className="border-t border-dark-border">
+                                    <div className="px-4 py-1 text-xs text-gray-500">Public (Charges Only)</div>
+                                    <button
+                                        onClick={() => exportPublicRateCard('SEA')}
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-dark-bg transition-colors"
+                                    >
+                                        SEA Region
+                                    </button>
+                                    <button
+                                        onClick={() => exportPublicRateCard('GULF')}
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-dark-bg transition-colors"
+                                    >
+                                        Gulf Region
+                                    </button>
+                                    <button
+                                        onClick={() => exportPublicRateCard('CENTRAL_ASIA')}
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-dark-bg transition-colors"
+                                    >
+                                        Central Asia Region
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         <button
                             onClick={() => setShowBulkMarkup(true)}
                             className="btn-ghost text-sm flex-shrink-0 hidden sm:flex items-center gap-1"

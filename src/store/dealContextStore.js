@@ -127,6 +127,8 @@ export const useDealContextStore = create(
             const newContexts = { ...contexts, [opportunityId]: updated };
             set({ contexts: newContexts });
             saveDealContextLocal(newContexts);
+            // Sync to Supabase
+            get().syncContextToSupabase(opportunityId, updated);
         },
 
         // Add a suggested task to context
@@ -213,6 +215,8 @@ export const useDealContextStore = create(
 
             set({ taskPatterns: newPatterns });
             saveTaskPatternsLocal(newPatterns);
+            // Sync to Supabase
+            get().syncPatternsToSupabase(newPatterns);
         },
 
         // Get task effectiveness score (higher = more likely to be completed vs skipped)
@@ -337,11 +341,109 @@ export const useDealContextStore = create(
             saveDealContextLocal(rest);
         },
 
-        // Initialize - could sync from Supabase in future
+        // Sync context to Supabase
+        syncContextToSupabase: async (opportunityId, context) => {
+            if (!isSupabaseConfigured()) return;
+
+            try {
+                const { error } = await supabase
+                    .from('deal_contexts')
+                    .upsert({
+                        opportunity_id: opportunityId,
+                        suggested_tasks: context.suggestedTasks || [],
+                        completed_tasks: context.completedTasks || [],
+                        skipped_tasks: context.skippedTasks || [],
+                        milestones: context.milestones || [],
+                        notes: context.notes || [],
+                        last_interaction: context.lastInteraction,
+                        updated_at: new Date().toISOString(),
+                    }, { onConflict: 'opportunity_id' });
+
+                if (error) console.error('Failed to sync deal context:', error);
+            } catch (e) {
+                console.error('Error syncing deal context:', e);
+            }
+        },
+
+        // Sync task patterns to Supabase
+        syncPatternsToSupabase: async (patterns) => {
+            if (!isSupabaseConfigured()) return;
+
+            try {
+                // Get the single patterns row
+                const { data: existing } = await supabase
+                    .from('task_patterns')
+                    .select('id')
+                    .limit(1)
+                    .single();
+
+                if (existing) {
+                    await supabase
+                        .from('task_patterns')
+                        .update({
+                            completed_tasks: patterns.completedTasks || [],
+                            skipped_tasks: patterns.skippedTasks || [],
+                            effectiveness: patterns.effectiveness || {},
+                            updated_at: new Date().toISOString(),
+                        })
+                        .eq('id', existing.id);
+                }
+            } catch (e) {
+                console.error('Error syncing task patterns:', e);
+            }
+        },
+
+        // Initialize - load from Supabase
         initialize: async () => {
             set({ loading: true });
-            // For now, just use localStorage
-            // Future: sync with Supabase deal_contexts table
+
+            if (isSupabaseConfigured()) {
+                try {
+                    // Load deal contexts
+                    const { data: contextsData, error: contextsError } = await supabase
+                        .from('deal_contexts')
+                        .select('*');
+
+                    if (!contextsError && contextsData) {
+                        const contexts = {};
+                        contextsData.forEach(row => {
+                            contexts[row.opportunity_id] = {
+                                opportunityId: row.opportunity_id,
+                                suggestedTasks: row.suggested_tasks || [],
+                                completedTasks: row.completed_tasks || [],
+                                skippedTasks: row.skipped_tasks || [],
+                                milestones: row.milestones || [],
+                                notes: row.notes || [],
+                                lastInteraction: row.last_interaction,
+                                createdAt: row.created_at,
+                                updatedAt: row.updated_at,
+                            };
+                        });
+                        set({ contexts });
+                        saveDealContextLocal(contexts);
+                    }
+
+                    // Load task patterns
+                    const { data: patternsData, error: patternsError } = await supabase
+                        .from('task_patterns')
+                        .select('*')
+                        .limit(1)
+                        .single();
+
+                    if (!patternsError && patternsData) {
+                        const taskPatterns = {
+                            completedTasks: patternsData.completed_tasks || [],
+                            skippedTasks: patternsData.skipped_tasks || [],
+                            effectiveness: patternsData.effectiveness || {},
+                        };
+                        set({ taskPatterns });
+                        saveTaskPatternsLocal(taskPatterns);
+                    }
+                } catch (e) {
+                    console.error('Error loading from Supabase:', e);
+                }
+            }
+
             set({ loading: false });
         },
     }))

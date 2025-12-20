@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { DEFAULT_TEMPLATE, MODULE_TYPES, PRESET_TEMPLATES } from '../data/invoiceModules';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const STORAGE_KEY = 'tell_invoice_templates';
 const TEMPLATES_VERSION = 4; // Increment this when adding new preset templates
@@ -55,6 +56,68 @@ function saveTemplates(data) {
     }
 }
 
+// Sync single template to Supabase
+async function syncTemplateToSupabase(template) {
+    if (!isSupabaseConfigured()) return;
+
+    try {
+        const { error } = await supabase
+            .from('invoice_templates')
+            .upsert({
+                template_id: template.id,
+                name: template.name,
+                is_default: template.isDefault || false,
+                page_settings: template.pageSettings || {},
+                styles: template.styles || {},
+                layout: template.layout || [],
+                updated_at: new Date().toISOString(),
+            }, { onConflict: 'template_id' });
+
+        if (error) console.error('Failed to sync template:', error);
+    } catch (e) {
+        console.error('Error syncing template to Supabase:', e);
+    }
+}
+
+// Delete template from Supabase
+async function deleteTemplateFromSupabase(templateId) {
+    if (!isSupabaseConfigured()) return;
+
+    try {
+        await supabase
+            .from('invoice_templates')
+            .delete()
+            .eq('template_id', templateId);
+    } catch (e) {
+        console.error('Error deleting template from Supabase:', e);
+    }
+}
+
+// Save active template preference
+async function saveActiveTemplatePreference(templateId) {
+    if (!isSupabaseConfigured()) return;
+
+    try {
+        const { data: existing } = await supabase
+            .from('user_preferences')
+            .select('id')
+            .limit(1)
+            .single();
+
+        if (existing) {
+            await supabase
+                .from('user_preferences')
+                .update({
+                    active_invoice_template_id: templateId,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', existing.id);
+        }
+    } catch (e) {
+        console.error('Error saving active template preference:', e);
+    }
+}
+
 // Generate unique ID
 function generateId() {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
@@ -80,6 +143,7 @@ export const useInvoiceTemplateStore = create(
             setActiveTemplate: (templateId) => {
                 set({ activeTemplateId: templateId, selectedModuleId: null });
                 saveTemplates({ templates: get().templates, activeTemplateId: templateId });
+                saveActiveTemplatePreference(templateId);
             },
 
             // Create new template
@@ -107,6 +171,8 @@ export const useInvoiceTemplateStore = create(
                 const updated = [...templates, newTemplate];
                 set({ templates: updated, activeTemplateId: newTemplate.id });
                 saveTemplates({ templates: updated, activeTemplateId: newTemplate.id });
+                syncTemplateToSupabase(newTemplate);
+                saveActiveTemplatePreference(newTemplate.id);
                 return newTemplate;
             },
 
@@ -120,6 +186,8 @@ export const useInvoiceTemplateStore = create(
                 );
                 set({ templates: updated });
                 saveTemplates({ templates: updated, activeTemplateId: get().activeTemplateId });
+                const updatedTemplate = updated.find(t => t.id === templateId);
+                if (updatedTemplate) syncTemplateToSupabase(updatedTemplate);
             },
 
             // Delete template
@@ -134,6 +202,10 @@ export const useInvoiceTemplateStore = create(
 
                 set({ templates: updated, activeTemplateId: newActiveId, selectedModuleId: null });
                 saveTemplates({ templates: updated, activeTemplateId: newActiveId });
+                deleteTemplateFromSupabase(templateId);
+                if (activeTemplateId === templateId) {
+                    saveActiveTemplatePreference(newActiveId);
+                }
             },
 
             // Duplicate template
@@ -170,6 +242,8 @@ export const useInvoiceTemplateStore = create(
                 );
                 set({ templates: updated });
                 saveTemplates({ templates: updated, activeTemplateId });
+                const updatedTemplate = updated.find(t => t.id === activeTemplateId);
+                if (updatedTemplate) syncTemplateToSupabase(updatedTemplate);
             },
 
             // Update global styles
@@ -186,6 +260,8 @@ export const useInvoiceTemplateStore = create(
                 );
                 set({ templates: updated });
                 saveTemplates({ templates: updated, activeTemplateId });
+                const updatedTemplate = updated.find(t => t.id === activeTemplateId);
+                if (updatedTemplate) syncTemplateToSupabase(updatedTemplate);
             },
 
             // Select module
@@ -225,6 +301,8 @@ export const useInvoiceTemplateStore = create(
 
                 set({ templates: updated, selectedModuleId: newModule.id });
                 saveTemplates({ templates: updated, activeTemplateId });
+                const updatedTemplate = updated.find(t => t.id === activeTemplateId);
+                if (updatedTemplate) syncTemplateToSupabase(updatedTemplate);
                 return newModule;
             },
 
@@ -246,6 +324,8 @@ export const useInvoiceTemplateStore = create(
                     selectedModuleId: selectedModuleId === moduleId ? null : selectedModuleId,
                 });
                 saveTemplates({ templates: updated, activeTemplateId });
+                const updatedTemplate = updated.find(t => t.id === activeTemplateId);
+                if (updatedTemplate) syncTemplateToSupabase(updatedTemplate);
             },
 
             // Update module config
@@ -267,6 +347,8 @@ export const useInvoiceTemplateStore = create(
 
                 set({ templates: updated });
                 saveTemplates({ templates: updated, activeTemplateId });
+                const updatedTemplate = updated.find(t => t.id === activeTemplateId);
+                if (updatedTemplate) syncTemplateToSupabase(updatedTemplate);
             },
 
             // Update module width
@@ -286,6 +368,8 @@ export const useInvoiceTemplateStore = create(
 
                 set({ templates: updated });
                 saveTemplates({ templates: updated, activeTemplateId });
+                const updatedTemplate = updated.find(t => t.id === activeTemplateId);
+                if (updatedTemplate) syncTemplateToSupabase(updatedTemplate);
             },
 
             // Reorder modules
@@ -304,6 +388,8 @@ export const useInvoiceTemplateStore = create(
 
                 set({ templates: updated });
                 saveTemplates({ templates: updated, activeTemplateId });
+                const updatedTemplate = updated.find(t => t.id === activeTemplateId);
+                if (updatedTemplate) syncTemplateToSupabase(updatedTemplate);
             },
 
             // Move module up/down
@@ -347,6 +433,8 @@ export const useInvoiceTemplateStore = create(
 
                 set({ templates: updated, selectedModuleId: newModule.id });
                 saveTemplates({ templates: updated, activeTemplateId });
+                const updatedTemplate = updated.find(t => t.id === activeTemplateId);
+                if (updatedTemplate) syncTemplateToSupabase(updatedTemplate);
             },
 
             // Set dragging state
@@ -376,6 +464,8 @@ export const useInvoiceTemplateStore = create(
 
                 set({ templates: updated, selectedModuleId: null });
                 saveTemplates({ templates: updated, activeTemplateId });
+                const updatedTemplate = updated.find(t => t.id === templateId);
+                if (updatedTemplate) syncTemplateToSupabase(updatedTemplate);
             },
 
             // Export template as JSON
@@ -422,10 +512,57 @@ export const useInvoiceTemplateStore = create(
                     const updated = [...templates, newTemplate];
                     set({ templates: updated, activeTemplateId: newTemplate.id });
                     saveTemplates({ templates: updated, activeTemplateId: newTemplate.id });
+                    syncTemplateToSupabase(newTemplate);
+                    saveActiveTemplatePreference(newTemplate.id);
 
                     return { success: true, template: newTemplate };
                 } catch (e) {
                     return { success: false, error: e.message };
+                }
+            },
+
+            // Initialize - load from Supabase
+            initialize: async () => {
+                if (!isSupabaseConfigured()) return;
+
+                try {
+                    // Load templates from Supabase
+                    const { data: templatesData, error: templatesError } = await supabase
+                        .from('invoice_templates')
+                        .select('*');
+
+                    if (!templatesError && templatesData && templatesData.length > 0) {
+                        const templates = templatesData.map(row => ({
+                            id: row.template_id,
+                            name: row.name,
+                            isDefault: row.is_default,
+                            pageSettings: row.page_settings || {},
+                            styles: row.styles || {},
+                            layout: row.layout || [],
+                            createdAt: new Date(row.created_at).getTime(),
+                            updatedAt: new Date(row.updated_at).getTime(),
+                        }));
+
+                        // Merge with presets (ensure presets exist)
+                        const presets = generatePresetTemplates();
+                        const existingIds = new Set(templates.map(t => t.id));
+                        const missingPresets = presets.filter(p => !existingIds.has(p.id));
+                        const mergedTemplates = [...templates, ...missingPresets];
+
+                        // Load active template preference
+                        const { data: prefsData } = await supabase
+                            .from('user_preferences')
+                            .select('active_invoice_template_id')
+                            .limit(1)
+                            .single();
+
+                        const activeTemplateId = prefsData?.active_invoice_template_id || mergedTemplates[0]?.id || 'default';
+
+                        set({ templates: mergedTemplates, activeTemplateId });
+                        saveTemplates({ templates: mergedTemplates, activeTemplateId });
+                    }
+                } catch (e) {
+                    console.error('Error loading invoice templates from Supabase:', e);
                 }
             },
         };

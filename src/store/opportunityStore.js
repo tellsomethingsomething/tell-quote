@@ -2,9 +2,6 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
-const OPPORTUNITIES_STORAGE_KEY = 'tell_opportunities';
-const SYNC_QUEUE_KEY = 'tell_opportunities_sync_queue';
-
 // Regions and countries
 export const REGIONS = {
     GCC: ['Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman'],
@@ -20,77 +17,6 @@ export const getRegionForCountry = (country) => {
     if (REGIONS.SEA.includes(country)) return 'SEA';
     return 'Other';
 };
-
-// Load from localStorage (fallback/cache)
-function loadOpportunitiesLocal() {
-    try {
-        const saved = localStorage.getItem(OPPORTUNITIES_STORAGE_KEY);
-        return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-        return [];
-    }
-}
-
-function saveOpportunitiesLocal(opportunities) {
-    try {
-        localStorage.setItem(OPPORTUNITIES_STORAGE_KEY, JSON.stringify(opportunities));
-    } catch (e) {
-        console.error('Failed to save opportunities locally:', e);
-    }
-}
-
-// Sync queue for failed operations
-function loadSyncQueue() {
-    try {
-        const saved = localStorage.getItem(SYNC_QUEUE_KEY);
-        return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-        return [];
-    }
-}
-
-function saveSyncQueue(queue) {
-    try {
-        localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
-    } catch (e) {
-        console.error('Failed to save sync queue:', e);
-    }
-}
-
-function generateId() {
-    return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-}
-
-// Check if string is a valid UUID
-function isValidUUID(str) {
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-}
-
-// Convert local opportunity to DB format
-function toDbFormat(opp) {
-    return {
-        id: isValidUUID(opp.id) ? opp.id : undefined, // Only use valid UUID ids, let DB generate otherwise
-        title: opp.title,
-        client_id: opp.clientId,
-        client: opp.client,
-        region: opp.region,
-        country: opp.country,
-        status: opp.status,
-        value: opp.value,
-        currency: opp.currency,
-        probability: opp.probability,
-        source: opp.source,
-        competitors: opp.competitors,
-        contacts: opp.contacts,
-        account_owner_id: opp.accountOwnerId,
-        brief: opp.brief,
-        notes: opp.notes,
-        next_action: opp.nextAction,
-        next_action_date: opp.nextActionDate,
-        expected_close_date: opp.expectedCloseDate,
-        converted_to_quote_id: opp.convertedToQuoteId,
-    };
-}
 
 // Convert DB opportunity to local format
 function fromDbFormat(o) {
@@ -117,27 +43,52 @@ function fromDbFormat(o) {
         convertedToQuoteId: o.converted_to_quote_id,
         createdAt: o.created_at,
         updatedAt: o.updated_at,
-        _synced: true, // Mark as synced from DB
+    };
+}
+
+// Convert local opportunity to DB format
+function toDbFormat(opp) {
+    return {
+        title: opp.title,
+        client_id: opp.clientId || null,
+        client: opp.client || {},
+        region: opp.region,
+        country: opp.country,
+        status: opp.status,
+        value: opp.value,
+        currency: opp.currency,
+        probability: opp.probability,
+        source: opp.source,
+        competitors: opp.competitors,
+        contacts: opp.contacts,
+        account_owner_id: opp.accountOwnerId,
+        brief: opp.brief,
+        notes: opp.notes,
+        next_action: opp.nextAction,
+        next_action_date: opp.nextActionDate || null,
+        expected_close_date: opp.expectedCloseDate || null,
+        converted_to_quote_id: opp.convertedToQuoteId || null,
     };
 }
 
 export const useOpportunityStore = create(
     subscribeWithSelector((set, get) => ({
-        opportunities: loadOpportunitiesLocal(),
+        opportunities: [],
         loading: false,
-        syncStatus: 'idle', // 'idle' | 'syncing' | 'error' | 'success'
-        syncError: null,
-        pendingSyncCount: loadSyncQueue().length,
+        error: null,
+        realtimeSubscription: null,
 
-        // Initialize - load from Supabase (or localStorage fallback)
+        // Initialize - load from Supabase and subscribe to realtime
         initialize: async () => {
             if (!isSupabaseConfigured()) {
-                set({ loading: false, syncStatus: 'idle' });
+                set({ loading: false, error: 'Supabase not configured' });
                 return;
             }
 
-            set({ loading: true, syncStatus: 'syncing' });
+            set({ loading: true, error: null });
+
             try {
+                // Fetch all opportunities
                 const { data, error } = await supabase
                     .from('opportunities')
                     .select('*')
@@ -145,332 +96,210 @@ export const useOpportunityStore = create(
 
                 if (error) throw error;
 
-                const dbOpportunities = (data || []).map(fromDbFormat);
+                const opportunities = (data || []).map(fromDbFormat);
+                set({ opportunities, loading: false, error: null });
 
-                // Merge with localStorage - DB is source of truth, but keep unsynced local items
-                const localOpps = loadOpportunitiesLocal();
-                const unsyncedLocal = localOpps.filter(local =>
-                    !local._synced && !dbOpportunities.find(db => db.id === local.id)
-                );
-
-                // If there are unsynced local opportunities, sync them now
-                if (unsyncedLocal.length > 0) {
-                    console.log(`Found ${unsyncedLocal.length} unsynced local opportunities, syncing...`);
-                    for (const opp of unsyncedLocal) {
-                        try {
-                            const { data: inserted, error: insertError } = await supabase
-                                .from('opportunities')
-                                .insert(toDbFormat(opp))
-                                .select()
-                                .single();
-
-                            if (!insertError && inserted) {
-                                // Update local with DB id
-                                const syncedOpp = fromDbFormat(inserted);
-                                dbOpportunities.unshift(syncedOpp);
-                            }
-                        } catch (e) {
-                            console.error('Failed to sync local opportunity:', e);
-                        }
-                    }
-                }
-
-                saveOpportunitiesLocal(dbOpportunities);
-                set({
-                    opportunities: dbOpportunities,
-                    loading: false,
-                    syncStatus: 'success',
-                    syncError: null
-                });
-
-                // Process any pending sync queue
-                await get().processSyncQueue();
+                // Subscribe to realtime changes
+                get().subscribeToRealtime();
 
             } catch (e) {
-                console.error('Failed to load opportunities from DB:', e);
-                set({
-                    loading: false,
-                    syncStatus: 'error',
-                    syncError: e.message
-                });
+                console.error('Failed to load opportunities:', e);
+                set({ loading: false, error: e.message });
             }
         },
 
-        // Process pending sync operations
-        processSyncQueue: async () => {
+        // Subscribe to Supabase Realtime for live updates
+        subscribeToRealtime: () => {
             if (!isSupabaseConfigured()) return;
 
-            const queue = loadSyncQueue();
-            if (queue.length === 0) return;
-
-            const newQueue = [];
-            for (const item of queue) {
-                try {
-                    if (item.action === 'insert') {
-                        const { error } = await supabase
-                            .from('opportunities')
-                            .insert(item.data);
-                        if (error) throw error;
-                    } else if (item.action === 'update') {
-                        const { error } = await supabase
-                            .from('opportunities')
-                            .update(item.data)
-                            .eq('id', item.id);
-                        if (error) throw error;
-                    } else if (item.action === 'delete') {
-                        const { error } = await supabase
-                            .from('opportunities')
-                            .delete()
-                            .eq('id', item.id);
-                        if (error) throw error;
-                    }
-                } catch (e) {
-                    console.error('Sync queue item failed:', e);
-                    // Keep in queue for retry
-                    newQueue.push({ ...item, retries: (item.retries || 0) + 1, lastError: e.message });
-                }
+            // Unsubscribe from existing subscription
+            const existing = get().realtimeSubscription;
+            if (existing) {
+                supabase.removeChannel(existing);
             }
 
-            saveSyncQueue(newQueue);
-            set({ pendingSyncCount: newQueue.length });
+            const channel = supabase
+                .channel('opportunities-realtime')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'opportunities' },
+                    (payload) => {
+                        const { eventType, new: newRecord, old: oldRecord } = payload;
+
+                        set((state) => {
+                            let opportunities = [...state.opportunities];
+
+                            if (eventType === 'INSERT') {
+                                // Add new opportunity if not already present
+                                const exists = opportunities.find(o => o.id === newRecord.id);
+                                if (!exists) {
+                                    opportunities = [fromDbFormat(newRecord), ...opportunities];
+                                }
+                            } else if (eventType === 'UPDATE') {
+                                // Update existing opportunity
+                                opportunities = opportunities.map(o =>
+                                    o.id === newRecord.id ? fromDbFormat(newRecord) : o
+                                );
+                            } else if (eventType === 'DELETE') {
+                                // Remove deleted opportunity
+                                opportunities = opportunities.filter(o => o.id !== oldRecord.id);
+                            }
+
+                            return { opportunities };
+                        });
+                    }
+                )
+                .subscribe();
+
+            set({ realtimeSubscription: channel });
         },
 
-        // Add to sync queue for retry
-        addToSyncQueue: (action, id, data) => {
-            const queue = loadSyncQueue();
-            queue.push({ action, id, data, timestamp: Date.now() });
-            saveSyncQueue(queue);
-            set({ pendingSyncCount: queue.length });
-        },
-
-        // Manual sync all local data to Supabase
-        syncAllToSupabase: async () => {
-            if (!isSupabaseConfigured()) {
-                return { success: false, error: 'Supabase not configured' };
+        // Unsubscribe from realtime (cleanup)
+        unsubscribe: () => {
+            const channel = get().realtimeSubscription;
+            if (channel) {
+                supabase.removeChannel(channel);
+                set({ realtimeSubscription: null });
             }
-
-            set({ syncStatus: 'syncing' });
-            const localOpps = get().opportunities;
-            let synced = 0;
-            let errors = 0;
-
-            for (const opp of localOpps) {
-                try {
-                    // Try upsert - insert or update based on id
-                    const dbData = toDbFormat(opp);
-
-                    // Check if exists in DB
-                    const { data: existing } = await supabase
-                        .from('opportunities')
-                        .select('id')
-                        .eq('id', opp.id)
-                        .single();
-
-                    if (existing) {
-                        // Update
-                        const { error } = await supabase
-                            .from('opportunities')
-                            .update(dbData)
-                            .eq('id', opp.id);
-                        if (error) throw error;
-                    } else {
-                        // Insert
-                        const { data: inserted, error } = await supabase
-                            .from('opportunities')
-                            .insert(dbData)
-                            .select()
-                            .single();
-                        if (error) throw error;
-
-                        // Update local id if different
-                        if (inserted && inserted.id !== opp.id) {
-                            const opps = get().opportunities.map(o =>
-                                o.id === opp.id ? { ...o, id: inserted.id, _synced: true } : o
-                            );
-                            set({ opportunities: opps });
-                            saveOpportunitiesLocal(opps);
-                        }
-                    }
-                    synced++;
-                } catch (e) {
-                    console.error('Failed to sync opportunity:', opp.title, e);
-                    errors++;
-                }
-            }
-
-            // Mark all as synced
-            const syncedOpps = get().opportunities.map(o => ({ ...o, _synced: true }));
-            set({
-                opportunities: syncedOpps,
-                syncStatus: errors > 0 ? 'error' : 'success',
-                syncError: errors > 0 ? `${errors} items failed to sync` : null
-            });
-            saveOpportunitiesLocal(syncedOpps);
-
-            return { success: errors === 0, synced, errors };
         },
 
         // Add new opportunity
         addOpportunity: async (opportunityData) => {
-            const newOpportunity = {
-                id: generateId(),
-                title: opportunityData.title || '',
-                clientId: opportunityData.clientId || null,
-                client: opportunityData.client || {},
-                region: opportunityData.region || getRegionForCountry(opportunityData.country),
-                country: opportunityData.country || '',
-                status: opportunityData.status || 'active',
-                value: opportunityData.value || 0,
-                currency: opportunityData.currency || 'USD',
-                probability: opportunityData.probability || 50,
-                source: opportunityData.source || '',
-                competitors: opportunityData.competitors || [],
-                contacts: opportunityData.contacts || [],
-                accountOwnerId: opportunityData.accountOwnerId || null,
-                brief: opportunityData.brief || '',
-                notes: opportunityData.notes || '',
-                nextAction: opportunityData.nextAction || '',
-                nextActionDate: opportunityData.nextActionDate || null,
-                expectedCloseDate: opportunityData.expectedCloseDate || null,
-                convertedToQuoteId: null,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                _synced: false,
-            };
-
-            // Save locally first (optimistic)
-            set(state => {
-                const opportunities = [newOpportunity, ...state.opportunities];
-                saveOpportunitiesLocal(opportunities);
-                return { opportunities };
-            });
-
-            // Sync to Supabase
-            if (isSupabaseConfigured()) {
-                try {
-                    const { data, error } = await supabase
-                        .from('opportunities')
-                        .insert(toDbFormat(newOpportunity))
-                        .select()
-                        .single();
-
-                    if (error) throw error;
-
-                    // Update with server ID and mark as synced
-                    if (data) {
-                        set(state => {
-                            const opportunities = state.opportunities.map(o =>
-                                o.id === newOpportunity.id
-                                    ? { ...o, id: data.id, _synced: true }
-                                    : o
-                            );
-                            saveOpportunitiesLocal(opportunities);
-                            return { opportunities, syncStatus: 'success', syncError: null };
-                        });
-                        newOpportunity.id = data.id;
-                    }
-                } catch (e) {
-                    console.error('Failed to save opportunity to DB:', e);
-                    // Add to sync queue for retry
-                    get().addToSyncQueue('insert', newOpportunity.id, toDbFormat(newOpportunity));
-                    set({ syncStatus: 'error', syncError: `Failed to sync: ${e.message}` });
-                }
+            if (!isSupabaseConfigured()) {
+                set({ error: 'Supabase not configured' });
+                return null;
             }
 
-            return newOpportunity;
+            try {
+                const newOpp = {
+                    title: opportunityData.title || '',
+                    clientId: opportunityData.clientId || null,
+                    client: opportunityData.client || {},
+                    region: opportunityData.region || getRegionForCountry(opportunityData.country),
+                    country: opportunityData.country || '',
+                    status: opportunityData.status || 'active',
+                    value: opportunityData.value || 0,
+                    currency: opportunityData.currency || 'USD',
+                    probability: opportunityData.probability || 50,
+                    source: opportunityData.source || '',
+                    competitors: opportunityData.competitors || [],
+                    contacts: opportunityData.contacts || [],
+                    accountOwnerId: opportunityData.accountOwnerId || null,
+                    brief: opportunityData.brief || '',
+                    notes: opportunityData.notes || '',
+                    nextAction: opportunityData.nextAction || '',
+                    nextActionDate: opportunityData.nextActionDate || null,
+                    expectedCloseDate: opportunityData.expectedCloseDate || null,
+                    convertedToQuoteId: null,
+                };
+
+                const { data, error } = await supabase
+                    .from('opportunities')
+                    .insert(toDbFormat(newOpp))
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                // Realtime will handle adding to state, but also add immediately for responsiveness
+                const opportunity = fromDbFormat(data);
+                set((state) => ({
+                    opportunities: [opportunity, ...state.opportunities.filter(o => o.id !== opportunity.id)],
+                    error: null,
+                }));
+
+                return opportunity;
+
+            } catch (e) {
+                console.error('Failed to add opportunity:', e);
+                set({ error: e.message });
+                return null;
+            }
         },
 
         // Update opportunity
         updateOpportunity: async (opportunityId, updates) => {
+            if (!isSupabaseConfigured()) {
+                set({ error: 'Supabase not configured' });
+                return;
+            }
+
             // Auto-set region based on country if country changed
             if (updates.country && !updates.region) {
                 updates.region = getRegionForCountry(updates.country);
             }
 
-            // Update locally first
-            set(state => {
-                const opportunities = state.opportunities.map(opp =>
-                    opp.id === opportunityId
-                        ? { ...opp, ...updates, updatedAt: new Date().toISOString(), _synced: false }
-                        : opp
-                );
-                saveOpportunitiesLocal(opportunities);
-                return { opportunities };
-            });
+            try {
+                const dbUpdates = {};
+                if (updates.title !== undefined) dbUpdates.title = updates.title;
+                if (updates.clientId !== undefined) dbUpdates.client_id = updates.clientId;
+                if (updates.client !== undefined) dbUpdates.client = updates.client;
+                if (updates.region !== undefined) dbUpdates.region = updates.region;
+                if (updates.country !== undefined) dbUpdates.country = updates.country;
+                if (updates.status !== undefined) dbUpdates.status = updates.status;
+                if (updates.value !== undefined) dbUpdates.value = updates.value;
+                if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
+                if (updates.probability !== undefined) dbUpdates.probability = updates.probability;
+                if (updates.source !== undefined) dbUpdates.source = updates.source;
+                if (updates.competitors !== undefined) dbUpdates.competitors = updates.competitors;
+                if (updates.contacts !== undefined) dbUpdates.contacts = updates.contacts;
+                if (updates.accountOwnerId !== undefined) dbUpdates.account_owner_id = updates.accountOwnerId;
+                if (updates.brief !== undefined) dbUpdates.brief = updates.brief;
+                if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+                if (updates.nextAction !== undefined) dbUpdates.next_action = updates.nextAction;
+                if (updates.nextActionDate !== undefined) dbUpdates.next_action_date = updates.nextActionDate;
+                if (updates.expectedCloseDate !== undefined) dbUpdates.expected_close_date = updates.expectedCloseDate;
+                if (updates.convertedToQuoteId !== undefined) dbUpdates.converted_to_quote_id = updates.convertedToQuoteId;
 
-            // Sync to Supabase
-            if (isSupabaseConfigured()) {
-                try {
-                    const dbUpdates = {};
-                    if (updates.title !== undefined) dbUpdates.title = updates.title;
-                    if (updates.clientId !== undefined) dbUpdates.client_id = updates.clientId;
-                    if (updates.client !== undefined) dbUpdates.client = updates.client;
-                    if (updates.region !== undefined) dbUpdates.region = updates.region;
-                    if (updates.country !== undefined) dbUpdates.country = updates.country;
-                    if (updates.status !== undefined) dbUpdates.status = updates.status;
-                    if (updates.value !== undefined) dbUpdates.value = updates.value;
-                    if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
-                    if (updates.probability !== undefined) dbUpdates.probability = updates.probability;
-                    if (updates.source !== undefined) dbUpdates.source = updates.source;
-                    if (updates.competitors !== undefined) dbUpdates.competitors = updates.competitors;
-                    if (updates.contacts !== undefined) dbUpdates.contacts = updates.contacts;
-                    if (updates.accountOwnerId !== undefined) dbUpdates.account_owner_id = updates.accountOwnerId;
-                    if (updates.brief !== undefined) dbUpdates.brief = updates.brief;
-                    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
-                    if (updates.nextAction !== undefined) dbUpdates.next_action = updates.nextAction;
-                    if (updates.nextActionDate !== undefined) dbUpdates.next_action_date = updates.nextActionDate;
-                    if (updates.expectedCloseDate !== undefined) dbUpdates.expected_close_date = updates.expectedCloseDate;
-                    if (updates.convertedToQuoteId !== undefined) dbUpdates.converted_to_quote_id = updates.convertedToQuoteId;
+                if (Object.keys(dbUpdates).length > 0) {
+                    const { error } = await supabase
+                        .from('opportunities')
+                        .update(dbUpdates)
+                        .eq('id', opportunityId);
 
-                    if (Object.keys(dbUpdates).length > 0) {
-                        const { error } = await supabase
-                            .from('opportunities')
-                            .update(dbUpdates)
-                            .eq('id', opportunityId);
+                    if (error) throw error;
 
-                        if (error) throw error;
-
-                        // Mark as synced
-                        set(state => {
-                            const opportunities = state.opportunities.map(opp =>
-                                opp.id === opportunityId ? { ...opp, _synced: true } : opp
-                            );
-                            saveOpportunitiesLocal(opportunities);
-                            return { opportunities, syncStatus: 'success', syncError: null };
-                        });
-                    }
-                } catch (e) {
-                    console.error('Failed to update opportunity in DB:', e);
-                    get().addToSyncQueue('update', opportunityId, updates);
-                    set({ syncStatus: 'error', syncError: `Failed to sync update: ${e.message}` });
+                    // Optimistically update local state (realtime will confirm)
+                    set((state) => ({
+                        opportunities: state.opportunities.map(opp =>
+                            opp.id === opportunityId
+                                ? { ...opp, ...updates, updatedAt: new Date().toISOString() }
+                                : opp
+                        ),
+                        error: null,
+                    }));
                 }
+
+            } catch (e) {
+                console.error('Failed to update opportunity:', e);
+                set({ error: e.message });
             }
         },
 
         // Delete opportunity
         deleteOpportunity: async (opportunityId) => {
-            // Delete locally first
-            set(state => {
-                const opportunities = state.opportunities.filter(o => o.id !== opportunityId);
-                saveOpportunitiesLocal(opportunities);
-                return { opportunities };
-            });
+            if (!isSupabaseConfigured()) {
+                set({ error: 'Supabase not configured' });
+                return;
+            }
 
-            // Sync to Supabase
-            if (isSupabaseConfigured()) {
-                try {
-                    const { error } = await supabase
-                        .from('opportunities')
-                        .delete()
-                        .eq('id', opportunityId);
+            try {
+                const { error } = await supabase
+                    .from('opportunities')
+                    .delete()
+                    .eq('id', opportunityId);
 
-                    if (error) throw error;
-                    set({ syncStatus: 'success', syncError: null });
-                } catch (e) {
-                    console.error('Failed to delete opportunity from DB:', e);
-                    get().addToSyncQueue('delete', opportunityId, null);
-                    set({ syncStatus: 'error', syncError: `Failed to sync delete: ${e.message}` });
-                }
+                if (error) throw error;
+
+                // Optimistically remove from local state (realtime will confirm)
+                set((state) => ({
+                    opportunities: state.opportunities.filter(o => o.id !== opportunityId),
+                    error: null,
+                }));
+
+            } catch (e) {
+                console.error('Failed to delete opportunity:', e);
+                set({ error: e.message });
             }
         },
 
@@ -524,12 +353,12 @@ export const useOpportunityStore = create(
         },
 
         // Add contact to opportunity
-        addContact: (opportunityId, contact) => {
+        addContact: async (opportunityId, contact) => {
             const opportunity = get().getOpportunity(opportunityId);
             if (!opportunity) return;
 
             const newContact = {
-                id: generateId(),
+                id: crypto.randomUUID(),
                 name: contact.name || '',
                 role: contact.role || '',
                 email: contact.email || '',
@@ -543,11 +372,11 @@ export const useOpportunityStore = create(
             }
             contacts.push(newContact);
 
-            get().updateOpportunity(opportunityId, { contacts });
+            await get().updateOpportunity(opportunityId, { contacts });
         },
 
         // Update contact
-        updateContact: (opportunityId, contactId, updates) => {
+        updateContact: async (opportunityId, contactId, updates) => {
             const opportunity = get().getOpportunity(opportunityId);
             if (!opportunity) return;
 
@@ -559,16 +388,16 @@ export const useOpportunityStore = create(
                 c.id === contactId ? { ...c, ...updates } : c
             );
 
-            get().updateOpportunity(opportunityId, { contacts });
+            await get().updateOpportunity(opportunityId, { contacts });
         },
 
         // Delete contact
-        deleteContact: (opportunityId, contactId) => {
+        deleteContact: async (opportunityId, contactId) => {
             const opportunity = get().getOpportunity(opportunityId);
             if (!opportunity) return;
 
             const contacts = (opportunity.contacts || []).filter(c => c.id !== contactId);
-            get().updateOpportunity(opportunityId, { contacts });
+            await get().updateOpportunity(opportunityId, { contacts });
         },
 
         // Pipeline stats
@@ -628,14 +457,9 @@ export const useOpportunityStore = create(
                 .sort((a, b) => new Date(a.nextActionDate) - new Date(b.nextActionDate));
         },
 
-        // Get unsynced count
-        getUnsyncedCount: () => {
-            return get().opportunities.filter(o => !o._synced).length;
-        },
-
-        // Clear sync error
-        clearSyncError: () => {
-            set({ syncError: null, syncStatus: 'idle' });
+        // Clear error
+        clearError: () => {
+            set({ error: null });
         },
     }))
 );

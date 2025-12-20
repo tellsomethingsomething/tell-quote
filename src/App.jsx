@@ -15,6 +15,9 @@ import { useOpportunityStore } from './store/opportunityStore';
 import { useActivityStore } from './store/activityStore';
 import { useQuoteTemplateStore } from './store/quoteTemplateStore';
 import { useDealContextStore } from './store/dealContextStore';
+import { useKnowledgeStore } from './store/knowledgeStore';
+import { useKitStore } from './store/kitStore';
+import { useSopStore } from './store/sopStore';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
 
 // Lazy load pages for better code splitting
@@ -29,6 +32,8 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const FSPage = lazy(() => import('./pages/FSPage'));
 const CommercialTasksPage = lazy(() => import('./pages/CommercialTasksPage'));
 const SOPPage = lazy(() => import('./pages/SOPPage'));
+const KnowledgePage = lazy(() => import('./pages/KnowledgePage'));
+const KitListPage = lazy(() => import('./pages/KitListPage'));
 
 // Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings'
 function App() {
@@ -41,6 +46,9 @@ function App() {
   const initializeActivities = useActivityStore(state => state.initialize);
   const initializeTemplates = useQuoteTemplateStore(state => state.initialize);
   const initializeDealContext = useDealContextStore(state => state.initialize);
+  const initializeKnowledge = useKnowledgeStore(state => state.initialize);
+  const initializeKit = useKitStore(state => state.initialize);
+  const initializeSops = useSopStore(state => state.initialize);
   const resetQuote = useQuoteStore(state => state.resetQuote);
   const loadQuoteData = useQuoteStore(state => state.loadQuoteData);
 
@@ -181,6 +189,14 @@ function App() {
     confirmNavigateAway(() => setView('sop'));
   }, [confirmNavigateAway]);
 
+  const handleGoToKnowledge = useCallback(() => {
+    confirmNavigateAway(() => setView('knowledge'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToKit = useCallback(() => {
+    confirmNavigateAway(() => setView('kit'));
+  }, [confirmNavigateAway]);
+
   const handleSelectOpportunity = useCallback((opportunityId) => {
     setSelectedOpportunityId(opportunityId);
     setView('opportunity-detail');
@@ -240,6 +256,19 @@ function App() {
     }
   }, [view, quote.quoteNumber, markAsSaved]);
 
+  // Apply theme on initialization
+  const settings = useSettingsStore(state => state.settings);
+  useEffect(() => {
+    const theme = settings.theme || 'dark';
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    }
+  }, [settings.theme]);
+
   useEffect(() => {
     if (isAuthenticated) {
       initializeQuote();
@@ -250,8 +279,11 @@ function App() {
       initializeActivities();
       initializeTemplates();
       initializeDealContext();
+      initializeKnowledge();
+      initializeKit();
+      initializeSops();
     }
-  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities, initializeActivities, initializeTemplates, initializeDealContext]);
+  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities, initializeActivities, initializeTemplates, initializeDealContext, initializeKnowledge, initializeKit, initializeSops]);
 
   // Show login page if not authenticated
   if (!isAuthenticated) {
@@ -319,6 +351,7 @@ function App() {
                 onViewQuote={handleEditQuote}
                 onNewQuote={handleNewQuote}
                 onGoToOpportunities={handleGoToOpportunities}
+                onGoToKnowledge={handleGoToKnowledge}
               />
             </main>
           </Suspense>
@@ -355,6 +388,22 @@ function App() {
           <Suspense fallback={<LoadingSpinner text="Loading SOPs..." />}>
             <main id="main-content" tabIndex="-1">
               <SOPPage />
+            </main>
+          </Suspense>
+        );
+      case 'knowledge':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Knowledge Base..." />}>
+            <main id="main-content" tabIndex="-1">
+              <KnowledgePage />
+            </main>
+          </Suspense>
+        );
+      case 'kit':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Kit List..." />}>
+            <main id="main-content" tabIndex="-1">
+              <KitListPage />
             </main>
           </Suspense>
         );
@@ -403,7 +452,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-bg flex flex-col">
+    <div className={`min-h-screen flex flex-col ${settings.theme === 'light' ? 'bg-light-bg' : 'bg-dark-bg'}`}>
       <PWAStatus />
       <Header
         view={view}
@@ -416,6 +465,7 @@ function App() {
         onGoToOpportunities={handleGoToOpportunities}
         onGoToTasks={handleGoToTasks}
         onGoToSOP={handleGoToSOP}
+        onGoToKnowledge={handleGoToKnowledge}
         selectedClientId={selectedClientId}
       />
       {renderView()}

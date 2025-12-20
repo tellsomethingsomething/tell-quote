@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -7,6 +7,9 @@ import { useClientStore } from '../store/clientStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { formatCurrency, convertCurrency } from '../utils/currency';
+
+// Lazy load timeline component
+const OpportunityTimeline = lazy(() => import('../components/timeline/OpportunityTimeline'));
 
 // Format date helper
 const formatDate = (dateStr) => {
@@ -347,12 +350,6 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
         addOpportunity,
         deleteOpportunity,
         updateOpportunity,
-        syncStatus,
-        syncError,
-        pendingSyncCount,
-        syncAllToSupabase,
-        clearSyncError,
-        getUnsyncedCount
     } = useOpportunityStore();
     const { clients } = useClientStore();
     const { settings, setOpsPreferences } = useSettingsStore();
@@ -380,6 +377,7 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRegion, setFilterRegion] = useState('all');
     const [filterStatus, setFilterStatus] = useState('active');
+    const [viewMode, setViewMode] = useState('map'); // 'map' | 'timeline'
 
     const [expandedOpportunities, setExpandedOpportunities] = useState({});
     const [quickAddCountry, setQuickAddCountry] = useState(null);
@@ -848,57 +846,6 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
             onDragEnd={handleDragEnd}
         >
             <div className="h-[calc(100vh-60px)] overflow-y-auto p-3 sm:p-6">
-                {/* Sync Status Banner */}
-                {(syncError || pendingSyncCount > 0 || getUnsyncedCount() > 0) && (
-                    <div className={`mb-4 p-3 rounded-lg flex items-center justify-between ${
-                        syncError ? 'bg-red-500/10 border border-red-500/30' : 'bg-amber-500/10 border border-amber-500/30'
-                    }`}>
-                        <div className="flex items-center gap-3">
-                            {syncStatus === 'syncing' ? (
-                                <svg className="w-5 h-5 text-amber-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            ) : syncError ? (
-                                <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                            ) : (
-                                <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                            )}
-                            <div>
-                                <p className={`text-sm font-medium ${syncError ? 'text-red-400' : 'text-amber-400'}`}>
-                                    {syncError ? 'Sync Error' : `${getUnsyncedCount()} unsynced opportunities`}
-                                </p>
-                                {syncError && (
-                                    <p className="text-xs text-red-300/70">{syncError}</p>
-                                )}
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={syncAllToSupabase}
-                                disabled={syncStatus === 'syncing'}
-                                className="text-xs px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white transition-colors disabled:opacity-50"
-                            >
-                                {syncStatus === 'syncing' ? 'Syncing...' : 'Sync Now'}
-                            </button>
-                            {syncError && (
-                                <button
-                                    onClick={clearSyncError}
-                                    className="p-1 text-gray-400 hover:text-white"
-                                >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                )}
-
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
@@ -906,6 +853,36 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                         <p className="text-xs sm:text-sm text-gray-500">Track deals across GCC, Central Asia & SEA</p>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        {/* View Toggle */}
+                        <div className="flex items-center bg-dark-card rounded-lg p-1 gap-1">
+                            <button
+                                onClick={() => setViewMode('map')}
+                                className={`px-3 py-1.5 text-xs rounded-md flex items-center gap-1.5 transition-colors ${viewMode === 'map'
+                                    ? 'bg-accent-primary/20 text-accent-primary'
+                                    : 'text-gray-400 hover:text-gray-200'
+                                    }`}
+                                title="Map View"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                </svg>
+                                Map
+                            </button>
+                            <button
+                                onClick={() => setViewMode('timeline')}
+                                className={`px-3 py-1.5 text-xs rounded-md flex items-center gap-1.5 transition-colors ${viewMode === 'timeline'
+                                    ? 'bg-accent-primary/20 text-accent-primary'
+                                    : 'text-gray-400 hover:text-gray-200'
+                                    }`}
+                                title="Timeline / Gantt View"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                Timeline
+                            </button>
+                        </div>
+
                         {/* New Opportunity Button */}
                         <button
                             onClick={() => setShowNewModal(true)}
@@ -974,32 +951,46 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                     </div>
                 </div>
 
-                {/* Pipeline Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-                    <div className="card bg-gradient-to-br from-blue-900/20 to-blue-950/20 border-blue-900/30">
-                        <p className="text-xs text-blue-400 mb-1 uppercase tracking-wider">Active</p>
-                        <p className="text-2xl font-bold text-white">{stats.totalCount}</p>
-                    </div>
-                    <div className="card bg-gradient-to-br from-emerald-900/20 to-emerald-950/20 border-emerald-900/30">
-                        <p className="text-xs text-emerald-400 mb-1 uppercase tracking-wider">Pipeline</p>
-                        <p className="text-2xl font-bold text-white">{formatCurrency(stats.totalValue, dashboardCurrency, 0)}</p>
-                    </div>
-                    <div className="card bg-gradient-to-br from-amber-900/20 to-amber-950/20 border-amber-900/30">
-                        <p className="text-xs text-amber-400 mb-1 uppercase tracking-wider">Weighted</p>
-                        <p className="text-2xl font-bold text-white">{formatCurrency(stats.weightedValue, dashboardCurrency, 0)}</p>
-                    </div>
-                    <div className="card bg-gradient-to-br from-green-900/20 to-green-950/20 border-green-900/30">
-                        <p className="text-xs text-green-400 mb-1 uppercase tracking-wider">Won</p>
-                        <p className="text-2xl font-bold text-green-400">{stats.wonCount}</p>
-                    </div>
-                    <div className="card bg-gradient-to-br from-red-900/20 to-red-950/20 border-red-900/30">
-                        <p className="text-xs text-red-400 mb-1 uppercase tracking-wider">Lost</p>
-                        <p className="text-2xl font-bold text-red-400">{stats.lostCount}</p>
-                    </div>
-                </div>
+                {/* Timeline View */}
+                {viewMode === 'timeline' && (
+                    <Suspense fallback={<div className="card p-8 text-center text-gray-400">Loading timeline...</div>}>
+                        <OpportunityTimeline
+                            opportunities={filteredOpportunities}
+                            onSelectOpportunity={onSelectOpportunity}
+                        />
+                    </Suspense>
+                )}
 
-                {/* Region Sections */}
-                {Object.entries(REGIONS).map(([region, countries]) => {
+                {/* Map View - Pipeline Stats */}
+                {viewMode === 'map' && (
+                    <>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                            <div className="card bg-gradient-to-br from-blue-900/20 to-blue-950/20 border-blue-900/30">
+                                <p className="text-xs text-blue-400 mb-1 uppercase tracking-wider">Active</p>
+                                <p className="text-2xl font-bold text-white">{stats.totalCount}</p>
+                            </div>
+                            <div className="card bg-gradient-to-br from-emerald-900/20 to-emerald-950/20 border-emerald-900/30">
+                                <p className="text-xs text-emerald-400 mb-1 uppercase tracking-wider">Pipeline</p>
+                                <p className="text-2xl font-bold text-white">{formatCurrency(stats.totalValue, dashboardCurrency, 0)}</p>
+                            </div>
+                            <div className="card bg-gradient-to-br from-amber-900/20 to-amber-950/20 border-amber-900/30">
+                                <p className="text-xs text-amber-400 mb-1 uppercase tracking-wider">Weighted</p>
+                                <p className="text-2xl font-bold text-white">{formatCurrency(stats.weightedValue, dashboardCurrency, 0)}</p>
+                            </div>
+                            <div className="card bg-gradient-to-br from-green-900/20 to-green-950/20 border-green-900/30">
+                                <p className="text-xs text-green-400 mb-1 uppercase tracking-wider">Won</p>
+                                <p className="text-2xl font-bold text-green-400">{stats.wonCount}</p>
+                            </div>
+                            <div className="card bg-gradient-to-br from-red-900/20 to-red-950/20 border-red-900/30">
+                                <p className="text-xs text-red-400 mb-1 uppercase tracking-wider">Lost</p>
+                                <p className="text-2xl font-bold text-red-400">{stats.lostCount}</p>
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {/* Region Sections (Map View only) */}
+                {viewMode === 'map' && Object.entries(REGIONS).map(([region, countries]) => {
                     const isFilteredRegion = filterRegion === 'all' || filterRegion === region;
                     if (!isFilteredRegion) return null;
 

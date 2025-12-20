@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -23,6 +24,12 @@ export default {
           bg: '#0a0a0f',
           card: 'rgba(255, 255, 255, 0.02)',
           border: 'rgba(255, 255, 255, 0.08)',
+        },
+        // Light theme base
+        light: {
+          bg: '#f8fafc',
+          card: '#ffffff',
+          border: '#e2e8f0',
         },
         // Section accent colors - updated to align with brand
         section: {

@@ -840,5 +840,52 @@ export const useRateCardStore = create(
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
         },
+
+        // Export public-facing rate card (charges only, no costs)
+        exportPublicRateCard: (region = 'SEA') => {
+            const { items, sections } = get();
+
+            const headers = ['Category', 'Service', 'Description', 'Unit', 'Day Rate', 'Currency'];
+            let csvContent = headers.join(',') + '\n';
+
+            // Group by section
+            const sectionNames = {};
+            sections.forEach(s => { sectionNames[s.id] = s.name; });
+
+            // Sort items by section order
+            const sortedItems = [...items].sort((a, b) => {
+                const sectionA = sections.findIndex(s => s.id === a.section);
+                const sectionB = sections.findIndex(s => s.id === b.section);
+                return sectionA - sectionB;
+            });
+
+            sortedItems.forEach(item => {
+                const regionPricing = item.pricing?.[region];
+                const chargeAmount = regionPricing?.charge?.amount || 0;
+                const currency = regionPricing?.charge?.baseCurrency || 'USD';
+
+                if (chargeAmount > 0) {
+                    const row = [
+                        sectionNames[item.section] || item.section || 'General',
+                        `"${(item.name || '').replace(/"/g, '""')}"`,
+                        `"${(item.description || '').replace(/"/g, '""')}"`,
+                        item.unit || 'day',
+                        chargeAmount,
+                        currency
+                    ];
+                    csvContent += row.join(',') + '\n';
+                }
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `tell-productions-rate-card-${region.toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        },
     }))
 );

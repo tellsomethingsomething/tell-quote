@@ -2,9 +2,34 @@ import { useState } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useClientStore } from '../../store/clientStore';
 import { useAuthStore } from '../../store/authStore';
+import { useSettingsStore } from '../../store/settingsStore';
 import Navigation from './Navigation';
 import { useToast } from '../common/Toast';
 import SaveAsTemplateModal from '../templates/SaveAsTemplateModal';
+
+// Theme Toggle Component
+function ThemeToggle() {
+    const { settings, setTheme } = useSettingsStore();
+    const isDark = settings.theme !== 'light';
+
+    return (
+        <button
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            className="min-w-[44px] min-h-[44px] p-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center"
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+            {isDark ? (
+                <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            ) : (
+                <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            )}
+        </button>
+    );
+}
 
 // Skip Link Component for keyboard accessibility
 function SkipLink() {
@@ -18,7 +43,7 @@ function SkipLink() {
     );
 }
 
-export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS, onGoToOpportunities, onGoToTasks, onGoToSOP }) {
+export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS, onGoToOpportunities, onGoToTasks, onGoToSOP, onGoToKnowledge }) {
     const { quote, ratesLoading, refreshRates } = useQuoteStore();
     const { saveQuote } = useClientStore();
     const { logout, user } = useAuthStore();
@@ -61,7 +86,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
     // Let's make it simple for dashboard similar to clients view but maybe without title if DashboardPage handles it?
     // Clients view has "Tell Productions Quote Tool".
     // Let's use the same clean header for Dashboard as for Clients view.
-    if (view === 'clients' || view === 'client-detail' || view === 'dashboard' || view === 'quotes' || view === 'rate-card' || view === 'settings' || view === 'opportunities' || view === 'opportunity-detail' || view === 'tasks' || view === 'sop') {
+    if (view === 'clients' || view === 'client-detail' || view === 'dashboard' || view === 'quotes' || view === 'rate-card' || view === 'settings' || view === 'opportunities' || view === 'opportunity-detail' || view === 'tasks' || view === 'sop' || view === 'knowledge') {
         const activeTab = view === 'opportunity-detail' ? 'opportunities' : view === 'client-detail' ? 'clients' : view;
 
         return (
@@ -90,14 +115,18 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                                 if (tab === 'opportunities') onGoToOpportunities();
                                 if (tab === 'tasks') onGoToTasks();
                                 if (tab === 'sop') onGoToSOP();
+                                if (tab === 'knowledge') onGoToKnowledge();
                                 if (tab === 'rate-card') onGoToRateCard();
                                 if (tab === 'settings') onGoToSettings();
                             }}
                         />
                     </div>
 
-                    {/* Right Side - FS Button & User Menu */}
+                    {/* Right Side - Theme Toggle, FS Button & User Menu */}
                     <div className="flex items-center gap-2 sm:gap-3 relative">
+                        {/* Theme Toggle */}
+                        <ThemeToggle />
+
                         {/* Full Screen Analytics Button - Icon only on mobile */}
                         <button
                             onClick={onGoToFS}
@@ -182,6 +211,9 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
 
                         {/* Right: Controls */}
                         <div className="flex items-center gap-1 sm:gap-2">
+                            {/* Theme Toggle */}
+                            <ThemeToggle />
+
                             {/* Status Label */}
                             <div className={`px-2 sm:px-3 py-1 min-h-[32px] rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border flex items-center ${quote.status === 'won' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
                                 quote.status === 'sent' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :

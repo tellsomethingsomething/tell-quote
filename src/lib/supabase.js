@@ -214,3 +214,91 @@ export async function checkDatabaseConnection() {
         return false;
     }
 }
+
+// =====================================================
+// STORAGE HELPERS
+// =====================================================
+
+const KIT_IMAGES_BUCKET = 'kit-images';
+
+/**
+ * Upload a kit image to Supabase Storage
+ * @param {File} file - The file to upload
+ * @param {string} kitId - The kit ID for naming
+ * @returns {Promise<{url: string, path: string} | null>}
+ */
+export async function uploadKitImage(file, kitId) {
+    if (!supabase) {
+        throw new Error('Supabase not configured');
+    }
+
+    try {
+        // Generate unique filename
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${kitId}-${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        // Upload file
+        const { data, error } = await supabase.storage
+            .from(KIT_IMAGES_BUCKET)
+            .upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false,
+            });
+
+        if (error) throw error;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+            .from(KIT_IMAGES_BUCKET)
+            .getPublicUrl(filePath);
+
+        return {
+            url: publicUrl,
+            path: data.path,
+        };
+    } catch (error) {
+        console.error('Error uploading kit image:', error);
+        throw error;
+    }
+}
+
+/**
+ * Delete a kit image from Supabase Storage
+ * @param {string} path - The file path to delete
+ */
+export async function deleteKitImage(path) {
+    if (!supabase || !path) return;
+
+    try {
+        const { error } = await supabase.storage
+            .from(KIT_IMAGES_BUCKET)
+            .remove([path]);
+
+        if (error) throw error;
+    } catch (error) {
+        console.error('Error deleting kit image:', error);
+        throw error;
+    }
+}
+
+/**
+ * Get a signed URL for a kit image (for private buckets)
+ * @param {string} path - The file path
+ * @param {number} expiresIn - Seconds until expiry (default 1 hour)
+ */
+export async function getKitImageUrl(path, expiresIn = 3600) {
+    if (!supabase || !path) return null;
+
+    try {
+        const { data, error } = await supabase.storage
+            .from(KIT_IMAGES_BUCKET)
+            .createSignedUrl(path, expiresIn);
+
+        if (error) throw error;
+        return data.signedUrl;
+    } catch (error) {
+        console.error('Error getting signed URL:', error);
+        return null;
+    }
+}
