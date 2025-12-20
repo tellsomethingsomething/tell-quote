@@ -469,11 +469,17 @@ export const useSopStore = create(
                     id: crypto.randomUUID(),
                     completed: false,
                 })),
+                photos: [], // Don't copy photos
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             };
 
             return await get().addSop(newSop);
+        },
+
+        // Update SOP photos
+        updateSopPhotos: async (sopId, photos) => {
+            await get().updateSop(sopId, { photos });
         },
     }))
 );
@@ -487,6 +493,7 @@ function toDbFormat(sop) {
         description: sop.description || '',
         checklist: sop.checklist || [],
         tags: sop.tags || [],
+        photos: sop.photos || [],
         created_at: sop.createdAt,
         updated_at: sop.updatedAt,
     };
@@ -500,6 +507,7 @@ function fromDbFormat(record) {
         description: record.description || '',
         checklist: record.checklist || [],
         tags: record.tags || [],
+        photos: record.photos || [],
         createdAt: record.created_at,
         updatedAt: record.updated_at,
     };

@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useKnowledgeStore, FRAGMENT_TYPES, AGENTS } from '../store/knowledgeStore';
 import { useTimelineStore } from '../store/timelineStore';
-import { REGIONS } from '../store/opportunityStore';
+import { useSportsResearchStore, SPORTS, SPORTS_CONFIG, TARGET_REGIONS } from '../store/sportsResearchStore';
+import { useOpportunityStore, REGIONS } from '../store/opportunityStore';
 import ResearcherTimeline from '../components/timeline/ResearcherTimeline';
 
 // Tag input component
@@ -346,6 +347,326 @@ function StatsCard({ stats }) {
     );
 }
 
+// Sports Event Card
+function SportsEventCard({ event, onMarkReviewed, onDismiss, onConvert }) {
+    const config = SPORTS_CONFIG[event.sport] || { icon: '🏆', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' };
+    const isConverted = event.researchStatus === 'converted';
+    const isDismissed = event.researchStatus === 'dismissed';
+
+    return (
+        <div className={`card hover:border-gray-700 transition-colors ${isDismissed ? 'opacity-50' : ''}`}>
+            <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-lg`}>{config.icon}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded border ${config.color}`}>
+                        {event.sport}
+                    </span>
+                    {event.tier && (
+                        <span className="text-xs px-2 py-0.5 rounded bg-gray-700/50 text-gray-400">
+                            {event.tier}
+                        </span>
+                    )}
+                    {event.eventType && (
+                        <span className="text-xs text-gray-500">{event.eventType}</span>
+                    )}
+                </div>
+                <div className="flex gap-1">
+                    {!isConverted && !isDismissed && (
+                        <>
+                            <button
+                                onClick={() => onMarkReviewed(event.id)}
+                                className="p-1.5 text-gray-500 hover:text-blue-400 transition-colors"
+                                title="Mark as Reviewed"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </button>
+                            <button
+                                onClick={() => onDismiss(event.id)}
+                                className="p-1.5 text-gray-500 hover:text-red-400 transition-colors"
+                                title="Dismiss"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            <h3 className="text-sm font-medium text-gray-200 mb-1">{event.eventName}</h3>
+
+            <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-2">
+                {event.organization && <span>{event.organization}</span>}
+                {event.country && <span>• {event.country}</span>}
+                {event.region && <span>• {event.region}</span>}
+            </div>
+
+            {(event.startDate || event.venue) && (
+                <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-2">
+                    {event.startDate && (
+                        <span className="flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            {event.startDate}
+                            {event.endDate && ` - ${event.endDate}`}
+                        </span>
+                    )}
+                    {event.venue && (
+                        <span className="flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            </svg>
+                            {event.venue}
+                        </span>
+                    )}
+                </div>
+            )}
+
+            {event.notes && (
+                <p className="text-xs text-gray-400 mb-2">{event.notes}</p>
+            )}
+
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-dark-border">
+                <span className={`text-xs px-2 py-0.5 rounded ${
+                    isConverted ? 'bg-green-500/20 text-green-400' :
+                    isDismissed ? 'bg-gray-500/20 text-gray-500' :
+                    event.researchStatus === 'reviewed' ? 'bg-blue-500/20 text-blue-400' :
+                    'bg-amber-500/20 text-amber-400'
+                }`}>
+                    {event.researchStatus === 'new' ? 'New' :
+                     event.researchStatus === 'reviewed' ? 'Reviewed' :
+                     event.researchStatus === 'converted' ? 'Converted' : 'Dismissed'}
+                </span>
+
+                {!isConverted && !isDismissed && (
+                    <button
+                        onClick={() => onConvert(event)}
+                        className="btn-primary btn-sm flex items-center gap-1"
+                    >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        Convert to Opportunity
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// Sports Research Tab
+function SportsResearchTab() {
+    const {
+        events,
+        loading,
+        error,
+        initialize,
+        markReviewed,
+        dismissEvent,
+        convertToOpportunity,
+        getStats,
+    } = useSportsResearchStore();
+
+    const { addOpportunity } = useOpportunityStore();
+
+    const [filterSport, setFilterSport] = useState('all');
+    const [filterRegion, setFilterRegion] = useState('all');
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [conversionSuccess, setConversionSuccess] = useState(null);
+
+    useEffect(() => {
+        initialize();
+    }, [initialize]);
+
+    const stats = useMemo(() => getStats(), [events]);
+
+    const filteredEvents = useMemo(() => {
+        return events.filter(e => {
+            if (filterSport !== 'all' && e.sport !== filterSport) return false;
+            if (filterRegion !== 'all' && e.region !== filterRegion) return false;
+            if (filterStatus !== 'all' && e.researchStatus !== filterStatus) return false;
+            return true;
+        });
+    }, [events, filterSport, filterRegion, filterStatus]);
+
+    const handleConvert = async (event) => {
+        // Create opportunity from sports event
+        const oppData = {
+            title: event.eventName,
+            country: event.country === 'Regional' ? '' : event.country,
+            region: event.region,
+            source: `Sports Research: ${event.sport}`,
+            brief: `${event.eventType || 'Event'} - ${event.organization || 'Unknown organization'}`,
+            notes: [
+                event.notes,
+                event.venue ? `Venue: ${event.venue}` : null,
+                event.startDate ? `Dates: ${event.startDate}${event.endDate ? ` - ${event.endDate}` : ''}` : null,
+                event.broadcastStatus ? `Broadcast: ${event.broadcastStatus}` : null,
+            ].filter(Boolean).join('\n'),
+            value: event.estimatedValue || 0,
+            currency: event.currency || 'USD',
+            stage: 'lead',
+            status: 'active',
+        };
+
+        const newOpp = await addOpportunity(oppData);
+        if (newOpp) {
+            await convertToOpportunity(event.id, newOpp.id);
+            setConversionSuccess({ eventName: event.eventName, oppId: newOpp.id });
+            setTimeout(() => setConversionSuccess(null), 3000);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <div className="text-gray-400">Loading sports events...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <p className="text-sm text-red-400">{error}</p>
+                <p className="text-xs text-gray-500 mt-2">
+                    Run <code className="bg-gray-800 px-1 rounded">supabase-complete-setup.sql</code> in Supabase SQL editor to create required tables.
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            {/* Conversion Success Toast */}
+            {conversionSuccess && (
+                <div className="fixed bottom-4 right-4 z-50 bg-green-500/20 border border-green-500/30 rounded-lg p-4 shadow-lg animate-fade-in">
+                    <div className="flex items-center gap-3">
+                        <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <div>
+                            <p className="text-sm text-green-400 font-medium">Converted to Opportunity</p>
+                            <p className="text-xs text-gray-400">{conversionSuccess.eventName}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+                <div className="card text-center">
+                    <div className="text-2xl font-bold text-brand-teal">{stats.total}</div>
+                    <div className="text-xs text-gray-500">Total Events</div>
+                </div>
+                <div className="card text-center">
+                    <div className="text-2xl font-bold text-amber-400">{stats.new}</div>
+                    <div className="text-xs text-gray-500">New</div>
+                </div>
+                <div className="card text-center">
+                    <div className="text-2xl font-bold text-blue-400">{stats.reviewed}</div>
+                    <div className="text-xs text-gray-500">Reviewed</div>
+                </div>
+                <div className="card text-center">
+                    <div className="text-2xl font-bold text-green-400">{stats.converted}</div>
+                    <div className="text-xs text-gray-500">Converted</div>
+                </div>
+                <div className="card text-center">
+                    <div className="text-2xl font-bold text-gray-500">{stats.dismissed}</div>
+                    <div className="text-xs text-gray-500">Dismissed</div>
+                </div>
+            </div>
+
+            {/* Sport Breakdown */}
+            <div className="grid grid-cols-5 gap-2 mb-6">
+                {Object.entries(SPORTS).map(([key, sport]) => {
+                    const config = SPORTS_CONFIG[sport];
+                    const count = stats.bySport[sport] || 0;
+                    return (
+                        <button
+                            key={key}
+                            onClick={() => setFilterSport(filterSport === sport ? 'all' : sport)}
+                            className={`card text-center py-3 transition-all cursor-pointer ${
+                                filterSport === sport ? 'ring-2 ring-brand-teal' : 'hover:border-gray-600'
+                            }`}
+                        >
+                            <div className="text-2xl mb-1">{config.icon}</div>
+                            <div className="text-xs text-gray-400">{sport}</div>
+                            <div className="text-sm font-bold text-gray-200">{count}</div>
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-3 mb-4">
+                <select
+                    value={filterRegion}
+                    onChange={(e) => setFilterRegion(e.target.value)}
+                    className="input-sm"
+                >
+                    <option value="all">All Regions</option>
+                    {Object.keys(TARGET_REGIONS).map(region => (
+                        <option key={region} value={region}>{region}</option>
+                    ))}
+                </select>
+                <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="input-sm"
+                >
+                    <option value="all">All Status</option>
+                    <option value="new">New</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="converted">Converted</option>
+                    <option value="dismissed">Dismissed</option>
+                </select>
+                {(filterSport !== 'all' || filterRegion !== 'all' || filterStatus !== 'all') && (
+                    <button
+                        onClick={() => {
+                            setFilterSport('all');
+                            setFilterRegion('all');
+                            setFilterStatus('all');
+                        }}
+                        className="btn-ghost btn-sm"
+                    >
+                        Clear Filters
+                    </button>
+                )}
+            </div>
+
+            {/* Events List */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {filteredEvents.length === 0 ? (
+                    <div className="col-span-full card text-center py-12">
+                        <svg className="w-12 h-12 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <h3 className="text-lg font-medium text-gray-400 mb-2">No events found</h3>
+                        <p className="text-sm text-gray-500">
+                            Adjust filters or wait for auto-research to discover events.
+                        </p>
+                    </div>
+                ) : (
+                    filteredEvents.map(event => (
+                        <SportsEventCard
+                            key={event.id}
+                            event={event}
+                            onMarkReviewed={markReviewed}
+                            onDismiss={dismissEvent}
+                            onConvert={handleConvert}
+                        />
+                    ))
+                )}
+            </div>
+        </div>
+    );
+}
+
 // Main Knowledge Page
 export default function KnowledgePage() {
     const {
@@ -365,7 +686,7 @@ export default function KnowledgePage() {
 
     const initializeTimeline = useTimelineStore(state => state.initialize);
 
-    const [activeTab, setActiveTab] = useState('knowledge'); // 'knowledge' | 'timeline'
+    const [activeTab, setActiveTab] = useState('sports'); // 'knowledge' | 'timeline' | 'sports'
     const [filterType, setFilterType] = useState('all');
     const [filterRegion, setFilterRegion] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -414,11 +735,11 @@ export default function KnowledgePage() {
                 <div>
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-100 flex items-center gap-2">
                         <svg className="w-6 h-6 text-brand-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        AI Intelligence
+                        Research
                     </h1>
-                    <p className="text-sm text-gray-500">Knowledge base and research timeline</p>
+                    <p className="text-sm text-gray-500">Sports events, market intelligence, and knowledge base</p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -471,6 +792,19 @@ export default function KnowledgePage() {
                         Research Timeline
                     </span>
                 </button>
+                <button
+                    onClick={() => setActiveTab('sports')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'sports'
+                            ? 'bg-green-500/20 text-green-400'
+                            : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                    }`}
+                >
+                    <span className="flex items-center gap-2">
+                        <span className="text-sm">⚽</span>
+                        Sports Research
+                    </span>
+                </button>
             </div>
 
             {error && (
@@ -482,6 +816,11 @@ export default function KnowledgePage() {
             {/* Timeline Tab */}
             {activeTab === 'timeline' && (
                 <ResearcherTimeline />
+            )}
+
+            {/* Sports Research Tab */}
+            {activeTab === 'sports' && (
+                <SportsResearchTab />
             )}
 
             {/* Knowledge Tab */}
