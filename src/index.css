@@ -316,6 +316,32 @@ html.light ::-webkit-scrollbar-thumb:hover {
   background-color: #9ca3af !important;
 }
 
+/* Light mode navigation bar */
+html.light .bg-gray-900\/80 {
+  background-color: rgba(243, 244, 246, 0.95) !important;
+}
+
+html.light .bg-gray-900\/50 {
+  background-color: rgba(249, 250, 251, 0.95) !important;
+}
+
+html.light .bg-gray-900 {
+  background-color: #f3f4f6 !important;
+}
+
+html.light .border-gray-800\/80 {
+  border-color: #e5e7eb !important;
+}
+
+/* Light mode text overrides */
+html.light .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+html.light .text-gray-600 {
+  color: #4b5563 !important;
+}
+
 /* Light mode select dropdown arrow */
 html.light select.input,
 html.light select.input-sm {
