@@ -616,6 +616,8 @@ export const useQuoteStore = create(
                     days: item.days || 1,
                     cost: item.cost || 0,
                     charge: item.charge || 0,
+                    rateCardItemId: item.rateCardItemId || null, // Link to rate card
+                    kitItemId: item.kitItemId || null, // Link to kit inventory
                     ...item,
                 };
 
