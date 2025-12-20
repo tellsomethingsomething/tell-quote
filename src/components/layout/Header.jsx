@@ -43,7 +43,7 @@ function SkipLink() {
     );
 }
 
-export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS, onGoToOpportunities, onGoToTasks, onGoToSOP, onGoToKnowledge }) {
+export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS, onGoToOpportunities, onGoToTasks, onGoToSOP, onGoToKnowledge, onGoToKit }) {
     const { quote, ratesLoading, refreshRates } = useQuoteStore();
     const { saveQuote } = useClientStore();
     const { logout, user } = useAuthStore();
@@ -86,7 +86,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
     // Let's make it simple for dashboard similar to clients view but maybe without title if DashboardPage handles it?
     // Clients view has "Tell Productions Quote Tool".
     // Let's use the same clean header for Dashboard as for Clients view.
-    if (view === 'clients' || view === 'client-detail' || view === 'dashboard' || view === 'quotes' || view === 'rate-card' || view === 'settings' || view === 'opportunities' || view === 'opportunity-detail' || view === 'tasks' || view === 'sop' || view === 'knowledge') {
+    if (view === 'clients' || view === 'client-detail' || view === 'dashboard' || view === 'quotes' || view === 'rate-card' || view === 'settings' || view === 'opportunities' || view === 'opportunity-detail' || view === 'tasks' || view === 'sop' || view === 'knowledge' || view === 'kit') {
         const activeTab = view === 'opportunity-detail' ? 'opportunities' : view === 'client-detail' ? 'clients' : view;
 
         return (
@@ -116,6 +116,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                                 if (tab === 'tasks') onGoToTasks();
                                 if (tab === 'sop') onGoToSOP();
                                 if (tab === 'knowledge') onGoToKnowledge();
+                                if (tab === 'kit') onGoToKit();
                                 if (tab === 'rate-card') onGoToRateCard();
                                 if (tab === 'settings') onGoToSettings();
                             }}

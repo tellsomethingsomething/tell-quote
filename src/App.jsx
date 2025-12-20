@@ -466,6 +466,7 @@ function App() {
         onGoToTasks={handleGoToTasks}
         onGoToSOP={handleGoToSOP}
         onGoToKnowledge={handleGoToKnowledge}
+        onGoToKit={handleGoToKit}
         selectedClientId={selectedClientId}
       />
       {renderView()}
