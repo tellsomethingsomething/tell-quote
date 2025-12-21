@@ -43,7 +43,7 @@ function SkipLink() {
     );
 }
 
-export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS, onGoToOpportunities, onGoToTasks, onGoToSOP, onGoToKnowledge, onGoToKit, onGoToContacts }) {
+export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS, onGoToOpportunities, onGoToProjects, onGoToTasks, onGoToSOP, onGoToKnowledge, onGoToKit, onGoToContacts }) {
     const { quote, ratesLoading, refreshRates } = useQuoteStore();
     const { saveQuote } = useClientStore();
     const { logout, user } = useAuthStore();
@@ -86,8 +86,8 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
     // Let's make it simple for dashboard similar to clients view but maybe without title if DashboardPage handles it?
     // Clients view has "Tell Productions Quote Tool".
     // Let's use the same clean header for Dashboard as for Clients view.
-    if (view === 'clients' || view === 'client-detail' || view === 'dashboard' || view === 'quotes' || view === 'rate-card' || view === 'settings' || view === 'opportunities' || view === 'opportunity-detail' || view === 'tasks' || view === 'sop' || view === 'knowledge' || view === 'kit' || view === 'contacts') {
-        const activeTab = view === 'opportunity-detail' ? 'opportunities' : view === 'client-detail' ? 'clients' : view;
+    if (view === 'clients' || view === 'client-detail' || view === 'dashboard' || view === 'quotes' || view === 'rate-card' || view === 'settings' || view === 'opportunities' || view === 'opportunity-detail' || view === 'projects' || view === 'project-detail' || view === 'tasks' || view === 'sop' || view === 'knowledge' || view === 'kit' || view === 'contacts') {
+        const activeTab = view === 'opportunity-detail' ? 'opportunities' : view === 'client-detail' ? 'clients' : view === 'project-detail' ? 'projects' : view;
 
         return (
             <>
@@ -113,6 +113,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                                 if (tab === 'quotes') onGoToQuotes();
                                 if (tab === 'clients') onGoToClients();
                                 if (tab === 'opportunities') onGoToOpportunities();
+                                if (tab === 'projects') onGoToProjects();
                                 if (tab === 'tasks') onGoToTasks();
                                 if (tab === 'sop') onGoToSOP();
                                 if (tab === 'knowledge') onGoToKnowledge();

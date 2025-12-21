@@ -18,6 +18,7 @@ import { useDealContextStore } from './store/dealContextStore';
 import { useKnowledgeStore } from './store/knowledgeStore';
 import { useKitStore } from './store/kitStore';
 import { useSopStore } from './store/sopStore';
+import { useProjectStore } from './store/projectStore';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
 
 // Initialize auth store to set up OAuth listeners (must run once on app load)
@@ -38,6 +39,8 @@ const SOPPage = lazy(() => import('./pages/SOPPage'));
 const KnowledgePage = lazy(() => import('./pages/KnowledgePage'));
 const KitListPage = lazy(() => import('./pages/KitListPage'));
 const ContactsPage = lazy(() => import('./pages/ContactsPage'));
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
+const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 
 // Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings' | 'contacts'
@@ -54,12 +57,14 @@ function App() {
   const initializeKnowledge = useKnowledgeStore(state => state.initialize);
   const initializeKit = useKitStore(state => state.initialize);
   const initializeSops = useSopStore(state => state.initialize);
+  const initializeProjects = useProjectStore(state => state.initialize);
   const resetQuote = useQuoteStore(state => state.resetQuote);
   const loadQuoteData = useQuoteStore(state => state.loadQuoteData);
 
   const [view, setView] = useState('dashboard');
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState(null);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [pendingNewQuoteClientId, setPendingNewQuoteClientId] = useState(null);
@@ -206,6 +211,15 @@ function App() {
     confirmNavigateAway(() => setView('contacts'));
   }, [confirmNavigateAway]);
 
+  const handleGoToProjects = useCallback(() => {
+    confirmNavigateAway(() => setView('projects'));
+  }, [confirmNavigateAway]);
+
+  const handleSelectProject = useCallback((projectId) => {
+    setSelectedProjectId(projectId);
+    setView('project-detail');
+  }, []);
+
   const handleSelectOpportunity = useCallback((opportunityId) => {
     setSelectedOpportunityId(opportunityId);
     setView('opportunity-detail');
@@ -291,8 +305,9 @@ function App() {
       initializeKnowledge();
       initializeKit();
       initializeSops();
+      initializeProjects();
     }
-  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities, initializeActivities, initializeTemplates, initializeDealContext, initializeKnowledge, initializeKit, initializeSops]);
+  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities, initializeActivities, initializeTemplates, initializeDealContext, initializeKnowledge, initializeKit, initializeSops, initializeProjects]);
 
   // Show login/landing page if not authenticated
   const [showLanding, setShowLanding] = useState(true);
@@ -429,6 +444,26 @@ function App() {
             </main>
           </Suspense>
         );
+      case 'projects':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Projects..." />}>
+            <main id="main-content" tabIndex="-1">
+              <ProjectsPage onSelectProject={handleSelectProject} />
+            </main>
+          </Suspense>
+        );
+      case 'project-detail':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Project..." />}>
+            <main id="main-content" tabIndex="-1">
+              <ProjectDetailPage
+                projectId={selectedProjectId}
+                onBack={handleGoToProjects}
+                onEditQuote={handleEditQuote}
+              />
+            </main>
+          </Suspense>
+        );
       case 'fs':
         return (
           <Suspense fallback={<LoadingSpinner text="Loading..." />}>
@@ -485,6 +520,7 @@ function App() {
         onGoToSettings={handleGoToSettings}
         onGoToFS={handleGoToFS}
         onGoToOpportunities={handleGoToOpportunities}
+        onGoToProjects={handleGoToProjects}
         onGoToTasks={handleGoToTasks}
         onGoToSOP={handleGoToSOP}
         onGoToKnowledge={handleGoToKnowledge}
