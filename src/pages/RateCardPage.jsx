@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRateCardStore, ITEM_TYPES, getItemTypeFromSection } from '../store/rateCardStore';
 import { useQuoteStore } from '../store/quoteStore';
+import { useKitStore } from '../store/kitStore';
 import { useToast } from '../components/common/Toast';
 import { FALLBACK_RATES } from '../data/currencies';
 
@@ -30,7 +31,10 @@ const convertCurrency = (amount, fromCurrency, toCurrency, rates) => {
 export default function RateCardPage() {
     const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults, exportPublicRateCard } = useRateCardStore();
     const { rates } = useQuoteStore();
+    const syncAllToRateCard = useKitStore(state => state.syncAllToRateCard);
+    const kitItems = useKitStore(state => state.items);
     const toast = useToast();
+    const [syncing, setSyncing] = useState(false);
     const fileInputRef = useRef(null);
     const saveTimeoutRef = useRef(null);
     const [selectedSection, setSelectedSection] = useState('all');
@@ -229,6 +233,30 @@ export default function RateCardPage() {
         triggerSaved();
     };
 
+    // Sync all kit items to rate card
+    const handleSyncFromKit = async () => {
+        setSyncing(true);
+        try {
+            const result = await syncAllToRateCard();
+            if (result.syncedCount > 0) {
+                toast.success(`Synced ${result.syncedCount} kit items to rate card`);
+                triggerSaved();
+            } else {
+                toast.info('No kit items with rates to sync');
+            }
+            if (result.errorCount > 0) {
+                toast.warning(`${result.errorCount} items failed to sync`);
+            }
+        } catch (e) {
+            toast.error('Failed to sync: ' + e.message);
+        } finally {
+            setSyncing(false);
+        }
+    };
+
+    // Count kit items with rates that could be synced
+    const kitItemsWithRates = kitItems.filter(i => i.dayRate || i.weekRate || i.monthRate).length;
+
     return (
         <div className="h-[calc(100vh-60px)] flex flex-col bg-dark-bg">
             {/* Header */}
@@ -316,6 +344,19 @@ export default function RateCardPage() {
                                 </div>
                             </div>
                         </div>
+                        {kitItemsWithRates > 0 && (
+                            <button
+                                onClick={handleSyncFromKit}
+                                disabled={syncing}
+                                className="btn-ghost text-sm flex-shrink-0 hidden sm:flex items-center gap-1 text-teal-400 hover:text-teal-300"
+                                title={`Sync ${kitItemsWithRates} kit items with rates to rate card`}
+                            >
+                                <svg className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                {syncing ? 'Syncing...' : `Sync Kit (${kitItemsWithRates})`}
+                            </button>
+                        )}
                         <button
                             onClick={() => setShowBulkMarkup(true)}
                             className="btn-ghost text-sm flex-shrink-0 hidden sm:flex items-center gap-1"

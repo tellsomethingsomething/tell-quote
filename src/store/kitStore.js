@@ -431,6 +431,37 @@ export const useKitStore = create(
             }
         },
 
+        // Sync all kit items to rate card
+        syncAllToRateCard: async () => {
+            const { items, categories } = get();
+            let syncedCount = 0;
+            let errorCount = 0;
+
+            for (const item of items) {
+                // Only sync items with rates
+                if (!item.dayRate && !item.weekRate && !item.monthRate) continue;
+
+                try {
+                    const categoryName = item.categoryName || categories.find(c => c.id === item.categoryId)?.name;
+                    const rateCardItemId = await syncKitToRateCard(item, categoryName);
+
+                    if (rateCardItemId && !item.rateCardItemId) {
+                        // Update kit item with rate card link
+                        await supabase.from('kit_items').update({ rate_card_item_id: rateCardItemId }).eq('id', item.id);
+                        set((state) => ({
+                            items: state.items.map(i => i.id === item.id ? { ...i, rateCardItemId } : i),
+                        }));
+                    }
+                    syncedCount++;
+                } catch (e) {
+                    console.error(`Failed to sync kit item ${item.kitId}:`, e);
+                    errorCount++;
+                }
+            }
+
+            return { syncedCount, errorCount };
+        },
+
         // Generate next kit ID for category
         generateKitId: async (categoryName) => {
             const { items, categories } = get();
