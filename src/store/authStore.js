@@ -462,6 +462,52 @@ export const useAuthStore = create((set, get) => ({
     },
 
     /**
+     * Login with Google OAuth
+     */
+    loginWithGoogle: async () => {
+        if (!isSupabaseConfigured()) {
+            set({ error: 'Google login requires Supabase configuration' });
+            return false;
+        }
+
+        set({ isLoading: true, error: null });
+
+        try {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    },
+                    scopes: 'email profile',
+                },
+            });
+
+            if (error) {
+                set({
+                    error: error.message || 'Google login failed',
+                    isLoading: false
+                });
+                return false;
+            }
+
+            // The user will be redirected to Google for authentication
+            // After successful auth, they'll be redirected back and
+            // the onAuthStateChange listener will handle the session
+            return true;
+        } catch (e) {
+            console.error('Google login error:', e);
+            set({
+                error: 'An error occurred during Google login',
+                isLoading: false
+            });
+            return false;
+        }
+    },
+
+    /**
      * Logout
      */
     logout: async () => {

@@ -27,6 +27,7 @@ export default function CommercialTasksPage() {
     const addOpportunity = useOpportunityStore(state => state.addOpportunity);
     const { addActivityLog } = useSettingsStore();
     const settings = useSettingsStore(state => state.settings);
+    const okrs = settings?.okrs || [];
 
     const [tasks, setTasks] = useState(() => {
         const saved = localStorage.getItem('tell_commercial_tasks_v2');
@@ -48,8 +49,9 @@ export default function CommercialTasksPage() {
     });
     const [nextScan, setNextScan] = useState(null);
     const [showAddTask, setShowAddTask] = useState(false);
-    const [newTask, setNewTask] = useState({ title: '', description: '', category: 'client_tasks', priority: 'medium' });
+    const [newTask, setNewTask] = useState({ title: '', description: '', category: 'client_tasks', priority: 'medium', okrId: '' });
     const [activeCategory, setActiveCategory] = useState('all');
+    const [activeOkr, setActiveOkr] = useState('all');
 
     // Complete & Log modal state
     const [showLogModal, setShowLogModal] = useState(false);
@@ -490,7 +492,7 @@ Return ONLY JSON:
             createdAt: new Date().toISOString(),
         };
         setManualTasks(prev => [task, ...prev]);
-        setNewTask({ title: '', description: '', category: 'client_tasks', priority: 'medium' });
+        setNewTask({ title: '', description: '', category: 'client_tasks', priority: 'medium', okrId: '' });
         setShowAddTask(false);
     };
 
@@ -521,10 +523,12 @@ Return ONLY JSON:
         ...tasks.filter(t => !completedTasks.includes(t.id))
     ];
 
-    // Filter by category
-    const filteredTasks = activeCategory === 'all'
-        ? allTasks
-        : allTasks.filter(t => t.category === activeCategory);
+    // Filter by category and OKR
+    const filteredTasks = allTasks.filter(t => {
+        const matchesCategory = activeCategory === 'all' || t.category === activeCategory;
+        const matchesOkr = activeOkr === 'all' || t.okrId === activeOkr;
+        return matchesCategory && matchesOkr;
+    });
 
     // Group tasks by category for display
     const tasksByCategory = CATEGORIES.reduce((acc, cat) => {
@@ -593,7 +597,7 @@ Return ONLY JSON:
                 </div>
 
                 {/* Category Tabs */}
-                <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
                     <button
                         onClick={() => setActiveCategory('all')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
@@ -624,6 +628,40 @@ Return ONLY JSON:
                         );
                     })}
                 </div>
+
+                {/* OKR Filter */}
+                {okrs.length > 0 && (
+                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                        <span className="text-xs text-gray-500 py-2 px-2">OKR:</span>
+                        <button
+                            onClick={() => setActiveOkr('all')}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                                activeOkr === 'all'
+                                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                                    : 'bg-gray-800/50 text-gray-500 hover:text-gray-300 border border-transparent'
+                            }`}
+                        >
+                            All
+                        </button>
+                        {okrs.map((okr, i) => {
+                            const count = allTasks.filter(t => t.okrId === okr.id).length;
+                            return (
+                                <button
+                                    key={okr.id}
+                                    onClick={() => setActiveOkr(okr.id)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                                        activeOkr === okr.id
+                                            ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                                            : 'bg-gray-800/50 text-gray-500 hover:text-gray-300 border border-transparent'
+                                    }`}
+                                    title={okr.keyResult}
+                                >
+                                    OKR{i + 1}: {okr.objective.substring(0, 20)}{okr.objective.length > 20 ? '...' : ''} ({count})
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
 
                 {/* Add Task Modal */}
                 {showAddTask && (
@@ -676,6 +714,21 @@ Return ONLY JSON:
                                         </select>
                                     </div>
                                 </div>
+                                {okrs.length > 0 && (
+                                    <div>
+                                        <label className="block text-sm text-gray-400 mb-1">Link to OKR (optional)</label>
+                                        <select
+                                            value={newTask.okrId}
+                                            onChange={(e) => setNewTask({ ...newTask, okrId: e.target.value })}
+                                            className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                                        >
+                                            <option value="">No OKR</option>
+                                            {okrs.map(okr => (
+                                                <option key={okr.id} value={okr.id}>{okr.objective}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex justify-end gap-3 mt-6">
                                 <button onClick={() => setShowAddTask(false)} className="btn-ghost">Cancel</button>

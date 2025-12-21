@@ -1205,6 +1205,54 @@ export default function SettingsPage() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Company OKRs */}
+                        <div className="mt-8">
+                            <h4 className="text-sm font-semibold text-gray-300 mb-2">Company OKRs</h4>
+                            <p className="text-xs text-gray-500 mb-4">
+                                Define your company objectives to guide research priorities. These will be used to prioritize sports events and opportunities.
+                            </p>
+                            <div className="space-y-4">
+                                {(settings.okrs || []).map((okr, index) => (
+                                    <div key={okr.id} className="p-4 bg-dark-bg/50 rounded-lg border border-dark-border">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="w-6 h-6 rounded-full bg-accent-primary/20 text-accent-primary text-xs font-bold flex items-center justify-center">
+                                                {index + 1}
+                                            </span>
+                                            <span className="text-xs text-gray-500 uppercase tracking-wide">OKR {index + 1}</span>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="label text-xs">Objective</label>
+                                                <input
+                                                    type="text"
+                                                    value={okr.objective}
+                                                    onChange={(e) => {
+                                                        useSettingsStore.getState().updateOkr(okr.id, { objective: e.target.value });
+                                                        triggerSaved();
+                                                    }}
+                                                    className="input text-sm"
+                                                    placeholder="e.g., Expand into GCC market"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="label text-xs">Key Result</label>
+                                                <textarea
+                                                    value={okr.keyResult}
+                                                    onChange={(e) => {
+                                                        useSettingsStore.getState().updateOkr(okr.id, { keyResult: e.target.value });
+                                                        triggerSaved();
+                                                    }}
+                                                    className="input text-sm resize-none"
+                                                    rows={2}
+                                                    placeholder="e.g., Win 3 major sports broadcast contracts by end of 2025"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 )}
 

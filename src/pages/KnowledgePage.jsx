@@ -3,6 +3,7 @@ import { useKnowledgeStore, FRAGMENT_TYPES, AGENTS } from '../store/knowledgeSto
 import { useTimelineStore } from '../store/timelineStore';
 import { useSportsResearchStore, SPORTS, SPORTS_CONFIG, TARGET_REGIONS, RESEARCH_PROMPT } from '../store/sportsResearchStore';
 import { useOpportunityStore, REGIONS } from '../store/opportunityStore';
+import { useSettingsStore } from '../store/settingsStore';
 import ResearcherTimeline from '../components/timeline/ResearcherTimeline';
 
 // Tag input component
@@ -477,6 +478,7 @@ function SportsResearchTab() {
     } = useSportsResearchStore();
 
     const { addOpportunity } = useOpportunityStore();
+    const getOkrsForPrompt = useSettingsStore(state => state.getOkrsForPrompt);
 
     const [filterSport, setFilterSport] = useState('all');
     const [filterRegion, setFilterRegion] = useState('all');
@@ -642,17 +644,31 @@ function SportsResearchTab() {
                 </button>
                 {showPrompt && (
                     <div className="mt-3 p-4 bg-dark-card border border-dark-border rounded-lg">
+                        {/* OKRs Section */}
+                        {getOkrsForPrompt() && (
+                            <div className="mb-4 p-3 bg-accent-primary/10 border border-accent-primary/30 rounded-lg">
+                                <h4 className="text-xs font-semibold text-accent-primary mb-2">Company OKRs (Prioritize events aligned with these goals):</h4>
+                                <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono">
+                                    {getOkrsForPrompt()}
+                                </pre>
+                            </div>
+                        )}
                         <pre className="text-xs text-gray-400 whitespace-pre-wrap font-mono overflow-x-auto">
                             {RESEARCH_PROMPT}
                         </pre>
                         <button
-                            onClick={() => navigator.clipboard.writeText(RESEARCH_PROMPT)}
+                            onClick={() => {
+                                const okrSection = getOkrsForPrompt()
+                                    ? `## Company OKRs (Prioritize events aligned with these goals):\n${getOkrsForPrompt()}\n\n`
+                                    : '';
+                                navigator.clipboard.writeText(okrSection + RESEARCH_PROMPT);
+                            }}
                             className="mt-3 btn-ghost btn-sm flex items-center gap-1"
                         >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
-                            Copy Prompt
+                            Copy Full Prompt (with OKRs)
                         </button>
                     </div>
                 )}

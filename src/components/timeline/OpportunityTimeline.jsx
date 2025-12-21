@@ -49,24 +49,108 @@ function calculateBarPosition(opp, startDate, endDate, totalDays) {
     return { left: `${Math.max(0, left)}%`, width: `${Math.min(100 - left, width)}%` };
 }
 
-// Opportunity bar component
-function OpportunityBar({ opp, style, onClick }) {
+// Draggable Opportunity bar component
+function OpportunityBar({ opp, style, onClick, onDragEnd, startDate, totalDays, containerWidth }) {
     const colors = STATUS_COLORS[opp.status] || STATUS_COLORS.active;
     const probability = opp.probability || 50;
+    const [isDragging, setIsDragging] = React.useState(null); // null, 'move', 'left', 'right'
+    const [dragOffset, setDragOffset] = React.useState({ left: 0, width: 0 });
+    const barRef = React.useRef(null);
+
+    const handleMouseDown = (e, type) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(type);
+
+        const startX = e.clientX;
+        const initialStyle = { ...style };
+
+        const handleMouseMove = (moveEvent) => {
+            const deltaX = moveEvent.clientX - startX;
+            const deltaPercent = (deltaX / containerWidth) * 100;
+            const deltaDays = (deltaX / containerWidth) * totalDays;
+
+            if (type === 'move') {
+                setDragOffset({ left: deltaPercent, width: 0 });
+            } else if (type === 'left') {
+                setDragOffset({ left: deltaPercent, width: -deltaPercent });
+            } else if (type === 'right') {
+                setDragOffset({ left: 0, width: deltaPercent });
+            }
+        };
+
+        const handleMouseUp = (upEvent) => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+
+            const deltaX = upEvent.clientX - startX;
+            const deltaDays = Math.round((deltaX / containerWidth) * totalDays);
+
+            if (Math.abs(deltaDays) > 0) {
+                const oppStart = opp.createdAt ? new Date(opp.createdAt) : new Date();
+                const oppEnd = opp.expectedCloseDate ? new Date(opp.expectedCloseDate) : new Date();
+
+                let newStart = oppStart;
+                let newEnd = oppEnd;
+
+                if (type === 'move') {
+                    newStart = new Date(oppStart.getTime() + deltaDays * 24 * 60 * 60 * 1000);
+                    newEnd = new Date(oppEnd.getTime() + deltaDays * 24 * 60 * 60 * 1000);
+                } else if (type === 'left') {
+                    newStart = new Date(oppStart.getTime() + deltaDays * 24 * 60 * 60 * 1000);
+                } else if (type === 'right') {
+                    newEnd = new Date(oppEnd.getTime() + deltaDays * 24 * 60 * 60 * 1000);
+                }
+
+                // Ensure start is before end
+                if (newStart < newEnd) {
+                    onDragEnd?.(opp.id, {
+                        createdAt: newStart.toISOString(),
+                        expectedCloseDate: newEnd.toISOString(),
+                    });
+                }
+            }
+
+            setIsDragging(null);
+            setDragOffset({ left: 0, width: 0 });
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    };
+
+    const currentStyle = {
+        ...style,
+        left: `calc(${style.left} + ${dragOffset.left}%)`,
+        width: `calc(${style.width} + ${dragOffset.width}%)`,
+        opacity: opp.status === 'lost' ? 0.4 : (probability / 100) * 0.5 + 0.5,
+        zIndex: isDragging ? 20 : undefined,
+    };
 
     return (
         <div
-            className={`absolute h-8 rounded cursor-pointer transition-all hover:scale-y-110 hover:z-10 ${colors.bg} ${colors.border} border shadow-sm`}
-            style={{
-                ...style,
-                opacity: opp.status === 'lost' ? 0.4 : (probability / 100) * 0.5 + 0.5,
-            }}
-            onClick={() => onClick(opp)}
-            title={`${opp.title} - ${opp.status} (${probability}%)`}
+            ref={barRef}
+            className={`absolute h-8 rounded cursor-grab transition-opacity ${isDragging ? 'cursor-grabbing' : ''} ${colors.bg} ${colors.border} border shadow-sm group`}
+            style={currentStyle}
+            onClick={() => !isDragging && onClick(opp)}
+            onMouseDown={(e) => handleMouseDown(e, 'move')}
+            title={`${opp.title} - ${opp.status} (${probability}%) - Drag to move, drag edges to resize`}
         >
-            <div className="px-2 py-1 truncate text-xs text-white font-medium">
+            {/* Left resize handle */}
+            <div
+                className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 hover:bg-white/30 rounded-l transition-opacity"
+                onMouseDown={(e) => handleMouseDown(e, 'left')}
+            />
+
+            <div className="px-3 py-1 truncate text-xs text-white font-medium select-none">
                 {opp.title}
             </div>
+
+            {/* Right resize handle */}
+            <div
+                className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 hover:bg-white/30 rounded-r transition-opacity"
+                onMouseDown={(e) => handleMouseDown(e, 'right')}
+            />
         </div>
     );
 }
@@ -117,6 +201,7 @@ function ResearchMarker({ event, startDate, totalDays, onClick }) {
 // Main component
 export default function OpportunityTimeline({ opportunities: externalOpps, onSelectOpportunity }) {
     const storeOpps = useOpportunityStore(state => state.opportunities);
+    const updateOpportunity = useOpportunityStore(state => state.updateOpportunity);
     const opportunities = externalOpps || storeOpps;
 
     // Timeline store for research events
@@ -128,7 +213,26 @@ export default function OpportunityTimeline({ opportunities: externalOpps, onSel
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [showResearch, setShowResearch] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [timelineWidth, setTimelineWidth] = useState(800);
     const containerRef = React.useRef(null);
+    const timelineContainerRef = React.useRef(null);
+
+    // Track timeline width for drag calculations
+    useEffect(() => {
+        const updateWidth = () => {
+            if (timelineContainerRef.current) {
+                setTimelineWidth(timelineContainerRef.current.offsetWidth);
+            }
+        };
+        updateWidth();
+        window.addEventListener('resize', updateWidth);
+        return () => window.removeEventListener('resize', updateWidth);
+    }, []);
+
+    // Handle drag end - update opportunity dates
+    const handleDragEnd = async (oppId, updates) => {
+        await updateOpportunity(oppId, updates);
+    };
 
     // Initialize timeline events
     useEffect(() => {
@@ -264,7 +368,8 @@ export default function OpportunityTimeline({ opportunities: externalOpps, onSel
     const handleSelectOpp = (opp) => {
         setSelectedOpp(opp);
         if (onSelectOpportunity) {
-            onSelectOpportunity(opp);
+            // Pass the opportunity ID for navigation
+            onSelectOpportunity(opp.id);
         }
     };
 
@@ -449,7 +554,7 @@ export default function OpportunityTimeline({ opportunities: externalOpps, onSel
                                     </div>
 
                                     {/* Timeline Bar */}
-                                    <div className="flex-1 relative h-12 py-2 group">
+                                    <div ref={timelineContainerRef} className="flex-1 relative h-12 py-2 group">
                                         {/* Month grid lines */}
                                         <div className="absolute inset-0 flex">
                                             {monthLabels.map(month => (
@@ -479,6 +584,10 @@ export default function OpportunityTimeline({ opportunities: externalOpps, onSel
                                             opp={opp}
                                             style={barStyle}
                                             onClick={handleSelectOpp}
+                                            onDragEnd={handleDragEnd}
+                                            startDate={startDate}
+                                            totalDays={totalDays}
+                                            containerWidth={timelineWidth}
                                         />
                                     </div>
                                 </div>

@@ -34,8 +34,9 @@ const CommercialTasksPage = lazy(() => import('./pages/CommercialTasksPage'));
 const SOPPage = lazy(() => import('./pages/SOPPage'));
 const KnowledgePage = lazy(() => import('./pages/KnowledgePage'));
 const KitListPage = lazy(() => import('./pages/KitListPage'));
+const ContactsPage = lazy(() => import('./pages/ContactsPage'));
 
-// Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings'
+// Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings' | 'contacts'
 function App() {
   const { isAuthenticated } = useAuthStore();
   const initializeQuote = useQuoteStore(state => state.initialize);
@@ -195,6 +196,10 @@ function App() {
 
   const handleGoToKit = useCallback(() => {
     confirmNavigateAway(() => setView('kit'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToContacts = useCallback(() => {
+    confirmNavigateAway(() => setView('contacts'));
   }, [confirmNavigateAway]);
 
   const handleSelectOpportunity = useCallback((opportunityId) => {
@@ -407,6 +412,14 @@ function App() {
             </main>
           </Suspense>
         );
+      case 'contacts':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Contacts..." />}>
+            <main id="main-content" tabIndex="-1">
+              <ContactsPage />
+            </main>
+          </Suspense>
+        );
       case 'fs':
         return (
           <Suspense fallback={<LoadingSpinner text="Loading..." />}>
@@ -467,6 +480,7 @@ function App() {
         onGoToSOP={handleGoToSOP}
         onGoToKnowledge={handleGoToKnowledge}
         onGoToKit={handleGoToKit}
+        onGoToContacts={handleGoToContacts}
         selectedClientId={selectedClientId}
       />
       {renderView()}

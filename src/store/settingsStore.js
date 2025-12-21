@@ -85,6 +85,12 @@ const defaultSettings = {
         { id: 'GULF', label: 'Gulf States', currency: 'USD' },
         { id: 'CENTRAL_ASIA', label: 'Central Asia', currency: 'USD' },
     ],
+    // Company OKRs that guide research priorities
+    okrs: [
+        { id: 'okr1', objective: 'Expand into GCC market', keyResult: 'Win 3 major sports broadcast contracts in Saudi Arabia or UAE by end of 2025', priority: 1 },
+        { id: 'okr2', objective: 'Grow recurring revenue', keyResult: 'Establish 5 long-term league partnerships across SEA region', priority: 2 },
+        { id: 'okr3', objective: 'Build Central Asia presence', keyResult: 'Deliver 2 multi-sport events in Kazakhstan or Uzbekistan', priority: 3 },
+    ],
     // Opportunities page preferences (synced across devices)
     opsPreferences: {
         expandedCountries: {}, // { countryName: boolean }
@@ -609,6 +615,32 @@ export const useSettingsStore = create(
             const updated = { ...state.settings, regions };
             await saveSettingsLocal(updated);
             set({ settings: updated });
+        },
+
+        // OKRs - Update an OKR
+        updateOkr: async (id, updates) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                okrs: state.settings.okrs.map(okr =>
+                    okr.id === id ? { ...okr, ...updates } : okr
+                ),
+            };
+            await saveSettingsLocal(updated);
+            saveSettingsToDb(updated);
+            set({ settings: updated });
+        },
+
+        // Get OKRs formatted for research prompt
+        getOkrsForPrompt: () => {
+            const { settings } = get();
+            const okrs = settings.okrs || [];
+            if (okrs.length === 0) return '';
+
+            return okrs
+                .sort((a, b) => a.priority - b.priority)
+                .map((okr, i) => `${i + 1}. **${okr.objective}**: ${okr.keyResult}`)
+                .join('\n');
         },
 
         // Export settings
