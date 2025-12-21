@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, lazy, Suspense, useRef } from 'react';
-import Header from './components/layout/Header';
+import Sidebar from './components/layout/Sidebar';
+import EditorHeader from './components/layout/EditorHeader';
 import EditorPanel from './components/layout/EditorPanel';
 import PreviewPanel from './components/layout/PreviewPanel';
 import LoginPage from './pages/LoginPage';
@@ -68,6 +69,18 @@ function App() {
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [pendingNewQuoteClientId, setPendingNewQuoteClientId] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    return saved === 'true';
+  });
+
+  const handleToggleSidebar = useCallback(() => {
+    setSidebarCollapsed(prev => {
+      const newValue = !prev;
+      localStorage.setItem('sidebar-collapsed', String(newValue));
+      return newValue;
+    });
+  }, []);
 
   // Use custom hook for unsaved changes tracking
   const quote = useQuoteStore(state => state.quote);
@@ -513,27 +526,71 @@ function App() {
     }
   };
 
+  // Determine active tab for sidebar
+  const activeTab = view === 'opportunity-detail' ? 'opportunities'
+    : view === 'client-detail' ? 'clients'
+    : view === 'project-detail' ? 'projects'
+    : view;
+
+  // Handle sidebar navigation
+  const handleSidebarTabChange = useCallback((tab) => {
+    if (tab === 'dashboard') handleGoToDashboard();
+    else if (tab === 'quotes') handleGoToQuotes();
+    else if (tab === 'clients') handleGoToClients();
+    else if (tab === 'opportunities') handleGoToOpportunities();
+    else if (tab === 'projects') handleGoToProjects();
+    else if (tab === 'tasks') handleGoToTasks();
+    else if (tab === 'sop') handleGoToSOP();
+    else if (tab === 'knowledge') handleGoToKnowledge();
+    else if (tab === 'kit') handleGoToKit();
+    else if (tab === 'rate-card') handleGoToRateCard();
+    else if (tab === 'contacts') handleGoToContacts();
+    else if (tab === 'settings') handleGoToSettings();
+  }, [handleGoToDashboard, handleGoToQuotes, handleGoToClients, handleGoToOpportunities, handleGoToProjects, handleGoToTasks, handleGoToSOP, handleGoToKnowledge, handleGoToKit, handleGoToRateCard, handleGoToContacts, handleGoToSettings]);
+
+  // Editor view has its own header, other views use sidebar
+  const isEditorView = view === 'editor';
+  const isFullScreenView = view === 'fs';
+
+  // Full screen view (no sidebar)
+  if (isFullScreenView) {
+    return (
+      <div className={`min-h-screen ${settings.theme === 'light' ? 'bg-light-bg' : 'bg-dark-bg'}`}>
+        <PWAStatus />
+        {renderView()}
+      </div>
+    );
+  }
+
   return (
-    <div className={`min-h-screen flex flex-col ${settings.theme === 'light' ? 'bg-light-bg' : 'bg-dark-bg'}`}>
+    <div className={`min-h-screen flex ${settings.theme === 'light' ? 'bg-light-bg' : 'bg-dark-bg'}`}>
       <PWAStatus />
-      <Header
-        view={view}
-        onGoToClients={handleGoToClients}
-        onGoToRateCard={handleGoToRateCard}
-        onGoToDashboard={handleGoToDashboard}
-        onGoToQuotes={handleGoToQuotes}
-        onGoToSettings={handleGoToSettings}
-        onGoToFS={handleGoToFS}
-        onGoToOpportunities={handleGoToOpportunities}
-        onGoToProjects={handleGoToProjects}
-        onGoToTasks={handleGoToTasks}
-        onGoToSOP={handleGoToSOP}
-        onGoToKnowledge={handleGoToKnowledge}
-        onGoToKit={handleGoToKit}
-        onGoToContacts={handleGoToContacts}
-        selectedClientId={selectedClientId}
-      />
-      {renderView()}
+
+      {/* Sidebar - shown on all views except editor and full screen */}
+      {!isEditorView && (
+        <Sidebar
+          activeTab={activeTab}
+          onTabChange={handleSidebarTabChange}
+          onGoToFS={handleGoToFS}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={handleToggleSidebar}
+        />
+      )}
+
+      {/* Main Content */}
+      <div className={`flex-1 flex flex-col min-h-screen overflow-hidden ${!isEditorView && !sidebarCollapsed ? 'lg:ml-0' : ''}`}>
+        {/* Editor has its own header */}
+        {isEditorView && (
+          <EditorHeader
+            onGoToDashboard={handleGoToDashboard}
+          />
+        )}
+
+        {/* Page Content */}
+        <div className="flex-1 overflow-y-auto">
+          {renderView()}
+        </div>
+      </div>
 
       {/* Template Picker Modal */}
       <TemplatePickerModal
