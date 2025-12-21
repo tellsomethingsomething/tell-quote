@@ -209,7 +209,66 @@ export const useAuthStore = create((set, get) => ({
             supabase.auth.onAuthStateChange(async (event, session) => {
                 if (event === 'SIGNED_IN' && session) {
                     // Fetch user profile
-                    const profile = await fetchUserProfile(session.user.id);
+                    let profile = await fetchUserProfile(session.user.id);
+
+                    // If no profile exists (new OAuth user), create pending profile
+                    if (!profile) {
+                        const name = session.user.user_metadata?.full_name ||
+                            session.user.user_metadata?.name ||
+                            session.user.email?.split('@')[0] ||
+                            'User';
+
+                        const { data: newProfile, error: createError } = await supabase
+                            .from('user_profiles')
+                            .insert({
+                                auth_user_id: session.user.id,
+                                name: name,
+                                email: session.user.email,
+                                role: 'user',
+                                status: 'pending',
+                                tab_permissions: [],
+                            })
+                            .select()
+                            .single();
+
+                        if (!createError && newProfile) {
+                            profile = {
+                                id: newProfile.id,
+                                authUserId: newProfile.auth_user_id,
+                                name: newProfile.name,
+                                email: newProfile.email,
+                                role: newProfile.role,
+                                status: newProfile.status,
+                                tabPermissions: newProfile.tab_permissions || [],
+                            };
+                            logSecurityEvent('signup_request_oauth', { email: session.user.email });
+                        }
+                    }
+
+                    // Check if user is pending/suspended
+                    if (profile?.status === 'pending') {
+                        await supabase.auth.signOut();
+                        saveAuthSession(null);
+                        set({
+                            isAuthenticated: false,
+                            user: null,
+                            error: 'Your account is pending approval. Please wait for an administrator to activate your account.',
+                            isLoading: false
+                        });
+                        return;
+                    }
+
+                    if (profile?.status === 'suspended') {
+                        await supabase.auth.signOut();
+                        saveAuthSession(null);
+                        set({
+                            isAuthenticated: false,
+                            user: null,
+                            error: 'Your account has been suspended. Please contact an administrator.',
+                            isLoading: false
+                        });
+                        return;
+                    }
 
                     const authSession = {
                         email: session.user.email,
@@ -223,7 +282,8 @@ export const useAuthStore = create((set, get) => ({
                     set({
                         isAuthenticated: true,
                         user: authSession,
-                        error: null
+                        error: null,
+                        isLoading: false
                     });
                 } else if (event === 'SIGNED_OUT') {
                     saveAuthSession(null);

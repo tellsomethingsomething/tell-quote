@@ -198,11 +198,15 @@ export const AVAILABLE_TABS = [
     { id: 'clients', label: 'Clients', description: 'Client database' },
     { id: 'opportunities', label: 'Opportunities', description: 'Sales pipeline' },
     { id: 'tasks', label: 'Tasks', description: 'Commercial tasks' },
+    { id: 'sop', label: 'SOP', description: 'Standard operating procedures' },
+    { id: 'knowledge', label: 'Research', description: 'Knowledge base and research' },
+    { id: 'kit', label: 'Kit', description: 'Equipment inventory' },
     { id: 'rate-card', label: 'Rate Card', description: 'Pricing rates' },
+    { id: 'contacts', label: 'Contacts', description: 'Contact management' },
     { id: 'settings', label: 'Settings', description: 'System configuration (Admin only)' },
 ];
 
 /**
  * Default tab permissions for new users
  */
-export const DEFAULT_TAB_PERMISSIONS = ['dashboard', 'quotes', 'clients', 'opportunities', 'tasks', 'rate-card'];
+export const DEFAULT_TAB_PERMISSIONS = ['dashboard', 'quotes', 'clients', 'opportunities', 'tasks'];

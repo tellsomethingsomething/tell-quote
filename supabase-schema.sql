@@ -191,10 +191,12 @@ create table user_profiles (
   name text not null,
   email text not null,
   role text default 'user' check (role in ('admin', 'user')),
-  tab_permissions text[] default array['dashboard', 'quotes', 'clients', 'opportunities', 'tasks', 'sop', 'rate-card'],
+  status text default 'pending' check (status in ('pending', 'active', 'suspended')),
+  tab_permissions text[] default array[]::text[],
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  unique(auth_user_id)
+  unique(auth_user_id),
+  unique(email)
 );
 
 -- Index for fast lookups by auth user id
@@ -207,6 +209,16 @@ alter table user_profiles enable row level security;
 -- All authenticated users can read profiles (internal tool)
 create policy "Authenticated users can read profiles" on user_profiles
   for select using (auth.role() = 'authenticated');
+
+-- Admins can update any profile
+create policy "Admins can manage profiles" on user_profiles
+  for all using (
+    exists (
+      select 1 from user_profiles up
+      where up.auth_user_id = auth.uid()
+      and up.role = 'admin'
+    )
+  );
 
 -- Users can update their own name only
 create policy "Users can update own name" on user_profiles
@@ -245,4 +257,53 @@ create policy "Allow all google_tokens" on google_tokens for all using (true) wi
 
 -- Trigger for updated_at
 create trigger update_google_tokens_updated_at before update on google_tokens
+  for each row execute function update_updated_at_column();
+
+-- ============================================================
+-- MIGRATION: Add status column to user_profiles
+-- Run this if you already have the user_profiles table:
+-- ============================================================
+-- ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS status text DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'suspended'));
+-- ALTER TABLE user_profiles ADD CONSTRAINT user_profiles_email_unique UNIQUE (email);
+-- UPDATE user_profiles SET tab_permissions = ARRAY[]::text[] WHERE tab_permissions IS NULL;
+
+-- ============================================================
+-- Set tom@tell.so as admin (run after user signs up)
+-- ============================================================
+-- UPDATE user_profiles SET role = 'admin', status = 'active', tab_permissions = ARRAY['dashboard', 'quotes', 'clients', 'opportunities', 'tasks', 'sop', 'knowledge', 'kit', 'rate-card', 'contacts'] WHERE email = 'tom@tell.so';
+
+-- ============================================================
+-- Contacts table for CRM
+-- ============================================================
+create table contacts (
+  id uuid default uuid_generate_v4() primary key,
+  name text not null,
+  email text,
+  phone text,
+  company text,
+  role text,
+  client_id uuid references clients(id) on delete set null,
+  source text,
+  status text default 'active' check (status in ('active', 'inactive')),
+  tags text[] default '{}',
+  notes text,
+  last_contacted_at timestamp with time zone,
+  metadata jsonb default '{}',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Indexes for contacts
+create index contacts_email_idx on contacts(email);
+create index contacts_client_id_idx on contacts(client_id);
+create index contacts_status_idx on contacts(status);
+
+-- Enable RLS
+alter table contacts enable row level security;
+
+-- Allow all (internal tool)
+create policy "Allow all contacts" on contacts for all using (true) with check (true);
+
+-- Trigger for updated_at
+create trigger update_contacts_updated_at before update on contacts
   for each row execute function update_updated_at_column();
