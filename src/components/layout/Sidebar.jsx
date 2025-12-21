@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useSettingsStore } from '../../store/settingsStore';
 
@@ -28,6 +28,26 @@ export default function Sidebar({
     const { logout, user } = useAuthStore();
     const { settings, setTheme } = useSettingsStore();
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    // Detect mobile viewport
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Close mobile menu when navigating
+    const handleNavClick = (tab) => {
+        if (isMobile) {
+            setMobileOpen(false);
+        }
+        onTabChange(tab);
+    };
 
     const isDark = settings.theme !== 'light';
     const userName = user?.profile?.name || user?.email?.split('@')[0] || 'User';
@@ -38,42 +58,71 @@ export default function Sidebar({
         return NAV_ITEMS.filter(item => item.type === 'divider' || hasPermission(item.id));
     }, [hasPermission]);
 
+    // Mobile: use mobileOpen state, Desktop: use collapsed prop
+    const isOpen = isMobile ? mobileOpen : !collapsed;
+
     return (
         <>
+            {/* Mobile hamburger button - always visible on mobile */}
+            {isMobile && !mobileOpen && (
+                <button
+                    onClick={() => setMobileOpen(true)}
+                    className="fixed top-4 left-4 z-50 w-12 h-12 rounded-xl bg-dark-card border border-dark-border flex items-center justify-center text-gray-400 hover:text-white hover:bg-dark-border transition-colors shadow-lg"
+                    aria-label="Open menu"
+                >
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            )}
+
             {/* Mobile overlay */}
-            {!collapsed && (
+            {isMobile && mobileOpen && (
                 <div
-                    className="lg:hidden fixed inset-0 bg-black/50 z-40"
-                    onClick={onToggleCollapse}
+                    className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
+                    onClick={() => setMobileOpen(false)}
                 />
             )}
 
+            {/* Sidebar */}
             <aside
                 className={`fixed lg:relative z-50 h-screen bg-dark-bg border-r border-dark-border flex flex-col transition-all duration-300 ease-in-out ${
-                    collapsed
-                        ? 'w-16 -translate-x-full lg:translate-x-0'
-                        : 'w-64 translate-x-0'
+                    isMobile
+                        ? mobileOpen ? 'w-72 translate-x-0' : 'w-72 -translate-x-full'
+                        : collapsed ? 'w-16' : 'w-64'
                 }`}
             >
                 {/* Logo & Toggle */}
-                <div className={`h-16 border-b border-dark-border flex items-center ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
-                    {!collapsed && (
+                <div className={`h-16 border-b border-dark-border flex items-center ${!isOpen && !isMobile ? 'justify-center px-2' : 'justify-between px-4'}`}>
+                    {(isOpen || isMobile) && (
                         <button
-                            onClick={() => onTabChange('dashboard')}
+                            onClick={() => handleNavClick('dashboard')}
                             className="flex items-center hover:opacity-80 transition-opacity"
                         >
                             <img src="/tell-logo.svg" alt="Tell" className="h-7" />
                         </button>
                     )}
-                    <button
-                        onClick={onToggleCollapse}
-                        className="w-10 h-10 rounded-lg hover:bg-white/5 flex items-center justify-center text-gray-400 hover:text-gray-200 transition-colors"
-                        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                    >
-                        <svg className={`w-5 h-5 transition-transform ${collapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                        </svg>
-                    </button>
+                    {isMobile ? (
+                        <button
+                            onClick={() => setMobileOpen(false)}
+                            className="w-10 h-10 rounded-lg hover:bg-white/5 flex items-center justify-center text-gray-400 hover:text-gray-200 transition-colors"
+                            title="Close menu"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    ) : (
+                        <button
+                            onClick={onToggleCollapse}
+                            className="w-10 h-10 rounded-lg hover:bg-white/5 flex items-center justify-center text-gray-400 hover:text-gray-200 transition-colors"
+                            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                        >
+                            <svg className={`w-5 h-5 transition-transform ${collapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
 
                 {/* Navigation */}
@@ -88,18 +137,18 @@ export default function Sidebar({
                             return (
                                 <li key={item.id}>
                                     <button
-                                        onClick={() => onTabChange(item.id)}
+                                        onClick={() => handleNavClick(item.id)}
                                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
                                             isActive
                                                 ? 'bg-accent-primary/20 text-accent-primary'
                                                 : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
                                         }`}
-                                        title={collapsed ? item.label : undefined}
+                                        title={!isOpen && !isMobile ? item.label : undefined}
                                     >
                                         <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
                                         </svg>
-                                        {!collapsed && (
+                                        {(isOpen || isMobile) && (
                                             <span className="text-sm font-medium truncate">{item.label}</span>
                                         )}
                                     </button>
@@ -113,20 +162,20 @@ export default function Sidebar({
                 <div className="border-t border-dark-border p-2 space-y-1">
                     {/* Full Screen Analytics */}
                     <button
-                        onClick={onGoToFS}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-teal-400 hover:bg-teal-500/10 transition-colors ${collapsed ? 'justify-center' : ''}`}
+                        onClick={() => { if (isMobile) setMobileOpen(false); onGoToFS(); }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-teal-400 hover:bg-teal-500/10 transition-colors ${!isOpen && !isMobile ? 'justify-center' : ''}`}
                         title="Full Screen Analytics"
                     >
                         <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
-                        {!collapsed && <span className="text-sm font-medium">Analytics</span>}
+                        {(isOpen || isMobile) && <span className="text-sm font-medium">Analytics</span>}
                     </button>
 
                     {/* Theme Toggle */}
                     <button
                         onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors ${collapsed ? 'justify-center' : ''}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors ${!isOpen && !isMobile ? 'justify-center' : ''}`}
                         title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
                     >
                         {isDark ? (
@@ -138,36 +187,36 @@ export default function Sidebar({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                             </svg>
                         )}
-                        {!collapsed && <span className="text-sm font-medium">{isDark ? 'Light Mode' : 'Dark Mode'}</span>}
+                        {(isOpen || isMobile) && <span className="text-sm font-medium">{isDark ? 'Light Mode' : 'Dark Mode'}</span>}
                     </button>
 
                     {/* Settings */}
                     <button
-                        onClick={() => onTabChange('settings')}
+                        onClick={() => handleNavClick('settings')}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                             activeTab === 'settings'
                                 ? 'bg-accent-primary/20 text-accent-primary'
                                 : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                        } ${collapsed ? 'justify-center' : ''}`}
+                        } ${!isOpen && !isMobile ? 'justify-center' : ''}`}
                         title="Settings"
                     >
                         <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        {!collapsed && <span className="text-sm font-medium">Settings</span>}
+                        {(isOpen || isMobile) && <span className="text-sm font-medium">Settings</span>}
                     </button>
 
                     {/* User Menu */}
                     <div className="relative">
                         <button
                             onClick={() => setShowUserMenu(!showUserMenu)}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors ${collapsed ? 'justify-center' : ''}`}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors ${!isOpen && !isMobile ? 'justify-center' : ''}`}
                         >
                             <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs shrink-0">
                                 {userInitials}
                             </div>
-                            {!collapsed && (
+                            {(isOpen || isMobile) && (
                                 <div className="flex-1 text-left min-w-0">
                                     <p className="text-sm font-medium text-gray-200 truncate">{userName}</p>
                                     <p className="text-xs text-gray-500">{userRole}</p>
@@ -180,11 +229,12 @@ export default function Sidebar({
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
                                 <div className={`absolute z-50 bg-[#1a1f2e] border border-dark-border rounded-lg shadow-2xl overflow-hidden ${
-                                    collapsed ? 'left-full ml-2 bottom-0 w-48' : 'left-0 bottom-full mb-2 w-full'
+                                    !isOpen && !isMobile ? 'left-full ml-2 bottom-0 w-48' : 'left-0 bottom-full mb-2 w-full'
                                 }`}>
                                     <button
                                         onClick={() => {
                                             setShowUserMenu(false);
+                                            if (isMobile) setMobileOpen(false);
                                             logout();
                                         }}
                                         className="w-full px-4 py-3 text-left text-sm text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-colors flex items-center gap-2"
@@ -200,18 +250,6 @@ export default function Sidebar({
                     </div>
                 </div>
             </aside>
-
-            {/* Mobile Toggle Button (when collapsed) */}
-            {collapsed && (
-                <button
-                    onClick={onToggleCollapse}
-                    className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-lg bg-dark-bg border border-dark-border flex items-center justify-center text-gray-400 hover:text-gray-200 transition-colors"
-                >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-            )}
         </>
     );
 }
