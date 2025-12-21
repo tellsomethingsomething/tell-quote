@@ -220,6 +220,11 @@ function App() {
     setView('project-detail');
   }, []);
 
+  const handleConvertQuoteToProject = useCallback((projectId) => {
+    setSelectedProjectId(projectId);
+    setView('project-detail');
+  }, []);
+
   const handleSelectOpportunity = useCallback((opportunityId) => {
     setSelectedOpportunityId(opportunityId);
     setView('opportunity-detail');
@@ -496,7 +501,7 @@ function App() {
 
             {/* Editor Panel - Hidden on mobile when preview is shown */}
             <div className={`${showMobilePreview ? 'hidden lg:flex' : 'flex'} flex-1`}>
-              <EditorPanel onGoToSettings={handleGoToSettings} />
+              <EditorPanel onGoToSettings={handleGoToSettings} onConvertToProject={handleConvertQuoteToProject} />
             </div>
 
             {/* Preview Panel - Hidden on mobile when editor is shown */}

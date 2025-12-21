@@ -372,7 +372,7 @@ export const useProjectStore = create(
         // Create project from quote
         createFromQuote: async (quote, opportunity = null) => {
             const projectData = {
-                name: quote.project?.name || opportunity?.title || 'Untitled Project',
+                name: quote.project?.title || opportunity?.title || 'Untitled Project',
                 opportunityId: opportunity?.id || null,
                 quoteId: quote.id || null,
                 clientId: quote.client?.clientId || opportunity?.clientId || null,
