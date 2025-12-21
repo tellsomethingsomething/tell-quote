@@ -277,11 +277,48 @@ const DEFAULT_SOPS = [
     },
 ];
 
+// Load collapsed state from localStorage
+const loadCollapsedState = () => {
+    try {
+        const saved = localStorage.getItem('sop_collapsed_state');
+        return saved ? JSON.parse(saved) : {};
+    } catch {
+        return {};
+    }
+};
+
+// Save collapsed state to localStorage
+const saveCollapsedState = (state) => {
+    try {
+        localStorage.setItem('sop_collapsed_state', JSON.stringify(state));
+    } catch (e) {
+        console.error('Failed to save collapsed state:', e);
+    }
+};
+
 export const useSopStore = create(
     subscribeWithSelector((set, get) => ({
         sops: [],
         isLoading: false,
         error: null,
+        collapsedSops: loadCollapsedState(), // Track which SOPs are collapsed
+
+        // Toggle collapsed state for a SOP
+        toggleCollapsed: (sopId) => {
+            set((state) => {
+                const newCollapsed = {
+                    ...state.collapsedSops,
+                    [sopId]: !state.collapsedSops[sopId],
+                };
+                saveCollapsedState(newCollapsed);
+                return { collapsedSops: newCollapsed };
+            });
+        },
+
+        // Check if a SOP is collapsed
+        isCollapsed: (sopId) => {
+            return get().collapsedSops[sopId] || false;
+        },
 
         // Initialize from Supabase or use defaults
         initialize: async () => {

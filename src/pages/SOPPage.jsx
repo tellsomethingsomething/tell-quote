@@ -123,11 +123,11 @@ function ChecklistItem({ item, onToggle, onDelete, onEdit, isEditing, onEditSubm
 }
 
 // SOP Card component
-function SOPCard({ sop, onToggleItem, onAddItem, onRemoveItem, onEditItem, onReset, onDuplicate, onUpdatePhotos }) {
+function SOPCard({ sop, onToggleItem, onAddItem, onRemoveItem, onEditItem, onReset, onDuplicate, onUpdatePhotos, isCollapsed, onToggleCollapsed }) {
     const [newItemText, setNewItemText] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [editText, setEditText] = useState('');
-    const [isExpanded, setIsExpanded] = useState(true);
+    const isExpanded = !isCollapsed;
 
     const completedCount = sop.checklist?.filter(i => i.completed).length || 0;
     const totalCount = sop.checklist?.length || 0;
@@ -162,7 +162,7 @@ function SOPCard({ sop, onToggleItem, onAddItem, onRemoveItem, onEditItem, onRes
             {/* Header */}
             <div
                 className="p-4 cursor-pointer hover:bg-white/5 transition-colors"
-                onClick={() => setIsExpanded(!isExpanded)}
+                onClick={onToggleCollapsed}
             >
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
@@ -468,6 +468,8 @@ export default function SOPPage() {
         duplicateSop,
         updateSopPhotos,
         getCompletionPercentage,
+        collapsedSops,
+        toggleCollapsed,
     } = useSopStore();
 
     const [activeCategory, setActiveCategory] = useState(SOP_CATEGORIES.OPERATIONS);
@@ -599,6 +601,8 @@ export default function SOPPage() {
                                 onReset={resetChecklist}
                                 onDuplicate={duplicateSop}
                                 onUpdatePhotos={updateSopPhotos}
+                                isCollapsed={collapsedSops[sop.id] || false}
+                                onToggleCollapsed={() => toggleCollapsed(sop.id)}
                             />
                         ))}
                         {filteredSops.length === 0 && (
