@@ -20,6 +20,9 @@ import { useKnowledgeStore } from './store/knowledgeStore';
 import { useKitStore } from './store/kitStore';
 import { useSopStore } from './store/sopStore';
 import { useProjectStore } from './store/projectStore';
+import { useCrewStore } from './store/crewStore';
+import { useKitBookingStore } from './store/kitBookingStore';
+import { useCallSheetStore } from './store/callSheetStore';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
 
 // Initialize auth store to set up OAuth listeners (must run once on app load)
@@ -42,6 +45,11 @@ const KitListPage = lazy(() => import('./pages/KitListPage'));
 const ContactsPage = lazy(() => import('./pages/ContactsPage'));
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
+const CrewPage = lazy(() => import('./pages/CrewPage'));
+const CrewDetailPage = lazy(() => import('./pages/CrewDetailPage'));
+const KitBookingPage = lazy(() => import('./pages/KitBookingPage'));
+const CallSheetPage = lazy(() => import('./pages/CallSheetPage'));
+const CallSheetDetailPage = lazy(() => import('./pages/CallSheetDetailPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 
 // Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings' | 'contacts'
@@ -59,6 +67,9 @@ function App() {
   const initializeKit = useKitStore(state => state.initialize);
   const initializeSops = useSopStore(state => state.initialize);
   const initializeProjects = useProjectStore(state => state.initialize);
+  const initializeCrew = useCrewStore(state => state.initialize);
+  const initializeKitBookings = useKitBookingStore(state => state.initialize);
+  const initializeCallSheets = useCallSheetStore(state => state.initialize);
   const resetQuote = useQuoteStore(state => state.resetQuote);
   const loadQuoteData = useQuoteStore(state => state.loadQuoteData);
 
@@ -66,6 +77,8 @@ function App() {
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState(null);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [selectedCrewId, setSelectedCrewId] = useState(null);
+  const [selectedCallSheetId, setSelectedCallSheetId] = useState(null);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [pendingNewQuoteClientId, setPendingNewQuoteClientId] = useState(null);
@@ -220,6 +233,10 @@ function App() {
     confirmNavigateAway(() => setView('kit'));
   }, [confirmNavigateAway]);
 
+  const handleGoToKitBookings = useCallback(() => {
+    confirmNavigateAway(() => setView('kit-bookings'));
+  }, [confirmNavigateAway]);
+
   const handleGoToContacts = useCallback(() => {
     confirmNavigateAway(() => setView('contacts'));
   }, [confirmNavigateAway]);
@@ -231,6 +248,24 @@ function App() {
   const handleSelectProject = useCallback((projectId) => {
     setSelectedProjectId(projectId);
     setView('project-detail');
+  }, []);
+
+  const handleGoToCrew = useCallback(() => {
+    confirmNavigateAway(() => setView('crew'));
+  }, [confirmNavigateAway]);
+
+  const handleSelectCrew = useCallback((crewId) => {
+    setSelectedCrewId(crewId);
+    setView('crew-detail');
+  }, []);
+
+  const handleGoToCallSheets = useCallback(() => {
+    confirmNavigateAway(() => setView('call-sheets'));
+  }, [confirmNavigateAway]);
+
+  const handleSelectCallSheet = useCallback((callSheetId) => {
+    setSelectedCallSheetId(callSheetId);
+    setView('call-sheet-detail');
   }, []);
 
   const handleConvertQuoteToProject = useCallback((projectId) => {
@@ -324,8 +359,11 @@ function App() {
       initializeKit();
       initializeSops();
       initializeProjects();
+      initializeCrew();
+      initializeKitBookings();
+      initializeCallSheets();
     }
-  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities, initializeActivities, initializeTemplates, initializeDealContext, initializeKnowledge, initializeKit, initializeSops, initializeProjects]);
+  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities, initializeActivities, initializeTemplates, initializeDealContext, initializeKnowledge, initializeKit, initializeSops, initializeProjects, initializeCrew, initializeKitBookings, initializeCallSheets]);
 
   // Show login/landing page if not authenticated
   const [showLanding, setShowLanding] = useState(true);
@@ -454,6 +492,14 @@ function App() {
             </main>
           </Suspense>
         );
+      case 'kit-bookings':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Kit Bookings..." />}>
+            <main id="main-content" tabIndex="-1">
+              <KitBookingPage />
+            </main>
+          </Suspense>
+        );
       case 'contacts':
         return (
           <Suspense fallback={<LoadingSpinner text="Loading Contacts..." />}>
@@ -478,6 +524,44 @@ function App() {
                 projectId={selectedProjectId}
                 onBack={handleGoToProjects}
                 onEditQuote={handleEditQuote}
+              />
+            </main>
+          </Suspense>
+        );
+      case 'crew':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Crew..." />}>
+            <main id="main-content" tabIndex="-1">
+              <CrewPage onSelectCrew={handleSelectCrew} />
+            </main>
+          </Suspense>
+        );
+      case 'crew-detail':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Crew Member..." />}>
+            <main id="main-content" tabIndex="-1">
+              <CrewDetailPage
+                crewId={selectedCrewId}
+                onBack={handleGoToCrew}
+              />
+            </main>
+          </Suspense>
+        );
+      case 'call-sheets':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Call Sheets..." />}>
+            <main id="main-content" tabIndex="-1">
+              <CallSheetPage onSelectCallSheet={handleSelectCallSheet} />
+            </main>
+          </Suspense>
+        );
+      case 'call-sheet-detail':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Call Sheet..." />}>
+            <main id="main-content" tabIndex="-1">
+              <CallSheetDetailPage
+                callSheetId={selectedCallSheetId}
+                onBack={handleGoToCallSheets}
               />
             </main>
           </Suspense>
@@ -530,6 +614,8 @@ function App() {
   const activeTab = view === 'opportunity-detail' ? 'opportunities'
     : view === 'client-detail' ? 'clients'
     : view === 'project-detail' ? 'projects'
+    : view === 'crew-detail' ? 'crew'
+    : view === 'call-sheet-detail' ? 'call-sheets'
     : view;
 
   // Handle sidebar navigation
@@ -543,10 +629,13 @@ function App() {
     else if (tab === 'sop') handleGoToSOP();
     else if (tab === 'knowledge') handleGoToKnowledge();
     else if (tab === 'kit') handleGoToKit();
+    else if (tab === 'kit-bookings') handleGoToKitBookings();
+    else if (tab === 'crew') handleGoToCrew();
+    else if (tab === 'call-sheets') handleGoToCallSheets();
     else if (tab === 'rate-card') handleGoToRateCard();
     else if (tab === 'contacts') handleGoToContacts();
     else if (tab === 'settings') handleGoToSettings();
-  }, [handleGoToDashboard, handleGoToQuotes, handleGoToClients, handleGoToOpportunities, handleGoToProjects, handleGoToTasks, handleGoToSOP, handleGoToKnowledge, handleGoToKit, handleGoToRateCard, handleGoToContacts, handleGoToSettings]);
+  }, [handleGoToDashboard, handleGoToQuotes, handleGoToClients, handleGoToOpportunities, handleGoToProjects, handleGoToTasks, handleGoToSOP, handleGoToKnowledge, handleGoToKit, handleGoToKitBookings, handleGoToCrew, handleGoToCallSheets, handleGoToRateCard, handleGoToContacts, handleGoToSettings]);
 
   // Editor view has its own header, other views use sidebar
   const isEditorView = view === 'editor';
