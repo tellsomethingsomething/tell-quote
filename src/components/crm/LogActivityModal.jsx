@@ -102,9 +102,10 @@ export default function LogActivityModal({
                 {/* Close button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                    className="absolute top-4 right-4 btn-icon text-gray-500 hover:text-white"
+                    aria-label="Close modal"
                 >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
@@ -143,6 +144,7 @@ export default function LogActivityModal({
                         <input
                             type="text"
                             required
+                            autoFocus
                             value={form.title}
                             onChange={(e) => setForm({ ...form, title: e.target.value })}
                             className="input w-full"

@@ -86,9 +86,10 @@ export default function TemplatePickerModal({ isOpen, onClose, onSelectTemplate,
                     </div>
                     <button
                         onClick={() => onClose()}
-                        className="p-2 hover:bg-white/5 rounded-lg transition-colors"
+                        className="btn-icon text-gray-400 hover:text-white"
+                        aria-label="Close modal"
                     >
-                        <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
@@ -107,6 +108,7 @@ export default function TemplatePickerModal({ isOpen, onClose, onSelectTemplate,
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search templates..."
                             className="input pl-10"
+                            autoFocus
                         />
                     </div>
 
