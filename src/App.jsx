@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense, useRef } from 'react';
 import Header from './components/layout/Header';
 import EditorPanel from './components/layout/EditorPanel';
 import PreviewPanel from './components/layout/PreviewPanel';
@@ -20,6 +20,9 @@ import { useKitStore } from './store/kitStore';
 import { useSopStore } from './store/sopStore';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
 
+// Initialize auth store to set up OAuth listeners (must run once on app load)
+useAuthStore.getState().initialize();
+
 // Lazy load pages for better code splitting
 const ClientsPage = lazy(() => import('./pages/ClientsPage'));
 const ClientDetailPage = lazy(() => import('./pages/ClientDetailPage'));
@@ -35,6 +38,7 @@ const SOPPage = lazy(() => import('./pages/SOPPage'));
 const KnowledgePage = lazy(() => import('./pages/KnowledgePage'));
 const KitListPage = lazy(() => import('./pages/KitListPage'));
 const ContactsPage = lazy(() => import('./pages/ContactsPage'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 
 // Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings' | 'contacts'
 function App() {
@@ -290,9 +294,14 @@ function App() {
     }
   }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities, initializeActivities, initializeTemplates, initializeDealContext, initializeKnowledge, initializeKit, initializeSops]);
 
-  // Show login page if not authenticated
+  // Show login/landing page if not authenticated
+  const [showLanding, setShowLanding] = useState(true);
+
   if (!isAuthenticated) {
-    return <LoginPage />;
+    if (showLanding) {
+      return <Suspense fallback={<LoadingSpinner />}><LandingPage onLogin={() => setShowLanding(false)} /></Suspense>;
+    }
+    return <LoginPage onBack={() => setShowLanding(true)} />;
   }
 
   // Render current view with Suspense boundaries
