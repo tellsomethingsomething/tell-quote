@@ -666,7 +666,7 @@ Return ONLY JSON:
                 {/* Add Task Modal */}
                 {showAddTask && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md">
+                        <div className="bg-[#1a1f2e] border border-dark-border rounded-xl p-6 w-full max-w-md">
                             <h3 className="text-lg font-semibold text-white mb-4">Add Task</h3>
                             <div className="space-y-4">
                                 <div>

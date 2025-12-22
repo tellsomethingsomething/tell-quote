@@ -264,7 +264,7 @@ function AddResearchForm({ onClose, onSubmit }) {
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md p-4">
-            <div className="bg-dark-card border border-dark-border rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="bg-[#1a1f2e] border border-dark-border rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
                 <div className="sticky top-0 bg-dark-card border-b border-dark-border p-4 flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-100">Add Research Finding</h3>
                     <button onClick={onClose} className="p-2 text-gray-400 hover:text-white">

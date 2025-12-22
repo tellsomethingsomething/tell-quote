@@ -35,7 +35,7 @@ export default function TemplateManager({ onClose }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md modal-backdrop p-4">
-            <div className="bg-dark-card border border-dark-border rounded-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="bg-[#1a1f2e] border border-dark-border rounded-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-dark-border">
                     <h3 className="text-lg font-semibold text-gray-100">Manage Templates</h3>

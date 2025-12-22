@@ -73,7 +73,7 @@ export default function SaveAsTemplateModal({ isOpen, onClose }) {
             />
 
             {/* Modal */}
-            <div className="relative bg-dark-card border border-dark-border rounded-xl shadow-2xl w-full max-w-md">
+            <div className="relative bg-[#1a1f2e] border border-dark-border rounded-xl shadow-2xl w-full max-w-md">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-dark-border">
                     <div className="flex items-center gap-3">

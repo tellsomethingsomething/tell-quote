@@ -180,7 +180,7 @@ function NewCrewModal({ isOpen, onClose }) {
 
     return (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="bg-dark-card border border-dark-border rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="bg-[#1a1f2e] border border-dark-border rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
                 <div className="p-6 border-b border-dark-border">
                     <h2 className="text-xl font-bold text-white">Add Crew Member</h2>
                 </div>

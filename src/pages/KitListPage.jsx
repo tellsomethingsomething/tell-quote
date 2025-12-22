@@ -473,7 +473,7 @@ function KitModal({ item, categories, locations, onSave, onClose }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-            <div className="bg-dark-card border border-dark-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-[#1a1f2e] border border-dark-border rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="sticky top-0 bg-dark-card border-b border-dark-border p-4 flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-100">
                         {isNew ? 'Add Kit Item' : `Edit ${item.kitId}`}

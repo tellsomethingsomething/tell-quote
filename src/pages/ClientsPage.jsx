@@ -822,7 +822,7 @@ export default function ClientsPage({ onSelectClient }) {
             {
                 isAddClientModalOpen && (
                     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md modal-backdrop p-4">
-                        <div className="bg-dark-card border border-dark-border rounded-xl p-4 sm:p-6 w-full max-w-lg shadow-2xl modal-content relative max-h-[90vh] overflow-y-auto">
+                        <div className="bg-[#1a1f2e] border border-dark-border rounded-xl p-4 sm:p-6 w-full max-w-lg shadow-2xl modal-content relative max-h-[90vh] overflow-y-auto">
                             <button
                                 onClick={() => { setIsAddClientModalOpen(false); setFormErrors({}); }}
                                 className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"

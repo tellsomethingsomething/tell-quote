@@ -413,7 +413,7 @@ export default function RateCardPage() {
             {/* Add Category Modal */}
             {showAddCategoryForm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md modal-backdrop" onClick={() => setShowAddCategoryForm(false)}>
-                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-sm shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
+                    <div className="bg-[#1a1f2e] border border-dark-border rounded-xl p-6 w-full max-w-sm shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
                         <button
                             onClick={() => setShowAddCategoryForm(false)}
                             className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
@@ -535,7 +535,7 @@ export default function RateCardPage() {
             {/* Add Item Modal */}
             {showAddForm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md modal-backdrop" onClick={() => setShowAddForm(false)}>
-                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
+                    <div className="bg-[#1a1f2e] border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
                         <button
                             onClick={() => setShowAddForm(false)}
                             className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
@@ -609,7 +609,7 @@ export default function RateCardPage() {
             {/* Edit Item Modal */}
             {editingItem && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md modal-backdrop" onClick={() => setEditingItem(null)}>
-                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
+                    <div className="bg-[#1a1f2e] border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
                         <button
                             onClick={() => setEditingItem(null)}
                             className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
@@ -682,7 +682,7 @@ export default function RateCardPage() {
             {/* Bulk Markup Modal */}
             {showBulkMarkup && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md modal-backdrop" onClick={() => setShowBulkMarkup(false)}>
-                    <div className="bg-dark-card border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
+                    <div className="bg-[#1a1f2e] border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl modal-content relative" onClick={e => e.stopPropagation()}>
                         <button
                             onClick={() => setShowBulkMarkup(false)}
                             className="absolute top-4 right-4 p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"

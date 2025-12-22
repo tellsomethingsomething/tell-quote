@@ -70,7 +70,7 @@ export default function TemplatePickerModal({ isOpen, onClose, onSelectTemplate,
             />
 
             {/* Modal */}
-            <div className="relative bg-dark-card border border-dark-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+            <div className="relative bg-[#1a1f2e] border border-dark-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-dark-border">
                     <div className="flex items-center gap-3">
