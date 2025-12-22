@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { pdf } from '@react-pdf/renderer';
 import { useCallSheetStore, CALL_SHEET_STATUS, CALL_SHEET_STATUS_CONFIG, DEPARTMENTS } from '../store/callSheetStore';
 import { useCrewStore } from '../store/crewStore';
 import { useProjectStore } from '../store/projectStore';
@@ -1263,6 +1263,7 @@ export default function CallSheetDetailPage({ callSheetId, onBack }) {
     const [saving, setSaving] = useState(false);
     const [pendingChanges, setPendingChanges] = useState({});
     const [enabledSections, setEnabledSections] = useState(getDefaultSections());
+    const [generatingPdf, setGeneratingPdf] = useState(false);
 
     // Load call sheet
     useEffect(() => {
@@ -1327,6 +1328,36 @@ export default function CallSheetDetailPage({ callSheetId, onBack }) {
         if (confirm('Delete this call sheet? This cannot be undone.')) {
             await deleteCallSheet(id);
             onBack();
+        }
+    };
+
+    const handleExportPdf = async () => {
+        setGeneratingPdf(true);
+        try {
+            const merged = { ...sheet, ...pendingChanges, enabledSections };
+            const blob = await pdf(
+                <CallSheetPDF
+                    sheet={merged}
+                    crew={crew}
+                    cast={cast}
+                    settings={settings}
+                />
+            ).toBlob();
+
+            const filename = `call-sheet-day${merged.dayNumber || 1}-${merged.shootDate || 'draft'}.pdf`;
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Failed to generate PDF:', err);
+            alert('Failed to generate PDF. Please try again.');
+        } finally {
+            setGeneratingPdf(false);
         }
     };
 
@@ -1404,27 +1435,16 @@ export default function CallSheetDetailPage({ callSheetId, onBack }) {
 
                             {/* Actions */}
                             {/* PDF Export */}
-                            <PDFDownloadLink
-                                document={
-                                    <CallSheetPDF
-                                        sheet={{ ...merged, enabledSections }}
-                                        crew={crew}
-                                        cast={cast}
-                                        settings={settings}
-                                    />
-                                }
-                                fileName={`call-sheet-day${merged.dayNumber || 1}-${merged.shootDate || 'draft'}.pdf`}
-                                className="px-4 py-2 bg-accent-primary/20 text-accent-primary rounded-lg font-medium hover:bg-accent-primary/30 transition-colors flex items-center gap-2"
+                            <button
+                                onClick={handleExportPdf}
+                                disabled={generatingPdf}
+                                className="px-4 py-2 bg-accent-primary/20 text-accent-primary rounded-lg font-medium hover:bg-accent-primary/30 transition-colors flex items-center gap-2 disabled:opacity-50"
                             >
-                                {({ loading: pdfLoading }) => (
-                                    <>
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        {pdfLoading ? 'Generating...' : 'Export PDF'}
-                                    </>
-                                )}
-                            </PDFDownloadLink>
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                {generatingPdf ? 'Generating...' : 'Export PDF'}
+                            </button>
 
                             {sheet.status === CALL_SHEET_STATUS.DRAFT && (
                                 <button
