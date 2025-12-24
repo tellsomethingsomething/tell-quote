@@ -1,313 +1,428 @@
-# Tell CRM Roadmap
-## Vision: AI-Native Sales Intelligence Platform
+# ProductionOS - Launch Sprint
 
-Transform from a quote tool into a fully integrated, AI/Agent-driven CRM where intelligent agents handle repetitive work, surface critical insights, and help close deals faster.
+## Vision
+AI-native CRM + rental management platform for production companies, AV rental houses, and event businesses. The platform they wish Current RMS/Rentman was.
 
----
-
-## Current State (v1.0)
-
-**Core Features:**
-- Quote generation with multi-currency, regional pricing
-- Client & contact management
-- Opportunity pipeline tracking
-- Activity timeline (manual logging)
-- Smart tasks with pattern learning
-- Rate card management
-- PDF export (quotes, proposals, invoices)
-- PWA with offline support
-
-**Backend Ready (Not Integrated):**
-- Google OAuth Edge Functions
-- Gmail sync/send Edge Functions
-- Calendar sync Edge Functions
+**Brand:** ProductionOS
+**Killer Feature:** Real P&L per project
+**Price:** $29/user/month
+**Target:** 10 paying customers in 30 days
 
 ---
 
-## Phase 1: Communication Hub (Q1)
-*Connect all client communications in one place*
+## Launch Sprint: 1 Week (5-6 hrs/day = ~40 hrs)
 
-### 1.1 Email Integration
-- [ ] Google OAuth connect in Settings
-- [ ] Background email sync (15 min intervals)
-- [ ] Email thread view in client timeline
-- [ ] Compose & send emails from app
-- [ ] Email quote PDFs directly
-- [ ] Email templates library
+### Day 1: Foundation (6 hrs)
+| Task | Time | Priority |
+|------|------|----------|
+| Buy domain (productionos.com or .io) | 30 min | 🔴 |
+| Set up new Supabase project for multi-tenant | 1 hr | 🔴 |
+| Create organizations table + RLS policies | 2 hrs | 🔴 |
+| Set up Stripe account + products | 1 hr | 🔴 |
+| Fork/copy Tell codebase to ProductionOS repo | 30 min | 🔴 |
+| Update branding (logo, colors, name) | 1 hr | 🟡 |
 
-### 1.2 Calendar Integration
-- [ ] Two-way Google Calendar sync
-- [ ] Meeting scheduling from client page
-- [ ] Auto-create activities from calendar events
-- [ ] Meeting reminders with client context
+### Day 2: Auth & Billing (6 hrs)
+| Task | Time | Priority |
+|------|------|----------|
+| Implement Supabase Auth with org context | 2 hrs | 🔴 |
+| Create signup flow (email + org name) | 1.5 hrs | 🔴 |
+| Integrate Stripe Checkout for subscriptions | 2 hrs | 🔴 |
+| Webhook for payment events | 30 min | 🔴 |
 
-### 1.3 Communication Analytics
-- [ ] Response time tracking
-- [ ] Email open/click tracking (via SendGrid)
-- [ ] Communication frequency insights
-- [ ] "Gone quiet" alerts
+### Day 3: Multi-Tenant Data (6 hrs)
+| Task | Time | Priority |
+|------|------|----------|
+| Add org_id to all tables | 1 hr | 🔴 |
+| Update all RLS policies for tenant isolation | 2 hrs | 🔴 |
+| Migrate stores to include org context | 2 hrs | 🔴 |
+| Test data isolation between orgs | 1 hr | 🔴 |
 
-**AI Features:**
-- AI email drafting (context-aware)
-- Smart reply suggestions
-- Best time to send recommendations
+### Day 4: Invoice & P&L (6 hrs)
+| Task | Time | Priority |
+|------|------|----------|
+| Create invoices table | 30 min | 🔴 |
+| Build Invoice page (list, create, view) | 2.5 hrs | 🔴 |
+| One-click invoice from Won quote | 1 hr | 🔴 |
+| Create expenses table + basic UI | 1.5 hrs | 🔴 |
+| P&L widget per project | 30 min | 🔴 |
 
----
+### Day 5: Polish & Ops (6 hrs)
+| Task | Time | Priority |
+|------|------|----------|
+| Re-enable Kit management UI | 1 hr | 🟡 |
+| Re-enable Crew management UI | 1 hr | 🟡 |
+| Re-enable Projects UI | 1 hr | 🟡 |
+| Add live chat widget (Crisp/Intercom) | 30 min | 🟡 |
+| Onboarding checklist for new users | 1 hr | 🟡 |
+| Landing page (simple) | 30 min | 🟡 |
 
-## Phase 2: Intelligent Agents (Q2)
-*AI agents that work alongside you*
+### Day 6: Deploy & Test (5 hrs)
+| Task | Time | Priority |
+|------|------|----------|
+| Deploy to Vercel with custom domain | 1 hr | 🔴 |
+| Set up subdomain routing (app.productionos.com) | 1 hr | 🟡 |
+| End-to-end testing (signup → pay → use) | 2 hrs | 🔴 |
+| Fix critical bugs | 1 hr | 🔴 |
 
-### 2.1 Research Agent
-- [ ] Auto-research new clients (company info, news, LinkedIn)
-- [ ] Competitor analysis for opportunities
-- [ ] Industry trend summaries
-- [ ] Pre-meeting briefings
-
-### 2.2 Communication Agent
-- [ ] Draft follow-up emails based on context
-- [ ] Personalized outreach sequences
-- [ ] Meeting summary generation
-- [ ] Thank you notes after meetings
-
-### 2.3 Deal Coach Agent
-- [ ] Win probability scoring
-- [ ] Risk identification ("No activity in 14 days")
-- [ ] Next best action recommendations
-- [ ] Objection handling suggestions
-- [ ] Competitive positioning tips
-
-### 2.4 Admin Agent
-- [ ] Auto-log activities from emails/calendar
-- [ ] Smart task creation from conversations
-- [ ] Data enrichment (fill missing fields)
-- [ ] Duplicate detection & merge
-
-**Agent Infrastructure:**
-- Agent task queue system
-- Background processing with Supabase Edge Functions
-- Agent activity log (transparency)
-- User feedback loop (thumbs up/down)
-
----
-
-## Phase 3: Sales Intelligence (Q3)
-*Data-driven insights to close more deals*
-
-### 3.1 Pipeline Analytics
-- [ ] Revenue forecasting (AI-powered)
-- [ ] Pipeline velocity metrics
-- [ ] Stage conversion analysis
-- [ ] Bottleneck identification
-
-### 3.2 Client Intelligence
-- [ ] Client health scoring (automated)
-- [ ] Churn risk prediction
-- [ ] Upsell/cross-sell opportunities
-- [ ] Lifetime value calculation
-
-### 3.3 Pricing Intelligence
-- [ ] Win rate by price point analysis
-- [ ] Optimal pricing recommendations
-- [ ] Discount impact analysis
-- [ ] Competitive price positioning
-
-### 3.4 Performance Insights
-- [ ] Rep performance dashboards
-- [ ] Activity-to-outcome correlation
-- [ ] Best practices identification
-- [ ] Coaching recommendations
-
-**AI Features:**
-- Natural language queries ("Show deals likely to close this month")
-- Anomaly detection ("Unusual drop in response rate")
-- Trend analysis & alerts
+### Day 7: Launch (4 hrs)
+| Task | Time | Priority |
+|------|------|----------|
+| Final bug fixes | 1 hr | 🔴 |
+| Create launch post (LinkedIn) | 1 hr | 🟡 |
+| Direct outreach to network (10 emails) | 1 hr | 🔴 |
+| Monitor signups + support | 1 hr | 🔴 |
 
 ---
 
-## Phase 4: Workflow Automation (Q4)
-*Automate repetitive processes*
+## What's IN for Week 1 Launch
 
-### 4.1 Sales Sequences
-- [ ] Multi-step email sequences
-- [ ] Trigger-based automation
-- [ ] A/B testing for sequences
-- [ ] Sequence performance analytics
+### Core Platform
+- ✅ Multi-tenant authentication (Supabase Auth)
+- ✅ Organization/workspace model
+- ✅ Stripe subscription billing ($29/user)
+- ✅ 5-day free trial
 
-### 4.2 Deal Automation
-- [ ] Auto-move stages based on activities
-- [ ] Automated follow-up scheduling
-- [ ] Quote expiry reminders (auto-send)
-- [ ] Win/loss reason collection
+### CRM
+- ✅ Clients & contacts
+- ✅ Opportunities & pipeline
+- ✅ Quotes with multi-currency
+- ✅ Activities & timeline
+- ✅ Tasks
 
-### 4.3 Client Onboarding
-- [ ] Welcome sequence automation
-- [ ] Document collection workflow
-- [ ] Kickoff meeting scheduling
-- [ ] Handoff to delivery team
+### Finance (KILLER FEATURE)
+- ✅ Invoices (create from quote, track status)
+- ✅ Expenses per project
+- ✅ P&L per project (real-time)
 
-### 4.4 Integrations Hub
-- [ ] Slack notifications
-- [ ] WhatsApp Business (SEA focus)
-- [ ] Accounting software (Xero/QuickBooks)
-- [ ] Project management (Notion/Asana)
+### Operations
+- ✅ Kit/Equipment database
+- ✅ Crew database
+- ✅ Projects
 
----
-
-## Phase 5: Team & Scale (Q1 Next Year)
-*Multi-user, enterprise-ready*
-
-### 5.1 Team Features
-- [ ] Multi-user with roles (Admin, Sales, Viewer)
-- [ ] Team pipeline views
-- [ ] Activity feeds
-- [ ] @mentions & collaboration
-- [ ] Territory/region assignment
-
-### 5.2 Client Portal
-- [ ] Branded quote viewing
-- [ ] E-signature integration
-- [ ] Client document upload
-- [ ] Payment integration
-
-### 5.3 Advanced Reporting
-- [ ] Custom report builder
-- [ ] Scheduled report emails
-- [ ] Export to Excel/PDF
-- [ ] Dashboard customization
-
-### 5.4 Enterprise Features
-- [ ] SSO (Google/Microsoft)
-- [ ] Audit logs
-- [ ] Data retention policies
-- [ ] API access for integrations
+### Infrastructure
+- ✅ Custom domain (app.productionos.com)
+- ✅ Live chat support (Crisp)
+- ✅ PWA / mobile ready
 
 ---
 
-## AI/Agent Architecture
+## What's OUT for Week 1 (v1.1+)
+
+| Feature | Why Deferred | Target |
+|---------|--------------|--------|
+| Xero/QuickBooks sync | Complex OAuth, can invoice manually | Week 3 |
+| AI agents | Cool but not essential for MVP | Week 4 |
+| CSV import | Can manually enter data initially | Week 2 |
+| Call sheets PDF | Projects work, PDF can wait | Week 2 |
+| Kit availability calendar | Database works, visual timeline later | Week 2 |
+| Crew availability calendar | Same as above | Week 2 |
+| Custom subdomains per tenant | app.productionos.com works fine | Week 4 |
+| Email integration | Can use normal email for now | Week 3 |
+| Advanced analytics | Basic P&L is enough | Week 4 |
+
+---
+
+## Technical Architecture (SaaS)
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Tell CRM Frontend                     │
-│  (React + Zustand)                                       │
-└─────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────┐
-│                   Supabase Backend                       │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
-│  │  Database   │  │  Edge Funcs │  │  Realtime   │     │
-│  │ (PostgreSQL)│  │   (Deno)    │  │  (WebSocket)│     │
-│  └─────────────┘  └─────────────┘  └─────────────┘     │
-└─────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────┐
-│                    Agent Orchestrator                    │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │              Agent Task Queue                    │   │
-│  │  (Background jobs, scheduled tasks, triggers)   │   │
-│  └─────────────────────────────────────────────────┘   │
-│                                                         │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │
-│  │ Research │ │  Comms   │ │  Coach   │ │  Admin   │  │
-│  │  Agent   │ │  Agent   │ │  Agent   │ │  Agent   │  │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘  │
-└─────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────┐
-│                   External Services                      │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐      │
-│  │ Claude  │ │ Gmail   │ │ Calendar│ │ LinkedIn│      │
-│  │   API   │ │   API   │ │   API   │ │   API   │      │
-│  └─────────┘ └─────────┘ └─────────┘ └─────────┘      │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        app.productionos.com                                  │
+│                   (React 19 + Zustand + Vite + Vercel)                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         SUPABASE (Multi-Tenant)                              │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐             │
+│  │  Auth + Orgs    │  │    Database     │  │  Edge Functions │             │
+│  │                 │  │                 │  │                 │             │
+│  │ • User signup   │  │ • organizations │  │ • stripe-webhook│             │
+│  │ • Org context   │  │ • clients       │  │ • (future AI)   │             │
+│  │ • Invites       │  │ • quotes        │  │                 │             │
+│  │                 │  │ • invoices      │  │                 │             │
+│  │                 │  │ • expenses      │  │                 │             │
+│  │                 │  │ • projects      │  │                 │             │
+│  │                 │  │ • kit_items     │  │                 │             │
+│  │                 │  │ • crew          │  │                 │             │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘             │
+│                              ▲                                              │
+│                              │ RLS: WHERE org_id = auth.org_id()            │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              STRIPE                                          │
+│  • Subscription: $29/user/month                                             │
+│  • 5-day free trial                                                         │
+│  • Webhook → update org.subscription_status                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Agent Design Principles
+## Database Changes for Multi-Tenant
 
-1. **Transparency** - Users always know when AI acted
-2. **Human-in-the-loop** - Critical actions require approval
-3. **Context-aware** - Agents understand deal history & relationships
-4. **Learning** - Feedback improves recommendations over time
-5. **Proactive** - Surface insights before users ask
-6. **Efficient** - Batch operations, smart caching, minimal API calls
+### New Tables
 
----
-
-## Data Model Extensions
-
-### agent_tasks
 ```sql
-- id, type, status (pending/running/completed/failed)
-- agent_type (research/comms/coach/admin)
-- context_type (client/opportunity/quote)
-- context_id
-- input_data, output_data
-- created_at, started_at, completed_at
-- user_feedback (thumbs_up/thumbs_down/null)
+-- organizations (tenants)
+CREATE TABLE organizations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL, -- for future subdomains
+
+  owner_id UUID REFERENCES auth.users(id),
+
+  stripe_customer_id TEXT,
+  stripe_subscription_id TEXT,
+  subscription_status TEXT DEFAULT 'trialing', -- trialing, active, canceled, past_due
+  trial_ends_at TIMESTAMPTZ DEFAULT now() + interval '5 days',
+
+  settings JSONB DEFAULT '{}',
+
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- org_members (users in orgs)
+CREATE TABLE org_members (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT DEFAULT 'member', -- owner, admin, member, viewer
+
+  created_at TIMESTAMPTZ DEFAULT now(),
+
+  UNIQUE(org_id, user_id)
+);
+
+-- invoices
+CREATE TABLE invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+
+  invoice_number TEXT NOT NULL,
+  quote_id UUID REFERENCES quotes(id),
+  client_id UUID REFERENCES clients(id),
+  project_id UUID,
+
+  status TEXT DEFAULT 'draft', -- draft, sent, paid, overdue
+
+  subtotal DECIMAL(12,2),
+  tax_rate DECIMAL(5,2) DEFAULT 0,
+  tax_amount DECIMAL(12,2) DEFAULT 0,
+  total DECIMAL(12,2),
+  currency TEXT DEFAULT 'USD',
+
+  issue_date DATE,
+  due_date DATE,
+  paid_date DATE,
+
+  line_items JSONB,
+  notes TEXT,
+
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+
+  UNIQUE(org_id, invoice_number)
+);
+
+-- expenses
+CREATE TABLE expenses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+
+  project_id UUID,
+  client_id UUID REFERENCES clients(id),
+
+  category TEXT NOT NULL,
+  description TEXT,
+  amount DECIMAL(12,2) NOT NULL,
+  currency TEXT DEFAULT 'USD',
+  date DATE NOT NULL,
+
+  receipt_url TEXT,
+  is_billable BOOLEAN DEFAULT false,
+
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 ```
 
-### ai_insights
+### Add org_id to Existing Tables
+
 ```sql
-- id, insight_type, severity (info/warning/action)
-- title, description, recommendation
-- context_type, context_id
-- is_dismissed, dismissed_at
-- created_at, expires_at
+-- Add org_id to all existing tables
+ALTER TABLE clients ADD COLUMN org_id UUID REFERENCES organizations(id);
+ALTER TABLE quotes ADD COLUMN org_id UUID REFERENCES organizations(id);
+ALTER TABLE opportunities ADD COLUMN org_id UUID REFERENCES organizations(id);
+ALTER TABLE activities ADD COLUMN org_id UUID REFERENCES organizations(id);
+ALTER TABLE tasks ADD COLUMN org_id UUID REFERENCES organizations(id);
+ALTER TABLE kit_items ADD COLUMN org_id UUID REFERENCES organizations(id);
+ALTER TABLE crew_members ADD COLUMN org_id UUID REFERENCES organizations(id);
+ALTER TABLE projects ADD COLUMN org_id UUID REFERENCES organizations(id);
+-- etc.
 ```
 
-### email_threads
+### RLS Policies
+
 ```sql
-- id, client_id, thread_id (Gmail)
-- subject, participants
-- last_message_at, message_count
-- sentiment_score, is_waiting_reply
+-- Example RLS for clients (apply to all tables)
+ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only see their org's clients"
+  ON clients FOR SELECT
+  USING (org_id IN (
+    SELECT org_id FROM org_members WHERE user_id = auth.uid()
+  ));
+
+CREATE POLICY "Users can insert to their org"
+  ON clients FOR INSERT
+  WITH CHECK (org_id IN (
+    SELECT org_id FROM org_members WHERE user_id = auth.uid()
+  ));
+
+CREATE POLICY "Users can update their org's clients"
+  ON clients FOR UPDATE
+  USING (org_id IN (
+    SELECT org_id FROM org_members WHERE user_id = auth.uid()
+  ));
+
+CREATE POLICY "Users can delete their org's clients"
+  ON clients FOR DELETE
+  USING (org_id IN (
+    SELECT org_id FROM org_members WHERE user_id = auth.uid()
+  ));
 ```
 
-### sequences
-```sql
-- id, name, trigger_type
-- steps (JSONB array)
-- is_active, stats
-```
+---
+
+## Pricing Model
+
+| Plan | Price | Users | Features |
+|------|-------|-------|----------|
+| **Starter** | $29/user/mo | 1-5 | Full platform, 5-day trial |
+| **Pro** | $29/user/mo | 6-20 | + Priority support |
+| **Enterprise** | Custom | 20+ | + Custom onboarding, SLA |
+
+**Stripe Setup:**
+- Product: ProductionOS
+- Price: $29/user/month (metered)
+- Trial: 5 days
+- Billing: Monthly
+
+---
+
+## Launch Checklist
+
+### Before Launch
+- [ ] Domain purchased (productionos.com or .io)
+- [ ] Supabase project created
+- [ ] Stripe account verified
+- [ ] Privacy policy & terms of service
+- [ ] Support email set up
+
+### Launch Day
+- [ ] DNS configured
+- [ ] SSL working
+- [ ] Signup flow tested
+- [ ] Payment flow tested
+- [ ] First user signed up (you)
+
+### Post-Launch
+- [ ] LinkedIn announcement
+- [ ] 10 direct outreach emails
+- [ ] Monitor for bugs
+- [ ] Respond to support requests
 
 ---
 
 ## Success Metrics
 
-| Metric | Current | Phase 1 | Phase 2 | Phase 3 |
-|--------|---------|---------|---------|---------|
-| Time to quote | 30 min | 20 min | 15 min | 10 min |
-| Follow-up rate | 60% | 80% | 90% | 95% |
-| Data entry time | 20 min/day | 10 min | 5 min | 2 min |
-| Win rate | 35% | 40% | 45% | 50% |
-| Response time | 24 hrs | 12 hrs | 6 hrs | 2 hrs |
+| Metric | Week 1 | Week 2 | Week 4 | Month 2 |
+|--------|--------|--------|--------|---------|
+| Signups | 20 | 50 | 100 | 200 |
+| Paid customers | 2 | 5 | 10 | 25 |
+| MRR | $58 | $145 | $290 | $725 |
+| Churn | 0% | <10% | <10% | <5% |
 
 ---
 
-## Implementation Priority
+## V1.1 Roadmap (Weeks 2-4)
 
-**Start with highest ROI, lowest complexity:**
+### Week 2
+- [ ] CSV import for clients/quotes
+- [ ] Kit availability calendar
+- [ ] Crew availability calendar
+- [ ] Call sheet PDF generation
+- [ ] Invoice PDF generation
 
-1. **Email Integration** (Phase 1.1) - Immediate value, backend ready
-2. **AI Email Drafting** - High daily usage, clear value
-3. **Auto-Activity Logging** (Phase 2.4) - Reduces manual work
-4. **Deal Coach** (Phase 2.3) - Differentiator, high impact
-5. **Pipeline Forecasting** (Phase 3.1) - Executive visibility
+### Week 3
+- [ ] Xero OAuth integration
+- [ ] Invoice sync to Xero
+- [ ] Email integration (Gmail)
+- [ ] Team invites (add users to org)
+
+### Week 4
+- [ ] AI Invoice Agent (auto-generate)
+- [ ] AI Follow-up Agent (draft emails)
+- [ ] QuickBooks integration
+- [ ] Custom subdomains
 
 ---
 
-## Next Steps
+## MCP Servers for Development
 
-1. Complete Google OAuth frontend integration
-2. Build email sync store with background refresh
-3. Add Compose Email modal with AI draft button
-4. Create agent infrastructure (task queue, logging)
-5. Implement first agent: Communication Agent (email drafts)
+### Currently Installed
+- ✅ sequential-thinking - Complex reasoning
+- ✅ playwright - Browser testing
+- ✅ claude-in-chrome - Browser automation
+- ✅ n8n - Workflow automation
+
+### To Install This Week
+```bash
+# Supabase for database operations
+claude mcp add supabase -- npx -y @supabase/mcp-server
+
+# Memory for persistent context
+claude mcp add memory -- npx -y @anthropic-ai/mcp-memory
+```
 
 ---
 
-*Last updated: December 2024*
+## Competitive Positioning
+
+**Tagline:** "Finally, a rental management system built this decade."
+
+**vs Current RMS:**
+- Modern UI that works on mobile
+- Real P&L per project (not just invoicing)
+- 1/3 the price
+- AI automation (coming soon)
+
+**vs Rentman:**
+- Simpler, faster to learn
+- Better CRM capabilities
+- More affordable
+- Built for small teams, not enterprises
+
+**vs Spreadsheets:**
+- Professional quotes & invoices
+- Client relationship tracking
+- Equipment & crew management
+- Actual business insights
+
+---
+
+## Immediate Next Steps
+
+1. [ ] Buy domain
+2. [ ] Create new Supabase project
+3. [ ] Set up Stripe account
+4. [ ] Fork codebase to productionos repo
+5. [ ] Start Day 1 tasks
+
+---
+
+*Sprint starts: NOW*
+*Launch target: 7 days*
