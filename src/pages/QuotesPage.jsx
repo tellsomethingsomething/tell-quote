@@ -10,11 +10,7 @@ const STATUSES = [
     { id: 'all', label: 'All Quotes', color: 'gray' },
     { id: 'draft', label: 'Draft', color: 'gray' },
     { id: 'sent', label: 'Sent', color: 'blue' },
-    { id: 'under_review', label: 'Under Review', color: 'amber' },
-    { id: 'approved', label: 'Approved', color: 'emerald' },
     { id: 'won', label: 'Won', color: 'green' },
-    { id: 'rejected', label: 'Rejected', color: 'red' },
-    { id: 'expired', label: 'Expired', color: 'gray' },
     { id: 'dead', label: 'Dead', color: 'red' },
 ];
 
@@ -176,11 +172,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
     const getStatusColor = (status) => {
         switch (status) {
             case 'sent': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-            case 'under_review': return 'bg-amber-400/20 text-amber-400 border-amber-400/30';
-            case 'approved': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
             case 'won': return 'bg-green-500/20 text-green-400 border-green-500/30';
-            case 'rejected': return 'bg-red-500/20 text-red-400 border-red-500/30';
-            case 'expired': return 'bg-gray-600/20 text-gray-500 border-gray-600/30';
             case 'dead': return 'bg-red-500/20 text-red-400 border-red-500/30';
             default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
         }
@@ -214,7 +206,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
 
     // Handle status change with loss reason modal
     const handleStatusChange = (quoteId, newStatus) => {
-        if (newStatus === 'rejected' || newStatus === 'expired' || newStatus === 'dead') {
+        if (newStatus === 'dead') {
             setLossReasonModal({ open: true, quoteId, newStatus });
         } else {
             updateQuoteStatus(quoteId, newStatus);
@@ -477,11 +469,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                     >
                                         <option value="draft">Draft</option>
                                         <option value="sent">Sent</option>
-                                        <option value="under_review">Under Review</option>
-                                        <option value="approved">Approved</option>
                                         <option value="won">Won</option>
-                                        <option value="rejected">Rejected</option>
-                                        <option value="expired">Expired</option>
                                         <option value="dead">Dead</option>
                                     </select>
                                 </div>
@@ -657,11 +645,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                             >
                                                 <option value="draft">Draft</option>
                                                 <option value="sent">Sent</option>
-                                                <option value="under_review">Under Review</option>
-                                                <option value="approved">Approved</option>
                                                 <option value="won">Won</option>
-                                                <option value="rejected">Rejected</option>
-                                                <option value="expired">Expired</option>
                                                 <option value="dead">Dead</option>
                                             </select>
                                         </td>
@@ -767,9 +751,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                 <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md modal-backdrop p-4">
                     <div className="bg-[#1a1f2e] border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl">
                         <h2 className="text-xl font-bold text-gray-100 mb-2">
-                            {lossReasonModal.newStatus === 'rejected' ? 'Quote Rejected' :
-                             lossReasonModal.newStatus === 'expired' ? 'Quote Expired' :
-                             'Quote Lost'}
+                            Quote Lost
                         </h2>
                         <p className="text-sm text-gray-400 mb-6">
                             Help us track why this opportunity didn't close

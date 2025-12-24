@@ -1041,7 +1041,13 @@ export const useClientStore = create(
             if (isSupabaseConfigured()) {
                 try {
                     const quote = get().savedQuotes.find(q => q.id === quoteId);
-                    const { error } = await supabase
+                    if (!quote?.quoteNumber) {
+                        console.warn('Cannot sync status update - quote not found or missing quoteNumber');
+                        return;
+                    }
+
+                    // Use quote_number for lookup since local ID may differ from Supabase ID
+                    const { error, count } = await supabase
                         .from('quotes')
                         .update({
                             status,
@@ -1052,9 +1058,14 @@ export const useClientStore = create(
                                 _lostReasonNotes: quote?.lostReasonNotes,
                             }
                         })
-                        .eq('id', quoteId);
+                        .eq('quote_number', quote.quoteNumber);
 
                     if (error) throw error;
+
+                    // Log if no rows were updated (for debugging)
+                    if (count === 0) {
+                        console.warn(`Status update: No rows matched quote_number ${quote.quoteNumber}`);
+                    }
 
                     // Mark as synced
                     set(state => {

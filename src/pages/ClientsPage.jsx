@@ -402,13 +402,13 @@ export default function ClientsPage({ onSelectClient }) {
                     </div>
 
                     {/* Filters row - horizontal scroll on mobile */}
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+                    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
                         {/* Date Filters Group */}
                         <div className="flex items-center gap-1 bg-dark-bg/50 rounded-lg px-1.5 py-0.5 flex-shrink-0">
                             <select
                                 value={selectedYear}
                                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                className="input-sm text-sm w-[72px] min-h-[40px] bg-transparent border-none focus:ring-0"
+                                className="input-sm text-sm w-20 min-h-[40px] bg-transparent border-none focus:ring-0"
                             >
                                 {years.length === 0 && <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>}
                                 {years.map(y => (
