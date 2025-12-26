@@ -193,6 +193,16 @@ export const useActivityStore = create(
             ).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
         },
 
+        // Get overdue follow-ups (any incomplete activity with overdue date)
+        getOverdueFollowUps: () => {
+            const now = new Date();
+            return get().activities.filter(a =>
+                !a.isCompleted &&
+                a.dueDate &&
+                new Date(a.dueDate) < now
+            ).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        },
+
         // Get recent activities
         getRecentActivities: (limit = 20) => {
             return get().activities
