@@ -24,6 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_quote_templates_created_at ON quote_templates(cre
 ALTER TABLE quote_templates ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies (allow all for now, can be restricted later with user auth)
+DROP POLICY IF EXISTS "Allow all access to quote_templates" ON quote_templates;
 CREATE POLICY "Allow all access to quote_templates"
     ON quote_templates
     FOR ALL

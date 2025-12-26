@@ -8,7 +8,20 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Brand colors
+        // Marketing Design System
+        marketing: {
+          background: '#0A0A0B',
+          surface: '#141416',
+          border: '#2A2A2E',
+          primary: '#6366F1',
+          accent: '#8B5CF6',
+          success: '#10B981',
+          text: {
+            primary: '#FAFAFA',
+            secondary: '#A1A1AA'
+          }
+        },
+        // Existing Brand colors (Preserved)
         brand: {
           navy: '#143642',
           teal: '#0F8B8D',
@@ -56,6 +69,25 @@ export default {
       borderRadius: {
         'card': '10px',
         'input': '6px',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        aurora: {
+          from: {
+            backgroundPosition: "50% 50%, 50% 50%",
+          },
+          to: {
+            backgroundPosition: "350% 50%, 350% 50%",
+          },
+        },
+      },
+      animation: {
+        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+        'fade-in': 'fadeIn 0.5s ease-out forwards',
+        aurora: "aurora 60s linear infinite",
       },
     },
   },

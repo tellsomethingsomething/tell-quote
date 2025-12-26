@@ -29,10 +29,55 @@ const TABS = [
     { id: 'crew', label: 'Crew', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
     { id: 'cast', label: 'Cast', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
     { id: 'schedule', label: 'Schedule', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { id: 'travel', label: 'Travel', icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { id: 'logistics', label: 'Logistics', icon: 'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z' },
+    { id: 'technical', label: 'Technical', icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' },
+    { id: 'contacts', label: 'Contacts', icon: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' },
     { id: 'location', label: 'Location', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z' },
     { id: 'safety', label: 'Safety', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
     { id: 'notes', label: 'Notes', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' },
     { id: 'settings', label: 'Sections', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
+];
+
+// Transport types for transfers
+const TRANSPORT_TYPES = [
+    { value: 'minibus', label: 'Minibus' },
+    { value: 'car', label: 'Car' },
+    { value: 'van', label: 'Van' },
+    { value: 'coach', label: 'Coach' },
+    { value: 'taxi', label: 'Taxi' },
+    { value: 'other', label: 'Other' },
+];
+
+// Emergency contact types
+const EMERGENCY_CONTACT_TYPES = [
+    { value: 'hospital', label: 'Hospital' },
+    { value: 'police', label: 'Police' },
+    { value: 'fire', label: 'Fire' },
+    { value: 'ambulance', label: 'Ambulance' },
+    { value: 'security', label: 'Security' },
+    { value: 'production_emergency', label: 'Production Emergency' },
+    { value: 'venue_emergency', label: 'Venue Emergency' },
+    { value: 'hotel_emergency', label: 'Hotel Emergency' },
+    { value: 'embassy', label: 'Embassy' },
+    { value: 'insurance', label: 'Insurance' },
+    { value: 'local_fixer', label: 'Local Fixer' },
+    { value: 'other', label: 'Other' },
+];
+
+// Vendor types
+const VENDOR_TYPES = [
+    { value: 'ob', label: 'OB / Outside Broadcast' },
+    { value: 'lighting', label: 'Lighting' },
+    { value: 'satellite', label: 'Satellite / Uplink' },
+    { value: 'catering', label: 'Catering' },
+    { value: 'transport', label: 'Transport' },
+    { value: 'security', label: 'Security' },
+    { value: 'audio', label: 'Audio' },
+    { value: 'graphics', label: 'Graphics / VT' },
+    { value: 'comms', label: 'Communications' },
+    { value: 'generator', label: 'Generator / Power' },
+    { value: 'other', label: 'Other' },
 ];
 
 // Form Input Component
@@ -1235,6 +1280,468 @@ function NotesTab({ sheet, onUpdate }) {
     );
 }
 
+// Travel Tab (Flights & Transfers)
+function TravelTab({ flights, transfers, onAddFlight, onUpdateFlight, onRemoveFlight, onAddTransfer, onUpdateTransfer, onRemoveTransfer, callSheetId, crew }) {
+    const [showAddFlight, setShowAddFlight] = useState(false);
+    const [showAddTransfer, setShowAddTransfer] = useState(false);
+    const [newFlight, setNewFlight] = useState({ crewName: '', flightType: 'outbound', departureDate: '', departureTime: '', departureAirport: '', arrivalAirport: '', flightNumber: '', airline: '' });
+    const [newTransfer, setNewTransfer] = useState({ transferDate: '', transferTime: '', pickupLocation: '', dropoffLocation: '', transportType: 'minibus' });
+
+    const handleAddFlight = async () => {
+        if (!newFlight.crewName || !newFlight.departureDate) return;
+        await onAddFlight(callSheetId, newFlight);
+        setNewFlight({ crewName: '', flightType: 'outbound', departureDate: '', departureTime: '', departureAirport: '', arrivalAirport: '', flightNumber: '', airline: '' });
+        setShowAddFlight(false);
+    };
+
+    const handleAddTransfer = async () => {
+        if (!newTransfer.transferDate || !newTransfer.pickupLocation) return;
+        await onAddTransfer(callSheetId, newTransfer);
+        setNewTransfer({ transferDate: '', transferTime: '', pickupLocation: '', dropoffLocation: '', transportType: 'minibus' });
+        setShowAddTransfer(false);
+    };
+
+    // Group flights by type
+    const outboundFlights = flights.filter(f => f.flightType === 'outbound');
+    const returnFlights = flights.filter(f => f.flightType === 'return');
+
+    return (
+        <div className="space-y-6">
+            {/* Flights Section */}
+            <div className="bg-dark-card border border-dark-border rounded-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-dark-border flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-white">Flights</h3>
+                    <button onClick={() => setShowAddFlight(!showAddFlight)} className="px-3 py-1.5 bg-accent-primary text-white rounded-lg text-sm font-medium hover:bg-accent-primary/90">
+                        + Add Flight
+                    </button>
+                </div>
+
+                {showAddFlight && (
+                    <div className="px-6 py-4 bg-dark-bg/50 border-b border-dark-border">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <FormInput label="Crew Member" value={newFlight.crewName} onChange={(v) => setNewFlight({...newFlight, crewName: v})} placeholder="Name" />
+                            <FormSelect label="Type" value={newFlight.flightType} onChange={(v) => setNewFlight({...newFlight, flightType: v})} options={[{value:'outbound',label:'Outbound'},{value:'return',label:'Return'},{value:'internal',label:'Internal'}]} />
+                            <FormInput label="Date" type="date" value={newFlight.departureDate} onChange={(v) => setNewFlight({...newFlight, departureDate: v})} />
+                            <FormInput label="Time" type="time" value={newFlight.departureTime} onChange={(v) => setNewFlight({...newFlight, departureTime: v})} />
+                            <FormInput label="From Airport" value={newFlight.departureAirport} onChange={(v) => setNewFlight({...newFlight, departureAirport: v})} placeholder="LHR" />
+                            <FormInput label="To Airport" value={newFlight.arrivalAirport} onChange={(v) => setNewFlight({...newFlight, arrivalAirport: v})} placeholder="NRT" />
+                            <FormInput label="Flight #" value={newFlight.flightNumber} onChange={(v) => setNewFlight({...newFlight, flightNumber: v})} placeholder="BA007" />
+                            <FormInput label="Airline" value={newFlight.airline} onChange={(v) => setNewFlight({...newFlight, airline: v})} placeholder="British Airways" />
+                        </div>
+                        <div className="flex justify-end gap-2 mt-3">
+                            <button onClick={() => setShowAddFlight(false)} className="px-3 py-1.5 text-gray-400 hover:text-white text-sm">Cancel</button>
+                            <button onClick={handleAddFlight} className="px-4 py-1.5 bg-accent-primary text-white rounded-lg text-sm font-medium">Add</button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="divide-y divide-dark-border">
+                    {flights.length === 0 ? (
+                        <p className="px-6 py-8 text-center text-gray-500">No flights added yet</p>
+                    ) : (
+                        flights.map(flight => (
+                            <div key={flight.id} className="px-6 py-3 flex items-center gap-4">
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${flight.flightType === 'outbound' ? 'bg-blue-500/20 text-blue-400' : flight.flightType === 'return' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}`}>
+                                    {flight.flightType}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-white">{flight.crewName}</p>
+                                    <p className="text-sm text-gray-400">{flight.flightNumber} {flight.airline} - {flight.departureAirport} → {flight.arrivalAirport}</p>
+                                </div>
+                                <div className="text-sm text-gray-400">
+                                    {flight.departureDate && new Date(flight.departureDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                    {flight.departureTime && ` ${flight.departureTime}`}
+                                </div>
+                                <button onClick={() => onRemoveFlight(flight.id)} className="p-1.5 text-gray-400 hover:text-red-400">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            {/* Transfers Section */}
+            <div className="bg-dark-card border border-dark-border rounded-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-dark-border flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-white">Transfers</h3>
+                    <button onClick={() => setShowAddTransfer(!showAddTransfer)} className="px-3 py-1.5 bg-accent-primary text-white rounded-lg text-sm font-medium hover:bg-accent-primary/90">
+                        + Add Transfer
+                    </button>
+                </div>
+
+                {showAddTransfer && (
+                    <div className="px-6 py-4 bg-dark-bg/50 border-b border-dark-border">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <FormInput label="Date" type="date" value={newTransfer.transferDate} onChange={(v) => setNewTransfer({...newTransfer, transferDate: v})} />
+                            <FormInput label="Time" type="time" value={newTransfer.transferTime} onChange={(v) => setNewTransfer({...newTransfer, transferTime: v})} />
+                            <FormSelect label="Type" value={newTransfer.transportType} onChange={(v) => setNewTransfer({...newTransfer, transportType: v})} options={TRANSPORT_TYPES} />
+                            <FormInput label="Pickup Location" value={newTransfer.pickupLocation} onChange={(v) => setNewTransfer({...newTransfer, pickupLocation: v})} placeholder="Hotel Lobby" className="md:col-span-2" />
+                            <FormInput label="Drop-off Location" value={newTransfer.dropoffLocation} onChange={(v) => setNewTransfer({...newTransfer, dropoffLocation: v})} placeholder="Venue" className="md:col-span-2" />
+                        </div>
+                        <div className="flex justify-end gap-2 mt-3">
+                            <button onClick={() => setShowAddTransfer(false)} className="px-3 py-1.5 text-gray-400 hover:text-white text-sm">Cancel</button>
+                            <button onClick={handleAddTransfer} className="px-4 py-1.5 bg-accent-primary text-white rounded-lg text-sm font-medium">Add</button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="divide-y divide-dark-border">
+                    {transfers.length === 0 ? (
+                        <p className="px-6 py-8 text-center text-gray-500">No transfers added yet</p>
+                    ) : (
+                        transfers.map(transfer => (
+                            <div key={transfer.id} className="px-6 py-3 flex items-center gap-4">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-500/20 text-purple-400">{transfer.transportType}</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-white">{transfer.pickupLocation} → {transfer.dropoffLocation}</p>
+                                    {transfer.driverName && <p className="text-sm text-gray-400">Driver: {transfer.driverName} {transfer.driverPhone}</p>}
+                                </div>
+                                <div className="text-sm text-gray-400">
+                                    {transfer.transferDate && new Date(transfer.transferDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                    {transfer.transferTime && ` ${transfer.transferTime}`}
+                                </div>
+                                <button onClick={() => onRemoveTransfer(transfer.id)} className="p-1.5 text-gray-400 hover:text-red-400">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Logistics Tab (Accommodation & Vehicles)
+function LogisticsTab({ accommodation, vehicles, roomAssignments, onAddAccommodation, onRemoveAccommodation, onAddVehicle, onRemoveVehicle, callSheetId }) {
+    const [showAddHotel, setShowAddHotel] = useState(false);
+    const [showAddVehicle, setShowAddVehicle] = useState(false);
+    const [newHotel, setNewHotel] = useState({ hotelName: '', hotelAddress: '', hotelPhone: '', bookingReference: '' });
+    const [newVehicle, setNewVehicle] = useState({ vehicleType: 'OB Van', vehicleName: '', company: '', driverName: '', driverPhone: '' });
+
+    const handleAddHotel = async () => {
+        if (!newHotel.hotelName) return;
+        await onAddAccommodation(callSheetId, newHotel);
+        setNewHotel({ hotelName: '', hotelAddress: '', hotelPhone: '', bookingReference: '' });
+        setShowAddHotel(false);
+    };
+
+    const handleAddVehicle = async () => {
+        if (!newVehicle.vehicleType) return;
+        await onAddVehicle(callSheetId, newVehicle);
+        setNewVehicle({ vehicleType: 'OB Van', vehicleName: '', company: '', driverName: '', driverPhone: '' });
+        setShowAddVehicle(false);
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* Accommodation */}
+            <div className="bg-dark-card border border-dark-border rounded-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-dark-border flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-white">Accommodation</h3>
+                    <button onClick={() => setShowAddHotel(!showAddHotel)} className="px-3 py-1.5 bg-accent-primary text-white rounded-lg text-sm font-medium hover:bg-accent-primary/90">
+                        + Add Hotel
+                    </button>
+                </div>
+
+                {showAddHotel && (
+                    <div className="px-6 py-4 bg-dark-bg/50 border-b border-dark-border">
+                        <div className="grid grid-cols-2 gap-3">
+                            <FormInput label="Hotel Name" value={newHotel.hotelName} onChange={(v) => setNewHotel({...newHotel, hotelName: v})} placeholder="Hotel name" className="col-span-2" />
+                            <FormInput label="Address" value={newHotel.hotelAddress} onChange={(v) => setNewHotel({...newHotel, hotelAddress: v})} placeholder="Full address" className="col-span-2" />
+                            <FormInput label="Phone" value={newHotel.hotelPhone} onChange={(v) => setNewHotel({...newHotel, hotelPhone: v})} placeholder="+1 234 567 8900" />
+                            <FormInput label="Booking Ref" value={newHotel.bookingReference} onChange={(v) => setNewHotel({...newHotel, bookingReference: v})} placeholder="ABC123" />
+                        </div>
+                        <div className="flex justify-end gap-2 mt-3">
+                            <button onClick={() => setShowAddHotel(false)} className="px-3 py-1.5 text-gray-400 hover:text-white text-sm">Cancel</button>
+                            <button onClick={handleAddHotel} className="px-4 py-1.5 bg-accent-primary text-white rounded-lg text-sm font-medium">Add</button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="divide-y divide-dark-border">
+                    {accommodation.length === 0 ? (
+                        <p className="px-6 py-8 text-center text-gray-500">No accommodation added yet</p>
+                    ) : (
+                        accommodation.map(hotel => (
+                            <div key={hotel.id} className="px-6 py-4">
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <p className="font-semibold text-white text-lg">{hotel.hotelName}</p>
+                                        <p className="text-sm text-gray-400">{hotel.hotelAddress}</p>
+                                        <div className="flex gap-4 mt-2 text-sm">
+                                            {hotel.hotelPhone && <span className="text-gray-400">Tel: {hotel.hotelPhone}</span>}
+                                            {hotel.bookingReference && <span className="text-accent-primary">Ref: {hotel.bookingReference}</span>}
+                                        </div>
+                                    </div>
+                                    <button onClick={() => onRemoveAccommodation(hotel.id)} className="p-1.5 text-gray-400 hover:text-red-400">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            {/* Vehicles */}
+            <div className="bg-dark-card border border-dark-border rounded-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-dark-border flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-white">Vehicles & Equipment</h3>
+                    <button onClick={() => setShowAddVehicle(!showAddVehicle)} className="px-3 py-1.5 bg-accent-primary text-white rounded-lg text-sm font-medium hover:bg-accent-primary/90">
+                        + Add Vehicle
+                    </button>
+                </div>
+
+                {showAddVehicle && (
+                    <div className="px-6 py-4 bg-dark-bg/50 border-b border-dark-border">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <FormInput label="Vehicle Type" value={newVehicle.vehicleType} onChange={(v) => setNewVehicle({...newVehicle, vehicleType: v})} placeholder="OB Van, Equipment Truck..." />
+                            <FormInput label="Vehicle Name/ID" value={newVehicle.vehicleName} onChange={(v) => setNewVehicle({...newVehicle, vehicleName: v})} placeholder="Unit 1" />
+                            <FormInput label="Company" value={newVehicle.company} onChange={(v) => setNewVehicle({...newVehicle, company: v})} placeholder="Provider" />
+                            <FormInput label="Driver Name" value={newVehicle.driverName} onChange={(v) => setNewVehicle({...newVehicle, driverName: v})} />
+                            <FormInput label="Driver Phone" value={newVehicle.driverPhone} onChange={(v) => setNewVehicle({...newVehicle, driverPhone: v})} />
+                        </div>
+                        <div className="flex justify-end gap-2 mt-3">
+                            <button onClick={() => setShowAddVehicle(false)} className="px-3 py-1.5 text-gray-400 hover:text-white text-sm">Cancel</button>
+                            <button onClick={handleAddVehicle} className="px-4 py-1.5 bg-accent-primary text-white rounded-lg text-sm font-medium">Add</button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="divide-y divide-dark-border">
+                    {vehicles.length === 0 ? (
+                        <p className="px-6 py-8 text-center text-gray-500">No vehicles added yet</p>
+                    ) : (
+                        vehicles.map(vehicle => (
+                            <div key={vehicle.id} className="px-6 py-3 flex items-center gap-4">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-orange-500/20 text-orange-400">{vehicle.vehicleType}</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-white">{vehicle.vehicleName || vehicle.vehicleType}</p>
+                                    <p className="text-sm text-gray-400">{vehicle.company} {vehicle.driverName && `- ${vehicle.driverName}`}</p>
+                                </div>
+                                {vehicle.driverPhone && <span className="text-sm text-gray-400">{vehicle.driverPhone}</span>}
+                                <button onClick={() => onRemoveVehicle(vehicle.id)} className="p-1.5 text-gray-400 hover:text-red-400">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Technical Tab
+function TechnicalTab({ technical, onSaveTechnical, callSheetId }) {
+    const [localTech, setLocalTech] = useState(technical || {
+        cameraPositions: [],
+        radioChannels: [],
+        commsSetup: '',
+        powerRequirements: '',
+        uplinkInfo: '',
+        notes: '',
+    });
+
+    const handleSave = async () => {
+        await onSaveTechnical(callSheetId, localTech);
+    };
+
+    // Auto-save on change (debounced effect would be better, but simple for now)
+    useEffect(() => {
+        if (technical) {
+            setLocalTech(technical);
+        }
+    }, [technical]);
+
+    return (
+        <div className="space-y-6">
+            <div className="bg-dark-card border border-dark-border rounded-xl p-6">
+                <SectionHeader title="Camera Positions">
+                    <button onClick={handleSave} className="px-3 py-1.5 bg-accent-primary text-white rounded-lg text-sm font-medium">Save</button>
+                </SectionHeader>
+                <FormTextarea
+                    label="Camera Positions (one per line)"
+                    value={Array.isArray(localTech.cameraPositions) ? localTech.cameraPositions.map(c => `${c.camera}: ${c.position} (${c.equipment})`).join('\n') : ''}
+                    onChange={(v) => setLocalTech({...localTech, cameraPositions: v.split('\n').filter(Boolean).map((line, i) => ({camera: `Camera ${i+1}`, position: line, equipment: ''}))})}
+                    rows={4}
+                    placeholder="Camera 1: CENTRE (F800 + HJ22)&#10;Camera 2: LEFT WING (Sony PMW-500)"
+                />
+            </div>
+
+            <div className="bg-dark-card border border-dark-border rounded-xl p-6">
+                <SectionHeader title="Communications & Comms" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormTextarea
+                        label="Comms Setup"
+                        value={localTech.commsSetup || ''}
+                        onChange={(v) => setLocalTech({...localTech, commsSetup: v})}
+                        rows={3}
+                        placeholder="Talkback system, radio channels..."
+                    />
+                    <FormTextarea
+                        label="Radio Channels"
+                        value={Array.isArray(localTech.radioChannels) ? localTech.radioChannels.join('\n') : ''}
+                        onChange={(v) => setLocalTech({...localTech, radioChannels: v.split('\n').filter(Boolean)})}
+                        rows={3}
+                        placeholder="Ch 1: Production&#10;Ch 2: Camera&#10;Ch 3: Sound"
+                    />
+                </div>
+            </div>
+
+            <div className="bg-dark-card border border-dark-border rounded-xl p-6">
+                <SectionHeader title="Power & Connectivity" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormTextarea
+                        label="Power Requirements"
+                        value={localTech.powerRequirements || ''}
+                        onChange={(v) => setLocalTech({...localTech, powerRequirements: v})}
+                        rows={3}
+                        placeholder="Generator specs, power distribution..."
+                    />
+                    <FormTextarea
+                        label="Uplink / Transmission"
+                        value={localTech.uplinkInfo || ''}
+                        onChange={(v) => setLocalTech({...localTech, uplinkInfo: v})}
+                        rows={3}
+                        placeholder="Satellite uplink, LiveU, fiber..."
+                    />
+                </div>
+            </div>
+
+            <div className="bg-dark-card border border-dark-border rounded-xl p-6">
+                <SectionHeader title="Technical Notes" />
+                <FormTextarea
+                    label="Additional Technical Notes"
+                    value={localTech.notes || ''}
+                    onChange={(v) => setLocalTech({...localTech, notes: v})}
+                    rows={5}
+                    placeholder="Any other technical information..."
+                />
+            </div>
+        </div>
+    );
+}
+
+// Contacts Tab (Vendors & Emergency)
+function ContactsTab({ vendors, emergencyContacts, onAddVendor, onRemoveVendor, onAddEmergencyContact, onRemoveEmergencyContact, callSheetId }) {
+    const [showAddVendor, setShowAddVendor] = useState(false);
+    const [showAddEmergency, setShowAddEmergency] = useState(false);
+    const [newVendor, setNewVendor] = useState({ companyName: '', vendorType: '', contactName: '', contactPhone: '', contactEmail: '' });
+    const [newEmergency, setNewEmergency] = useState({ contactType: 'hospital', name: '', phone: '', address: '', organization: '' });
+
+    const handleAddVendor = async () => {
+        if (!newVendor.companyName) return;
+        await onAddVendor(callSheetId, newVendor);
+        setNewVendor({ companyName: '', vendorType: '', contactName: '', contactPhone: '', contactEmail: '' });
+        setShowAddVendor(false);
+    };
+
+    const handleAddEmergency = async () => {
+        if (!newEmergency.name || !newEmergency.phone) return;
+        await onAddEmergencyContact(callSheetId, newEmergency);
+        setNewEmergency({ contactType: 'hospital', name: '', phone: '', address: '', organization: '' });
+        setShowAddEmergency(false);
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* Vendors */}
+            <div className="bg-dark-card border border-dark-border rounded-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-dark-border flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-white">Vendors & Suppliers</h3>
+                    <button onClick={() => setShowAddVendor(!showAddVendor)} className="px-3 py-1.5 bg-accent-primary text-white rounded-lg text-sm font-medium hover:bg-accent-primary/90">
+                        + Add Vendor
+                    </button>
+                </div>
+
+                {showAddVendor && (
+                    <div className="px-6 py-4 bg-dark-bg/50 border-b border-dark-border">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <FormInput label="Company Name" value={newVendor.companyName} onChange={(v) => setNewVendor({...newVendor, companyName: v})} placeholder="Company" className="col-span-2" />
+                            <FormSelect label="Type" value={newVendor.vendorType} onChange={(v) => setNewVendor({...newVendor, vendorType: v})} options={VENDOR_TYPES} placeholder="Select type" />
+                            <FormInput label="Contact Name" value={newVendor.contactName} onChange={(v) => setNewVendor({...newVendor, contactName: v})} placeholder="John Smith" />
+                            <FormInput label="Phone" value={newVendor.contactPhone} onChange={(v) => setNewVendor({...newVendor, contactPhone: v})} placeholder="+44 7700 900000" />
+                            <FormInput label="Email" value={newVendor.contactEmail} onChange={(v) => setNewVendor({...newVendor, contactEmail: v})} placeholder="john@company.com" />
+                        </div>
+                        <div className="flex justify-end gap-2 mt-3">
+                            <button onClick={() => setShowAddVendor(false)} className="px-3 py-1.5 text-gray-400 hover:text-white text-sm">Cancel</button>
+                            <button onClick={handleAddVendor} className="px-4 py-1.5 bg-accent-primary text-white rounded-lg text-sm font-medium">Add</button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="divide-y divide-dark-border">
+                    {vendors.length === 0 ? (
+                        <p className="px-6 py-8 text-center text-gray-500">No vendors added yet</p>
+                    ) : (
+                        vendors.map(vendor => (
+                            <div key={vendor.id} className="px-6 py-3 flex items-center gap-4">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">{vendor.vendorType || 'Vendor'}</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-white">{vendor.companyName}</p>
+                                    <p className="text-sm text-gray-400">{vendor.contactName} {vendor.contactPhone && `- ${vendor.contactPhone}`}</p>
+                                </div>
+                                <button onClick={() => onRemoveVendor(vendor.id)} className="p-1.5 text-gray-400 hover:text-red-400">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            {/* Emergency Contacts */}
+            <div className="bg-dark-card border border-dark-border rounded-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-dark-border flex items-center justify-between bg-red-500/5">
+                    <h3 className="text-lg font-semibold text-white">Emergency Contacts</h3>
+                    <button onClick={() => setShowAddEmergency(!showAddEmergency)} className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600">
+                        + Add Emergency
+                    </button>
+                </div>
+
+                {showAddEmergency && (
+                    <div className="px-6 py-4 bg-dark-bg/50 border-b border-dark-border">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <FormSelect label="Type" value={newEmergency.contactType} onChange={(v) => setNewEmergency({...newEmergency, contactType: v})} options={EMERGENCY_CONTACT_TYPES} />
+                            <FormInput label="Name" value={newEmergency.name} onChange={(v) => setNewEmergency({...newEmergency, name: v})} placeholder="Name / Title" />
+                            <FormInput label="Organization" value={newEmergency.organization} onChange={(v) => setNewEmergency({...newEmergency, organization: v})} placeholder="Organization" />
+                            <FormInput label="Phone" value={newEmergency.phone} onChange={(v) => setNewEmergency({...newEmergency, phone: v})} placeholder="+44 999" />
+                            <FormInput label="Address" value={newEmergency.address} onChange={(v) => setNewEmergency({...newEmergency, address: v})} placeholder="Address" className="col-span-2" />
+                        </div>
+                        <div className="flex justify-end gap-2 mt-3">
+                            <button onClick={() => setShowAddEmergency(false)} className="px-3 py-1.5 text-gray-400 hover:text-white text-sm">Cancel</button>
+                            <button onClick={handleAddEmergency} className="px-4 py-1.5 bg-red-500 text-white rounded-lg text-sm font-medium">Add</button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="divide-y divide-dark-border">
+                    {emergencyContacts.length === 0 ? (
+                        <p className="px-6 py-8 text-center text-gray-500">No emergency contacts added yet</p>
+                    ) : (
+                        emergencyContacts.map(contact => (
+                            <div key={contact.id} className="px-6 py-3 flex items-center gap-4">
+                                <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400">{contact.contactType}</span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-white">{contact.name}</p>
+                                    <p className="text-sm text-gray-400">{contact.organization} {contact.address && `- ${contact.address}`}</p>
+                                </div>
+                                <span className="text-sm font-medium text-white">{contact.phone}</span>
+                                <button onClick={() => onRemoveEmergencyContact(contact.id)} className="p-1.5 text-gray-400 hover:text-red-400">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // Main Component
 export default function CallSheetDetailPage({ callSheetId, onBack }) {
     const id = callSheetId;
@@ -1243,6 +1750,16 @@ export default function CallSheetDetailPage({ callSheetId, onBack }) {
         currentCallSheet: sheet,
         currentCrew: crew,
         currentCast: cast,
+        // New enhanced state
+        currentAccommodation: accommodation,
+        currentRoomAssignments: roomAssignments,
+        currentFlights: flights,
+        currentTransfers: transfers,
+        currentVehicles: vehicles,
+        currentTechnical: technical,
+        currentVendors: vendors,
+        currentEmergencyContacts: emergencyContacts,
+        // Methods
         loadCallSheet,
         updateCallSheet,
         publishCallSheet,
@@ -1254,6 +1771,22 @@ export default function CallSheetDetailPage({ callSheetId, onBack }) {
         updateCastMember,
         removeCastMember,
         clearCurrent,
+        // New methods
+        addAccommodation,
+        removeAccommodation,
+        addFlight,
+        updateFlight,
+        removeFlight,
+        addTransfer,
+        updateTransfer,
+        removeTransfer,
+        addVehicle,
+        removeVehicle,
+        saveTechnical,
+        addVendor,
+        removeVendor,
+        addEmergencyContact,
+        removeEmergencyContact,
     } = useCallSheetStore();
 
     const { settings } = useSettingsStore();
@@ -1522,6 +2055,50 @@ export default function CallSheetDetailPage({ callSheetId, onBack }) {
                 )}
                 {activeTab === 'notes' && (
                     <NotesTab sheet={merged} onUpdate={handleUpdate} />
+                )}
+                {activeTab === 'travel' && (
+                    <TravelTab
+                        flights={flights}
+                        transfers={transfers}
+                        onAddFlight={addFlight}
+                        onUpdateFlight={updateFlight}
+                        onRemoveFlight={removeFlight}
+                        onAddTransfer={addTransfer}
+                        onUpdateTransfer={updateTransfer}
+                        onRemoveTransfer={removeTransfer}
+                        callSheetId={id}
+                        crew={crew}
+                    />
+                )}
+                {activeTab === 'logistics' && (
+                    <LogisticsTab
+                        accommodation={accommodation}
+                        vehicles={vehicles}
+                        roomAssignments={roomAssignments}
+                        onAddAccommodation={addAccommodation}
+                        onRemoveAccommodation={removeAccommodation}
+                        onAddVehicle={addVehicle}
+                        onRemoveVehicle={removeVehicle}
+                        callSheetId={id}
+                    />
+                )}
+                {activeTab === 'technical' && (
+                    <TechnicalTab
+                        technical={technical}
+                        onSaveTechnical={saveTechnical}
+                        callSheetId={id}
+                    />
+                )}
+                {activeTab === 'contacts' && (
+                    <ContactsTab
+                        vendors={vendors}
+                        emergencyContacts={emergencyContacts}
+                        onAddVendor={addVendor}
+                        onRemoveVendor={removeVendor}
+                        onAddEmergencyContact={addEmergencyContact}
+                        onRemoveEmergencyContact={removeEmergencyContact}
+                        callSheetId={id}
+                    />
                 )}
                 {activeTab === 'settings' && (
                     <SectionsSettingsTab

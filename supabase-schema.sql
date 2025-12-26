@@ -307,3 +307,129 @@ create policy "Allow all contacts" on contacts for all using (true) with check (
 -- Trigger for updated_at
 create trigger update_contacts_updated_at before update on contacts
   for each row execute function update_updated_at_column();
+
+-- ============================================================
+-- Invoices table
+-- ============================================================
+create table invoices (
+  id uuid default uuid_generate_v4() primary key,
+  invoice_number text not null,
+  quote_id uuid references quotes(id) on delete set null,
+  client_id uuid references clients(id) on delete set null,
+  project_id uuid,
+  status text default 'draft' check (status in ('draft', 'sent', 'paid', 'overdue', 'cancelled')),
+  subtotal numeric(12,2) default 0,
+  tax_rate numeric(5,2) default 0,
+  tax_amount numeric(12,2) default 0,
+  total numeric(12,2) default 0,
+  currency text default 'USD',
+  issue_date date,
+  due_date date,
+  paid_date date,
+  line_items jsonb default '[]',
+  notes text,
+  client_name text,
+  client_email text,
+  client_address text,
+  quote_number text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Indexes for invoices
+create index invoices_client_id_idx on invoices(client_id);
+create index invoices_quote_id_idx on invoices(quote_id);
+create index invoices_project_id_idx on invoices(project_id);
+create index invoices_status_idx on invoices(status);
+create index invoices_invoice_number_idx on invoices(invoice_number);
+
+-- Enable RLS
+alter table invoices enable row level security;
+
+-- Allow all (internal tool)
+create policy "Allow all invoices" on invoices for all using (true) with check (true);
+
+-- Trigger for updated_at
+create trigger update_invoices_updated_at before update on invoices
+  for each row execute function update_updated_at_column();
+
+-- ============================================================
+-- Expenses table (for P&L tracking)
+-- ============================================================
+create table expenses (
+  id uuid default uuid_generate_v4() primary key,
+  project_id uuid,
+  client_id uuid references clients(id) on delete set null,
+  category text not null,
+  description text,
+  amount numeric(12,2) not null,
+  currency text default 'USD',
+  date date not null,
+  receipt_url text,
+  is_billable boolean default false,
+  vendor text,
+  notes text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Indexes for expenses
+create index expenses_project_id_idx on expenses(project_id);
+create index expenses_client_id_idx on expenses(client_id);
+create index expenses_category_idx on expenses(category);
+create index expenses_date_idx on expenses(date);
+
+-- Enable RLS
+alter table expenses enable row level security;
+
+-- Allow all (internal tool)
+create policy "Allow all expenses" on expenses for all using (true) with check (true);
+
+-- Trigger for updated_at
+create trigger update_expenses_updated_at before update on expenses
+  for each row execute function update_updated_at_column();
+
+-- ============================================================
+-- Crew Bookings table (for P&L tracking - hidden feature)
+-- ============================================================
+create table crew_bookings (
+  id uuid default uuid_generate_v4() primary key,
+  crew_id uuid,
+  project_id uuid,
+  call_sheet_id uuid,
+  crew_name text,
+  crew_role text,
+  start_date date,
+  end_date date,
+  day_rate numeric(12,2) default 0,
+  days numeric(6,2) default 1,
+  overtime_hours numeric(6,2) default 0,
+  overtime_rate numeric(12,2) default 0,
+  total_cost numeric(12,2) default 0,
+  currency text default 'USD',
+  status text default 'pending' check (status in ('pending', 'confirmed', 'in_progress', 'completed', 'cancelled')),
+  is_paid boolean default false,
+  paid_date date,
+  po_number text,
+  notes text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Indexes for crew_bookings
+create index crew_bookings_crew_id_idx on crew_bookings(crew_id);
+create index crew_bookings_project_id_idx on crew_bookings(project_id);
+create index crew_bookings_call_sheet_id_idx on crew_bookings(call_sheet_id);
+create index crew_bookings_status_idx on crew_bookings(status);
+create index crew_bookings_start_date_idx on crew_bookings(start_date);
+create index crew_bookings_po_number_idx on crew_bookings(po_number);
+
+-- Enable RLS
+alter table crew_bookings enable row level security;
+
+-- Allow all (internal tool)
+create policy "Allow all crew_bookings" on crew_bookings for all using (true) with check (true);
+
+-- Trigger for updated_at
+create trigger update_crew_bookings_updated_at before update on crew_bookings
+  for each row execute function update_updated_at_column();

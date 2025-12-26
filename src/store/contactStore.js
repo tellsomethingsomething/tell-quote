@@ -2,60 +2,22 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
-const CONTACTS_KEY = 'tell_contacts';
-const COMPANIES_KEY = 'tell_companies';
-const COMMUNICATIONS_KEY = 'tell_communications';
+const CONTACTS_KEY = 'tell_crm_contacts';
 
-// Contact categories
-export const CONTACT_CATEGORIES = [
-    { id: 'client', label: 'Client', color: 'bg-blue-500' },
-    { id: 'broadcaster', label: 'Broadcaster', color: 'bg-purple-500' },
-    { id: 'venue', label: 'Venue', color: 'bg-green-500' },
-    { id: 'crew', label: 'Crew/Freelancer', color: 'bg-orange-500' },
-    { id: 'supplier', label: 'Supplier', color: 'bg-yellow-500' },
-    { id: 'federation', label: 'Federation', color: 'bg-red-500' },
-    { id: 'partner', label: 'Partner', color: 'bg-teal-500' },
-    { id: 'other', label: 'Other', color: 'bg-gray-500' },
+// Contact roles in buying process
+export const CONTACT_ROLES = [
+    { id: 'decision_maker', label: 'Decision Maker', color: 'bg-purple-500', description: 'Has authority to approve/reject' },
+    { id: 'influencer', label: 'Influencer', color: 'bg-blue-500', description: 'Influences the decision' },
+    { id: 'champion', label: 'Champion', color: 'bg-green-500', description: 'Advocates for your solution' },
+    { id: 'blocker', label: 'Blocker', color: 'bg-red-500', description: 'May oppose or delay' },
+    { id: 'end_user', label: 'End User', color: 'bg-amber-500', description: 'Will use the service' },
+    { id: 'other', label: 'Other', color: 'bg-gray-500', description: 'Other role' },
 ];
 
-// Company categories
-export const COMPANY_CATEGORIES = [
-    { id: 'client', label: 'Client' },
-    { id: 'broadcaster', label: 'Broadcaster' },
-    { id: 'venue', label: 'Venue' },
-    { id: 'supplier', label: 'Supplier' },
-    { id: 'federation', label: 'Federation' },
-    { id: 'partner', label: 'Partner' },
-    { id: 'agency', label: 'Agency' },
-    { id: 'crew_agency', label: 'Crew Agency' },
-];
-
-// Markets
-export const MARKETS = [
-    { id: 'Malaysia', label: 'Malaysia' },
-    { id: 'Singapore', label: 'Singapore' },
-    { id: 'Thailand', label: 'Thailand' },
-    { id: 'Indonesia', label: 'Indonesia' },
-    { id: 'Vietnam', label: 'Vietnam' },
-    { id: 'Philippines', label: 'Philippines' },
-    { id: 'Kuwait', label: 'Kuwait' },
-    { id: 'Saudi Arabia', label: 'Saudi Arabia' },
-    { id: 'UAE', label: 'UAE' },
-    { id: 'Qatar', label: 'Qatar' },
-    { id: 'UK', label: 'UK' },
-    { id: 'Kazakhstan', label: 'Kazakhstan' },
-    { id: 'Uzbekistan', label: 'Uzbekistan' },
-];
-
-// Communication types
-export const COMMUNICATION_TYPES = [
-    { id: 'email', label: 'Email', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-    { id: 'call', label: 'Call', icon: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' },
-    { id: 'meeting', label: 'Meeting', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
-    { id: 'whatsapp', label: 'WhatsApp', icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' },
-    { id: 'note', label: 'Note', icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' },
-    { id: 'linkedin', label: 'LinkedIn', icon: 'M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z' },
-];
+// Helper to get role info
+export const getRoleInfo = (roleId) => {
+    return CONTACT_ROLES.find(r => r.id === roleId) || CONTACT_ROLES[CONTACT_ROLES.length - 1];
+};
 
 // Load from localStorage
 function loadLocal(key, defaultValue = []) {
@@ -77,12 +39,57 @@ function saveLocal(key, data) {
     }
 }
 
+// Convert DB format to app format
+function fromDbFormat(c) {
+    return {
+        id: c.id,
+        clientId: c.client_id,
+        firstName: c.first_name,
+        lastName: c.last_name,
+        email: c.email,
+        phone: c.phone,
+        mobile: c.mobile,
+        jobTitle: c.job_title,
+        department: c.department,
+        role: c.role,
+        linkedinUrl: c.linkedin_url,
+        isPrimary: c.is_primary,
+        isActive: c.is_active,
+        notes: c.notes,
+        tags: c.tags || [],
+        customFields: c.custom_fields || {},
+        avatarUrl: c.avatar_url,
+        createdAt: c.created_at,
+        updatedAt: c.updated_at,
+        lastContactedAt: c.last_contacted_at,
+    };
+}
+
+// Convert app format to DB format
+function toDbFormat(contact) {
+    return {
+        client_id: contact.clientId,
+        first_name: contact.firstName,
+        last_name: contact.lastName || null,
+        email: contact.email || null,
+        phone: contact.phone || null,
+        mobile: contact.mobile || null,
+        job_title: contact.jobTitle || null,
+        department: contact.department || null,
+        role: contact.role || null,
+        linkedin_url: contact.linkedinUrl || null,
+        is_primary: contact.isPrimary || false,
+        is_active: contact.isActive !== false,
+        notes: contact.notes || null,
+        tags: contact.tags || [],
+        custom_fields: contact.customFields || {},
+        avatar_url: contact.avatarUrl || null,
+    };
+}
+
 export const useContactStore = create(
     subscribeWithSelector((set, get) => ({
-        // State
         contacts: loadLocal(CONTACTS_KEY),
-        companies: loadLocal(COMPANIES_KEY),
-        communications: loadLocal(COMMUNICATIONS_KEY),
         loading: false,
         error: null,
         initialized: false,
@@ -99,400 +106,293 @@ export const useContactStore = create(
             }
 
             try {
-                // Load companies
-                const { data: companiesData, error: companiesError } = await supabase
-                    .from('companies')
-                    .select('*')
-                    .order('name');
-
-                if (companiesError) throw companiesError;
-
-                // Load contacts
-                const { data: contactsData, error: contactsError } = await supabase
+                const { data, error } = await supabase
                     .from('contacts')
                     .select('*')
-                    .order('name');
+                    .order('created_at', { ascending: false });
 
-                if (contactsError) throw contactsError;
+                if (error) throw error;
 
-                // Load recent communications (last 100)
-                const { data: commsData, error: commsError } = await supabase
-                    .from('communications')
-                    .select('*')
-                    .order('occurred_at', { ascending: false })
-                    .limit(100);
-
-                if (commsError) throw commsError;
-
-                const companies = companiesData || [];
-                const contacts = contactsData || [];
-                const communications = commsData || [];
-
-                saveLocal(COMPANIES_KEY, companies);
+                const contacts = (data || []).map(fromDbFormat);
                 saveLocal(CONTACTS_KEY, contacts);
-                saveLocal(COMMUNICATIONS_KEY, communications);
-
-                set({
-                    companies,
-                    contacts,
-                    communications,
-                    loading: false,
-                    initialized: true,
-                });
+                set({ contacts, loading: false, initialized: true, error: null });
             } catch (e) {
                 console.error('Failed to initialize contacts:', e);
                 set({ loading: false, error: e.message, initialized: true });
             }
         },
 
-        // === COMPANIES ===
-
-        addCompany: async (company) => {
-            const newCompany = {
-                id: `company_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                ...company,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-            };
-
-            set((state) => {
-                const companies = [newCompany, ...state.companies];
-                saveLocal(COMPANIES_KEY, companies);
-                return { companies };
-            });
-
-            // Sync to Supabase
-            if (isSupabaseConfigured()) {
-                try {
-                    const { data, error } = await supabase
-                        .from('companies')
-                        .insert([{ ...newCompany }])
-                        .select()
-                        .single();
-
-                    if (error) throw error;
-
-                    // Update with server-generated ID
-                    set((state) => {
-                        const companies = state.companies.map(c =>
-                            c.id === newCompany.id ? { ...c, id: data.id } : c
-                        );
-                        saveLocal(COMPANIES_KEY, companies);
-                        return { companies };
-                    });
-
-                    return data;
-                } catch (e) {
-                    console.error('Failed to sync company:', e);
-                }
-            }
-
-            return newCompany;
+        // Get contacts for a specific client
+        getClientContacts: (clientId) => {
+            return get().contacts.filter(c => c.clientId === clientId);
         },
 
-        updateCompany: async (id, updates) => {
-            set((state) => {
-                const companies = state.companies.map(c =>
-                    c.id === id ? { ...c, ...updates, updated_at: new Date().toISOString() } : c
-                );
-                saveLocal(COMPANIES_KEY, companies);
-                return { companies };
-            });
-
-            if (isSupabaseConfigured()) {
-                try {
-                    await supabase
-                        .from('companies')
-                        .update({ ...updates, updated_at: new Date().toISOString() })
-                        .eq('id', id);
-                } catch (e) {
-                    console.error('Failed to update company:', e);
-                }
-            }
+        // Get primary contact for a client
+        getPrimaryContact: (clientId) => {
+            return get().contacts.find(c => c.clientId === clientId && c.isPrimary);
         },
 
-        deleteCompany: async (id) => {
-            set((state) => {
-                const companies = state.companies.filter(c => c.id !== id);
-                // Also unlink contacts
-                const contacts = state.contacts.map(c =>
-                    c.company_id === id ? { ...c, company_id: null } : c
-                );
-                saveLocal(COMPANIES_KEY, companies);
-                saveLocal(CONTACTS_KEY, contacts);
-                return { companies, contacts };
-            });
-
-            if (isSupabaseConfigured()) {
-                try {
-                    await supabase.from('companies').delete().eq('id', id);
-                } catch (e) {
-                    console.error('Failed to delete company:', e);
-                }
-            }
-        },
-
-        // === CONTACTS ===
-
-        addContact: async (contact) => {
-            const newContact = {
-                id: `contact_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                markets: [],
-                tags: [],
-                projects: [],
-                is_favorite: false,
-                ...contact,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-            };
-
-            set((state) => {
-                const contacts = [newContact, ...state.contacts];
-                saveLocal(CONTACTS_KEY, contacts);
-                return { contacts };
-            });
-
-            // Sync to Supabase
-            if (isSupabaseConfigured()) {
-                try {
-                    const { data, error } = await supabase
-                        .from('contacts')
-                        .insert([{ ...newContact }])
-                        .select()
-                        .single();
-
-                    if (error) throw error;
-
-                    set((state) => {
-                        const contacts = state.contacts.map(c =>
-                            c.id === newContact.id ? { ...c, id: data.id } : c
-                        );
-                        saveLocal(CONTACTS_KEY, contacts);
-                        return { contacts };
-                    });
-
-                    return data;
-                } catch (e) {
-                    console.error('Failed to sync contact:', e);
-                }
-            }
-
-            return newContact;
-        },
-
-        updateContact: async (id, updates) => {
-            set((state) => {
-                const contacts = state.contacts.map(c =>
-                    c.id === id ? { ...c, ...updates, updated_at: new Date().toISOString() } : c
-                );
-                saveLocal(CONTACTS_KEY, contacts);
-                return { contacts };
-            });
-
-            if (isSupabaseConfigured()) {
-                try {
-                    await supabase
-                        .from('contacts')
-                        .update({ ...updates, updated_at: new Date().toISOString() })
-                        .eq('id', id);
-                } catch (e) {
-                    console.error('Failed to update contact:', e);
-                }
-            }
-        },
-
-        deleteContact: async (id) => {
-            set((state) => {
-                const contacts = state.contacts.filter(c => c.id !== id);
-                const communications = state.communications.filter(c => c.contact_id !== id);
-                saveLocal(CONTACTS_KEY, contacts);
-                saveLocal(COMMUNICATIONS_KEY, communications);
-                return { contacts, communications };
-            });
-
-            if (isSupabaseConfigured()) {
-                try {
-                    await supabase.from('contacts').delete().eq('id', id);
-                } catch (e) {
-                    console.error('Failed to delete contact:', e);
-                }
-            }
-        },
-
-        toggleFavorite: async (id) => {
-            const contact = get().contacts.find(c => c.id === id);
-            if (contact) {
-                await get().updateContact(id, { is_favorite: !contact.is_favorite });
-            }
-        },
-
-        // === COMMUNICATIONS ===
-
-        addCommunication: async (communication) => {
-            const newComm = {
-                id: `comm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                action_items: [],
-                needs_followup: false,
-                ...communication,
-                occurred_at: communication.occurred_at || new Date().toISOString(),
-                created_at: new Date().toISOString(),
-            };
-
-            set((state) => {
-                const communications = [newComm, ...state.communications];
-                saveLocal(COMMUNICATIONS_KEY, communications);
-
-                // Update last_contacted_at on contact
-                let contacts = state.contacts;
-                if (newComm.contact_id) {
-                    contacts = state.contacts.map(c =>
-                        c.id === newComm.contact_id
-                            ? { ...c, last_contacted_at: newComm.occurred_at }
-                            : c
-                    );
-                    saveLocal(CONTACTS_KEY, contacts);
-                }
-
-                return { communications, contacts };
-            });
-
-            // Sync to Supabase
-            if (isSupabaseConfigured()) {
-                try {
-                    const { data, error } = await supabase
-                        .from('communications')
-                        .insert([{ ...newComm }])
-                        .select()
-                        .single();
-
-                    if (error) throw error;
-
-                    set((state) => {
-                        const communications = state.communications.map(c =>
-                            c.id === newComm.id ? { ...c, id: data.id } : c
-                        );
-                        saveLocal(COMMUNICATIONS_KEY, communications);
-                        return { communications };
-                    });
-
-                    return data;
-                } catch (e) {
-                    console.error('Failed to sync communication:', e);
-                }
-            }
-
-            return newComm;
-        },
-
-        updateCommunication: async (id, updates) => {
-            set((state) => {
-                const communications = state.communications.map(c =>
-                    c.id === id ? { ...c, ...updates } : c
-                );
-                saveLocal(COMMUNICATIONS_KEY, communications);
-                return { communications };
-            });
-
-            if (isSupabaseConfigured()) {
-                try {
-                    await supabase
-                        .from('communications')
-                        .update(updates)
-                        .eq('id', id);
-                } catch (e) {
-                    console.error('Failed to update communication:', e);
-                }
-            }
-        },
-
-        deleteCommunication: async (id) => {
-            set((state) => {
-                const communications = state.communications.filter(c => c.id !== id);
-                saveLocal(COMMUNICATIONS_KEY, communications);
-                return { communications };
-            });
-
-            if (isSupabaseConfigured()) {
-                try {
-                    await supabase.from('communications').delete().eq('id', id);
-                } catch (e) {
-                    console.error('Failed to delete communication:', e);
-                }
-            }
-        },
-
-        // === QUERIES ===
-
+        // Get contact by ID
         getContactById: (id) => {
             return get().contacts.find(c => c.id === id);
         },
 
-        getCompanyById: (id) => {
-            return get().companies.find(c => c.id === id);
+        // Get full name
+        getFullName: (contact) => {
+            if (!contact) return '';
+            return `${contact.firstName || ''}${contact.lastName ? ' ' + contact.lastName : ''}`.trim() || 'Unknown';
         },
 
-        getContactsByCompany: (companyId) => {
-            return get().contacts.filter(c => c.company_id === companyId);
-        },
-
-        getCommunicationsForContact: (contactId) => {
-            return get().communications
-                .filter(c => c.contact_id === contactId)
-                .sort((a, b) => new Date(b.occurred_at) - new Date(a.occurred_at));
-        },
-
-        getCommunicationsForCompany: (companyId) => {
-            const contactIds = get().contacts
-                .filter(c => c.company_id === companyId)
-                .map(c => c.id);
-            return get().communications
-                .filter(c => contactIds.includes(c.contact_id) || c.company_id === companyId)
-                .sort((a, b) => new Date(b.occurred_at) - new Date(a.occurred_at));
-        },
-
-        // Get contacts that haven't been contacted in X days
-        getColdContacts: (days = 30) => {
-            const cutoff = new Date();
-            cutoff.setDate(cutoff.getDate() - days);
-
-            return get().contacts.filter(c => {
-                if (!c.last_contacted_at) return true;
-                return new Date(c.last_contacted_at) < cutoff;
-            });
-        },
-
-        // Get contacts with pending follow-ups
-        getContactsNeedingFollowup: () => {
-            const today = new Date().toISOString().split('T')[0];
-            return get().contacts.filter(c => {
-                if (!c.next_followup_date) return false;
-                return c.next_followup_date <= today;
-            });
+        // Get initials for avatar
+        getInitials: (contact) => {
+            if (!contact) return '?';
+            const first = contact.firstName?.[0] || '';
+            const last = contact.lastName?.[0] || '';
+            return (first + last).toUpperCase() || '?';
         },
 
         // Search contacts
         searchContacts: (query) => {
             const q = query.toLowerCase();
-            return get().contacts.filter(c =>
-                c.name?.toLowerCase().includes(q) ||
-                c.email?.toLowerCase().includes(q) ||
-                c.role?.toLowerCase().includes(q) ||
-                c.notes?.toLowerCase().includes(q) ||
-                c.tags?.some(t => t.toLowerCase().includes(q)) ||
-                c.projects?.some(p => p.toLowerCase().includes(q))
-            );
+            return get().contacts.filter(c => {
+                const fullName = `${c.firstName || ''} ${c.lastName || ''}`.toLowerCase();
+                return (
+                    fullName.includes(q) ||
+                    c.email?.toLowerCase().includes(q) ||
+                    c.phone?.includes(q) ||
+                    c.mobile?.includes(q) ||
+                    c.jobTitle?.toLowerCase().includes(q) ||
+                    c.department?.toLowerCase().includes(q) ||
+                    c.tags?.some(t => t.toLowerCase().includes(q))
+                );
+            });
         },
 
-        // Get contact with company info
-        getContactWithCompany: (contactId) => {
-            const contact = get().contacts.find(c => c.id === contactId);
-            if (!contact) return null;
+        // Get contacts that need follow-up (not contacted in X days)
+        getStaleContacts: (days = 30) => {
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - days);
 
-            const company = contact.company_id
-                ? get().companies.find(c => c.id === contact.company_id)
-                : null;
-
-            return { ...contact, company };
+            return get().contacts.filter(c => {
+                if (!c.lastContactedAt) return true;
+                return new Date(c.lastContactedAt) < cutoff;
+            });
         },
+
+        // Add a new contact
+        addContact: async (contactData) => {
+            if (!isSupabaseConfigured()) {
+                set({ error: 'Supabase not configured' });
+                return null;
+            }
+
+            try {
+                const dbData = toDbFormat(contactData);
+
+                // If this is marked as primary, clear others first
+                if (contactData.isPrimary && contactData.clientId) {
+                    await supabase
+                        .from('contacts')
+                        .update({ is_primary: false })
+                        .eq('client_id', contactData.clientId);
+                }
+
+                const { data, error } = await supabase
+                    .from('contacts')
+                    .insert(dbData)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                const newContact = fromDbFormat(data);
+
+                set(state => {
+                    let contacts = state.contacts;
+                    // Clear primary from others if new one is primary
+                    if (newContact.isPrimary) {
+                        contacts = contacts.map(c =>
+                            c.clientId === newContact.clientId ? { ...c, isPrimary: false } : c
+                        );
+                    }
+                    contacts = [newContact, ...contacts];
+                    saveLocal(CONTACTS_KEY, contacts);
+                    return { contacts, error: null };
+                });
+
+                return newContact;
+            } catch (e) {
+                console.error('Failed to add contact:', e);
+                set({ error: e.message });
+                return null;
+            }
+        },
+
+        // Update a contact
+        updateContact: async (id, updates) => {
+            if (!isSupabaseConfigured()) {
+                set({ error: 'Supabase not configured' });
+                return false;
+            }
+
+            try {
+                const existingContact = get().contacts.find(c => c.id === id);
+                if (!existingContact) throw new Error('Contact not found');
+
+                const dbUpdates = {};
+                if (updates.firstName !== undefined) dbUpdates.first_name = updates.firstName;
+                if (updates.lastName !== undefined) dbUpdates.last_name = updates.lastName;
+                if (updates.email !== undefined) dbUpdates.email = updates.email;
+                if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+                if (updates.mobile !== undefined) dbUpdates.mobile = updates.mobile;
+                if (updates.jobTitle !== undefined) dbUpdates.job_title = updates.jobTitle;
+                if (updates.department !== undefined) dbUpdates.department = updates.department;
+                if (updates.role !== undefined) dbUpdates.role = updates.role;
+                if (updates.linkedinUrl !== undefined) dbUpdates.linkedin_url = updates.linkedinUrl;
+                if (updates.isPrimary !== undefined) dbUpdates.is_primary = updates.isPrimary;
+                if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+                if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+                if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
+                if (updates.customFields !== undefined) dbUpdates.custom_fields = updates.customFields;
+                if (updates.avatarUrl !== undefined) dbUpdates.avatar_url = updates.avatarUrl;
+
+                // If setting as primary, clear others first
+                if (updates.isPrimary) {
+                    await supabase
+                        .from('contacts')
+                        .update({ is_primary: false })
+                        .eq('client_id', existingContact.clientId)
+                        .neq('id', id);
+                }
+
+                const { error } = await supabase
+                    .from('contacts')
+                    .update(dbUpdates)
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                set(state => {
+                    const contacts = state.contacts.map(c => {
+                        if (c.id === id) {
+                            return { ...c, ...updates, updatedAt: new Date().toISOString() };
+                        }
+                        // Clear primary from others if this one became primary
+                        if (updates.isPrimary && c.clientId === existingContact.clientId) {
+                            return { ...c, isPrimary: false };
+                        }
+                        return c;
+                    });
+                    saveLocal(CONTACTS_KEY, contacts);
+                    return { contacts, error: null };
+                });
+
+                return true;
+            } catch (e) {
+                console.error('Failed to update contact:', e);
+                set({ error: e.message });
+                return false;
+            }
+        },
+
+        // Delete a contact
+        deleteContact: async (id) => {
+            if (!isSupabaseConfigured()) {
+                set({ error: 'Supabase not configured' });
+                return false;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('contacts')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                set(state => {
+                    const contacts = state.contacts.filter(c => c.id !== id);
+                    saveLocal(CONTACTS_KEY, contacts);
+                    return { contacts, error: null };
+                });
+
+                return true;
+            } catch (e) {
+                console.error('Failed to delete contact:', e);
+                set({ error: e.message });
+                return false;
+            }
+        },
+
+        // Link contact to opportunity
+        linkToOpportunity: async (contactId, opportunityId, role = null) => {
+            if (!isSupabaseConfigured()) return false;
+
+            try {
+                const { error } = await supabase
+                    .from('contact_opportunities')
+                    .insert({
+                        contact_id: contactId,
+                        opportunity_id: opportunityId,
+                        role,
+                    });
+
+                // Ignore unique constraint violations (already linked)
+                if (error && error.code !== '23505') throw error;
+                return true;
+            } catch (e) {
+                console.error('Failed to link contact to opportunity:', e);
+                return false;
+            }
+        },
+
+        // Unlink contact from opportunity
+        unlinkFromOpportunity: async (contactId, opportunityId) => {
+            if (!isSupabaseConfigured()) return false;
+
+            try {
+                const { error } = await supabase
+                    .from('contact_opportunities')
+                    .delete()
+                    .eq('contact_id', contactId)
+                    .eq('opportunity_id', opportunityId);
+
+                if (error) throw error;
+                return true;
+            } catch (e) {
+                console.error('Failed to unlink contact from opportunity:', e);
+                return false;
+            }
+        },
+
+        // Get contacts for an opportunity
+        getOpportunityContacts: async (opportunityId) => {
+            if (!isSupabaseConfigured()) return [];
+
+            try {
+                const { data, error } = await supabase
+                    .from('contact_opportunities')
+                    .select(`
+                        role,
+                        is_primary,
+                        contacts (*)
+                    `)
+                    .eq('opportunity_id', opportunityId);
+
+                if (error) throw error;
+
+                return (data || []).map(item => ({
+                    ...fromDbFormat(item.contacts),
+                    opportunityRole: item.role,
+                    isOpportunityPrimary: item.is_primary,
+                }));
+            } catch (e) {
+                console.error('Failed to get opportunity contacts:', e);
+                return [];
+            }
+        },
+
+        // Clear error
+        clearError: () => set({ error: null }),
     }))
 );

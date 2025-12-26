@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { useProjectStore, PROJECT_STATUSES } from '../store/projectStore';
 import { useClientStore } from '../store/clientStore';
 import { useOpportunityStore } from '../store/opportunityStore';
+import {
+    useDeliverablesStore,
+    DELIVERABLE_TYPES,
+    DELIVERABLE_STATUS,
+    formatDeliverableDueDate,
+} from '../store/deliverablesStore';
 import { formatCurrency } from '../utils/currency';
 
 // Format date helper
@@ -130,6 +136,465 @@ function InfoCard({ title, children, className = '' }) {
     );
 }
 
+// ============================================
+// DELIVERABLES SECTION
+// ============================================
+function DeliverablesSection({ projectId, currency }) {
+    const {
+        loadProjectDeliverables,
+        createDeliverable,
+        updateDeliverable,
+        deleteDeliverable,
+        createFromTemplate,
+        getProjectProgress,
+    } = useDeliverablesStore();
+
+    const [deliverables, setDeliverables] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [editingDeliverable, setEditingDeliverable] = useState(null);
+    const [showTemplateMenu, setShowTemplateMenu] = useState(false);
+
+    // Load deliverables on mount
+    useEffect(() => {
+        const load = async () => {
+            setLoading(true);
+            const data = await loadProjectDeliverables(projectId);
+            setDeliverables(data);
+            setLoading(false);
+        };
+        load();
+    }, [projectId, loadProjectDeliverables]);
+
+    const handleAdd = async (data) => {
+        const newDeliverable = await createDeliverable({
+            ...data,
+            project_id: projectId,
+        });
+        setDeliverables([...deliverables, newDeliverable]);
+        setShowAddModal(false);
+    };
+
+    const handleUpdate = async (id, updates) => {
+        const updated = await updateDeliverable(id, updates);
+        setDeliverables(deliverables.map(d => d.id === id ? updated : d));
+        setEditingDeliverable(null);
+    };
+
+    const handleDelete = async (id) => {
+        if (!confirm('Delete this deliverable?')) return;
+        await deleteDeliverable(id);
+        setDeliverables(deliverables.filter(d => d.id !== id));
+    };
+
+    const handleUseTemplate = async (templateType) => {
+        setLoading(true);
+        const created = await createFromTemplate(projectId, templateType);
+        setDeliverables([...deliverables, ...created]);
+        setShowTemplateMenu(false);
+        setLoading(false);
+    };
+
+    // Group by status
+    const grouped = deliverables.reduce((acc, d) => {
+        if (!acc[d.status]) acc[d.status] = [];
+        acc[d.status].push(d);
+        return acc;
+    }, {});
+
+    const progress = {
+        total: deliverables.length,
+        completed: deliverables.filter(d => ['approved', 'delivered'].includes(d.status)).length,
+        percent: deliverables.length > 0
+            ? Math.round((deliverables.filter(d => ['approved', 'delivered'].includes(d.status)).length / deliverables.length) * 100)
+            : 0,
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <div className="w-8 h-8 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            {/* Header with actions */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="text-lg font-medium text-gray-200">Project Deliverables</h3>
+                    <p className="text-sm text-gray-500">
+                        {progress.total} deliverables • {progress.completed} completed ({progress.percent}%)
+                    </p>
+                </div>
+                <div className="flex gap-2">
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowTemplateMenu(!showTemplateMenu)}
+                            className="px-3 py-2 text-sm bg-dark-bg border border-dark-border rounded-lg text-gray-300 hover:text-white hover:border-gray-500 transition-colors"
+                        >
+                            📋 Templates
+                        </button>
+                        {showTemplateMenu && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowTemplateMenu(false)} />
+                                <div className="absolute right-0 mt-2 w-48 bg-dark-card border border-dark-border rounded-lg shadow-xl z-50">
+                                    <button
+                                        onClick={() => handleUseTemplate('commercial')}
+                                        className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-dark-bg transition-colors"
+                                    >
+                                        🎬 Commercial
+                                    </button>
+                                    <button
+                                        onClick={() => handleUseTemplate('corporate')}
+                                        className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-dark-bg transition-colors"
+                                    >
+                                        🏢 Corporate
+                                    </button>
+                                    <button
+                                        onClick={() => handleUseTemplate('social_campaign')}
+                                        className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-dark-bg transition-colors"
+                                    >
+                                        📱 Social Campaign
+                                    </button>
+                                    <button
+                                        onClick={() => handleUseTemplate('documentary')}
+                                        className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-dark-bg transition-colors"
+                                    >
+                                        🎥 Documentary
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-accent-primary rounded-lg text-white hover:opacity-90 transition-opacity"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Deliverable
+                    </button>
+                </div>
+            </div>
+
+            {/* Progress bar */}
+            {deliverables.length > 0 && (
+                <div className="bg-dark-card border border-dark-border rounded-lg p-4">
+                    <div className="flex items-center justify-between text-sm mb-2">
+                        <span className="text-gray-400">Completion Progress</span>
+                        <span className="text-gray-300">{progress.percent}%</span>
+                    </div>
+                    <div className="h-2 bg-dark-bg rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-green-500 rounded-full transition-all"
+                            style={{ width: `${progress.percent}%` }}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Empty state */}
+            {deliverables.length === 0 && (
+                <div className="bg-dark-card border border-dark-border rounded-lg p-8 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-dark-bg flex items-center justify-center">
+                        <span className="text-3xl">🎬</span>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-200 mb-2">No deliverables yet</h3>
+                    <p className="text-gray-500 text-sm mb-4">
+                        Add deliverables to track project outputs or use a template
+                    </p>
+                    <div className="flex gap-2 justify-center">
+                        <button
+                            onClick={() => setShowTemplateMenu(true)}
+                            className="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-300 hover:text-white transition-colors"
+                        >
+                            Use Template
+                        </button>
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="px-4 py-2 bg-accent-primary rounded-lg text-white hover:opacity-90 transition-opacity"
+                        >
+                            Add Deliverable
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Deliverables list */}
+            {deliverables.length > 0 && (
+                <div className="space-y-4">
+                    {deliverables.map((deliverable) => {
+                        const typeInfo = DELIVERABLE_TYPES[deliverable.type] || DELIVERABLE_TYPES.other;
+                        const statusInfo = DELIVERABLE_STATUS[deliverable.status] || DELIVERABLE_STATUS.pending;
+                        const dueInfo = formatDeliverableDueDate(deliverable.due_date);
+
+                        return (
+                            <div
+                                key={deliverable.id}
+                                className="bg-dark-card border border-dark-border rounded-lg p-4 hover:border-gray-600 transition-colors"
+                            >
+                                <div className="flex items-start gap-4">
+                                    {/* Icon */}
+                                    <div className="w-10 h-10 rounded-lg bg-dark-bg flex items-center justify-center text-xl">
+                                        {typeInfo.icon}
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h4 className="font-medium text-gray-200 truncate">
+                                                {deliverable.name}
+                                            </h4>
+                                            <span
+                                                className="px-2 py-0.5 rounded text-xs font-medium"
+                                                style={{
+                                                    backgroundColor: `${statusInfo.color}20`,
+                                                    color: statusInfo.color
+                                                }}
+                                            >
+                                                {statusInfo.label}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-500 mb-2">{typeInfo.label}</p>
+
+                                        {/* Specs */}
+                                        <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                                            {deliverable.resolution && (
+                                                <span>📐 {deliverable.resolution}</span>
+                                            )}
+                                            {deliverable.duration && (
+                                                <span>⏱️ {deliverable.duration}</span>
+                                            )}
+                                            {deliverable.current_version > 1 && (
+                                                <span>📝 v{deliverable.current_version}</span>
+                                            )}
+                                            {dueInfo && (
+                                                <span className={
+                                                    dueInfo.status === 'overdue' ? 'text-red-400' :
+                                                    dueInfo.status === 'due-today' ? 'text-yellow-400' :
+                                                    dueInfo.status === 'due-soon' ? 'text-orange-400' : ''
+                                                }>
+                                                    📅 {dueInfo.text}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex items-center gap-1">
+                                        <select
+                                            value={deliverable.status}
+                                            onChange={(e) => handleUpdate(deliverable.id, { status: e.target.value })}
+                                            className="text-xs bg-dark-bg border border-dark-border rounded px-2 py-1 text-gray-300"
+                                        >
+                                            {Object.values(DELIVERABLE_STATUS).map((s) => (
+                                                <option key={s.id} value={s.id}>{s.label}</option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            onClick={() => setEditingDeliverable(deliverable)}
+                                            className="p-2 text-gray-500 hover:text-gray-300 transition-colors"
+                                            title="Edit"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(deliverable.id)}
+                                            className="p-2 text-gray-500 hover:text-red-400 transition-colors"
+                                            title="Delete"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Notes */}
+                                {deliverable.description && (
+                                    <p className="mt-3 text-sm text-gray-400 pl-14">
+                                        {deliverable.description}
+                                    </p>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            {/* Add/Edit Modal */}
+            {(showAddModal || editingDeliverable) && (
+                <DeliverableModal
+                    deliverable={editingDeliverable}
+                    onClose={() => {
+                        setShowAddModal(false);
+                        setEditingDeliverable(null);
+                    }}
+                    onSave={editingDeliverable
+                        ? (data) => handleUpdate(editingDeliverable.id, data)
+                        : handleAdd
+                    }
+                />
+            )}
+        </div>
+    );
+}
+
+// Deliverable Modal
+function DeliverableModal({ deliverable, onClose, onSave }) {
+    const [formData, setFormData] = useState(deliverable || {
+        name: '',
+        type: 'video_master',
+        description: '',
+        status: 'pending',
+        due_date: '',
+        resolution: '',
+        duration: '',
+        format: '',
+        notes: '',
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave(formData);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-dark-card rounded-xl w-full max-w-lg">
+                <div className="flex items-center justify-between p-4 border-b border-dark-border">
+                    <h3 className="text-lg font-medium text-gray-200">
+                        {deliverable ? 'Edit Deliverable' : 'Add Deliverable'}
+                    </h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-white">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-4 space-y-4">
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-1">Name *</label>
+                        <input
+                            type="text"
+                            required
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                            placeholder="e.g., Master Cut, Social 9:16"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">Type</label>
+                            <select
+                                value={formData.type}
+                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                            >
+                                {Object.values(DELIVERABLE_TYPES).map((t) => (
+                                    <option key={t.id} value={t.id}>{t.icon} {t.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">Status</label>
+                            <select
+                                value={formData.status}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                            >
+                                {Object.values(DELIVERABLE_STATUS).map((s) => (
+                                    <option key={s.id} value={s.id}>{s.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">Due Date</label>
+                            <input
+                                type="date"
+                                value={formData.due_date?.split('T')[0] || ''}
+                                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">Resolution</label>
+                            <input
+                                type="text"
+                                value={formData.resolution}
+                                onChange={(e) => setFormData({ ...formData, resolution: e.target.value })}
+                                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                                placeholder="e.g., 1920x1080"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">Duration</label>
+                            <input
+                                type="text"
+                                value={formData.duration}
+                                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                                placeholder="e.g., 30s, 2:30"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-1">Format</label>
+                            <input
+                                type="text"
+                                value={formData.format}
+                                onChange={(e) => setFormData({ ...formData, format: e.target.value })}
+                                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                                placeholder="e.g., MP4, ProRes"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-1">Description</label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            rows={2}
+                            className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white"
+                            placeholder="Brief description or specs..."
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-dark-border">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-gray-400 hover:text-white"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-6 py-2 bg-accent-primary rounded-lg text-white hover:opacity-90"
+                        >
+                            {deliverable ? 'Save Changes' : 'Add Deliverable'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 export default function ProjectDetailPage({ projectId, onBack, onEditQuote }) {
     const { projects, getProject, updateProject, deleteProject } = useProjectStore();
     const { clients } = useClientStore();
@@ -175,6 +640,7 @@ export default function ProjectDetailPage({ projectId, onBack, onEditQuote }) {
 
     const tabs = [
         { id: 'overview', label: 'Overview' },
+        { id: 'deliverables', label: 'Deliverables' },
         { id: 'budget', label: 'Budget' },
         { id: 'notes', label: 'Notes' },
     ];
@@ -468,6 +934,10 @@ export default function ProjectDetailPage({ projectId, onBack, onEditQuote }) {
                         </div>
                     </InfoCard>
                 </div>
+            )}
+
+            {activeTab === 'deliverables' && (
+                <DeliverablesSection projectId={projectId} currency={project.currency} />
             )}
 
             {activeTab === 'budget' && (

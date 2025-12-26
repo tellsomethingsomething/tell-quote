@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useActivityStore, ACTIVITY_TYPES } from '../../store/activityStore';
-import { formatDistanceToNow, format } from 'date-fns';
+import { ACTIVITY_TYPES, CALL_OUTCOMES, TASK_PRIORITIES } from '../../store/activityStore';
+import { format } from 'date-fns';
 
 // Activity type icons as SVG paths
 const ICONS = {
@@ -12,6 +12,7 @@ const ICONS = {
     send: "M12 19l9 2-9-18-9 18 9-2zm0 0v-8",
     trophy: "M5 3h14M5 3a2 2 0 00-2 2v1c0 2.5 2 4 2 4s0 1.5-2 4v1a2 2 0 002 2h14a2 2 0 002-2v-1c-2-2.5-2-4-2-4s2-1.5 2-4V5a2 2 0 00-2-2M5 3h14M12 17v4m-4 0h8",
     'x-circle': "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z",
+    eye: "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z",
     clock: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
     'more-horizontal': "M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z",
 };
@@ -49,7 +50,7 @@ export default function ActivityTimeline({
     activities,
     onEdit,
     onDelete,
-    onCompleteFollowUp,
+    onCompleteTask,
     showClient = false,
     emptyMessage = "No activities yet",
     maxItems = 50,
@@ -72,11 +73,12 @@ export default function ActivityTimeline({
     return (
         <div className="space-y-1">
             {displayActivities.map((activity, index) => {
-                const config = ACTIVITY_TYPES[activity.type] || ACTIVITY_TYPES.other;
+                const actType = activity.activityType || activity.type || 'note';
+                const config = ACTIVITY_TYPES[actType] || { label: 'Activity', icon: 'more-horizontal', color: 'text-gray-400', bgColor: 'bg-gray-400/10' };
                 const isExpanded = expandedId === activity.id;
-                const isOverdue = activity.followUpDate &&
-                    !activity.followUpCompleted &&
-                    new Date(activity.followUpDate) < new Date();
+                const isTask = actType === 'task';
+                const isOverdue = isTask && activity.dueDate && !activity.isCompleted && new Date(activity.dueDate) < new Date();
+                const priorityConfig = activity.priority && TASK_PRIORITIES.find(p => p.id === activity.priority);
 
                 return (
                     <div
@@ -85,12 +87,12 @@ export default function ActivityTimeline({
                     >
                         {/* Timeline dot */}
                         <div className="absolute left-0 -translate-x-1/2 top-0">
-                            <ActivityIcon type={activity.type} />
+                            <ActivityIcon type={actType} />
                         </div>
 
                         {/* Activity card */}
                         <div
-                            className={`card hover:border-white/10 transition-colors cursor-pointer ${isOverdue ? 'border-red-500/30 bg-red-500/5' : ''}`}
+                            className={`card hover:border-white/10 transition-colors cursor-pointer group ${isOverdue ? 'border-red-500/30 bg-red-500/5' : ''} ${activity.isCompleted ? 'opacity-60' : ''}`}
                             onClick={() => setExpandedId(isExpanded ? null : activity.id)}
                         >
                             <div className="flex items-start justify-between gap-3">
@@ -102,18 +104,38 @@ export default function ActivityTimeline({
                                         <span className="text-xs text-gray-500">
                                             {formatActivityDate(activity.activityDate)}
                                         </span>
-                                        {activity.followUpDate && !activity.followUpCompleted && (
+                                        {/* Task-specific badges */}
+                                        {isTask && activity.dueDate && !activity.isCompleted && (
                                             <span className={`text-xs px-2 py-0.5 rounded ${isOverdue ? 'bg-red-500/20 text-red-400' : 'bg-orange-500/20 text-orange-400'}`}>
-                                                Follow-up: {format(new Date(activity.followUpDate), 'MMM d')}
+                                                Due: {format(new Date(activity.dueDate), 'MMM d')}
                                             </span>
                                         )}
-                                        {activity.followUpCompleted && (
+                                        {isTask && activity.isCompleted && (
                                             <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400">
                                                 Completed
                                             </span>
                                         )}
+                                        {priorityConfig && (
+                                            <span className={`text-xs px-2 py-0.5 rounded ${priorityConfig.bgColor} ${priorityConfig.color}`}>
+                                                {priorityConfig.label}
+                                            </span>
+                                        )}
+                                        {/* Call outcome */}
+                                        {actType === 'call' && activity.callOutcome && (
+                                            <span className="text-xs px-2 py-0.5 rounded bg-gray-500/20 text-gray-400">
+                                                {CALL_OUTCOMES.find(c => c.id === activity.callOutcome)?.label || activity.callOutcome}
+                                            </span>
+                                        )}
+                                        {/* Duration */}
+                                        {activity.durationMinutes && (
+                                            <span className="text-xs text-gray-500">
+                                                {activity.durationMinutes} min
+                                            </span>
+                                        )}
                                     </div>
-                                    <h4 className="text-sm font-medium text-gray-200 mt-1">{activity.title}</h4>
+                                    <h4 className={`text-sm font-medium text-gray-200 mt-1 ${activity.isCompleted ? 'line-through' : ''}`}>
+                                        {activity.subject || activity.title || 'Untitled'}
+                                    </h4>
                                     {activity.description && !isExpanded && (
                                         <p className="text-xs text-gray-500 mt-1 line-clamp-1">{activity.description}</p>
                                     )}
@@ -121,14 +143,14 @@ export default function ActivityTimeline({
 
                                 {/* Action buttons */}
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    {activity.followUpDate && !activity.followUpCompleted && onCompleteFollowUp && (
+                                    {isTask && !activity.isCompleted && onCompleteTask && (
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                onCompleteFollowUp(activity.id);
+                                                onCompleteTask(activity.id);
                                             }}
                                             className="p-1.5 text-gray-500 hover:text-green-400 hover:bg-green-400/10 rounded transition-colors"
-                                            title="Mark follow-up complete"
+                                            title="Mark complete"
                                         >
                                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -155,14 +177,26 @@ export default function ActivityTimeline({
                             </div>
 
                             {/* Expanded details */}
-                            {isExpanded && activity.description && (
+                            {isExpanded && (
                                 <div className="mt-3 pt-3 border-t border-dark-border">
-                                    <p className="text-sm text-gray-400 whitespace-pre-wrap">{activity.description}</p>
-                                    {activity.loggedByName && (
-                                        <p className="text-xs text-gray-600 mt-2">
-                                            Logged by {activity.loggedByName}
+                                    {activity.description && (
+                                        <p className="text-sm text-gray-400 whitespace-pre-wrap">{activity.description}</p>
+                                    )}
+                                    {/* Meeting details */}
+                                    {actType === 'meeting' && activity.meetingLocation && (
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Location: {activity.meetingLocation}
                                         </p>
                                     )}
+                                    {/* Call direction */}
+                                    {actType === 'call' && activity.callDirection && (
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            {activity.callDirection === 'inbound' ? 'Incoming call' : 'Outgoing call'}
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-gray-600 mt-2">
+                                        {format(new Date(activity.createdAt || activity.activityDate), 'MMM d, yyyy h:mm a')}
+                                    </p>
                                 </div>
                             )}
                         </div>

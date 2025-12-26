@@ -9,7 +9,8 @@ const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 // Backward compatibility: Support old password-based auth if Supabase not configured
-const FALLBACK_PASSWORD = import.meta.env.VITE_APP_PASSWORD || 'tell2024';
+// SECURITY: Password must be set via environment variable - no hardcoded fallback
+const FALLBACK_PASSWORD = import.meta.env.VITE_APP_PASSWORD || null;
 
 /**
  * Load authentication session from localStorage
@@ -208,6 +209,26 @@ export const useAuthStore = create((set, get) => ({
             // Listen for auth changes
             supabase.auth.onAuthStateChange(async (event, session) => {
                 if (event === 'SIGNED_IN' && session) {
+                    // If logged in via Google, save the Gmail connection
+                    if (session.user.app_metadata?.provider === 'google' && session.provider_token) {
+                        try {
+                            await supabase.from('google_connections').upsert({
+                                user_id: session.user.id,
+                                google_email: session.user.email,
+                                google_user_id: session.user.user_metadata?.sub,
+                                google_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
+                                google_picture: session.user.user_metadata?.avatar_url,
+                                access_token: session.provider_token,
+                                refresh_token: session.provider_refresh_token,
+                                token_expires_at: new Date(Date.now() + 3600 * 1000).toISOString(), // 1 hour
+                                status: 'active',
+                                sync_enabled: true,
+                            }, { onConflict: 'user_id,google_email' });
+                        } catch (e) {
+                            console.error('Failed to save Google connection:', e);
+                        }
+                    }
+
                     // Fetch user profile
                     let profile = await fetchUserProfile(session.user.id);
 
@@ -460,6 +481,15 @@ export const useAuthStore = create((set, get) => ({
      * DEPRECATED: Use Supabase Auth instead
      */
     loginWithPassword: async (password) => {
+        // SECURITY: Require VITE_APP_PASSWORD to be set
+        if (!FALLBACK_PASSWORD) {
+            set({
+                error: 'Password authentication not configured. Please set VITE_APP_PASSWORD environment variable or use Supabase Auth.',
+                isLoading: false
+            });
+            return false;
+        }
+
         // Check rate limiting
         if (isRateLimited()) {
             const remaining = getRemainingLockoutTime();
@@ -541,7 +571,7 @@ export const useAuthStore = create((set, get) => ({
                         access_type: 'offline',
                         prompt: 'consent',
                     },
-                    scopes: 'email profile',
+                    scopes: 'email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.modify',
                 },
             });
 

@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { useOpportunityStore, REGIONS, getRegionForCountry } from '../store/opportunityStore';
 import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
+import { useActivityStore } from '../store/activityStore';
 import { formatCurrency } from '../utils/currency';
 import SmartTasksWidget from '../components/opportunities/SmartTasksWidget';
+import ActivityTimeline from '../components/crm/ActivityTimeline';
+import LogActivityModal from '../components/crm/LogActivityModal';
 
 const STATUS_COLORS = {
     active: 'bg-blue-400/20 text-blue-400',
@@ -15,8 +18,15 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
     const { getOpportunity, updateOpportunity, deleteOpportunity, addContact, updateContact, deleteContact } = useOpportunityStore();
     const { clients } = useClientStore();
     const { loadQuoteData, setClient, setProject, setFees } = useQuoteStore();
+    const { getOpportunityActivities, deleteActivity, completeTask, initialize: initializeActivities } = useActivityStore();
 
     const opportunity = getOpportunity(opportunityId);
+    const opportunityActivities = getOpportunityActivities(opportunityId);
+
+    // Initialize activity store on mount
+    useEffect(() => {
+        initializeActivities();
+    }, [initializeActivities]);
 
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({});
@@ -25,6 +35,9 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [editingContactId, setEditingContactId] = useState(null);
     const [contactForm, setContactForm] = useState({});
+
+    // Activity modal
+    const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
 
     // Handle escape key
     useEffect(() => {
@@ -392,6 +405,29 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
                             <p className="text-gray-400 whitespace-pre-wrap">{opportunity.notes}</p>
                         </div>
                     )}
+
+                    {/* Activity History */}
+                    <div className="card">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold text-gray-200">Activity History</h2>
+                            <button
+                                onClick={() => setIsActivityModalOpen(true)}
+                                className="btn-ghost text-sm flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Log Activity
+                            </button>
+                        </div>
+                        <ActivityTimeline
+                            activities={opportunityActivities}
+                            onDelete={deleteActivity}
+                            onCompleteTask={completeTask}
+                            emptyMessage="No activities logged yet. Track your interactions with this opportunity."
+                            maxItems={20}
+                        />
+                    </div>
                 </div>
 
                 {/* Sidebar */}
@@ -853,6 +889,15 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
                     </div>
                 </div>
             )}
+
+            {/* Log Activity Modal */}
+            <LogActivityModal
+                isOpen={isActivityModalOpen}
+                onClose={() => setIsActivityModalOpen(false)}
+                clientId={opportunity.clientId}
+                opportunityId={opportunityId}
+                contacts={opportunity.contacts || []}
+            />
         </div>
     );
 }

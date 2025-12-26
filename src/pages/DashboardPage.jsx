@@ -5,9 +5,11 @@ import { useSettingsStore } from '../store/settingsStore';
 import { useOpportunityStore, REGIONS } from '../store/opportunityStore';
 import { useActivityStore } from '../store/activityStore';
 import { useKnowledgeStore, FRAGMENT_TYPES } from '../store/knowledgeStore';
+import { useContactStore } from '../store/contactStore';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { CURRENCIES } from '../data/currencies';
+import CRMMetricsGrid from '../components/dashboard/CRMMetricsWidgets';
 
 // Status colors aligned with brand palette for visual harmony
 const STATUSES = [
@@ -712,6 +714,11 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
                             </div>
                         </div>
                     ))}
+                </div>
+
+                {/* CRM Metrics Grid - Win Rate, Sales Velocity, Activity, Pipeline Health */}
+                <div className="mt-6">
+                    <CRMMetricsGrid dashboardCurrency={dashboardCurrency} rates={rates} />
                 </div>
 
                 {/* Action Items Widget - Expiring Quotes & Overdue Follow-ups */}

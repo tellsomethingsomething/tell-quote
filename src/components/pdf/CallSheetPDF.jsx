@@ -27,11 +27,6 @@ const colors = {
     borderDark: '#CBD5E1',
 };
 
-// Department colors for visual distinction
-const getDeptColor = (deptId) => {
-    const dept = DEPARTMENTS.find(d => d.id === deptId);
-    return dept?.color || '#64748B';
-};
 
 const styles = StyleSheet.create({
     // Page
@@ -578,6 +573,273 @@ const styles = StyleSheet.create({
         color: colors.primary,
         lineHeight: 1.4,
     },
+
+    // Flight Table
+    flightTable: {
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 4,
+        overflow: 'hidden',
+        marginBottom: 12,
+    },
+    flightHeader: {
+        flexDirection: 'row',
+        backgroundColor: colors.offWhite,
+        paddingVertical: 6,
+        paddingHorizontal: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+    },
+    flightHeaderText: {
+        fontSize: 7,
+        fontFamily: 'Helvetica-Bold',
+        color: colors.tertiary,
+        textTransform: 'uppercase',
+    },
+    flightRow: {
+        flexDirection: 'row',
+        paddingVertical: 6,
+        paddingHorizontal: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+    },
+    flightTypeBadge: {
+        paddingHorizontal: 4,
+        paddingVertical: 2,
+        borderRadius: 2,
+        marginRight: 6,
+    },
+    flightTypeBadgeText: {
+        fontSize: 6,
+        fontFamily: 'Helvetica-Bold',
+        textTransform: 'uppercase',
+    },
+
+    // Transfer Row
+    transferRow: {
+        flexDirection: 'row',
+        backgroundColor: colors.offWhite,
+        padding: 8,
+        borderRadius: 4,
+        marginBottom: 6,
+    },
+    transferTime: {
+        width: 60,
+    },
+    transferTimeText: {
+        fontSize: 10,
+        fontFamily: 'Helvetica-Bold',
+        color: colors.teal,
+    },
+    transferRoute: {
+        flex: 1,
+    },
+    transferRouteText: {
+        fontSize: 9,
+        color: colors.primary,
+    },
+    transferDriver: {
+        fontSize: 8,
+        color: colors.tertiary,
+        marginTop: 2,
+    },
+
+    // Accommodation Box
+    accommodationBox: {
+        backgroundColor: colors.offWhite,
+        padding: 12,
+        borderRadius: 4,
+        borderLeftWidth: 3,
+        borderLeftColor: colors.teal,
+        marginBottom: 8,
+    },
+    hotelName: {
+        fontSize: 11,
+        fontFamily: 'Helvetica-Bold',
+        color: colors.primary,
+        marginBottom: 4,
+    },
+    hotelAddress: {
+        fontSize: 9,
+        color: colors.secondary,
+        marginBottom: 4,
+    },
+    hotelMeta: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    hotelMetaItem: {
+        fontSize: 8,
+        color: colors.tertiary,
+    },
+
+    // Vehicle Row
+    vehicleRow: {
+        flexDirection: 'row',
+        backgroundColor: colors.offWhite,
+        padding: 8,
+        borderRadius: 4,
+        marginBottom: 6,
+    },
+    vehicleType: {
+        width: 100,
+    },
+    vehicleTypeBadge: {
+        backgroundColor: colors.orange + '20',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 2,
+    },
+    vehicleTypeBadgeText: {
+        fontSize: 7,
+        fontFamily: 'Helvetica-Bold',
+        color: colors.orange,
+    },
+    vehicleInfo: {
+        flex: 1,
+    },
+    vehicleName: {
+        fontSize: 9,
+        fontFamily: 'Helvetica-Bold',
+        color: colors.primary,
+    },
+    vehicleDriver: {
+        fontSize: 8,
+        color: colors.tertiary,
+        marginTop: 2,
+    },
+
+    // Technical Box
+    technicalBox: {
+        backgroundColor: colors.offWhite,
+        padding: 12,
+        borderRadius: 4,
+        marginBottom: 8,
+    },
+    technicalLabel: {
+        fontSize: 8,
+        fontFamily: 'Helvetica-Bold',
+        color: colors.tertiary,
+        textTransform: 'uppercase',
+        marginBottom: 4,
+    },
+    technicalText: {
+        fontSize: 9,
+        color: colors.primary,
+        lineHeight: 1.4,
+    },
+
+    // Vendor Row
+    vendorRow: {
+        flexDirection: 'row',
+        paddingVertical: 6,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+    },
+    vendorType: {
+        width: 80,
+    },
+    vendorTypeBadge: {
+        backgroundColor: colors.teal + '20',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 2,
+    },
+    vendorTypeBadgeText: {
+        fontSize: 7,
+        fontFamily: 'Helvetica-Bold',
+        color: colors.teal,
+    },
+    vendorInfo: {
+        flex: 1,
+    },
+    vendorName: {
+        fontSize: 10,
+        fontFamily: 'Helvetica-Bold',
+        color: colors.primary,
+    },
+    vendorContact: {
+        fontSize: 8,
+        color: colors.secondary,
+        marginTop: 2,
+    },
+    vendorPhone: {
+        width: 100,
+        fontSize: 8,
+        color: colors.tertiary,
+        textAlign: 'right',
+    },
+
+    // Emergency Contact Row
+    emergencyRow: {
+        flexDirection: 'row',
+        backgroundColor: colors.red + '08',
+        padding: 8,
+        borderRadius: 4,
+        marginBottom: 6,
+        borderLeftWidth: 3,
+        borderLeftColor: colors.red,
+    },
+    emergencyType: {
+        width: 80,
+    },
+    emergencyTypeBadge: {
+        backgroundColor: colors.red + '20',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 2,
+    },
+    emergencyTypeBadgeText: {
+        fontSize: 7,
+        fontFamily: 'Helvetica-Bold',
+        color: colors.red,
+    },
+    emergencyInfo: {
+        flex: 1,
+    },
+    emergencyName: {
+        fontSize: 10,
+        fontFamily: 'Helvetica-Bold',
+        color: colors.primary,
+    },
+    emergencyOrg: {
+        fontSize: 8,
+        color: colors.secondary,
+        marginTop: 2,
+    },
+    emergencyPhone: {
+        width: 100,
+        fontSize: 10,
+        fontFamily: 'Helvetica-Bold',
+        color: colors.red,
+        textAlign: 'right',
+    },
+
+    // International Info Box
+    internationalBox: {
+        backgroundColor: colors.teal + '10',
+        padding: 12,
+        borderRadius: 4,
+        marginBottom: 12,
+    },
+    internationalGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+    },
+    internationalItem: {
+        width: '30%',
+    },
+    internationalLabel: {
+        fontSize: 7,
+        color: colors.tertiary,
+        textTransform: 'uppercase',
+        marginBottom: 2,
+    },
+    internationalValue: {
+        fontSize: 9,
+        color: colors.primary,
+    },
 });
 
 // Helper to format date
@@ -610,11 +872,27 @@ const groupCrewByDepartment = (crew) => {
 };
 
 // Main PDF Component
-export default function CallSheetPDF({ sheet, crew = [], cast = [], settings = {} }) {
+export default function CallSheetPDF({
+    sheet,
+    crew = [],
+    cast = [],
+    settings = {},
+    // New enhanced props
+    flights = [],
+    transfers = [],
+    accommodation = [],
+    vehicles = [],
+    technical = null,
+    vendors = [],
+    emergencyContacts = [],
+}) {
     const enabledSections = sheet.enabledSections || {};
     const crewByDept = groupCrewByDepartment(crew);
     const companyName = settings.companyName || 'Tell Productions';
-    const logoUrl = settings.logoUrl;
+
+    // Check if we have travel/logistics data
+    const hasTravel = flights.length > 0 || transfers.length > 0 || accommodation.length > 0;
+    const hasTechnical = technical && (technical.cameraPositions?.length > 0 || technical.commsSetup || technical.powerRequirements);
 
     return (
         <Document>
@@ -1076,6 +1354,385 @@ export default function CallSheetPDF({ sheet, crew = [], cast = [], settings = {
                         </Text>
                         <Text style={styles.footerRight}>
                             Page 3
+                        </Text>
+                    </View>
+                </Page>
+            )}
+
+            {/* Page 4 - Travel & Logistics (if any) */}
+            {hasTravel && (
+                <Page size="A4" style={styles.page}>
+                    <View style={styles.headerBanner}>
+                        <View style={styles.headerTop}>
+                            <View style={styles.headerLeft}>
+                                <Text style={styles.productionTitle}>
+                                    {sheet.productionTitle || sheet.projectName || 'Call Sheet'} - Travel & Logistics
+                                </Text>
+                            </View>
+                            <View style={styles.headerRight}>
+                                <View style={styles.dayBadge}>
+                                    <Text style={styles.dayBadgeText}>
+                                        DAY {sheet.dayNumber || 1}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={styles.content}>
+                        {/* International Info */}
+                        {(sheet.timeZone || sheet.perDiemAmount || sheet.localCurrency) && (
+                            <View style={styles.internationalBox}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.sectionTitle}>International Info</Text>
+                                </View>
+                                <View style={styles.internationalGrid}>
+                                    {sheet.timeZone && (
+                                        <View style={styles.internationalItem}>
+                                            <Text style={styles.internationalLabel}>Time Zone</Text>
+                                            <Text style={styles.internationalValue}>{sheet.timeZone} {sheet.timeZoneOffset && `(${sheet.timeZoneOffset})`}</Text>
+                                        </View>
+                                    )}
+                                    {sheet.localCurrency && (
+                                        <View style={styles.internationalItem}>
+                                            <Text style={styles.internationalLabel}>Local Currency</Text>
+                                            <Text style={styles.internationalValue}>{sheet.localCurrency} {sheet.exchangeRate && `@ ${sheet.exchangeRate}`}</Text>
+                                        </View>
+                                    )}
+                                    {sheet.perDiemAmount && (
+                                        <View style={styles.internationalItem}>
+                                            <Text style={styles.internationalLabel}>Per Diem</Text>
+                                            <Text style={styles.internationalValue}>{sheet.perDiemCurrency || 'USD'} {sheet.perDiemAmount}</Text>
+                                        </View>
+                                    )}
+                                    {sheet.internationalDialingCode && (
+                                        <View style={styles.internationalItem}>
+                                            <Text style={styles.internationalLabel}>Dialing Code</Text>
+                                            <Text style={styles.internationalValue}>{sheet.internationalDialingCode}</Text>
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Flights */}
+                        {flights.length > 0 && (
+                            <View style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.sectionTitle}>Flights ({flights.length})</Text>
+                                </View>
+                                <View style={styles.flightTable}>
+                                    <View style={styles.flightHeader}>
+                                        <Text style={[styles.flightHeaderText, { width: '8%' }]}>Type</Text>
+                                        <Text style={[styles.flightHeaderText, { width: '22%' }]}>Name</Text>
+                                        <Text style={[styles.flightHeaderText, { width: '12%' }]}>Flight</Text>
+                                        <Text style={[styles.flightHeaderText, { width: '20%' }]}>Route</Text>
+                                        <Text style={[styles.flightHeaderText, { width: '18%' }]}>Depart</Text>
+                                        <Text style={[styles.flightHeaderText, { width: '20%' }]}>Arrive</Text>
+                                    </View>
+                                    {flights.map((flight, idx) => (
+                                        <View key={flight.id || idx} style={styles.flightRow}>
+                                            <View style={{ width: '8%' }}>
+                                                <View style={[styles.flightTypeBadge, { backgroundColor: flight.flightType === 'outbound' ? colors.teal + '20' : colors.green + '20' }]}>
+                                                    <Text style={[styles.flightTypeBadgeText, { color: flight.flightType === 'outbound' ? colors.teal : colors.green }]}>
+                                                        {flight.flightType === 'outbound' ? 'OUT' : 'RET'}
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                            <Text style={{ width: '22%', fontSize: 9, color: colors.primary }}>{flight.crewName}</Text>
+                                            <Text style={{ width: '12%', fontSize: 8, color: colors.secondary }}>{flight.flightNumber}</Text>
+                                            <Text style={{ width: '20%', fontSize: 9, color: colors.primary }}>{flight.departureAirport} → {flight.arrivalAirport}</Text>
+                                            <Text style={{ width: '18%', fontSize: 8, color: colors.tertiary }}>
+                                                {flight.departureDate && new Date(flight.departureDate + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} {flight.departureTime}
+                                            </Text>
+                                            <Text style={{ width: '20%', fontSize: 8, color: colors.tertiary }}>
+                                                {flight.arrivalDate && new Date(flight.arrivalDate + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} {flight.arrivalTime || ''}
+                                            </Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Transfers */}
+                        {transfers.length > 0 && (
+                            <View style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.sectionTitle}>Transfers</Text>
+                                </View>
+                                {transfers.map((transfer, idx) => (
+                                    <View key={transfer.id || idx} style={styles.transferRow}>
+                                        <View style={styles.transferTime}>
+                                            <Text style={styles.transferTimeText}>{transfer.transferTime}</Text>
+                                        </View>
+                                        <View style={styles.transferRoute}>
+                                            <Text style={styles.transferRouteText}>{transfer.pickupLocation} → {transfer.dropoffLocation}</Text>
+                                            {transfer.driverName && (
+                                                <Text style={styles.transferDriver}>Driver: {transfer.driverName} {transfer.driverPhone}</Text>
+                                            )}
+                                        </View>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+
+                        {/* Accommodation */}
+                        {accommodation.length > 0 && (
+                            <View style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.sectionTitle}>Accommodation</Text>
+                                </View>
+                                {accommodation.map((hotel, idx) => (
+                                    <View key={hotel.id || idx} style={styles.accommodationBox}>
+                                        <Text style={styles.hotelName}>{hotel.hotelName}</Text>
+                                        {hotel.hotelAddress && (
+                                            <Text style={styles.hotelAddress}>
+                                                {hotel.hotelAddress}
+                                                {hotel.hotelCity && `, ${hotel.hotelCity}`}
+                                            </Text>
+                                        )}
+                                        <View style={styles.hotelMeta}>
+                                            {hotel.hotelPhone && <Text style={styles.hotelMetaItem}>Tel: {hotel.hotelPhone}</Text>}
+                                            {hotel.bookingReference && <Text style={styles.hotelMetaItem}>Ref: {hotel.bookingReference}</Text>}
+                                        </View>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+
+                        {/* Vehicles */}
+                        {vehicles.length > 0 && (
+                            <View style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.sectionTitle}>Vehicles & Equipment</Text>
+                                </View>
+                                {vehicles.map((vehicle, idx) => (
+                                    <View key={vehicle.id || idx} style={styles.vehicleRow}>
+                                        <View style={styles.vehicleType}>
+                                            <View style={styles.vehicleTypeBadge}>
+                                                <Text style={styles.vehicleTypeBadgeText}>{vehicle.vehicleType}</Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.vehicleInfo}>
+                                            <Text style={styles.vehicleName}>{vehicle.vehicleName || vehicle.vehicleType}</Text>
+                                            {(vehicle.driverName || vehicle.company) && (
+                                                <Text style={styles.vehicleDriver}>
+                                                    {vehicle.company} {vehicle.driverName && `- ${vehicle.driverName}`} {vehicle.driverPhone}
+                                                </Text>
+                                            )}
+                                        </View>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+                    </View>
+
+                    <View style={styles.footer}>
+                        <Text style={styles.footerLeft}>
+                            {companyName} | Call Sheet v{sheet.version || 1}
+                        </Text>
+                        <Text style={styles.footerRight}>
+                            Page 4
+                        </Text>
+                    </View>
+                </Page>
+            )}
+
+            {/* Page 5 - Technical (if any) */}
+            {hasTechnical && (
+                <Page size="A4" style={styles.page}>
+                    <View style={styles.headerBanner}>
+                        <View style={styles.headerTop}>
+                            <View style={styles.headerLeft}>
+                                <Text style={styles.productionTitle}>
+                                    {sheet.productionTitle || sheet.projectName || 'Call Sheet'} - Technical Plan
+                                </Text>
+                            </View>
+                            <View style={styles.headerRight}>
+                                <View style={styles.dayBadge}>
+                                    <Text style={styles.dayBadgeText}>
+                                        DAY {sheet.dayNumber || 1}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={styles.content}>
+                        {/* Camera Positions */}
+                        {technical?.cameraPositions?.length > 0 && (
+                            <View style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.sectionTitle}>Camera Positions</Text>
+                                </View>
+                                <View style={styles.technicalBox}>
+                                    {technical.cameraPositions.map((cam, idx) => (
+                                        <Text key={idx} style={styles.technicalText}>
+                                            {cam.camera}: {cam.position} {cam.equipment && `(${cam.equipment})`}
+                                        </Text>
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Comms & Radio */}
+                        {(technical?.commsSetup || technical?.radioChannels?.length > 0) && (
+                            <View style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.sectionTitle}>Communications</Text>
+                                </View>
+                                <View style={styles.twoColumn}>
+                                    {technical?.commsSetup && (
+                                        <View style={styles.columnLeft}>
+                                            <View style={styles.technicalBox}>
+                                                <Text style={styles.technicalLabel}>Comms Setup</Text>
+                                                <Text style={styles.technicalText}>{technical.commsSetup}</Text>
+                                            </View>
+                                        </View>
+                                    )}
+                                    {technical?.radioChannels?.length > 0 && (
+                                        <View style={styles.columnRight}>
+                                            <View style={styles.technicalBox}>
+                                                <Text style={styles.technicalLabel}>Radio Channels</Text>
+                                                {technical.radioChannels.map((ch, idx) => (
+                                                    <Text key={idx} style={styles.technicalText}>{ch}</Text>
+                                                ))}
+                                            </View>
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Power & Connectivity */}
+                        {(technical?.powerRequirements || technical?.uplinkInfo) && (
+                            <View style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.sectionTitle}>Power & Connectivity</Text>
+                                </View>
+                                <View style={styles.twoColumn}>
+                                    {technical?.powerRequirements && (
+                                        <View style={styles.columnLeft}>
+                                            <View style={styles.technicalBox}>
+                                                <Text style={styles.technicalLabel}>Power Requirements</Text>
+                                                <Text style={styles.technicalText}>{technical.powerRequirements}</Text>
+                                            </View>
+                                        </View>
+                                    )}
+                                    {technical?.uplinkInfo && (
+                                        <View style={styles.columnRight}>
+                                            <View style={styles.technicalBox}>
+                                                <Text style={styles.technicalLabel}>Uplink / Transmission</Text>
+                                                <Text style={styles.technicalText}>{technical.uplinkInfo}</Text>
+                                            </View>
+                                        </View>
+                                    )}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Technical Notes */}
+                        {technical?.notes && (
+                            <View style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.sectionTitle}>Technical Notes</Text>
+                                </View>
+                                <View style={styles.technicalBox}>
+                                    <Text style={styles.technicalText}>{technical.notes}</Text>
+                                </View>
+                            </View>
+                        )}
+                    </View>
+
+                    <View style={styles.footer}>
+                        <Text style={styles.footerLeft}>
+                            {companyName} | Call Sheet v{sheet.version || 1}
+                        </Text>
+                        <Text style={styles.footerRight}>
+                            Page 5
+                        </Text>
+                    </View>
+                </Page>
+            )}
+
+            {/* Page 6 - Vendors & Emergency Contacts (if any) */}
+            {(vendors.length > 0 || emergencyContacts.length > 0) && (
+                <Page size="A4" style={styles.page}>
+                    <View style={styles.headerBanner}>
+                        <View style={styles.headerTop}>
+                            <View style={styles.headerLeft}>
+                                <Text style={styles.productionTitle}>
+                                    {sheet.productionTitle || sheet.projectName || 'Call Sheet'} - Contacts
+                                </Text>
+                            </View>
+                            <View style={styles.headerRight}>
+                                <View style={styles.dayBadge}>
+                                    <Text style={styles.dayBadgeText}>
+                                        DAY {sheet.dayNumber || 1}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={styles.content}>
+                        {/* Vendors */}
+                        {vendors.length > 0 && (
+                            <View style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.sectionTitle}>Vendors & Suppliers</Text>
+                                </View>
+                                {vendors.map((vendor, idx) => (
+                                    <View key={vendor.id || idx} style={styles.vendorRow}>
+                                        <View style={styles.vendorType}>
+                                            <View style={styles.vendorTypeBadge}>
+                                                <Text style={styles.vendorTypeBadgeText}>{vendor.vendorType || 'Vendor'}</Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.vendorInfo}>
+                                            <Text style={styles.vendorName}>{vendor.companyName}</Text>
+                                            {vendor.contactName && (
+                                                <Text style={styles.vendorContact}>{vendor.contactName}</Text>
+                                            )}
+                                        </View>
+                                        <Text style={styles.vendorPhone}>{vendor.contactPhone}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+
+                        {/* Emergency Contacts */}
+                        {emergencyContacts.length > 0 && (
+                            <View style={styles.section}>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={[styles.sectionTitle, { color: colors.red }]}>Emergency Contacts</Text>
+                                </View>
+                                {emergencyContacts.map((contact, idx) => (
+                                    <View key={contact.id || idx} style={styles.emergencyRow}>
+                                        <View style={styles.emergencyType}>
+                                            <View style={styles.emergencyTypeBadge}>
+                                                <Text style={styles.emergencyTypeBadgeText}>{contact.contactType}</Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.emergencyInfo}>
+                                            <Text style={styles.emergencyName}>{contact.name}</Text>
+                                            {contact.organization && (
+                                                <Text style={styles.emergencyOrg}>{contact.organization} {contact.address && `- ${contact.address}`}</Text>
+                                            )}
+                                        </View>
+                                        <Text style={styles.emergencyPhone}>{contact.phone}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+                    </View>
+
+                    <View style={styles.footer}>
+                        <Text style={styles.footerLeft}>
+                            {companyName} | Call Sheet v{sheet.version || 1}
+                        </Text>
+                        <Text style={styles.footerRight}>
+                            Page 6
                         </Text>
                     </View>
                 </Page>

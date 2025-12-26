@@ -1,4 +1,6 @@
 import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import Sidebar from './components/layout/Sidebar';
 import EditorHeader from './components/layout/EditorHeader';
 import EditorPanel from './components/layout/EditorPanel';
@@ -19,10 +21,16 @@ import { useDealContextStore } from './store/dealContextStore';
 import { useKnowledgeStore } from './store/knowledgeStore';
 import { useKitStore } from './store/kitStore';
 import { useSopStore } from './store/sopStore';
-// import { useProjectStore } from './store/projectStore'; // Hidden for now
+import { useProjectStore } from './store/projectStore';
 import { useCrewStore } from './store/crewStore';
-// import { useKitBookingStore } from './store/kitBookingStore'; // Hidden for now
+import { useKitBookingStore } from './store/kitBookingStore';
 import { useCallSheetStore } from './store/callSheetStore';
+import { useInvoiceStore } from './store/invoiceStore';
+import { useExpenseStore } from './store/expenseStore';
+import { useCrewBookingStore } from './store/crewBookingStore';
+import { usePurchaseOrderStore } from './store/purchaseOrderStore';
+import { useContractStore } from './store/contractStore';
+import { useEmailStore } from './store/emailStore';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
 
 // Initialize auth store to set up OAuth listeners (must run once on app load)
@@ -43,14 +51,31 @@ const SOPPage = lazy(() => import('./pages/SOPPage'));
 const KnowledgePage = lazy(() => import('./pages/KnowledgePage'));
 const KitListPage = lazy(() => import('./pages/KitListPage'));
 const ContactsPage = lazy(() => import('./pages/ContactsPage'));
-// const ProjectsPage = lazy(() => import('./pages/ProjectsPage')); // Hidden for now
-// const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage')); // Hidden for now
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
+const ProjectDetailPage = lazy(() => import('./pages/ProjectDetailPage'));
 const CrewPage = lazy(() => import('./pages/CrewPage'));
 const CrewDetailPage = lazy(() => import('./pages/CrewDetailPage'));
-// const KitBookingPage = lazy(() => import('./pages/KitBookingPage')); // Hidden for now
+const KitBookingPage = lazy(() => import('./pages/KitBookingPage'));
 const CallSheetPage = lazy(() => import('./pages/CallSheetPage'));
 const CallSheetDetailPage = lazy(() => import('./pages/CallSheetDetailPage'));
+const InvoicesPage = lazy(() => import('./pages/InvoicesPage'));
+const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
+const ProfitLossPage = lazy(() => import('./pages/ProfitLossPage'));
+const PurchaseOrdersPage = lazy(() => import('./pages/PurchaseOrdersPage'));
+const ContractsPage = lazy(() => import('./pages/ContractsPage'));
+const EmailPage = lazy(() => import('./pages/EmailPage'));
+const EmailTemplatesPage = lazy(() => import('./pages/EmailTemplatesPage'));
+const WorkflowsPage = lazy(() => import('./pages/WorkflowsPage'));
+const CalendarPage = lazy(() => import('./pages/CalendarPage'));
+const EmailSequencesPage = lazy(() => import('./pages/EmailSequencesPage'));
+const TaskBoardPage = lazy(() => import('./pages/TaskBoardPage'));
+const ResourcesPage = lazy(() => import('./pages/ResourcesPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const Home = lazy(() => import('./pages/Home'));
+const Pricing = lazy(() => import('./pages/Pricing'));
+const FeaturePage = lazy(() => import('./pages/FeaturePage'));
+const UseCasePage = lazy(() => import('./pages/UseCasePage'));
+const ComparePage = lazy(() => import('./pages/ComparePage'));
 
 // Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings' | 'contacts'
 function App() {
@@ -66,17 +91,23 @@ function App() {
   const initializeKnowledge = useKnowledgeStore(state => state.initialize);
   const initializeKit = useKitStore(state => state.initialize);
   const initializeSops = useSopStore(state => state.initialize);
-  // const initializeProjects = useProjectStore(state => state.initialize); // Hidden for now
+  const initializeProjects = useProjectStore(state => state.initialize);
   const initializeCrew = useCrewStore(state => state.initialize);
-  // const initializeKitBookings = useKitBookingStore(state => state.initialize); // Hidden for now
+  const initializeKitBookings = useKitBookingStore(state => state.initialize);
   const initializeCallSheets = useCallSheetStore(state => state.initialize);
+  const initializeInvoices = useInvoiceStore(state => state.initialize);
+  const initializeExpenses = useExpenseStore(state => state.initialize);
+  const initializeCrewBookings = useCrewBookingStore(state => state.initialize);
+  const initializePurchaseOrders = usePurchaseOrderStore(state => state.initialize);
+  const initializeContracts = useContractStore(state => state.initialize);
+  const initializeEmails = useEmailStore(state => state.initialize);
   const resetQuote = useQuoteStore(state => state.resetQuote);
   const loadQuoteData = useQuoteStore(state => state.loadQuoteData);
 
   const [view, setView] = useState('dashboard');
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState(null);
-  // const [selectedProjectId, setSelectedProjectId] = useState(null); // Hidden for now
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [selectedCrewId, setSelectedCrewId] = useState(null);
   const [selectedCallSheetId, setSelectedCallSheetId] = useState(null);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -233,22 +264,22 @@ function App() {
     confirmNavigateAway(() => setView('kit'));
   }, [confirmNavigateAway]);
 
-  // const handleGoToKitBookings = useCallback(() => {
-  //   confirmNavigateAway(() => setView('kit-bookings'));
-  // }, [confirmNavigateAway]); // Hidden for now
+  const handleGoToKitBookings = useCallback(() => {
+    confirmNavigateAway(() => setView('kit-bookings'));
+  }, [confirmNavigateAway]);
 
   const handleGoToContacts = useCallback(() => {
     confirmNavigateAway(() => setView('contacts'));
   }, [confirmNavigateAway]);
 
-  // const handleGoToProjects = useCallback(() => {
-  //   confirmNavigateAway(() => setView('projects'));
-  // }, [confirmNavigateAway]); // Hidden for now
+  const handleGoToProjects = useCallback(() => {
+    confirmNavigateAway(() => setView('projects'));
+  }, [confirmNavigateAway]);
 
-  // const handleSelectProject = useCallback((projectId) => {
-  //   setSelectedProjectId(projectId);
-  //   setView('project-detail');
-  // }, []); // Hidden for now
+  const handleSelectProject = useCallback((projectId) => {
+    setSelectedProjectId(projectId);
+    setView('project-detail');
+  }, []);
 
   const handleGoToCrew = useCallback(() => {
     confirmNavigateAway(() => setView('crew'));
@@ -268,10 +299,34 @@ function App() {
     setView('call-sheet-detail');
   }, []);
 
-  // const handleConvertQuoteToProject = useCallback((projectId) => {
-  //   setSelectedProjectId(projectId);
-  //   setView('project-detail');
-  // }, []); // Hidden for now
+  const handleGoToInvoices = useCallback(() => {
+    confirmNavigateAway(() => setView('invoices'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToExpenses = useCallback(() => {
+    confirmNavigateAway(() => setView('expenses'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToPL = useCallback(() => {
+    confirmNavigateAway(() => setView('pl'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToPurchaseOrders = useCallback(() => {
+    confirmNavigateAway(() => setView('purchase-orders'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToContracts = useCallback(() => {
+    confirmNavigateAway(() => setView('contracts'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToResources = useCallback(() => {
+    confirmNavigateAway(() => setView('resources'));
+  }, [confirmNavigateAway]);
+
+  const handleConvertQuoteToProject = useCallback((projectId) => {
+    setSelectedProjectId(projectId);
+    setView('project-detail');
+  }, []);
 
   const handleSelectOpportunity = useCallback((opportunityId) => {
     setSelectedOpportunityId(opportunityId);
@@ -347,32 +402,70 @@ function App() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      initializeQuote();
-      initializeClients();
-      initializeRateCard();
-      initializeSettings();
-      initializeOpportunities();
-      initializeActivities();
-      initializeTemplates();
-      initializeDealContext();
-      initializeKnowledge();
-      initializeKit();
-      initializeSops();
-      // initializeProjects(); // Hidden for now
-      initializeCrew();
-      // initializeKitBookings(); // Hidden for now
-      initializeCallSheets();
+      // PERFORMANCE: Initialize all stores in parallel instead of sequentially
+      // This significantly reduces initial load time
+      Promise.all([
+        initializeQuote(),
+        initializeClients(),
+        initializeRateCard(),
+        initializeSettings(),
+        initializeOpportunities(),
+        initializeActivities(),
+        initializeTemplates(),
+        initializeDealContext(),
+        initializeKnowledge(),
+        initializeKit(),
+        initializeSops(),
+        initializeProjects(),
+        initializeCrew(),
+        initializeKitBookings(),
+        initializeCallSheets(),
+        initializeInvoices(),
+        initializeExpenses(),
+        initializeCrewBookings(), // Hidden - for P&L crew cost tracking
+        initializePurchaseOrders(),
+        initializeContracts(),
+        initializeEmails(),
+      ]).catch(err => {
+        console.error('Failed to initialize stores:', err);
+      });
     }
-  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities, initializeActivities, initializeTemplates, initializeDealContext, initializeKnowledge, initializeKit, initializeSops, initializeCrew, initializeCallSheets]);
+  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities, initializeActivities, initializeTemplates, initializeDealContext, initializeKnowledge, initializeKit, initializeSops, initializeProjects, initializeCrew, initializeKitBookings, initializeCallSheets, initializeInvoices, initializeExpenses, initializeCrewBookings, initializePurchaseOrders, initializeContracts, initializeEmails]);
 
-  // Show login/landing page if not authenticated
-  const [showLanding, setShowLanding] = useState(true);
-
+  // Show marketing site if not authenticated
   if (!isAuthenticated) {
-    if (showLanding) {
-      return <Suspense fallback={<LoadingSpinner />}><LandingPage onLogin={() => setShowLanding(false)} /></Suspense>;
-    }
-    return <LoginPage onBack={() => setShowLanding(true)} />;
+    return (
+      <HelmetProvider>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/pricing" element={<Pricing />} />
+
+            {/* Feature Pages */}
+            <Route path="/features" element={<Navigate to="/" replace />} />
+            <Route path="/features/:featureId" element={<FeaturePage />} />
+
+            {/* Use Case Pages */}
+            <Route path="/use-cases/:useCaseId" element={<UseCasePage />} />
+
+            {/* Comparison Pages */}
+            <Route path="/compare/:competitorId" element={<ComparePage />} />
+
+            {/* Auth Routes */}
+            <Route path="/auth/login" element={<LoginPage />} />
+            <Route path="/auth/signup" element={<div className="pt-32 text-center text-marketing-text-primary px-4"><h1 className="text-2xl font-bold mb-4">Signup Coming Soon</h1><p>We are currently in private beta.</p></div>} />
+
+            {/* Resources & Company Placeholders */}
+            <Route path="/resources/*" element={<Navigate to="/" replace />} />
+            <Route path="/company/*" element={<Navigate to="/" replace />} />
+            <Route path="/legal/*" element={<Navigate to="/" replace />} />
+
+            {/* Catch all redirect to Home for marketing site */}
+            <Route path="*" element={<Home />} />
+          </Routes>
+        </Suspense>
+      </HelmetProvider>
+    );
   }
 
   // Render current view with Suspense boundaries
@@ -492,14 +585,14 @@ function App() {
             </main>
           </Suspense>
         );
-      // case 'kit-bookings': // Hidden for now
-      //   return (
-      //     <Suspense fallback={<LoadingSpinner text="Loading Kit Bookings..." />}>
-      //       <main id="main-content" tabIndex="-1">
-      //         <KitBookingPage />
-      //       </main>
-      //     </Suspense>
-      //   );
+      case 'kit-bookings':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Kit Bookings..." />}>
+            <main id="main-content" tabIndex="-1">
+              <KitBookingPage />
+            </main>
+          </Suspense>
+        );
       case 'contacts':
         return (
           <Suspense fallback={<LoadingSpinner text="Loading Contacts..." />}>
@@ -508,26 +601,26 @@ function App() {
             </main>
           </Suspense>
         );
-      // case 'projects': // Hidden for now
-      //   return (
-      //     <Suspense fallback={<LoadingSpinner text="Loading Projects..." />}>
-      //       <main id="main-content" tabIndex="-1">
-      //         <ProjectsPage onSelectProject={handleSelectProject} />
-      //       </main>
-      //     </Suspense>
-      //   );
-      // case 'project-detail': // Hidden for now
-      //   return (
-      //     <Suspense fallback={<LoadingSpinner text="Loading Project..." />}>
-      //       <main id="main-content" tabIndex="-1">
-      //         <ProjectDetailPage
-      //           projectId={selectedProjectId}
-      //           onBack={handleGoToProjects}
-      //           onEditQuote={handleEditQuote}
-      //         />
-      //       </main>
-      //     </Suspense>
-      //   );
+      case 'projects':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Projects..." />}>
+            <main id="main-content" tabIndex="-1">
+              <ProjectsPage onSelectProject={handleSelectProject} />
+            </main>
+          </Suspense>
+        );
+      case 'project-detail':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Project..." />}>
+            <main id="main-content" tabIndex="-1">
+              <ProjectDetailPage
+                projectId={selectedProjectId}
+                onBack={handleGoToProjects}
+                onEditQuote={handleEditQuote}
+              />
+            </main>
+          </Suspense>
+        );
       case 'crew':
         return (
           <Suspense fallback={<LoadingSpinner text="Loading Crew..." />}>
@@ -564,6 +657,102 @@ function App() {
                 callSheetId={selectedCallSheetId}
                 onBack={handleGoToCallSheets}
               />
+            </main>
+          </Suspense>
+        );
+      case 'invoices':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Invoices..." />}>
+            <main id="main-content" tabIndex="-1">
+              <InvoicesPage />
+            </main>
+          </Suspense>
+        );
+      case 'expenses':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Expenses..." />}>
+            <main id="main-content" tabIndex="-1">
+              <ExpensesPage />
+            </main>
+          </Suspense>
+        );
+      case 'pl':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading P&L..." />}>
+            <main id="main-content" tabIndex="-1">
+              <ProfitLossPage onSelectProject={handleSelectProject} />
+            </main>
+          </Suspense>
+        );
+      case 'purchase-orders':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Purchase Orders..." />}>
+            <main id="main-content" tabIndex="-1">
+              <PurchaseOrdersPage />
+            </main>
+          </Suspense>
+        );
+      case 'contracts':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Contracts..." />}>
+            <main id="main-content" tabIndex="-1">
+              <ContractsPage />
+            </main>
+          </Suspense>
+        );
+      case 'email':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Email..." />}>
+            <main id="main-content" tabIndex="-1" className="h-screen">
+              <EmailPage />
+            </main>
+          </Suspense>
+        );
+      case 'email-templates':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Templates..." />}>
+            <main id="main-content" tabIndex="-1" className="h-screen">
+              <EmailTemplatesPage />
+            </main>
+          </Suspense>
+        );
+      case 'workflows':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Workflows..." />}>
+            <main id="main-content" tabIndex="-1" className="h-screen overflow-y-auto">
+              <WorkflowsPage />
+            </main>
+          </Suspense>
+        );
+      case 'calendar':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Calendar..." />}>
+            <main id="main-content" tabIndex="-1" className="h-screen overflow-y-auto">
+              <CalendarPage />
+            </main>
+          </Suspense>
+        );
+      case 'sequences':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Sequences..." />}>
+            <main id="main-content" tabIndex="-1" className="h-screen overflow-y-auto">
+              <EmailSequencesPage />
+            </main>
+          </Suspense>
+        );
+      case 'task-board':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Task Board..." />}>
+            <main id="main-content" tabIndex="-1" className="h-screen overflow-hidden">
+              <TaskBoardPage />
+            </main>
+          </Suspense>
+        );
+      case 'resources':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Resources..." />}>
+            <main id="main-content" tabIndex="-1">
+              <ResourcesPage />
             </main>
           </Suspense>
         );
@@ -614,11 +803,11 @@ function App() {
   // Determine active tab for sidebar
   const activeTab = view === 'opportunity-detail' ? 'opportunities'
     : view === 'client-detail' ? 'clients'
-    // : view === 'project-detail' ? 'projects' // Hidden for now
-    : view === 'crew-detail' ? 'crew'
-    : view === 'call-sheet-detail' ? 'analytics'
-    : view === 'call-sheets' ? 'analytics'
-    : view;
+      : view === 'project-detail' ? 'projects'
+        : view === 'crew-detail' ? 'crew'
+          : view === 'call-sheet-detail' ? 'analytics'
+            : view === 'call-sheets' ? 'analytics'
+              : view;
 
   // Handle sidebar navigation
   const handleSidebarTabChange = useCallback((tab) => {
@@ -626,18 +815,25 @@ function App() {
     else if (tab === 'quotes') handleGoToQuotes();
     else if (tab === 'clients') handleGoToClients();
     else if (tab === 'opportunities') handleGoToOpportunities();
-    // else if (tab === 'projects') handleGoToProjects(); // Hidden for now
+    else if (tab === 'projects') handleGoToProjects();
     else if (tab === 'tasks') handleGoToTasks();
+    else if (tab === 'task-board') confirmNavigateAway(() => setView('task-board'));
     else if (tab === 'sop') handleGoToSOP();
     else if (tab === 'knowledge') handleGoToKnowledge();
     else if (tab === 'kit') handleGoToKit();
-    // else if (tab === 'kit-bookings') handleGoToKitBookings(); // Hidden for now
+    else if (tab === 'kit-bookings') handleGoToKitBookings();
     else if (tab === 'crew') handleGoToCrew();
     else if (tab === 'analytics') handleGoToCallSheets();
+    else if (tab === 'invoices') handleGoToInvoices();
+    else if (tab === 'expenses') handleGoToExpenses();
+    else if (tab === 'pl') handleGoToPL();
+    else if (tab === 'purchase-orders') handleGoToPurchaseOrders();
+    else if (tab === 'contracts') handleGoToContracts();
+    else if (tab === 'resources') handleGoToResources();
     else if (tab === 'rate-card') handleGoToRateCard();
     else if (tab === 'contacts') handleGoToContacts();
     else if (tab === 'settings') handleGoToSettings();
-  }, [handleGoToDashboard, handleGoToQuotes, handleGoToClients, handleGoToOpportunities, handleGoToTasks, handleGoToSOP, handleGoToKnowledge, handleGoToKit, handleGoToCrew, handleGoToCallSheets, handleGoToRateCard, handleGoToContacts, handleGoToSettings]);
+  }, [handleGoToDashboard, handleGoToQuotes, handleGoToClients, handleGoToOpportunities, handleGoToProjects, handleGoToTasks, handleGoToSOP, handleGoToKnowledge, handleGoToKit, handleGoToKitBookings, handleGoToCrew, handleGoToCallSheets, handleGoToInvoices, handleGoToExpenses, handleGoToPL, handleGoToPurchaseOrders, handleGoToContracts, handleGoToResources, handleGoToRateCard, handleGoToContacts, handleGoToSettings]);
 
   // Editor view has its own header, other views use sidebar
   const isEditorView = view === 'editor';
