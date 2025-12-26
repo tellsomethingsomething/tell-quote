@@ -1,7 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { useClientStore } from '../store/clientStore';
 import { useOpportunityStore } from '../store/opportunityStore';
 import { useSettingsStore } from '../store/settingsStore';
+import { List, LayoutGrid } from 'lucide-react';
+
+// Lazy load TaskBoardPage for Board view
+const TaskBoardPage = lazy(() => import('./TaskBoardPage'));
 
 // API key from environment variable (set in Vercel dashboard)
 const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
@@ -52,6 +56,15 @@ export default function CommercialTasksPage() {
     const [newTask, setNewTask] = useState({ title: '', description: '', category: 'client_tasks', priority: 'medium', okrId: '' });
     const [activeCategory, setActiveCategory] = useState('all');
     const [activeOkr, setActiveOkr] = useState('all');
+    const [viewMode, setViewMode] = useState(() => {
+        const saved = localStorage.getItem('tell_tasks_view_mode');
+        return saved || 'list';
+    });
+
+    // Save view mode preference
+    useEffect(() => {
+        localStorage.setItem('tell_tasks_view_mode', viewMode);
+    }, [viewMode]);
 
     // Complete & Log modal state
     const [showLogModal, setShowLogModal] = useState(false);
@@ -571,31 +584,69 @@ Return ONLY JSON:
                             </svg>
                             <span className="hidden sm:inline">Add Task</span>
                         </button>
-                        <button
-                            onClick={() => generateTasks(true)}
-                            disabled={loading}
-                            className="btn-primary flex items-center gap-2"
-                        >
-                            {loading ? (
-                                <>
-                                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                    </svg>
-                                    <span className="hidden sm:inline">Scanning...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                    <span className="hidden sm:inline">Refresh</span>
-                                </>
-                            )}
-                        </button>
+                        {viewMode === 'list' && (
+                            <button
+                                onClick={() => generateTasks(true)}
+                                disabled={loading}
+                                className="btn-primary flex items-center gap-2"
+                            >
+                                {loading ? (
+                                    <>
+                                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                        </svg>
+                                        <span className="hidden sm:inline">Scanning...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        <span className="hidden sm:inline">Refresh</span>
+                                    </>
+                                )}
+                            </button>
+                        )}
+                        {/* View Toggle */}
+                        <div className="flex items-center bg-gray-800 rounded-lg p-1">
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`p-2 rounded-md transition-colors ${
+                                    viewMode === 'list'
+                                        ? 'bg-accent-primary text-white'
+                                        : 'text-gray-400 hover:text-white'
+                                }`}
+                                title="List View"
+                            >
+                                <List className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('board')}
+                                className={`p-2 rounded-md transition-colors ${
+                                    viewMode === 'board'
+                                        ? 'bg-accent-primary text-white'
+                                        : 'text-gray-400 hover:text-white'
+                                }`}
+                                title="Board View"
+                            >
+                                <LayoutGrid className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
+                {/* Board View */}
+                {viewMode === 'board' ? (
+                    <Suspense fallback={
+                        <div className="flex items-center justify-center h-64">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary"></div>
+                        </div>
+                    }>
+                        <TaskBoardPage embedded />
+                    </Suspense>
+                ) : (
+                <>
                 {/* Category Tabs */}
                 <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
                     <button
@@ -999,6 +1050,8 @@ Return ONLY JSON:
                             ))}
                         </div>
                     </div>
+                )}
+                </>
                 )}
             </div>
         </div>

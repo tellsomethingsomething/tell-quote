@@ -667,7 +667,7 @@ const BoardFilters = ({ labels, filters, onFilterChange }) => {
 };
 
 // ============ EMPTY STATE ============
-const EmptyState = ({ onCreateBoard }) => {
+const EmptyState = ({ onCreateBoard, embedded = false }) => {
     const [name, setName] = useState('');
     const [background, setBackground] = useState('blue');
 
@@ -678,7 +678,7 @@ const EmptyState = ({ onCreateBoard }) => {
     };
 
     return (
-        <div className="flex-1 flex items-center justify-center bg-gray-50">
+        <div className={`flex-1 flex items-center justify-center bg-gray-50 ${embedded ? 'min-h-[400px] rounded-xl' : ''}`}>
             <div className="text-center max-w-md">
                 <div className="w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
                     <Layout size={40} className="text-blue-600" />
@@ -722,7 +722,7 @@ const EmptyState = ({ onCreateBoard }) => {
 };
 
 // ============ MAIN PAGE ============
-const TaskBoardPage = () => {
+const TaskBoardPage = ({ embedded = false }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState({});
 
@@ -813,20 +813,20 @@ const TaskBoardPage = () => {
 
     if (loading && !currentBoard) {
         return (
-            <div className="flex-1 flex items-center justify-center">
+            <div className={`flex-1 flex items-center justify-center ${embedded ? 'min-h-[400px]' : ''}`}>
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
             </div>
         );
     }
 
     if (boards.length === 0) {
-        return <EmptyState onCreateBoard={handleCreateBoard} />;
+        return <EmptyState onCreateBoard={handleCreateBoard} embedded={embedded} />;
     }
 
     const bgColor = BOARD_BACKGROUNDS[currentBoard?.background]?.color || '#0079BF';
 
     return (
-        <div className="flex-1 flex flex-col h-screen" style={{ backgroundColor: bgColor }}>
+        <div className={`flex-1 flex flex-col ${embedded ? 'min-h-[600px] rounded-xl overflow-hidden' : 'h-screen'}`} style={{ backgroundColor: bgColor }}>
             {/* Board Header */}
             <div className="px-4 py-3 flex items-center gap-4 text-white">
                 <BoardSelector
