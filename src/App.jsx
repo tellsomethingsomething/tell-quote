@@ -252,6 +252,22 @@ function App() {
     confirmNavigateAway(() => setView('tasks'));
   }, [confirmNavigateAway]);
 
+  const handleGoToEmail = useCallback(() => {
+    confirmNavigateAway(() => setView('email'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToCalendar = useCallback(() => {
+    confirmNavigateAway(() => setView('calendar'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToSequences = useCallback(() => {
+    confirmNavigateAway(() => setView('sequences'));
+  }, [confirmNavigateAway]);
+
+  const handleGoToWorkflows = useCallback(() => {
+    confirmNavigateAway(() => setView('workflows'));
+  }, [confirmNavigateAway]);
+
   const handleGoToSOP = useCallback(() => {
     confirmNavigateAway(() => setView('sop'));
   }, [confirmNavigateAway]);
@@ -818,6 +834,10 @@ function App() {
     else if (tab === 'projects') handleGoToProjects();
     else if (tab === 'tasks') handleGoToTasks();
     else if (tab === 'task-board') confirmNavigateAway(() => setView('task-board'));
+    else if (tab === 'email') handleGoToEmail();
+    else if (tab === 'calendar') handleGoToCalendar();
+    else if (tab === 'sequences') handleGoToSequences();
+    else if (tab === 'workflows') handleGoToWorkflows();
     else if (tab === 'sop') handleGoToSOP();
     else if (tab === 'knowledge') handleGoToKnowledge();
     else if (tab === 'kit') handleGoToKit();
@@ -833,7 +853,7 @@ function App() {
     else if (tab === 'rate-card') handleGoToRateCard();
     else if (tab === 'contacts') handleGoToContacts();
     else if (tab === 'settings') handleGoToSettings();
-  }, [handleGoToDashboard, handleGoToQuotes, handleGoToClients, handleGoToOpportunities, handleGoToProjects, handleGoToTasks, handleGoToSOP, handleGoToKnowledge, handleGoToKit, handleGoToKitBookings, handleGoToCrew, handleGoToCallSheets, handleGoToInvoices, handleGoToExpenses, handleGoToPL, handleGoToPurchaseOrders, handleGoToContracts, handleGoToResources, handleGoToRateCard, handleGoToContacts, handleGoToSettings]);
+  }, [handleGoToDashboard, handleGoToQuotes, handleGoToClients, handleGoToOpportunities, handleGoToProjects, handleGoToTasks, handleGoToEmail, handleGoToCalendar, handleGoToSequences, handleGoToWorkflows, handleGoToSOP, handleGoToKnowledge, handleGoToKit, handleGoToKitBookings, handleGoToCrew, handleGoToCallSheets, handleGoToInvoices, handleGoToExpenses, handleGoToPL, handleGoToPurchaseOrders, handleGoToContracts, handleGoToResources, handleGoToRateCard, handleGoToContacts, handleGoToSettings]);
 
   // Editor view has its own header, other views use sidebar
   const isEditorView = view === 'editor';
