@@ -15,7 +15,6 @@ const features = [
         title: 'Quote Builder',
         subtitle: 'Create quotes in minutes, not hours',
         description: 'Drag-and-drop line items, apply regional rate cards, calculate margins instantly. Send professional PDFs clients actually want to sign.',
-        color: 'from-indigo-500 to-purple-600',
         link: '/features/quoting',
         mockup: QuoteBuilderMockup
     },
@@ -24,7 +23,6 @@ const features = [
         title: 'Project Tracking',
         subtitle: 'From quote to wrap, everything synced',
         description: 'When a quote is won, it becomes a project automatically. Crew, equipment, and budgets flow through without re-entering data.',
-        color: 'from-orange-500 to-red-600',
         link: '/features/projects',
         mockup: KanbanMockup
     },
@@ -33,7 +31,6 @@ const features = [
         title: 'Financial Dashboard',
         subtitle: 'Know your margins before you wrap',
         description: 'Real-time P&L on every project. Track costs as they happen. No more end-of-project surprises.',
-        color: 'from-green-500 to-emerald-600',
         link: '/features/financials',
         mockup: FinanceMockup
     },
@@ -42,7 +39,6 @@ const features = [
         title: 'CRM & Pipeline',
         subtitle: 'Track every client relationship',
         description: 'Manage leads, track communications, and visualize your sales pipeline. See lifetime value and project history at a glance.',
-        color: 'from-blue-500 to-cyan-600',
         link: '/features/crm',
         mockup: DashboardMockup
     },
@@ -51,7 +47,6 @@ const features = [
         title: 'Crew Network',
         subtitle: 'Your freelancer database, organized',
         description: 'Store day rates, skills, and availability. Search and book crew in seconds. No more spreadsheets or phone contacts.',
-        color: 'from-pink-500 to-rose-600',
         link: '/features/crew',
         mockup: CrewMockup
     },
@@ -60,7 +55,6 @@ const features = [
         title: 'Equipment Tracking',
         subtitle: 'Know where every piece of gear is',
         description: 'Check-in/out tracking, kit management, and conflict detection. Never double-book a camera again.',
-        color: 'from-amber-500 to-yellow-600',
         link: '/features/equipment',
         mockup: EquipmentMockup
     }
@@ -92,17 +86,17 @@ export default function FeatureShowcase() {
                             onClick={() => scrollTo(index)}
                             className={`flex-shrink-0 snap-start px-6 py-4 rounded-xl border transition-all duration-300 text-left min-w-[280px] sm:min-w-[320px] ${
                                 activeIndex === index
-                                    ? 'bg-white/10 border-white/20 shadow-lg'
-                                    : 'bg-transparent border-gray-700/50 hover:border-gray-600 hover:bg-white/5'
+                                    ? 'bg-marketing-surface border-marketing-primary/50 shadow-lg'
+                                    : 'bg-transparent border-marketing-border hover:border-marketing-border/80 hover:bg-marketing-surface/30'
                             }`}
                         >
                             <div className="flex items-center gap-3 mb-2">
-                                <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${feature.color}`} />
-                                <span className={`font-semibold ${activeIndex === index ? 'text-white' : 'text-gray-400'}`}>
+                                <div className={`w-2 h-2 rounded-full ${activeIndex === index ? 'bg-marketing-primary' : 'bg-marketing-border'}`} />
+                                <span className={`font-semibold ${activeIndex === index ? 'text-marketing-text-primary' : 'text-marketing-text-secondary'}`}>
                                     {feature.title}
                                 </span>
                             </div>
-                            <p className={`text-sm ${activeIndex === index ? 'text-gray-300' : 'text-gray-500'}`}>
+                            <p className={`text-sm ${activeIndex === index ? 'text-marketing-text-secondary' : 'text-marketing-text-secondary/60'}`}>
                                 {feature.subtitle}
                             </p>
                         </button>
@@ -116,8 +110,8 @@ export default function FeatureShowcase() {
                             key={index}
                             onClick={() => scrollTo(index)}
                             aria-label={`View ${feature.title}`}
-                            className={`w-2 h-2 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-1 focus:ring-offset-gray-900 ${
-                                activeIndex === index ? 'bg-white w-6' : 'bg-gray-600'
+                            className={`w-2 h-2 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-1 focus:ring-offset-marketing-background ${
+                                activeIndex === index ? 'bg-marketing-primary w-6' : 'bg-marketing-border'
                             }`}
                         />
                     ))}
@@ -134,22 +128,20 @@ export default function FeatureShowcase() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.3 }}
-                        className="order-2 lg:order-1 lg:col-span-2 text-center lg:text-center bg-gray-800/30 rounded-xl p-6 border border-gray-700/50"
+                        className="order-2 lg:order-1 lg:col-span-2 text-center lg:text-center bg-marketing-surface/50 rounded-xl p-6 border border-marketing-border"
                     >
-                        <div className={`inline-block px-3 py-1 rounded-full bg-gradient-to-r ${features[activeIndex].color} bg-opacity-20 mb-3`}>
-                            <span className="text-xs font-medium text-white/90">
-                                {features[activeIndex].title}
-                            </span>
-                        </div>
+                        <span className="inline-block px-3 py-1 rounded-full bg-marketing-surface border border-marketing-border text-marketing-text-secondary text-xs font-medium mb-3">
+                            {features[activeIndex].title}
+                        </span>
                         <h3 className="text-xl md:text-2xl font-bold text-white mb-3">
                             {features[activeIndex].subtitle}
                         </h3>
-                        <p className="text-gray-400 text-sm mb-4 leading-relaxed">
+                        <p className="text-marketing-text-secondary text-sm mb-4 leading-relaxed">
                             {features[activeIndex].description}
                         </p>
                         <Link
                             to={features[activeIndex].link}
-                            className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors group"
+                            className="inline-flex items-center gap-2 text-marketing-primary hover:text-marketing-primary/80 text-sm font-medium transition-colors group"
                         >
                             Learn more
                             <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
@@ -181,10 +173,10 @@ export default function FeatureShowcase() {
                     disabled={activeIndex === 0}
                     tabIndex={activeIndex === 0 ? -1 : 0}
                     aria-label="Previous feature"
-                    className={`p-3 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-900 ${
+                    className={`p-3 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background ${
                         activeIndex === 0
-                            ? 'border-gray-700 text-gray-600 cursor-not-allowed'
-                            : 'border-gray-600 text-gray-400 hover:border-white hover:text-white'
+                            ? 'border-marketing-border text-marketing-text-secondary/40 cursor-not-allowed'
+                            : 'border-marketing-border text-marketing-text-secondary hover:border-marketing-primary hover:text-marketing-text-primary'
                     }`}
                 >
                     <ChevronLeft className="w-5 h-5" aria-hidden="true" />
@@ -194,10 +186,10 @@ export default function FeatureShowcase() {
                     disabled={activeIndex === features.length - 1}
                     tabIndex={activeIndex === features.length - 1 ? -1 : 0}
                     aria-label="Next feature"
-                    className={`p-3 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-900 ${
+                    className={`p-3 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background ${
                         activeIndex === features.length - 1
-                            ? 'border-gray-700 text-gray-600 cursor-not-allowed'
-                            : 'border-gray-600 text-gray-400 hover:border-white hover:text-white'
+                            ? 'border-marketing-border text-marketing-text-secondary/40 cursor-not-allowed'
+                            : 'border-marketing-border text-marketing-text-secondary hover:border-marketing-primary hover:text-marketing-text-primary'
                     }`}
                 >
                     <ChevronRight className="w-5 h-5" aria-hidden="true" />
