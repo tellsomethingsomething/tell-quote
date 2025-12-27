@@ -908,4 +908,25 @@ html.light .btn-icon-sm:hover {
   [class*="Demo"] span {
     font-size: 0.875rem !important;
   }
+
+  /* Prevent horizontal scroll on marketing pages */
+  /* Target main containers and ensure they don't overflow */
+  main,
+  main > div,
+  main > section {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Interactive demo containers - constrain to viewport */
+  [class*="overflow-hidden"] {
+    max-width: 100% !important;
+  }
+
+  /* Kanban/board-style demos - horizontal scroll within container only */
+  [class*="Production Schedule"],
+  [class*="relative p-2"] {
+    max-width: calc(100vw - 32px) !important;
+    overflow-x: auto !important;
+  }
 }
