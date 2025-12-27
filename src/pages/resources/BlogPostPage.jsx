@@ -207,9 +207,10 @@ export default function BlogPostPage() {
                         <div
                             className="prose prose-invert prose-lg max-w-none
                                 prose-headings:text-white prose-headings:font-bold
-                                prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
-                                prose-p:text-marketing-text-secondary prose-p:leading-relaxed prose-p:mb-6
-                                prose-a:text-marketing-primary prose-a:no-underline hover:prose-a:underline"
+                                prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-6
+                                prose-p:text-marketing-text-secondary prose-p:leading-relaxed
+                                prose-a:text-marketing-primary prose-a:no-underline hover:prose-a:underline
+                                [&>p]:mb-6 [&>h2]:mt-12 [&>h2]:mb-6 [&>p+p]:mt-6"
                             dangerouslySetInnerHTML={{ __html: post.content }}
                         />
 

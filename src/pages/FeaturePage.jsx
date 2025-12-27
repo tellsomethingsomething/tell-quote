@@ -6,27 +6,28 @@ import { Check, ArrowRight, Quote } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import MotionScreenGrab from '../components/ui/MotionScreenGrab';
 import { featurePageData, features } from '../data/features';
-import DashboardMockup from '../components/mockups/DashboardMockup';
-import KanbanMockup from '../components/mockups/KanbanMockup';
-import QuoteBuilderMockup from '../components/mockups/QuoteBuilderMockup';
-import CrewMockup from '../components/mockups/CrewMockup';
-import EquipmentMockup from '../components/mockups/EquipmentMockup';
-import FinanceMockup from '../components/mockups/FinanceMockup';
-import CallSheetMockup from '../components/mockups/CallSheetMockup';
-import DeliverablesMockup from '../components/mockups/DeliverablesMockup';
+// Interactive Demos
+import QuotingDemo from '../components/mockups/demos/QuotingDemo';
+import ProjectsDemo from '../components/mockups/demos/ProjectsDemo';
+import CRMFeatureDemo from '../components/mockups/demos/CRMFeatureDemo';
+import CrewDemo from '../components/mockups/demos/CrewDemo';
+import EquipmentDemo from '../components/mockups/demos/EquipmentDemo';
+import FinancialsFeatureDemo from '../components/mockups/demos/FinancialsFeatureDemo';
+import CallSheetDemo from '../components/mockups/demos/CallSheetDemo';
+import DeliverablesDemo from '../components/mockups/demos/DeliverablesDemo';
 
-// Map feature IDs to their mockup components
-const getMockupForFeature = (featureId) => {
+// Map feature IDs to their interactive demo components
+const getDemoForFeature = (featureId) => {
     switch (featureId) {
-        case 'quoting': return <QuoteBuilderMockup />;
-        case 'projects': return <KanbanMockup />;
-        case 'crm': return <DashboardMockup />;
-        case 'crew': return <CrewMockup />;
-        case 'equipment': return <EquipmentMockup />;
-        case 'financials': return <FinanceMockup />;
-        case 'call-sheets': return <CallSheetMockup />;
-        case 'deliverables': return <DeliverablesMockup />;
-        default: return <DashboardMockup />;
+        case 'quoting': return <QuotingDemo />;
+        case 'projects': return <ProjectsDemo />;
+        case 'crm': return <CRMFeatureDemo />;
+        case 'crew': return <CrewDemo />;
+        case 'equipment': return <EquipmentDemo />;
+        case 'financials': return <FinancialsFeatureDemo />;
+        case 'call-sheets': return <CallSheetDemo />;
+        case 'deliverables': return <DeliverablesDemo />;
+        default: return <QuotingDemo />;
     }
 };
 
@@ -80,16 +81,40 @@ export default function FeaturePage() {
                     </div>
                 </motion.div>
 
-                {/* Motion Mockup */}
+                {/* Interactive Demo */}
                 <div className="max-w-4xl mx-auto z-20 relative">
                     <motion.div
                         initial={{ y: 40, opacity: 0, rotateX: 20 }}
                         animate={{ y: 0, opacity: 1, rotateX: 0 }}
                         transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
                         style={{ perspective: 1000 }}
-                        className="w-full overflow-hidden rounded-xl"
+                        className="w-full overflow-hidden"
                     >
-                        {getMockupForFeature(featureId)}
+                        {/* Demo Window */}
+                        <div className="bg-gray-900 rounded-xl border border-gray-800 shadow-2xl overflow-hidden">
+                            {/* Window Chrome */}
+                            <div className="bg-gray-800/80 px-4 py-3 flex items-center justify-between border-b border-gray-700/50">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex gap-1.5">
+                                        <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                                        <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                                        <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                                    </div>
+                                    <span className="text-gray-500 text-xs ml-2 hidden sm:inline">ProductionOS</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-gray-500 text-xs">
+                                    <span className="hidden sm:inline">Interactive Demo</span>
+                                    <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-400 rounded text-xs">
+                                        Live
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Demo Content */}
+                            <div className="relative min-h-[400px] sm:min-h-[450px]">
+                                {getDemoForFeature(featureId)}
+                            </div>
+                        </div>
                     </motion.div>
                 </div>
             </section>
