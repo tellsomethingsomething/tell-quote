@@ -7,8 +7,8 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 // Trial configuration
 export const TRIAL_CONFIG = {
-    durationHours: 48, // 48-hour trial
-    durationDays: 2, // For display purposes
+    durationHours: 120, // 5-day trial
+    durationDays: 5, // For display purposes
     gracePeriodDays: 0, // No grace period - auto-converts to paid
     warningHours: [24, 12, 6, 1], // Hours before expiration to show warnings
     requiresPaymentMethod: true, // Must capture billing during signup

@@ -1388,7 +1388,7 @@ function BillingStep({ formData, updateField, onBillingComplete }) {
                         <ul className="text-sm text-gray-400 space-y-1">
                             <li>• Full access to all features</li>
                             <li>• Unlimited quotes and projects</li>
-                            <li>• 48-hour trial period</li>
+                            <li>• 5-day trial period</li>
                             <li>• Upgrade anytime from Settings</li>
                         </ul>
                     </div>

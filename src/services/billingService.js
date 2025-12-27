@@ -106,7 +106,7 @@ export const PLANS = {
 
 /**
  * Create a Stripe checkout session for trial with billing capture
- * Sets up subscription but doesn't charge until trial ends (48 hours)
+ * Sets up subscription but doesn't charge until trial ends (5 days)
  */
 export async function createTrialCheckoutSession(planId = 'starter', organizationId, userEmail) {
     if (!isSupabaseConfigured()) {
@@ -127,7 +127,7 @@ export async function createTrialCheckoutSession(planId = 'starter', organizatio
             priceId,
             organizationId,
             customerEmail: userEmail,
-            trialPeriodDays: 2, // 48-hour trial
+            trialPeriodDays: 5, // 5-day trial
             successUrl: `${window.location.origin}/?onboarding=complete`,
             cancelUrl: `${window.location.origin}/?onboarding=billing`,
         },

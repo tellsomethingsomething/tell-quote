@@ -50,7 +50,7 @@ export const plans = [
 export const pricingFaqs = [
     {
         q: "How long is the free trial?",
-        a: "You get a 48-hour free trial to explore all features. After that, choose a plan that fits your needs."
+        a: "You get a 5-day free trial to explore all features. After that, choose a plan that fits your needs."
     },
     {
         q: "Can I cancel anytime?",

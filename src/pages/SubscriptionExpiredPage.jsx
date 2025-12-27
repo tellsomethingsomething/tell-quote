@@ -62,7 +62,7 @@ export default function SubscriptionExpiredPage({
                 return {
                     icon: <Clock className="w-16 h-16 text-amber-500" />,
                     title: 'Your Trial Has Ended',
-                    description: 'Your 48-hour trial has expired. Subscribe now to continue using all features.',
+                    description: 'Your 5-day trial has expired. Subscribe now to continue using all features.',
                 };
             case 'past_due':
                 return {

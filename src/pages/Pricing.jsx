@@ -102,7 +102,7 @@ export default function Pricing() {
             <section className="py-12 md:py-16 text-center max-w-4xl mx-auto px-4 md:px-6">
                 <h3 className="text-base md:text-lg font-bold mb-6 md:mb-8 uppercase tracking-widest text-marketing-text-secondary">Every plan includes</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 text-xs md:text-sm">
-                    {['48-hour free trial', 'Cancel anytime', 'Data export', 'Bank-level security', 'Regular updates', '99.9% uptime'].map(item => (
+                    {['5-day free trial', 'Cancel anytime', 'Data export', 'Bank-level security', 'Regular updates', '99.9% uptime'].map(item => (
                         <div key={item} className="flex items-center justify-center gap-2 text-marketing-text-primary font-medium p-3 bg-marketing-surface border border-marketing-border rounded-lg">
                             <Check size={14} className="text-marketing-success" /> {item}
                         </div>
@@ -165,7 +165,7 @@ export default function Pricing() {
                 <Link to="/auth/signup" className="inline-block px-8 py-4 bg-marketing-primary text-white font-bold rounded-xl hover:bg-marketing-primary/90 transition-colors">
                     Start free trial
                 </Link>
-                <p className="mt-4 text-sm text-marketing-text-secondary">48-hour free trial</p>
+                <p className="mt-4 text-sm text-marketing-text-secondary">5-day free trial</p>
             </section>
         </Layout>
     );

@@ -33,17 +33,17 @@ export default function Home() {
                             transition={{ duration: 0.6 }}
                         >
                             <span className="inline-block py-1 px-3 rounded-full bg-marketing-surface border border-marketing-border text-marketing-text-secondary text-xs font-medium mb-8 uppercase tracking-widest">
-                                CRM + Quoting + Kit + Crew
+                                Stop Leaving Money on the Table
                             </span>
                             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-tight text-white">
-                                The profit platform for <br className="hidden md:block" /> <span className="text-marketing-primary bg-clip-text text-transparent bg-gradient-to-r from-marketing-primary to-marketing-accent">production companies</span>
+                                The first CRM built for <br className="hidden md:block" /> <span className="text-marketing-primary bg-clip-text text-transparent bg-gradient-to-r from-marketing-primary to-marketing-accent">Production companies</span>
                             </h1>
                             <p className="text-xl md:text-2xl text-marketing-text-secondary max-w-3xl mx-auto mb-12 leading-relaxed">
-                                Know your margins on every job. Stop running your business from spreadsheets.
+                                See your real profit on every job. Quotes, kit, crew, and finances in one platform for video and event production.
                             </p>
 
                             <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-16">
-                                <Link to="/auth/signup" className="px-8 py-4 bg-marketing-primary text-white text-lg font-bold rounded-xl hover:bg-marketing-primary/90 transition-all shadow-lg hover:shadow-marketing-primary/25 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background" aria-label="Start your free 48-hour trial of ProductionOS">
+                                <Link to="/auth/signup" className="px-8 py-4 bg-marketing-primary text-white text-lg font-bold rounded-xl hover:bg-marketing-primary/90 transition-all shadow-lg hover:shadow-marketing-primary/25 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background" aria-label="Start your free 5-day trial of ProductionOS">
                                     Start Free Trial
                                 </Link>
                                 <Link to="/pricing" className="px-8 py-4 bg-marketing-surface/50 border border-marketing-border text-marketing-text-primary text-lg font-bold rounded-xl hover:bg-marketing-border/50 transition-all backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-marketing-background">
@@ -192,7 +192,7 @@ export default function Home() {
                             </Link>
                         </div>
                         <p className="mt-8 text-marketing-text-secondary text-sm opacity-70">
-                            48-hour free trial · Cancel anytime · Enterprise security
+                            5-day free trial · Cancel anytime · Enterprise security
                         </p>
                     </div>
                 </section>
