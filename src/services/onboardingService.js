@@ -8,7 +8,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 // Onboarding Steps
 export const ONBOARDING_STEPS = [
     { id: 'company_setup', label: 'Company Setup', required: true },
-    { id: 'billing', label: 'Start Trial', required: true }, // Capture billing for 48-hour trial
+    { id: 'billing', label: 'Start Trial', required: false }, // Skip if billing not configured
     { id: 'pain_points', label: 'Pain Points', required: false },
     { id: 'company_profile', label: 'Company Profile', required: false },
     { id: 'team_invite', label: 'Invite Team', required: false, conditional: true },

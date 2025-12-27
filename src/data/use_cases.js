@@ -26,7 +26,7 @@ export const useCases = {
         seoDesc: "Software for event production companies. Manage crew, vendors, equipment, budgets. Call sheets, resource scheduling. Built for live events. Start free trial.",
         intro: "Event production is chaos management. Multiple days, venues, crew calls, dozens of vendors. One missed detail and the whole thing falls apart. You need a system that handles complexity without creating more of it.",
         painPoints: [
-            { title: "Vendor coordination is chaos", desc: "Staging, AV, catering, transport — tracking deliveries and payments shouldn't require a war room." },
+            { title: "Vendor coordination is chaos", desc: "Staging, AV, catering, transport: tracking deliveries and payments shouldn't require a war room." },
             { title: "Crew changes constantly", desc: "Multiple days, multiple shifts. Someone drops out, you need a replacement now." },
             { title: "Budget overruns detected too late", desc: "Events are expensive. You find out you went over budget after the event, when it's too late." }
         ],
@@ -39,7 +39,7 @@ export const useCases = {
     },
     "photography": {
         title: "Run your photography studio like a business.",
-        subtitle: "Portrait, commercial, editorial, events — quote faster, track gear, know your margins.",
+        subtitle: "Portrait, commercial, editorial, events. Quote faster, track gear, know your margins.",
         image: "quote_builder.png",
         seoTitle: "Photography Studio Management Software | ProductionOS",
         seoDesc: "Software for photography studios. Quotes, equipment, clients, financials. Start free trial.",
@@ -58,7 +58,7 @@ export const useCases = {
     },
     "live-streaming": {
         title: "Streaming and broadcast, under control.",
-        subtitle: "Live events, remote production, hybrid broadcasts — track technical crew, streaming gear, and multi-day productions.",
+        subtitle: "Live events, remote production, hybrid broadcasts. Track technical crew, streaming gear, and multi-day productions.",
         image: "finance.png",
         seoTitle: "Live Streaming Production Software | ProductionOS",
         seoDesc: "Software for streaming companies. Technical crew, equipment, multi-day productions. Start free trial.",
@@ -77,7 +77,7 @@ export const useCases = {
     },
     "post-production": {
         title: "Post-production workflow, sorted.",
-        subtitle: "Edit houses, color grading, VFX, audio post — track projects, deliverables, and client revisions.",
+        subtitle: "Edit houses, color grading, VFX, audio post. Track projects, deliverables, and client revisions.",
         image: "kanban.png",
         seoTitle: "Post-Production Management Software | ProductionOS",
         seoDesc: "Track deliverables, revisions, project status, and profitability for post-production houses. Start free trial.",
@@ -96,7 +96,7 @@ export const useCases = {
     },
     "corporate-video": {
         title: "In-house video teams, level up.",
-        subtitle: "Internal video departments producing training, comms, social, events — prove your value with real numbers.",
+        subtitle: "Internal video departments producing training, comms, social, events. Prove your value with real numbers.",
         image: "finance.png",
         seoTitle: "Corporate Video Team Software | ProductionOS",
         seoDesc: "Project tracking, equipment management, and reporting for corporate video teams. Prove your ROI. Start free trial.",

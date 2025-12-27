@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, Check } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+// motion/AnimatePresence removed - using CSS transitions for mobile menu
 
 export default function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -85,9 +85,6 @@ export default function Navbar() {
                         <Link to="/resources/blog" className="text-sm font-medium text-marketing-text-secondary hover:text-marketing-text-primary transition-colors">
                             Blog
                         </Link>
-                        <Link to="/resources/templates" className="text-sm font-medium text-marketing-text-secondary hover:text-marketing-text-primary transition-colors">
-                            Templates
-                        </Link>
                     </div>
 
                     {/* CTA Buttons */}
@@ -105,57 +102,54 @@ export default function Navbar() {
 
                     {/* Mobile Menu Button */}
                     <button
-                        className="md:hidden text-marketing-text-primary p-2"
+                        type="button"
+                        className="md:hidden text-marketing-text-primary p-2 relative z-50"
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        aria-label="Toggle menu"
                     >
                         {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
                 </div>
             </div>
 
-            {/* Mobile Menu */}
-            <AnimatePresence>
-                {mobileMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-marketing-background border-b border-marketing-border overflow-hidden"
-                    >
-                        <div className="container mx-auto px-6 py-6 space-y-6">
-                            <div className="space-y-4">
-                                <div className="text-xs font-semibold text-marketing-text-secondary uppercase tracking-wider mb-2">Features</div>
-                                {features.map((feature) => (
-                                    <Link
-                                        key={feature.path}
-                                        to={feature.path}
-                                        className="block text-marketing-text-primary py-1"
-                                    >
-                                        {feature.name}
-                                    </Link>
-                                ))}
-                            </div>
+            {/* Mobile Menu - Simplified without framer-motion */}
+            <div
+                className={`md:hidden bg-marketing-background border-b border-marketing-border overflow-hidden transition-all duration-300 ease-in-out ${
+                    mobileMenuOpen ? 'max-h-[80vh] opacity-100' : 'max-h-0 opacity-0'
+                }`}
+            >
+                <div className="container mx-auto px-6 py-6 space-y-6">
+                    <div className="space-y-4">
+                        <div className="text-xs font-semibold text-marketing-text-secondary uppercase tracking-wider mb-2">Features</div>
+                        {features.map((feature) => (
+                            <Link
+                                key={feature.path}
+                                to={feature.path}
+                                className="block text-marketing-text-primary py-1"
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                {feature.name}
+                            </Link>
+                        ))}
+                    </div>
 
-                            <div className="h-px bg-marketing-border" />
+                    <div className="h-px bg-marketing-border" />
 
-                            <div className="space-y-4">
-                                <Link to="/pricing" className="block text-marketing-text-primary font-medium">Pricing</Link>
-                                <Link to="/resources/blog" className="block text-marketing-text-primary font-medium">Blog</Link>
-                                <Link to="/resources/templates" className="block text-marketing-text-primary font-medium">Templates</Link>
-                            </div>
+                    <div className="space-y-4">
+                        <Link to="/pricing" className="block text-marketing-text-primary font-medium" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
+                        <Link to="/resources/blog" className="block text-marketing-text-primary font-medium" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
+                    </div>
 
-                            <div className="pt-4 flex flex-col gap-4">
-                                <Link to="/auth/login" className="w-full py-3 text-center text-marketing-text-primary font-medium border border-marketing-border rounded-lg">
-                                    Log in
-                                </Link>
-                                <Link to="/auth/signup" className="w-full py-3 text-center bg-marketing-primary text-white font-bold rounded-lg">
-                                    Start free trial
-                                </Link>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    <div className="pt-4 flex flex-col gap-4">
+                        <Link to="/auth/login" className="w-full py-3 text-center text-marketing-text-primary font-medium border border-marketing-border rounded-lg" onClick={() => setMobileMenuOpen(false)}>
+                            Log in
+                        </Link>
+                        <Link to="/auth/signup" className="w-full py-3 text-center bg-marketing-primary text-white font-bold rounded-lg" onClick={() => setMobileMenuOpen(false)}>
+                            Start free trial
+                        </Link>
+                    </div>
+                </div>
+            </div>
         </nav>
     );
 }

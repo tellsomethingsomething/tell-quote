@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
+import { validatePassword, getPasswordStrength } from '../utils/validation';
 
-export default function LoginPage() {
+export default function LoginPage({ initialMode = 'login' }) {
     const {
         login,
         signup,
@@ -16,16 +17,22 @@ export default function LoginPage() {
         isSupabaseAuth
     } = useAuthStore();
 
-    const [mode, setMode] = useState('login'); // 'login', 'signup', or 'forgot'
+    const [mode, setMode] = useState(initialMode); // 'login', 'signup', or 'forgot'
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
+    const [acceptedGDPR, setAcceptedGDPR] = useState(false);
     const [signupSuccess, setSignupSuccess] = useState(false);
     const [resetSuccess, setResetSuccess] = useState(false);
     const [resetError, setResetError] = useState(null);
     const [lockoutTimer, setLockoutTimer] = useState(0);
     const useSupabase = isSupabaseAuth();
+
+    // Password validation for signup
+    const passwordValidation = mode === 'signup' ? validatePassword(password) : { valid: true, error: null };
+    const passwordStrength = mode === 'signup' ? getPasswordStrength(password) : null;
 
     // Countdown timer for lockout
     useEffect(() => {
@@ -288,6 +295,98 @@ export default function LoginPage() {
                                 {!passwordsMatch && (
                                     <p className="mt-1 text-xs text-red-400">Passwords do not match</p>
                                 )}
+                                {/* Password strength indicator */}
+                                {password && passwordStrength && (
+                                    <div className="mt-2">
+                                        <div className="flex gap-1 mb-1">
+                                            {[0, 1, 2, 3].map((level) => (
+                                                <div
+                                                    key={level}
+                                                    className={`h-1 flex-1 rounded-full transition-colors ${
+                                                        level <= passwordStrength.score
+                                                            ? passwordStrength.color === 'red' ? 'bg-red-500'
+                                                            : passwordStrength.color === 'orange' ? 'bg-orange-500'
+                                                            : passwordStrength.color === 'yellow' ? 'bg-yellow-500'
+                                                            : passwordStrength.color === 'green' ? 'bg-green-500'
+                                                            : 'bg-emerald-500'
+                                                            : 'bg-dark-border'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
+                                        <p className={`text-xs ${
+                                            passwordStrength.color === 'red' ? 'text-red-400'
+                                            : passwordStrength.color === 'orange' ? 'text-orange-400'
+                                            : passwordStrength.color === 'yellow' ? 'text-yellow-400'
+                                            : 'text-green-400'
+                                        }`}>
+                                            Password strength: {passwordStrength.label}
+                                        </p>
+                                    </div>
+                                )}
+                                {!passwordValidation.valid && password && (
+                                    <p className="mt-1 text-xs text-red-400">{passwordValidation.error}</p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Terms and Conditions Checkbox (Signup only) */}
+                        {useSupabase && mode === 'signup' && (
+                            <div className="flex items-start gap-3">
+                                <input
+                                    id="acceptTerms"
+                                    type="checkbox"
+                                    checked={acceptedTerms}
+                                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                    className="mt-1 h-4 w-4 rounded border-gray-600 bg-dark-bg text-brand-teal focus:ring-brand-teal/20 focus:ring-offset-0"
+                                    disabled={rateLimited}
+                                />
+                                <label htmlFor="acceptTerms" className="text-sm text-gray-400">
+                                    I agree to the{' '}
+                                    <a
+                                        href="/legal/terms"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-brand-teal hover:text-brand-teal-light underline"
+                                    >
+                                        Terms of Service
+                                    </a>
+                                    {' '}and{' '}
+                                    <a
+                                        href="/legal/privacy"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-brand-teal hover:text-brand-teal-light underline"
+                                    >
+                                        Privacy Policy
+                                    </a>
+                                </label>
+                            </div>
+                        )}
+
+                        {/* GDPR Consent Checkbox (Signup only) */}
+                        {useSupabase && mode === 'signup' && (
+                            <div className="flex items-start gap-3">
+                                <input
+                                    id="acceptGDPR"
+                                    type="checkbox"
+                                    checked={acceptedGDPR}
+                                    onChange={(e) => setAcceptedGDPR(e.target.checked)}
+                                    className="mt-1 h-4 w-4 rounded border-gray-600 bg-dark-bg text-brand-teal focus:ring-brand-teal/20 focus:ring-offset-0"
+                                    disabled={rateLimited}
+                                />
+                                <label htmlFor="acceptGDPR" className="text-sm text-gray-400">
+                                    I consent to ProductionOS processing my personal data as described in the{' '}
+                                    <a
+                                        href="/legal/gdpr"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-brand-teal hover:text-brand-teal-light underline"
+                                    >
+                                        Data Processing Agreement
+                                    </a>
+                                    . I understand I can withdraw consent at any time.
+                                </label>
                             </div>
                         )}
 
@@ -343,7 +442,7 @@ export default function LoginPage() {
 
                         <button
                             type="submit"
-                            disabled={isLoading || rateLimited || (mode === 'forgot' ? !email : mode === 'signup' ? !name || !email || !password || !confirmPassword || !passwordsMatch : (useSupabase ? !email || !password : !password))}
+                            disabled={isLoading || rateLimited || (mode === 'forgot' ? !email : mode === 'signup' ? !name || !email || !password || !confirmPassword || !passwordsMatch || !passwordValidation.valid || !acceptedTerms || !acceptedGDPR : (useSupabase ? !email || !password : !password))}
                             className="btn-primary w-full py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
                             aria-busy={isLoading}
                         >

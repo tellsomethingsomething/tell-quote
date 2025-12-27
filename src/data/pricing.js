@@ -49,8 +49,8 @@ export const plans = [
 
 export const pricingFaqs = [
     {
-        q: "Do I need a credit card to sign up?",
-        a: "No, you can sign up for the free trial without entering any payment details. You only need to add a card when you decide to upgrade to a paid plan."
+        q: "How long is the free trial?",
+        a: "You get a 48-hour free trial to explore all features. After that, choose a plan that fits your needs."
     },
     {
         q: "Can I cancel anytime?",

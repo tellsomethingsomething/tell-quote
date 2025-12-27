@@ -235,6 +235,82 @@ export function validateForm(data, schema) {
 }
 
 /**
+ * Validates password strength
+ * Requirements:
+ * - At least 8 characters
+ * - At least one uppercase letter
+ * - At least one lowercase letter
+ * - At least one number
+ * - At least one special character
+ */
+export function validatePassword(value, required = true) {
+    if (!value || !value.trim()) {
+        return required
+            ? { valid: false, error: 'Password is required' }
+            : { valid: true, error: null };
+    }
+
+    const password = value.trim();
+    const errors = [];
+
+    if (password.length < 8) {
+        errors.push('at least 8 characters');
+    }
+    if (!/[A-Z]/.test(password)) {
+        errors.push('one uppercase letter');
+    }
+    if (!/[a-z]/.test(password)) {
+        errors.push('one lowercase letter');
+    }
+    if (!/[0-9]/.test(password)) {
+        errors.push('one number');
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+        errors.push('one special character');
+    }
+
+    if (errors.length > 0) {
+        return {
+            valid: false,
+            error: `Password must contain ${errors.join(', ')}`
+        };
+    }
+
+    return { valid: true, error: null };
+}
+
+/**
+ * Gets password strength score and label
+ * Returns: { score: 0-4, label: 'Weak'|'Fair'|'Good'|'Strong', color: string }
+ */
+export function getPasswordStrength(password) {
+    if (!password) return { score: 0, label: 'Too short', color: 'red' };
+
+    let score = 0;
+
+    // Length checks
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+
+    // Character variety checks
+    if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++;
+
+    // Cap at 4
+    score = Math.min(score, 4);
+
+    const labels = ['Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+    const colors = ['red', 'orange', 'yellow', 'green', 'emerald'];
+
+    return {
+        score,
+        label: labels[score],
+        color: colors[score]
+    };
+}
+
+/**
  * Sanitizes a string by trimming and removing dangerous characters
  */
 export function sanitizeString(value) {

@@ -1,16 +1,14 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, animate } from 'framer-motion';
 import { Check, ArrowRight, Star, Youtube, LayoutDashboard, Calculator, Clapperboard, FileSpreadsheet, Users, Briefcase } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import MotionScreenGrab from '../components/ui/MotionScreenGrab';
 import { AuroraBackground } from '../components/ui/AuroraBackground';
 import { BentoGrid, BentoGridItem } from '../components/ui/BentoGrid';
-import FeatureTabs from '../components/ui/FeatureTabs';
-import FeaturesGrid from '../components/ui/FeaturesGrid';
-import ROICalculator from '../components/ui/ROICalculator';
-import DashboardMockup from '../components/mockups/DashboardMockup';
+import FeatureShowcase from '../components/ui/FeatureShowcase';
+import InteractiveDemo from '../components/mockups/InteractiveDemo';
 import { features } from '../data/features';
 import { testimonials } from '../data/testimonials';
 import { faqs } from '../data/faq';
@@ -54,48 +52,47 @@ export default function Home() {
                             </div>
                         </motion.div>
 
-                        {/* Hero Visual */}
-                        <div className="max-w-4xl mx-auto relative z-20 -mb-20">
+                        {/* Interactive Demo */}
+                        <div className="max-w-5xl mx-auto relative z-20 -mb-20">
                             <motion.div
-                                initial={{ y: 40, opacity: 0, rotateX: 20 }}
-                                animate={{ y: 0, opacity: 1, rotateX: 0 }}
-                                transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-                                style={{ perspective: 1000 }}
+                                initial={{ y: 40, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
                             >
-                                <DashboardMockup />
+                                <InteractiveDemo />
                             </motion.div>
                         </div>
                     </div>
                 </section>
             </AuroraBackground>
 
-            {/* --- CHALLENGE SECTION --- */}
+            {/* --- WHY PRODUCTIONOS SECTION --- */}
             <section className="pt-48 pb-24 bg-marketing-background">
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-20">
-                        <h2 className="text-marketing-primary font-bold tracking-widest uppercase text-sm mb-3">THE CHALLENGE</h2>
-                        <h3 className="text-3xl md:text-5xl font-bold mb-4">Fragmented tools create <br />operational blindspots.</h3>
+                        <h2 className="text-marketing-primary font-bold tracking-widest uppercase text-sm mb-3">WHY PRODUCTIONOS</h2>
+                        <h3 className="text-3xl md:text-5xl font-bold mb-4">Three things production companies <br />actually need.</h3>
                         <p className="text-xl text-marketing-text-secondary max-w-2xl mx-auto">
-                            Relying on disconnected spreadsheets, documents, and chat apps introduces risk, errors, and inefficiency into your business.
+                            Not another generic tool. Purpose-built features for how production companies actually work.
                         </p>
                     </div>
 
                     <BentoGrid className="max-w-6xl mx-auto">
                         {[
                             {
-                                title: "Disconnected Quoting",
-                                description: "Static PDF quotes don't sync with your project management, leading to scope creep and lost revenue.",
-                                header: <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/10 p-4 items-center justify-center"><FileSpreadsheet className="w-12 h-12 text-red-400" /></div>,
+                                title: "Profit & Cost Visibility",
+                                description: "See margins from the first quote. Track costs as they happen.",
+                                header: <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/10 p-4 items-center justify-center"><Calculator className="w-12 h-12 text-green-400" /></div>,
                             },
                             {
-                                title: "Resource Conflicts",
-                                description: "Without a centralized calendar, double-booking crew and equipment becomes an expensive inevitability.",
-                                header: <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/10 p-4 items-center justify-center"><Users className="w-12 h-12 text-orange-400" /></div>,
+                                title: "Full Project Management",
+                                description: "Quotes convert to projects. Crew, kit, and budgets sync automatically.",
+                                header: <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/10 p-4 items-center justify-center"><Briefcase className="w-12 h-12 text-blue-400" /></div>,
                             },
                             {
-                                title: "Financial Opacity",
-                                description: "Waiting until the end of a project to calculate profitability prevents proactive decision making.",
-                                header: <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border border-yellow-500/10 p-4 items-center justify-center"><Calculator className="w-12 h-12 text-yellow-400" /></div>,
+                                title: "Built-in CRM",
+                                description: "Manage clients and communications. See project history at a glance.",
+                                header: <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/10 p-4 items-center justify-center"><Users className="w-12 h-12 text-purple-400" /></div>,
                             },
                         ].map((item, i) => (
                             <BentoGridItem
@@ -109,51 +106,58 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* --- SOLUTION WORKFLOW --- */}
+            {/* --- PLATFORM FEATURES --- */}
             <section className="py-24 bg-marketing-surface border-y border-marketing-border overflow-hidden">
                 <div className="container mx-auto px-6">
-                    <div className="text-center mb-20">
+                    <div className="text-center mb-12">
                         <h2 className="text-marketing-primary font-bold tracking-widest uppercase text-sm mb-3">THE PLATFORM</h2>
-                        <h3 className="text-3xl md:text-5xl font-bold mb-6">Everything you need to <br />run a modern production company.</h3>
-                        <p className="text-xl text-marketing-text-secondary max-w-3xl mx-auto mb-12">
-                            A complete suite of tools built specifically for the unique workflows of video production.
+                        <h3 className="text-3xl md:text-5xl font-bold mb-6">See it in action.</h3>
+                        <p className="text-xl text-marketing-text-secondary max-w-2xl mx-auto">
+                            One platform for quotes, kit, crew, and finances. Know your profit on every job.
                         </p>
-
-                        <FeaturesGrid />
-                        <div className="mt-12"></div>
-                        <FeatureTabs />
                     </div>
-                </div>
-            </section>
 
-            {/* --- ROI CALCULATOR --- */}
-            <section className="py-24 bg-marketing-background">
-                <div className="container mx-auto px-6">
-                    <ROICalculator />
+                    <FeatureShowcase />
                 </div>
             </section>
 
             {/* --- SOCIAL PROOF --- */}
-            <section className="py-24 border-b border-marketing-border bg-marketing-background">
+            <section className="py-24 border-b border-marketing-border bg-marketing-background overflow-hidden">
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl md:text-5xl font-bold mb-6">Trusted by the industry's best.</h2>
                         <p className="text-xl text-marketing-text-secondary">Join over 200 production companies scaling with ProductionOS.</p>
                     </div>
+                </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                        {testimonials.slice(0, 3).map((t, i) => (
-                            <motion.div
+                {/* Auto-scrolling testimonials marquee */}
+                <div className="relative">
+                    <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-marketing-background to-transparent z-10" />
+                    <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-marketing-background to-transparent z-10" />
+
+                    <motion.div
+                        className="flex gap-6"
+                        animate={{
+                            x: [0, -1920]
+                        }}
+                        transition={{
+                            x: {
+                                duration: 30,
+                                repeat: Infinity,
+                                ease: "linear"
+                            }
+                        }}
+                    >
+                        {/* Double the testimonials for seamless loop */}
+                        {[...testimonials, ...testimonials].map((t, i) => (
+                            <div
                                 key={i}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.1 }}
-                                className="p-8 bg-marketing-surface/50 backdrop-blur-sm border border-marketing-border/50 rounded-3xl hover:border-marketing-primary/30 transition-all hover:shadow-2xl hover:shadow-marketing-primary/5 hover:-translate-y-1"
+                                className="flex-shrink-0 w-[400px] p-8 bg-marketing-surface/50 backdrop-blur-sm border border-marketing-border/50 rounded-3xl"
                             >
                                 <div className="flex text-marketing-primary mb-6">
-                                    {[...Array(5)].map((_, i) => <Star key={i} size={18} fill="currentColor" className="opacity-80" />)}
+                                    {[...Array(5)].map((_, j) => <Star key={j} size={18} fill="currentColor" className="opacity-80" />)}
                                 </div>
-                                <p className="text-xl mb-8 leading-relaxed font-medium text-marketing-text-primary/90">"{t.quote}"</p>
+                                <p className="text-lg mb-8 leading-relaxed font-medium text-marketing-text-primary/90">"{t.quote}"</p>
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-marketing-primary to-marketing-accent flex items-center justify-center font-bold text-white text-lg shadow-lg">
                                         {t.author[0]}
@@ -163,9 +167,9 @@ export default function Home() {
                                         <div className="text-sm text-marketing-text-secondary">{t.role}, {t.company}</div>
                                     </div>
                                 </div>
-                            </motion.div>
+                            </div>
                         ))}
-                    </div>
+                    </motion.div>
                 </div>
             </section>
 
@@ -186,7 +190,7 @@ export default function Home() {
                             </Link>
                         </div>
                         <p className="mt-8 text-marketing-text-secondary text-sm opacity-70">
-                            No credit card required for trial · Cancel anytime · Enterprise security
+                            48-hour free trial · Cancel anytime · Enterprise security
                         </p>
                     </div>
                 </section>

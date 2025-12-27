@@ -67,7 +67,7 @@ export const comparisons = {
     },
     monday: {
         title: "ProductionOS vs Monday.com",
-        intro: "Monday is a powerful general project management tool. That's exactly the problem — it's not built for production. It requires days of customization.",
+        intro: "Monday is a powerful general project management tool. That's exactly the problem: it's not built for production. It requires days of customization.",
         seoTitle: "ProductionOS vs Monday.com for Production | ProductionOS",
         seoDesc: "Monday.com for production companies? Compare with ProductionOS. Production-specific features vs generic project management. Start free trial.",
         table: [
@@ -98,7 +98,7 @@ export const comparisons = {
     },
     asana: {
         title: "ProductionOS vs Asana",
-        intro: "Asana is excellent for task management. But production companies need more than tasks — they need quotes, crew, equipment, and financials.",
+        intro: "Asana is excellent for task management. But production companies need more than tasks: quotes, crew, equipment, and financials.",
         seoTitle: "ProductionOS vs Asana for Production | ProductionOS",
         seoDesc: "Asana for production companies? Compare with ProductionOS. Task management vs full production business software. Start free trial.",
         table: [

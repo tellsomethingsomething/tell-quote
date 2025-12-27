@@ -3,12 +3,13 @@ import { useClientStore } from '../store/clientStore';
 import { useOpportunityStore } from '../store/opportunityStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { List, LayoutGrid } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 // Lazy load TaskBoardPage for Board view
 const TaskBoardPage = lazy(() => import('./TaskBoardPage'));
 
-// API key from environment variable (set in Vercel dashboard)
-const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
+// Edge function URL for commercial tasks generation
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 // Scan interval: 3 hours in milliseconds
 const SCAN_INTERVAL = 3 * 60 * 60 * 1000;
@@ -110,9 +111,9 @@ export default function CommercialTasksPage() {
     }, [lastGenerated]);
 
     const generateTasks = useCallback(async (force = false) => {
-        // Check for API key
-        if (!ANTHROPIC_API_KEY) {
-            setError('API key not configured. Set VITE_ANTHROPIC_API_KEY in environment variables.');
+        // Check for Supabase URL
+        if (!SUPABASE_URL) {
+            setError('Supabase not configured.');
             return;
         }
 
@@ -251,28 +252,28 @@ Generate 8-12 tasks. For research/new business, suggest SPECIFIC companies and c
 Return ONLY JSON:
 [{"id":"unique","category":"upcoming_deals|client_tasks|research|client_comms","priority":"high|medium|low","title":"Specific action","description":"Context and why","client":"Client/Company name","clientId":"ID if existing client","opportunityId":"ID if relevant","contact":"Person NAME only - no job titles/roles","newClient":true/false,"suggestedCompany":"For new prospects","suggestedContact":"Person name only","suggestedRole":"Their job title separately","suggestedCountry":"Country"}]`;
 
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
+            // Get the session token for authorization
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                throw new Error('Please log in to generate tasks');
+            }
+
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-commercial-tasks`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-api-key': ANTHROPIC_API_KEY,
-                    'anthropic-version': '2023-06-01',
-                    'anthropic-dangerous-direct-browser-access': 'true',
+                    'Authorization': `Bearer ${session.access_token}`,
                 },
-                body: JSON.stringify({
-                    model: 'claude-sonnet-4-20250514',
-                    max_tokens: 2048,
-                    messages: [{ role: 'user', content: prompt }],
-                }),
+                body: JSON.stringify({ prompt }),
             });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error?.message || `API error: ${response.status}`);
+                throw new Error(errorData.error || `API error: ${response.status}`);
             }
 
             const data = await response.json();
-            const content = data.content[0]?.text;
+            const content = data.content;
 
             // Parse JSON from response
             const jsonMatch = content.match(/\[[\s\S]*\]/);

@@ -24,6 +24,15 @@ import {
     getSuggestedRates,
     getDefaultCrewRoles,
 } from '../../services/onboardingService';
+import {
+    processImportFile,
+    mapHeaders,
+    validateImportData,
+    downloadTemplate,
+    importClients,
+    importCrew,
+    importEquipment,
+} from '../../services/dataImportService';
 
 // Step icons mapping
 const STEP_ICONS = {
@@ -84,7 +93,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
     const [error, setError] = useState(null);
     const [progress, setProgress] = useState(null);
 
-    const { createOrganization } = useOrganizationStore();
+    const { createOrganization, createInvitation } = useOrganizationStore();
 
     // Form data
     const [formData, setFormData] = useState({
@@ -112,6 +121,9 @@ export default function OnboardingWizard({ userId, onComplete }) {
         // Rate Card
         crewRates: {},
         equipmentRates: {},
+
+        // Data Imports (from CSV)
+        dataImports: {},
 
         // First Action
         firstAction: 'create_quote',
@@ -275,6 +287,18 @@ export default function OnboardingWizard({ userId, onComplete }) {
                     return false;
                 }
                 break;
+
+            case 'team_invite': {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const filledInvites = formData.teamInvites.filter(inv => inv.email.trim());
+                for (const invite of filledInvites) {
+                    if (!emailRegex.test(invite.email.trim())) {
+                        setError(`Invalid email format: ${invite.email}`);
+                        return false;
+                    }
+                }
+                break;
+            }
         }
 
         return true;
@@ -384,6 +408,13 @@ export default function OnboardingWizard({ userId, onComplete }) {
             case 'rate_card':
                 return {
                     rate_card_configured: Object.keys(formData.crewRates).length > 0,
+                    // Store the actual crew rates for later processing
+                    crew_rates: formData.crewRates,
+                };
+            case 'team_invite':
+                return {
+                    team_invites: formData.teamInvites.filter(inv => inv.email.trim()),
+                    team_invites_sent: formData.teamInvites.filter(inv => inv.email.trim()).length,
                 };
             case 'first_action':
                 return {
@@ -434,6 +465,52 @@ export default function OnboardingWizard({ userId, onComplete }) {
                 .from('settings')
                 .update(settingsData)
                 .eq('organization_id', org.id);
+
+            // 2b. Create rate card items from crew rates
+            if (Object.keys(formData.crewRates).length > 0) {
+                const rateCardItems = Object.entries(formData.crewRates)
+                    .filter(([_, rate]) => rate && parseFloat(rate) > 0)
+                    .map(([role, rate]) => ({
+                        organization_id: org.id,
+                        name: role,
+                        description: `${role} day rate`,
+                        section: 'prod_production',
+                        unit: 'day',
+                        is_active: true,
+                        pricing: {
+                            DEFAULT: {
+                                cost: { amount: parseFloat(rate) * 0.7, baseCurrency: formData.currency },
+                                charge: { amount: parseFloat(rate), baseCurrency: formData.currency },
+                            }
+                        }
+                    }));
+
+                if (rateCardItems.length > 0) {
+                    await supabase.from('rate_cards').insert(rateCardItems);
+                }
+            }
+
+            // 2c. Send team invitations (with proper token generation and email sending)
+            if (formData.teamInvites?.length > 0) {
+                const validInvites = formData.teamInvites.filter(inv => inv.email?.trim());
+                for (const invite of validInvites) {
+                    // createInvitation generates token, saves to DB, and sends email via edge function
+                    await createInvitation(invite.email.trim(), invite.role || 'member', []);
+                }
+            }
+
+            // 2d. Import data from CSV uploads
+            if (formData.dataImports) {
+                if (formData.dataImports.clients?.length > 0) {
+                    await importClients(formData.dataImports.clients, org.id, userId);
+                }
+                if (formData.dataImports.crew?.length > 0) {
+                    await importCrew(formData.dataImports.crew, org.id, userId);
+                }
+                if (formData.dataImports.equipment?.length > 0) {
+                    await importEquipment(formData.dataImports.equipment, org.id, userId);
+                }
+            }
 
             // 3. Mark onboarding as complete
             await completeOnboarding(userId, org.id);
@@ -870,6 +947,13 @@ function CompanyProfileStep({ formData, updateField }) {
 }
 
 function TeamInviteStep({ formData, updateField }) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const isValidEmail = (email) => {
+        if (!email.trim()) return true; // Empty is valid (optional)
+        return emailRegex.test(email.trim());
+    };
+
     const addInvite = () => {
         updateField('teamInvites', [...formData.teamInvites, { email: '', role: 'member' }]);
     };
@@ -891,31 +975,39 @@ function TeamInviteStep({ formData, updateField }) {
             </p>
 
             <div className="space-y-3">
-                {formData.teamInvites.map((invite, index) => (
-                    <div key={index} className="flex gap-3">
-                        <input
-                            type="email"
-                            value={invite.email}
-                            onChange={(e) => updateInvite(index, 'email', e.target.value)}
-                            placeholder="colleague@company.com"
-                            className="input flex-1"
-                        />
-                        <select
-                            value={invite.role}
-                            onChange={(e) => updateInvite(index, 'role', e.target.value)}
-                            className="input w-32"
-                        >
-                            <option value="admin">Admin</option>
-                            <option value="member">Member</option>
-                            <option value="viewer">Viewer</option>
-                        </select>
-                        {formData.teamInvites.length > 1 && (
-                            <button onClick={() => removeInvite(index)} className="text-gray-500 hover:text-red-400">
-                                <X className="w-5 h-5" />
-                            </button>
-                        )}
-                    </div>
-                ))}
+                {formData.teamInvites.map((invite, index) => {
+                    const showError = invite.email.trim() && !isValidEmail(invite.email);
+                    return (
+                        <div key={index} className="space-y-1">
+                            <div className="flex gap-3">
+                                <input
+                                    type="email"
+                                    value={invite.email}
+                                    onChange={(e) => updateInvite(index, 'email', e.target.value)}
+                                    placeholder="colleague@company.com"
+                                    className={`input flex-1 ${showError ? 'border-red-500 focus:border-red-500' : ''}`}
+                                />
+                                <select
+                                    value={invite.role}
+                                    onChange={(e) => updateInvite(index, 'role', e.target.value)}
+                                    className="input w-32"
+                                >
+                                    <option value="admin">Admin</option>
+                                    <option value="member">Member</option>
+                                    <option value="viewer">Viewer</option>
+                                </select>
+                                {formData.teamInvites.length > 1 && (
+                                    <button onClick={() => removeInvite(index)} className="text-gray-500 hover:text-red-400">
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                )}
+                            </div>
+                            {showError && (
+                                <p className="text-red-500 text-sm pl-1">Please enter a valid email address</p>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
 
             <button
@@ -930,6 +1022,76 @@ function TeamInviteStep({ formData, updateField }) {
 }
 
 function DataImportStep({ formData, updateField }) {
+    const [importStatus, setImportStatus] = useState({});
+    const [processing, setProcessing] = useState({});
+
+    const handleFileSelect = async (type, file) => {
+        if (!file) return;
+
+        setProcessing(prev => ({ ...prev, [type]: true }));
+        setImportStatus(prev => ({ ...prev, [type]: null }));
+
+        try {
+            // Process the file
+            const { headers, rows, format } = await processImportFile(file);
+
+            if (rows.length === 0) {
+                setImportStatus(prev => ({ ...prev, [type]: { error: 'No data found in file' } }));
+                return;
+            }
+
+            // Map headers to schema fields
+            const mapping = mapHeaders(headers, type);
+
+            // Validate the data
+            const { validRows, invalidRows, errors } = validateImportData(rows, mapping, type);
+
+            if (validRows.length === 0) {
+                setImportStatus(prev => ({
+                    ...prev,
+                    [type]: {
+                        error: `No valid records found. ${errors.length} errors: ${errors.slice(0, 3).join(', ')}${errors.length > 3 ? '...' : ''}`
+                    }
+                }));
+                return;
+            }
+
+            // Store valid data for import during handleComplete
+            updateField('dataImports', {
+                ...formData.dataImports,
+                [type]: validRows
+            });
+
+            setImportStatus(prev => ({
+                ...prev,
+                [type]: {
+                    success: true,
+                    count: validRows.length,
+                    invalidCount: invalidRows.length
+                }
+            }));
+        } catch (err) {
+            setImportStatus(prev => ({
+                ...prev,
+                [type]: { error: err.message || 'Failed to process file' }
+            }));
+        } finally {
+            setProcessing(prev => ({ ...prev, [type]: false }));
+        }
+    };
+
+    const handleTemplateDownload = (type) => {
+        downloadTemplate(type);
+    };
+
+    const clearImport = (type) => {
+        updateField('dataImports', {
+            ...formData.dataImports,
+            [type]: null
+        });
+        setImportStatus(prev => ({ ...prev, [type]: null }));
+    };
+
     return (
         <div className="space-y-6">
             <p className="text-gray-400">
@@ -937,30 +1099,75 @@ function DataImportStep({ formData, updateField }) {
             </p>
 
             <div className="grid gap-4">
-                {/* Import Options */}
-                {['clients', 'crew', 'equipment'].map(type => (
-                    <div key={type} className="p-4 bg-dark-bg border border-dark-border rounded-lg">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h4 className="text-white font-medium capitalize">{type}</h4>
-                                <p className="text-sm text-gray-500">
-                                    Import from CSV or Excel
-                                </p>
+                {['clients', 'crew', 'equipment'].map(type => {
+                    const status = importStatus[type];
+                    const isProcessing = processing[type];
+                    const hasData = formData.dataImports?.[type]?.length > 0;
+
+                    return (
+                        <div key={type} className="p-4 bg-dark-bg border border-dark-border rounded-lg">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="text-white font-medium capitalize">{type}</h4>
+                                    <p className="text-sm text-gray-500">
+                                        {hasData ? (
+                                            <span className="text-green-400">
+                                                {formData.dataImports[type].length} records ready to import
+                                            </span>
+                                        ) : (
+                                            'Import from CSV'
+                                        )}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleTemplateDownload(type)}
+                                        className="text-sm text-brand-primary hover:underline flex items-center gap-1"
+                                    >
+                                        <Download className="w-3 h-3" />
+                                        Template
+                                    </button>
+                                    {hasData ? (
+                                        <button
+                                            onClick={() => clearImport(type)}
+                                            className="btn-secondary text-sm flex items-center gap-1"
+                                        >
+                                            <X className="w-4 h-4" />
+                                            Clear
+                                        </button>
+                                    ) : (
+                                        <label className={`btn-secondary text-sm cursor-pointer flex items-center gap-1 ${isProcessing ? 'opacity-50 cursor-wait' : ''}`}>
+                                            {isProcessing ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Upload className="w-4 h-4" />
+                                            )}
+                                            Upload
+                                            <input
+                                                type="file"
+                                                accept=".csv"
+                                                className="hidden"
+                                                disabled={isProcessing}
+                                                onChange={(e) => handleFileSelect(type, e.target.files?.[0])}
+                                            />
+                                        </label>
+                                    )}
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <a href={`/templates/${type}-template.csv`} className="text-sm text-brand-primary hover:underline flex items-center gap-1">
-                                    <Download className="w-3 h-3" />
-                                    Template
-                                </a>
-                                <label className="btn-secondary text-sm cursor-pointer">
-                                    <Upload className="w-4 h-4 mr-1" />
-                                    Upload
-                                    <input type="file" accept=".csv,.xlsx,.xls" className="hidden" />
-                                </label>
-                            </div>
+                            {status?.error && (
+                                <div className="mt-2 text-sm text-red-400 flex items-center gap-1">
+                                    <AlertCircle className="w-4 h-4" />
+                                    {status.error}
+                                </div>
+                            )}
+                            {status?.success && status.invalidCount > 0 && (
+                                <div className="mt-2 text-sm text-yellow-400">
+                                    {status.invalidCount} rows skipped due to validation errors
+                                </div>
+                            )}
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <div className="text-center pt-4">
@@ -1092,10 +1299,9 @@ function FirstActionStep({ formData, updateField }) {
     );
 }
 
-// Billing Step - Captures payment method for 48-hour trial
+// Billing Step - Shows plan info, can be skipped (billing configured later)
 function BillingStep({ formData, updateField, onBillingComplete }) {
     const [selectedPlan, setSelectedPlan] = useState('starter');
-    const [isRedirecting, setIsRedirecting] = useState(false);
 
     const plans = [
         {
@@ -1115,23 +1321,6 @@ function BillingStep({ formData, updateField, onBillingComplete }) {
         },
     ];
 
-    const handleStartTrial = async () => {
-        setIsRedirecting(true);
-        try {
-            // Import dynamically to avoid circular deps
-            const { createTrialCheckoutSession } = await import('../../services/billingService');
-            const { url } = await createTrialCheckoutSession(selectedPlan);
-            if (url) {
-                window.location.href = url;
-            }
-        } catch (error) {
-            console.error('Error creating checkout:', error);
-            setIsRedirecting(false);
-            // For demo/dev, allow proceeding without Stripe
-            onBillingComplete({ plan: selectedPlan, demo: true });
-        }
-    };
-
     return (
         <div className="space-y-6">
             <div className="text-center mb-6">
@@ -1140,7 +1329,7 @@ function BillingStep({ formData, updateField, onBillingComplete }) {
                     48-Hour Free Trial
                 </div>
                 <p className="text-gray-400">
-                    Try ProductionOS free for 48 hours. Your card won't be charged until after the trial.
+                    Explore ProductionOS with full access. Choose a plan anytime from Settings.
                 </p>
             </div>
 
@@ -1149,7 +1338,10 @@ function BillingStep({ formData, updateField, onBillingComplete }) {
                 {plans.map(plan => (
                     <button
                         key={plan.id}
-                        onClick={() => setSelectedPlan(plan.id)}
+                        onClick={() => {
+                            setSelectedPlan(plan.id);
+                            updateField('selectedPlan', plan.id);
+                        }}
                         className={`relative p-5 rounded-xl border text-left transition-all ${
                             selectedPlan === plan.id
                                 ? 'border-brand-primary bg-brand-primary/10'
@@ -1187,43 +1379,24 @@ function BillingStep({ formData, updateField, onBillingComplete }) {
                 ))}
             </div>
 
-            {/* Trial Info */}
+            {/* Free Trial Info */}
             <div className="bg-dark-bg border border-dark-border rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                    <CreditCard className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                    <Sparkles className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                     <div>
-                        <h4 className="font-medium text-white mb-1">How the trial works</h4>
+                        <h4 className="font-medium text-white mb-1">What you get in the trial</h4>
                         <ul className="text-sm text-gray-400 space-y-1">
-                            <li>• Your card is securely saved but not charged today</li>
-                            <li>• Full access to all features for 48 hours</li>
-                            <li>• After trial, your subscription begins automatically</li>
-                            <li>• Cancel anytime during the trial - no charge</li>
+                            <li>• Full access to all features</li>
+                            <li>• Unlimited quotes and projects</li>
+                            <li>• 48-hour trial period</li>
+                            <li>• Upgrade anytime from Settings</li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            {/* Start Trial Button */}
-            <button
-                onClick={handleStartTrial}
-                disabled={isRedirecting}
-                className="w-full py-3 bg-brand-primary hover:bg-brand-primary/90 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-                {isRedirecting ? (
-                    <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Redirecting to checkout...
-                    </>
-                ) : (
-                    <>
-                        <CreditCard className="w-4 h-4" />
-                        Start 48-Hour Free Trial
-                    </>
-                )}
-            </button>
-
             <p className="text-xs text-center text-gray-500">
-                By starting your trial, you agree to our Terms of Service and Privacy Policy.
+                Click Continue below to start exploring ProductionOS.
             </p>
         </div>
     );

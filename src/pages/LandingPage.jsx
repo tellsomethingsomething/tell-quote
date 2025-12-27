@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import {
     Clapperboard,
     ArrowRight,
@@ -34,6 +35,30 @@ export default function LandingPage({ onLogin }) {
 
     return (
         <div className="min-h-screen bg-[#050507] text-white selection:bg-[#FF3366] selection:text-white font-sans overflow-x-hidden">
+            <Helmet>
+                <title>ProductionOS - Production Management Software for Creative Teams</title>
+                <meta name="description" content="Streamline your production workflow with ProductionOS. Manage quotes, crews, equipment, and projects in one place. Built for video, film, and live event production companies." />
+                <meta name="keywords" content="production management, video production software, film production, crew management, quote software, production company, event production" />
+
+                {/* Open Graph / Facebook */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://productionos.com/" />
+                <meta property="og:title" content="ProductionOS - Production Management Software" />
+                <meta property="og:description" content="Streamline your production workflow. Manage quotes, crews, equipment, and projects in one place." />
+                <meta property="og:image" content="https://productionos.com/og-image.png" />
+
+                {/* Twitter */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:url" content="https://productionos.com/" />
+                <meta name="twitter:title" content="ProductionOS - Production Management Software" />
+                <meta name="twitter:description" content="Streamline your production workflow. Manage quotes, crews, equipment, and projects in one place." />
+                <meta name="twitter:image" content="https://productionos.com/og-image.png" />
+
+                {/* Additional SEO */}
+                <link rel="canonical" href="https://productionos.com/" />
+                <meta name="robots" content="index, follow" />
+                <meta name="author" content="ProductionOS" />
+            </Helmet>
 
             {/* Dynamic Background */}
             <div className="fixed inset-0 z-0 pointer-events-none">
@@ -79,6 +104,46 @@ export default function LandingPage({ onLogin }) {
                     </button>
                 </div>
             </nav>
+
+            {/* Mobile Menu Drawer */}
+            {mobileMenuOpen && (
+                <div className="fixed inset-0 z-40 md:hidden">
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+                    <div className="fixed top-0 right-0 w-full max-w-sm h-full bg-[#0A0A0F] border-l border-white/10 p-6 pt-20">
+                        <button
+                            className="absolute top-6 right-6 text-white/60 hover:text-white"
+                            onClick={() => setMobileMenuOpen(false)}
+                        >
+                            <X size={24} />
+                        </button>
+                        <nav className="flex flex-col gap-6">
+                            {['Product', 'Solutions', 'Pricing', 'Company'].map((item) => (
+                                <a
+                                    key={item}
+                                    href={`#${item.toLowerCase()}`}
+                                    className="text-lg font-medium text-white/80 hover:text-white transition-colors"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    {item}
+                                </a>
+                            ))}
+                            <hr className="border-white/10 my-4" />
+                            <button
+                                onClick={() => { setMobileMenuOpen(false); onLogin(); }}
+                                className="text-left text-lg font-medium text-white/80 hover:text-white transition-colors"
+                            >
+                                Log in
+                            </button>
+                            <button
+                                onClick={() => { setMobileMenuOpen(false); onLogin(); }}
+                                className="px-6 py-3 bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-semibold rounded-xl transition-all text-center"
+                            >
+                                Start Free Trial
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            )}
 
             <main className="relative z-10 pt-32 pb-20 md:pt-48">
 

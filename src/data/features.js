@@ -59,7 +59,7 @@ export const features = [
         id: 'crew',
         title: 'Resource Database',
         headline: 'Your black book, digitized',
-        description: 'Crew, talent, vendors, locations — all searchable. Day rates, skills, availability, contact details. Stop asking "what\'s their number?" every time.',
+        description: 'Crew, talent, vendors, locations: all searchable. Day rates, skills, availability, contact details. Stop asking "what\'s their number?" every time.',
         icon: Users,
         path: '/features/crew',
         bullets: [
@@ -89,7 +89,7 @@ export const features = [
         id: 'financials',
         title: 'Financial Overview',
         headline: 'Actually know your margins',
-        description: 'Revenue, expenses, invoices, and P&L — all connected. See which projects make money and which don\'t. Make smarter decisions.',
+        description: 'Revenue, expenses, invoices, and P&L: all connected. See which projects make money and which don\'t. Make smarter decisions.',
         icon: BarChart3,
         path: '/features/financials',
         bullets: [
@@ -119,7 +119,7 @@ export const features = [
         id: 'deliverables',
         title: 'Deliverables',
         headline: 'Track every output',
-        description: 'Video masters, social cuts, photos, audio, graphics — track status, versions, and due dates for everything you deliver.',
+        description: 'Video masters, social cuts, photos, audio, graphics. Track status, versions, and due dates for everything you deliver.',
         icon: Layers,
         path: '/features/deliverables',
         bullets: [
@@ -135,7 +135,7 @@ export const features = [
 export const featurePageData = {
     quoting: {
         title: "Quotes that win work. Built in 15 minutes.",
-        subtitle: "Stop copying and pasting from old quotes. Stop rebuilding from scratch every time. ProductionOS quote builder has everything you need — sections, rate cards, margins, multi-currency — in one clean interface.",
+        subtitle: "Stop copying and pasting from old quotes. Stop rebuilding from scratch every time. ProductionOS quote builder has everything you need: sections, rate cards, margins, multi-currency, all in one clean interface.",
         image: "quote_builder.png",
         seoTitle: "Quote Builder for Production Companies | ProductionOS",
         seoDesc: "Build professional production quotes in minutes. Section-based editor, rate cards, multi-currency, margin calculator. Win more work. Start free trial.",
@@ -158,7 +158,7 @@ export const featurePageData = {
     },
     projects: {
         title: "From signed deal to wrapped project. All tracked.",
-        subtitle: "Won a job? Convert to project in one click. Track status, budget, deliverables, and crew in one place. Know exactly where every project stands — without chasing updates.",
+        subtitle: "Won a job? Convert to project in one click. Track status, budget, deliverables, and crew in one place. Know exactly where every project stands without chasing updates.",
         image: "kanban.png",
         seoTitle: "Production Project Management Software | ProductionOS",
         seoDesc: "Track production projects from kickoff to wrap. Budget vs actuals, deliverables, call sheets, crew assignments. Built for video and event production. Start free trial.",
@@ -181,7 +181,7 @@ export const featurePageData = {
     },
     crm: {
         title: "Win more work. Lose fewer leads.",
-        subtitle: "Track every opportunity from first contact to signed deal. Visual pipeline, activity timeline, and deal insights — built for how production companies actually sell.",
+        subtitle: "Track every opportunity from first contact to signed deal. Visual pipeline, activity timeline, and deal insights built for how production companies actually sell.",
         image: "dashboard.png",
         seoTitle: "CRM for Production Companies | ProductionOS",
         seoDesc: "Sales pipeline built for production companies. Track leads, opportunities, and deals. Activity timeline, lead scoring, email tracking. Win more work. Start free trial.",
@@ -204,7 +204,7 @@ export const featurePageData = {
     },
     crew: {
         title: "Your entire network, organized.",
-        subtitle: "Crew, talent, vendors, locations — all in one searchable database. Rates, skills, availability, contact details. Stop scrolling through WhatsApp threads to find people.",
+        subtitle: "Crew, talent, vendors, locations: all in one searchable database. Rates, skills, availability, contact details. Stop scrolling through WhatsApp threads to find people.",
         seoTitle: "Crew Management Software for Production | ProductionOS",
         seoDesc: "Crew database with rates, skills, availability. Talent, vendors, locations all in one place. Never ask 'what's their day rate?' again. Start free trial.",
         painPoint: "Your network is scattered across phone contacts, WhatsApp groups, old emails, and memory. When you need a gaffer for Tuesday, you shouldn't spend 30 minutes figuring out who's available.",
@@ -248,7 +248,7 @@ export const featurePageData = {
     },
     financials: {
         title: "Actually know if you're making money.",
-        subtitle: "Invoicing, expenses, purchase orders, and project P&L — all connected. See your real margins on every project. Make decisions based on data, not guesses.",
+        subtitle: "Invoicing, expenses, purchase orders, and project P&L: all connected. See your real margins on every project. Make decisions based on data, not guesses.",
         image: "finance.png",
         seoTitle: "Financial Tracking for Production Companies | ProductionOS",
         seoDesc: "Invoicing, expense tracking, project P&L for production companies. Know your margins. Stop guessing if you're profitable. Start free trial.",
@@ -293,7 +293,7 @@ export const featurePageData = {
     },
     deliverables: {
         title: "Track every output from edit to delivery.",
-        subtitle: "Master, social cuts, BTS, photos, audio — track every deliverable with status, versions, and due dates. Know exactly what's done and what's still outstanding.",
+        subtitle: "Master, social cuts, BTS, photos, audio. Track every deliverable with status, versions, and due dates. Know exactly what's done and what's still outstanding.",
         seoTitle: "Deliverables Tracking for Production | ProductionOS",
         seoDesc: "Track video deliverables from edit to delivery. Status workflow, version control, due dates. Never miss a deadline. Built for production companies. Start free trial.",
         painPoint: "A single project can have 15 deliverables. Master, social cuts, square versions, BTS. Each with revisions and due dates. Track that across 10 projects and things fall through cracks.",

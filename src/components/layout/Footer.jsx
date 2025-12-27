@@ -63,7 +63,6 @@ export default function Footer() {
                         <h4 className="font-semibold text-marketing-text-primary mb-6">Resources</h4>
                         <ul className="space-y-4 text-sm text-marketing-text-secondary">
                             <li><Link to="/resources/blog" className="hover:text-marketing-primary transition-colors">Blog</Link></li>
-                            <li><Link to="/resources/templates" className="hover:text-marketing-primary transition-colors">Templates</Link></li>
                             <li><Link to="/company/contact" className="hover:text-marketing-primary transition-colors">Help Center</Link></li>
                             <li><Link to="/company/about" className="hover:text-marketing-primary transition-colors">About Us</Link></li>
                         </ul>

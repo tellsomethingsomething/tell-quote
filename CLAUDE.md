@@ -97,16 +97,33 @@ The invoice designer (`/src/components/invoiceDesigner/`) allows customizing PDF
 ### Backend (Supabase)
 
 - Schema in `supabase-schema.sql`, RLS policies in `supabase-rls-policies.sql`
-- Tables: quotes, clients, rate_cards, rate_card_sections, settings
+- Tables: quotes, clients, rate_cards, rate_card_sections, settings, organizations, user_profiles, subscriptions
 - All use JSONB columns for flexible nested data
-- Authentication: Supabase Auth (recommended) or legacy password mode
+- Authentication: Supabase Auth with PKCE flow (secure)
+- Multi-tenancy via organization_id on all tables
+
+### Edge Functions (`/supabase/functions/`)
+
+- **Billing**: `create-checkout-session`, `create-portal-session`, `stripe-webhook`, `cancel-subscription`, `reactivate-subscription`
+- **Email**: `send-invitation-email` (via Resend), `gmail-send`, `gmail-sync`
+- **Auth**: `google-oauth`, `google-oauth-callback`, `microsoft-oauth-callback`
+- **AI**: `generate-commercial-tasks` (Anthropic API proxy)
+
+### Key Services (`/src/services/`)
+
+- **billingService.js** - Stripe checkout, subscription management, invoice history
+- **subscriptionGuard.js** - Access level determination (FULL, WARNING, GRACE, BLOCKED)
+- **trialService.js** - 48-hour trial management with read-only mode
+- **gdprService.js** - Data export and account deletion with 30-day grace period
+- **dataImportService.js** - CSV import for clients, crew, equipment
+- **onboardingService.js** - Multi-step onboarding wizard with progress tracking
 
 ### Utilities
 
 - `/src/utils/calculations.js` - Quote totals, margins, fees
 - `/src/utils/currency.js` - Multi-currency support with live exchange rates
 - `/src/utils/encryption.js` - Client-side encryption for sensitive data (API keys)
-- `/src/utils/validation.js` - Form validation helpers
+- `/src/utils/validation.js` - Form validation (password requires 8+ chars, uppercase, lowercase, number, special char)
 
 ## Styling
 
@@ -121,3 +138,41 @@ The invoice designer (`/src/components/invoiceDesigner/`) allows customizing PDF
 - **GitHub Pages**: Uses base path `/tell-quote/` (set via `GITHUB_ACTIONS` env var in vite.config.js)
 
 Build is optimized with manual chunk splitting for caching (react-vendor, zustand-vendor, pdf-vendor, charts-vendor, supabase-vendor).
+
+## Security
+
+### Authentication
+- Supabase Auth with PKCE flow (most secure OAuth pattern)
+- 24-hour session duration with auto-refresh on activity
+- Rate limiting: 5 failed attempts → 15-minute lockout
+- Password requirements: 8+ chars, uppercase, lowercase, number, special character
+
+### Database Security
+- Row Level Security (RLS) on all tables
+- Multi-tenant isolation via organization_id
+- All API keys stored server-side in edge functions
+
+### Compliance
+- GDPR: Data export (JSON), account deletion with 30-day grace period
+- Privacy: Cookie consent banner with preference management
+- Legal pages: `/legal/privacy`, `/legal/gdpr`, `/legal/terms`
+
+## Environment Variables
+
+See `.env.example` for required configuration:
+
+```bash
+# Supabase
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
+
+# Stripe (set in Supabase Edge Functions secrets)
+# STRIPE_SECRET_KEY=sk_...
+# STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Resend (for emails)
+# RESEND_API_KEY=re_...
+
+# Anthropic (for AI features)
+# ANTHROPIC_API_KEY=sk-ant-...
+```

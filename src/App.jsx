@@ -86,6 +86,10 @@ const TermsPage = lazy(() => import('./pages/legal/TermsPage'));
 const PrivacyPage = lazy(() => import('./pages/legal/PrivacyPage'));
 const GDPRPage = lazy(() => import('./pages/legal/GDPRPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const BlogPage = lazy(() => import('./pages/resources/BlogPage'));
+const BlogPostPage = lazy(() => import('./pages/resources/BlogPostPage'));
+const AboutPage = lazy(() => import('./pages/company/AboutPage'));
+const ContactPage = lazy(() => import('./pages/company/ContactPage'));
 
 // Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings' | 'contacts'
 function App() {
@@ -580,7 +584,7 @@ function App() {
 
             {/* Auth Routes */}
             <Route path="/auth/login" element={<LoginPage />} />
-            <Route path="/auth/signup" element={<div className="pt-32 text-center text-marketing-text-primary px-4"><h1 className="text-2xl font-bold mb-4">Signup Coming Soon</h1><p>We are currently in private beta.</p></div>} />
+            <Route path="/auth/signup" element={<LoginPage initialMode="signup" />} />
             <Route path="/auth/google-callback" element={<GoogleOAuthCallback />} />
             <Route path="/reset-password" element={<ResetPasswordPage onComplete={() => window.location.href = '/auth/login'} />} />
 
@@ -589,9 +593,13 @@ function App() {
             <Route path="/legal/privacy" element={<PrivacyPage />} />
             <Route path="/legal/gdpr" element={<GDPRPage />} />
 
-            {/* Resources & Company Placeholders */}
-            <Route path="/resources/*" element={<Navigate to="/" replace />} />
-            <Route path="/company/*" element={<Navigate to="/" replace />} />
+            {/* Resources Pages */}
+            <Route path="/resources/blog" element={<BlogPage />} />
+            <Route path="/resources/blog/:slug" element={<BlogPostPage />} />
+
+            {/* Company Pages */}
+            <Route path="/company/about" element={<AboutPage />} />
+            <Route path="/company/contact" element={<ContactPage />} />
 
             {/* Catch all redirect to Home for marketing site */}
             <Route path="*" element={<Home />} />
@@ -618,7 +626,7 @@ function App() {
 
     return (
       <OnboardingWizard
-        userId={user?.id}
+        userId={user?.userId}
         onComplete={handleOnboardingComplete}
       />
     );

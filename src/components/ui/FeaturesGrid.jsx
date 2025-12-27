@@ -8,7 +8,6 @@ import {
     Camera,
     FileSpreadsheet,
     DollarSign,
-    LayoutDashboard,
     ArrowRight
 } from 'lucide-react';
 import { BentoGrid, BentoGridItem } from './BentoGrid';
@@ -55,12 +54,6 @@ const features = [
         description: "Turn quotes into invoices instantly. Track expenses, POs, and real-time project P&L without spreadsheet headaches.",
         header: <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/10 items-center justify-center group-hover:bg-green-500/20 transition-colors"><DollarSign className="w-10 h-10 text-green-400" /></div>,
         link: "/features/financials"
-    },
-    {
-        title: "Client Portal",
-        description: "Give clients a professional dashboard to approve quotes, pay invoices, and view deliverables. (Coming Soon)",
-        header: <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-pink-500/10 to-pink-600/5 border border-pink-500/10 items-center justify-center group-hover:bg-pink-500/20 transition-colors"><LayoutDashboard className="w-10 h-10 text-pink-400" /></div>,
-        link: "#"
     }
 ];
 

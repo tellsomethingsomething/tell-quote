@@ -17,7 +17,7 @@ export const faqs = [
     },
     {
         question: "How long does setup take?",
-        answer: "Most users are up and running in under an hour. Creating your first quote takes about 10 minutes. No training required — if you've used any modern software, you'll figure it out."
+        answer: "Most users are up and running in under an hour. Creating your first quote takes about 10 minutes. No training required. If you've used any modern software, you'll figure it out."
     },
     {
         question: "What happens when my trial ends?",
