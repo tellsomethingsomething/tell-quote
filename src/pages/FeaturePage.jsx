@@ -126,21 +126,86 @@ export default function FeaturePage() {
             </section>
 
             {/* Pain Point vs Solution */}
-            <section className="py-20 bg-marketing-surface border-y border-marketing-border">
+            <section className="py-24 bg-gradient-to-b from-marketing-background to-marketing-surface">
                 <div className="container mx-auto px-6 md:px-12">
-                    <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
-                        <div className="bg-red-500/5 border border-red-500/10 p-8 rounded-2xl">
-                            <h3 className="text-red-400 font-bold mb-4 flex items-center gap-2">
-                                <XIcon /> The Old Way
-                            </h3>
-                            <p className="text-marketing-text-secondary leading-relaxed">"{data.painPoint}"</p>
-                        </div>
-                        <div className="bg-marketing-success/5 border border-marketing-success/10 p-8 rounded-2xl">
-                            <h3 className="text-marketing-success font-bold mb-4 flex items-center gap-2">
-                                <CheckIcon /> The ProductionOS Way
-                            </h3>
-                            <p className="text-marketing-text-secondary leading-relaxed">{data.solution}</p>
-                        </div>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="text-center mb-16"
+                    >
+                        <h2 className="text-3xl md:text-4xl font-bold mb-4">A Better Way to Work</h2>
+                        <p className="text-marketing-text-secondary text-lg max-w-2xl mx-auto">
+                            Stop wrestling with spreadsheets and disconnected tools
+                        </p>
+                    </motion.div>
+
+                    <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                        {/* The Old Way */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.1 }}
+                            className="relative group"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-red-900/10 rounded-2xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity" />
+                            <div className="relative bg-gradient-to-br from-gray-900 to-gray-900/80 border border-red-500/20 p-8 rounded-2xl h-full">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                                        <XIcon className="text-red-400" />
+                                    </div>
+                                    <div>
+                                        <span className="text-xs font-medium text-red-400/70 uppercase tracking-wider">Before</span>
+                                        <h3 className="text-xl font-bold text-red-400">The Old Way</h3>
+                                    </div>
+                                </div>
+                                <p className="text-gray-400 leading-relaxed text-lg italic">
+                                    "{data.painPoint}"
+                                </p>
+                                <div className="mt-6 pt-6 border-t border-red-500/10">
+                                    <div className="flex items-center gap-2 text-red-400/60 text-sm">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>Hours of manual work</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* The ProductionOS Way */}
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.2 }}
+                            className="relative group"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-emerald-900/10 rounded-2xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity" />
+                            <div className="relative bg-gradient-to-br from-gray-900 to-gray-900/80 border border-emerald-500/20 p-8 rounded-2xl h-full">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                                        <CheckIcon className="text-emerald-400" />
+                                    </div>
+                                    <div>
+                                        <span className="text-xs font-medium text-emerald-400/70 uppercase tracking-wider">With ProductionOS</span>
+                                        <h3 className="text-xl font-bold text-emerald-400">The Better Way</h3>
+                                    </div>
+                                </div>
+                                <p className="text-gray-300 leading-relaxed text-lg">
+                                    {data.solution}
+                                </p>
+                                <div className="mt-6 pt-6 border-t border-emerald-500/10">
+                                    <div className="flex items-center gap-2 text-emerald-400/80 text-sm">
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                        </svg>
+                                        <span>Done in minutes, not hours</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
                     </div>
                 </div>
             </section>
@@ -216,10 +281,10 @@ export default function FeaturePage() {
     );
 }
 
-function CheckIcon() {
-    return <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>;
+function CheckIcon({ className }) {
+    return <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>;
 }
 
-function XIcon() {
-    return <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
+function XIcon({ className }) {
+    return <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
 }
