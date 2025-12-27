@@ -8,8 +8,25 @@ import {
     Download,
     Send
 } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 export default function QuoteBuilderMockup() {
+    const { formatPrice } = useCurrency();
+
+    const lineItems = [
+        { role: 'Director', days: 2, rate: 1500, total: 3000 },
+        { role: 'Producer', days: 3, rate: 800, total: 2400 },
+        { role: 'Director of Photography', days: 2, rate: 1200, total: 2400 },
+        { role: 'Camera Assistant (1st AC)', days: 2, rate: 600, total: 1200 },
+        { role: 'Gaffer', days: 2, rate: 650, total: 1300 },
+        { role: 'Sound Recordist', days: 2, rate: 700, total: 1400 },
+    ];
+
+    const sectionTotal = 12400;
+    const subtotal = 28500;
+    const fee = 4275;
+    const total = 32775;
+
     return (
         <div className="w-full bg-marketing-surface border border-marketing-border rounded-xl overflow-hidden shadow-2xl flex flex-col aspect-[16/10] text-left font-sans select-none">
             {/* Mock Header */}
@@ -41,19 +58,12 @@ export default function QuoteBuilderMockup() {
                             <ChevronDown size={16} className="text-marketing-text-secondary" />
                             <h4 className="font-bold text-marketing-text-primary">1.0 Production Crew</h4>
                         </div>
-                        <span className="text-sm font-mono font-medium text-marketing-text-primary">$12,400.00</span>
+                        <span className="text-sm font-mono font-medium text-marketing-text-primary">{formatPrice(sectionTotal, { decimals: 2 })}</span>
                     </div>
 
                     {/* Line Items */}
                     <div className="p-4 space-y-1">
-                        {[
-                            { role: 'Director', days: 2, rate: 1500, total: 3000 },
-                            { role: 'Producer', days: 3, rate: 800, total: 2400 },
-                            { role: 'Director of Photography', days: 2, rate: 1200, total: 2400 },
-                            { role: 'Camera Assistant (1st AC)', days: 2, rate: 600, total: 1200 },
-                            { role: 'Gaffer', days: 2, rate: 650, total: 1300 },
-                            { role: 'Sound Recordist', days: 2, rate: 700, total: 1400 },
-                        ].map((item, i) => (
+                        {lineItems.map((item, i) => (
                             <div key={i} className="grid grid-cols-12 gap-4 items-center py-2 px-2 hover:bg-marketing-background rounded-md group">
                                 <div className="col-span-1 text-marketing-text-secondary/30 cursor-grab opacity-0 group-hover:opacity-100 flex justify-center">
                                     <GripVertical size={14} />
@@ -65,10 +75,10 @@ export default function QuoteBuilderMockup() {
                                     {item.days} days
                                 </div>
                                 <div className="col-span-2 text-right text-marketing-text-secondary text-sm bg-marketing-background/50 rounded px-2 py-1 border border-marketing-border/30">
-                                    ${item.rate}
+                                    {formatPrice(item.rate)}
                                 </div>
                                 <div className="col-span-2 text-right font-mono font-medium text-marketing-text-primary text-sm">
-                                    ${item.total}
+                                    {formatPrice(item.total)}
                                 </div>
                             </div>
                         ))}
@@ -82,15 +92,15 @@ export default function QuoteBuilderMockup() {
                     <div className="mt-auto p-4 bg-marketing-background/30 border-t border-marketing-border flex justify-end gap-8">
                         <div className="text-right">
                             <div className="text-xs text-marketing-text-secondary mb-1">Subtotal</div>
-                            <div className="font-bold text-marketing-text-primary">$28,500.00</div>
+                            <div className="font-bold text-marketing-text-primary">{formatPrice(subtotal, { decimals: 2 })}</div>
                         </div>
                         <div className="text-right">
                             <div className="text-xs text-marketing-text-secondary mb-1">Agency Fee (15%)</div>
-                            <div className="font-bold text-marketing-text-primary">$4,275.00</div>
+                            <div className="font-bold text-marketing-text-primary">{formatPrice(fee, { decimals: 2 })}</div>
                         </div>
                         <div className="text-right">
                             <div className="text-xs text-marketing-text-secondary mb-1">Total</div>
-                            <div className="font-bold text-marketing-primary text-xl">$32,775.00</div>
+                            <div className="font-bold text-marketing-primary text-xl">{formatPrice(total, { decimals: 2 })}</div>
                         </div>
                     </div>
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCurrency } from '../../../hooks/useCurrency';
 
 const demoData = {
     quote: {
@@ -23,6 +24,7 @@ const demoData = {
 };
 
 export default function DataSyncDemo() {
+    const { formatPrice } = useCurrency();
     const [stage, setStage] = useState('quote'); // quote, transitioning, project
     const [isAnimating, setIsAnimating] = useState(false);
     const timeoutRef = useRef(null);
@@ -78,7 +80,7 @@ export default function DataSyncDemo() {
                                 </div>
                                 <div className="text-right">
                                     <p className="text-2xl font-bold text-white">
-                                        ${demoData.quote.total.toLocaleString()}
+                                        {formatPrice(demoData.quote.total)}
                                     </p>
                                     <p className="text-gray-500 text-sm">Quote Value</p>
                                 </div>
@@ -221,8 +223,8 @@ export default function DataSyncDemo() {
                                     <span className="text-green-400 text-sm font-medium">On Track</span>
                                 </div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-gray-500">Spent: $0</span>
-                                    <span className="text-white font-medium">Budget: ${demoData.quote.total.toLocaleString()}</span>
+                                    <span className="text-gray-500">Spent: {formatPrice(0)}</span>
+                                    <span className="text-white font-medium">Budget: {formatPrice(demoData.quote.total)}</span>
                                 </div>
                                 <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
                                     <motion.div

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCurrency } from '../../../hooks/useCurrency';
 
 const demoQuote = {
     title: "Brand Campaign Video",
@@ -13,6 +14,7 @@ const demoQuote = {
 };
 
 export default function FinancialDemo() {
+    const { formatPrice } = useCurrency();
     const [markup, setMarkup] = useState(25);
     const [hoveredRow, setHoveredRow] = useState(null);
 
@@ -96,7 +98,7 @@ export default function FinancialDemo() {
                                     {item.days}
                                 </td>
                                 <td className="px-4 py-3 text-right text-gray-400 hidden sm:table-cell">
-                                    ${item.totalCost.toLocaleString()}
+                                    {formatPrice(item.totalCost)}
                                 </td>
                                 <td className="px-4 py-3 text-right text-white font-medium">
                                     <motion.span
@@ -105,7 +107,7 @@ export default function FinancialDemo() {
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ duration: 0.2 }}
                                     >
-                                        ${item.charge.toLocaleString()}
+                                        {formatPrice(item.charge)}
                                     </motion.span>
                                 </td>
                                 <td className="px-4 py-3 text-right">
@@ -116,7 +118,7 @@ export default function FinancialDemo() {
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ duration: 0.2 }}
                                     >
-                                        +${item.profit.toLocaleString()}
+                                        +{formatPrice(item.profit)}
                                     </motion.span>
                                 </td>
                             </motion.tr>
@@ -171,7 +173,7 @@ export default function FinancialDemo() {
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ type: "spring", stiffness: 300 }}
                         >
-                            ${calculations.totalProfit.toLocaleString()}
+                            {formatPrice(calculations.totalProfit)}
                         </motion.p>
                     </div>
                     <div className="text-right">
@@ -189,10 +191,10 @@ export default function FinancialDemo() {
                 </div>
                 <div className="mt-3 pt-3 border-t border-white/10 flex justify-between text-sm">
                     <span className="text-gray-400">
-                        Total Cost: <span className="text-gray-300">${calculations.totalCost.toLocaleString()}</span>
+                        Total Cost: <span className="text-gray-300">{formatPrice(calculations.totalCost)}</span>
                     </span>
                     <span className="text-gray-400">
-                        Quote Total: <span className="text-white font-semibold">${calculations.totalCharge.toLocaleString()}</span>
+                        Quote Total: <span className="text-white font-semibold">{formatPrice(calculations.totalCharge)}</span>
                     </span>
                 </div>
             </motion.div>

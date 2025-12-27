@@ -1,7 +1,19 @@
 import React from 'react';
 import { Search, MoreHorizontal, Star, MapPin, Phone, Mail } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 export default function CrewMockup() {
+    const { formatDayRate } = useCurrency();
+
+    const crewMembers = [
+        { name: 'James Chen', role: 'Director of Photography', rate: 1200, rating: 5, location: 'Los Angeles', available: true },
+        { name: 'Maria Santos', role: 'Producer', rate: 950, rating: 5, location: 'New York', available: true },
+        { name: 'Alex Kim', role: 'Gaffer', rate: 650, rating: 4, location: 'London', available: false },
+        { name: 'Sarah Johnson', role: 'Sound Recordist', rate: 700, rating: 5, location: 'Sydney', available: true },
+        { name: 'David Park', role: '1st AC', rate: 550, rating: 4, location: 'Vancouver', available: true },
+        { name: 'Emma Wilson', role: 'Editor', rate: 600, rating: 5, location: 'Berlin', available: false },
+    ];
+
     return (
         <div className="w-full bg-marketing-surface border border-marketing-border rounded-xl overflow-hidden shadow-2xl flex flex-col aspect-[16/10] text-left font-sans select-none">
             {/* Header */}
@@ -21,14 +33,7 @@ export default function CrewMockup() {
             {/* Body */}
             <div className="flex-1 bg-marketing-background p-6 overflow-hidden">
                 <div className="grid grid-cols-3 gap-4 h-full">
-                    {[
-                        { name: 'James Chen', role: 'Director of Photography', rate: '$1,200/day', rating: 5, location: 'Los Angeles', available: true },
-                        { name: 'Maria Santos', role: 'Producer', rate: '$950/day', rating: 5, location: 'New York', available: true },
-                        { name: 'Alex Kim', role: 'Gaffer', rate: '$650/day', rating: 4, location: 'London', available: false },
-                        { name: 'Sarah Johnson', role: 'Sound Recordist', rate: '$700/day', rating: 5, location: 'Sydney', available: true },
-                        { name: 'David Park', role: '1st AC', rate: '$550/day', rating: 4, location: 'Vancouver', available: true },
-                        { name: 'Emma Wilson', role: 'Editor', rate: '$600/day', rating: 5, location: 'Berlin', available: false },
-                    ].map((crew, i) => (
+                    {crewMembers.map((crew, i) => (
                         <div key={i} className="bg-marketing-surface border border-marketing-border p-4 rounded-lg hover:border-marketing-primary/50 transition-colors cursor-pointer group">
                             <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-3">
@@ -50,7 +55,7 @@ export default function CrewMockup() {
                                 ))}
                             </div>
                             <div className="flex items-center justify-between text-xs">
-                                <span className="text-marketing-primary font-bold">{crew.rate}</span>
+                                <span className="text-marketing-primary font-bold">{formatDayRate(crew.rate)}</span>
                                 <span className="text-marketing-text-secondary flex items-center gap-1">
                                     <MapPin size={10} /> {crew.location}
                                 </span>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCurrency } from '../../../hooks/useCurrency';
 
 const demoClient = {
     name: "Nike Marketing",
@@ -57,6 +58,7 @@ const ActivityIcon = ({ type }) => {
 };
 
 export default function CRMDemo() {
+    const { formatPrice, formatPriceShort } = useCurrency();
     const [activeTab, setActiveTab] = useState('overview');
 
     return (
@@ -84,8 +86,8 @@ export default function CRMDemo() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[
                     { label: "Projects", value: demoClient.stats.projects, color: "text-white" },
-                    { label: "Lifetime Value", value: `$${(demoClient.stats.totalValue / 1000).toFixed(0)}k`, color: "text-green-400" },
-                    { label: "Avg Project", value: `$${(demoClient.stats.avgProjectSize / 1000).toFixed(0)}k`, color: "text-indigo-400" },
+                    { label: "Lifetime Value", value: formatPriceShort(demoClient.stats.totalValue), color: "text-green-400" },
+                    { label: "Avg Project", value: formatPriceShort(demoClient.stats.avgProjectSize), color: "text-indigo-400" },
                     { label: "Last Project", value: demoClient.stats.lastProject, color: "text-gray-300" }
                 ].map((stat, i) => (
                     <motion.div
@@ -226,7 +228,7 @@ export default function CRMDemo() {
                                     <p className="text-white text-sm mt-1">{quote.title}</p>
                                 </div>
                                 <p className="text-white font-semibold">
-                                    ${quote.value.toLocaleString()}
+                                    {formatPrice(quote.value)}
                                 </p>
                             </motion.div>
                         ))}

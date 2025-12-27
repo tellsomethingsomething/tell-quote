@@ -11,8 +11,17 @@ import {
     Clock,
     DollarSign
 } from 'lucide-react';
+import { useCurrency } from '../../hooks/useCurrency';
 
 export default function DashboardMockup() {
+    const { formatPrice, formatPriceShort } = useCurrency();
+
+    const stats = [
+        { label: 'Revenue (Oct)', value: 124500, change: '+12%', icon: DollarSign, color: 'text-green-400' },
+        { label: 'Active Projects', value: 14, change: '+3', icon: ClapperboardIcon, color: 'text-purple-400', isCount: true },
+        { label: 'Pending Quotes', value: 8, change: 45000, icon: FileTextIcon, color: 'text-orange-400', isCount: true },
+    ];
+
     return (
         <div className="w-full bg-marketing-surface border border-marketing-border rounded-xl overflow-hidden shadow-2xl flex flex-col aspect-[16/10] text-left font-sans select-none">
             {/* Mock Header */}
@@ -43,19 +52,19 @@ export default function DashboardMockup() {
 
                 {/* Stats Row */}
                 <div className="grid grid-cols-3 gap-4">
-                    {[
-                        { label: 'Revenue (Oct)', value: '$124,500', change: '+12%', icon: DollarSign, color: 'text-green-400' },
-                        { label: 'Active Projects', value: '14', change: '+3', icon: ClapperboardIcon, color: 'text-purple-400' },
-                        { label: 'Pending Quotes', value: '8', change: '$45k', icon: FileTextIcon, color: 'text-orange-400' },
-                    ].map((stat, i) => (
+                    {stats.map((stat, i) => (
                         <div key={i} className="bg-marketing-surface border border-marketing-border p-4 rounded-lg">
                             <div className="flex justify-between items-start mb-2">
                                 <span className="text-xs text-marketing-text-secondary font-medium uppercase tracking-wide">{stat.label}</span>
                                 <stat.icon size={16} className={stat.color} />
                             </div>
                             <div className="flex items-end gap-2">
-                                <span className="text-2xl font-bold text-marketing-text-primary">{stat.value}</span>
-                                <span className="text-xs text-green-400 mb-1 font-medium">{stat.change}</span>
+                                <span className="text-2xl font-bold text-marketing-text-primary">
+                                    {stat.isCount ? stat.value : formatPrice(stat.value)}
+                                </span>
+                                <span className="text-xs text-green-400 mb-1 font-medium">
+                                    {typeof stat.change === 'number' ? formatPriceShort(stat.change) : stat.change}
+                                </span>
                             </div>
                         </div>
                     ))}
