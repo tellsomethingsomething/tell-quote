@@ -66,14 +66,14 @@ export default function FinancialDemo() {
 
             {/* Line Items Table */}
             <div className="bg-gray-800/50 rounded-lg overflow-hidden border border-gray-700/50">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm table-fixed">
                     <thead>
-                        <tr className="text-gray-400 text-left border-b border-gray-700/50">
-                            <th className="px-4 py-3 font-medium">Item</th>
-                            <th className="px-4 py-3 font-medium text-right hidden sm:table-cell">Days</th>
-                            <th className="px-4 py-3 font-medium text-right hidden sm:table-cell">Cost</th>
-                            <th className="px-4 py-3 font-medium text-right">Charge</th>
-                            <th className="px-4 py-3 font-medium text-right">Profit</th>
+                        <tr className="text-gray-400 border-b border-gray-700/50">
+                            <th className="px-4 py-3 font-medium text-left w-[40%]">Item</th>
+                            <th className="px-4 py-3 font-medium text-center w-[12%] hidden sm:table-cell">Days</th>
+                            <th className="px-4 py-3 font-medium text-right w-[16%] hidden sm:table-cell">Cost</th>
+                            <th className="px-4 py-3 font-medium text-right w-[16%]">Charge</th>
+                            <th className="px-4 py-3 font-medium text-right w-[16%]">Profit</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -88,13 +88,13 @@ export default function FinancialDemo() {
                                     backgroundColor: hoveredRow === index ? 'rgba(55, 65, 81, 0.3)' : 'transparent'
                                 }}
                             >
-                                <td className="px-4 py-3 text-white">
+                                <td className="px-4 py-3 text-white text-left">
                                     {item.name}
                                     <span className="sm:hidden text-gray-500 text-xs ml-2">
                                         ({item.days}d)
                                     </span>
                                 </td>
-                                <td className="px-4 py-3 text-right text-gray-300 hidden sm:table-cell">
+                                <td className="px-4 py-3 text-center text-gray-300 hidden sm:table-cell">
                                     {item.days}
                                 </td>
                                 <td className="px-4 py-3 text-right text-gray-400 hidden sm:table-cell">

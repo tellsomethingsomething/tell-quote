@@ -1,8 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Clapperboard, Twitter, Linkedin, Youtube, Mail, ArrowRight } from 'lucide-react';
+import { ArrowRight, Check, Loader2 } from 'lucide-react';
 
 export default function Footer() {
+    const [email, setEmail] = useState('');
+    const [status, setStatus] = useState('idle'); // idle, loading, success, error
+    const [errorMessage, setErrorMessage] = useState('');
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        // Basic validation
+        if (!email || !email.includes('@')) {
+            setStatus('error');
+            setErrorMessage('Please enter a valid email');
+            return;
+        }
+
+        setStatus('loading');
+
+        // Simulate API call - replace with actual newsletter service
+        try {
+            await new Promise(resolve => setTimeout(resolve, 800));
+            setStatus('success');
+            setEmail('');
+            // Reset after 3 seconds
+            setTimeout(() => setStatus('idle'), 3000);
+        } catch {
+            setStatus('error');
+            setErrorMessage('Something went wrong. Try again.');
+        }
+    };
+
     return (
         <footer className="bg-marketing-surface border-t border-marketing-border pt-16 pb-8">
             <div className="container mx-auto px-6 md:px-12">
@@ -21,17 +50,6 @@ export default function Footer() {
                         <p className="text-marketing-text-secondary mb-8 max-w-sm">
                             The operating system for production companies. Quotes, projects, crew, and finances in one unified platform.
                         </p>
-                        <div className="flex gap-4">
-                            <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-marketing-text-secondary hover:bg-marketing-primary hover:text-white transition-all">
-                                <Twitter size={18} />
-                            </a>
-                            <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-marketing-text-secondary hover:bg-marketing-primary hover:text-white transition-all">
-                                <Linkedin size={18} />
-                            </a>
-                            <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-marketing-text-secondary hover:bg-marketing-primary hover:text-white transition-all">
-                                <Youtube size={18} />
-                            </a>
-                        </div>
                     </div>
 
                     {/* Links Columns */}
@@ -83,16 +101,41 @@ export default function Footer() {
                     <div>
                         <h4 className="font-semibold text-marketing-text-primary mb-6">Stay Updated</h4>
                         <p className="text-xs text-marketing-text-secondary mb-4">Product updates and production tips. No spam.</p>
-                        <div className="flex gap-2">
-                            <input
-                                type="email"
-                                placeholder="Email"
-                                className="bg-marketing-background border border-marketing-border rounded-lg px-3 py-2 text-sm text-marketing-text-primary w-full focus:outline-none focus:border-marketing-primary transition-colors"
-                            />
-                            <button className="bg-marketing-primary text-white rounded-lg px-3 py-2 hover:bg-marketing-primary/90 transition-colors">
-                                <ArrowRight size={16} />
-                            </button>
-                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-2">
+                            <div className="flex gap-2">
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        if (status === 'error') setStatus('idle');
+                                    }}
+                                    placeholder="Email"
+                                    disabled={status === 'loading' || status === 'success'}
+                                    className="bg-marketing-background border border-marketing-border rounded-lg px-3 py-2 text-sm text-marketing-text-primary w-full focus:outline-none focus:border-marketing-primary transition-colors disabled:opacity-50"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={status === 'loading' || status === 'success'}
+                                    className="bg-marketing-primary text-white rounded-lg px-3 py-2 hover:bg-marketing-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center min-w-[40px]"
+                                >
+                                    {status === 'loading' ? (
+                                        <Loader2 size={16} className="animate-spin" />
+                                    ) : status === 'success' ? (
+                                        <Check size={16} />
+                                    ) : (
+                                        <ArrowRight size={16} />
+                                    )}
+                                </button>
+                            </div>
+                            {status === 'error' && (
+                                <p className="text-red-400 text-xs">{errorMessage}</p>
+                            )}
+                            {status === 'success' && (
+                                <p className="text-green-400 text-xs">Thanks! You're subscribed.</p>
+                            )}
+                        </form>
 
                         <div className="mt-8">
                             <h4 className="font-semibold text-marketing-text-primary mb-4">Legal</h4>

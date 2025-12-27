@@ -49,7 +49,7 @@ export default function InteractiveDemo() {
     const ActiveComponent = tabs.find(t => t.id === activeTab)?.component || FinancialDemo;
 
     return (
-        <div className="w-full max-w-4xl mx-auto">
+        <div className="w-full max-w-5xl mx-auto">
             {/* Demo Window */}
             <div className="bg-gray-900 rounded-xl border border-gray-800 shadow-2xl overflow-hidden">
                 {/* Window Chrome */}
