@@ -125,83 +125,155 @@ export default function FeaturePage() {
                 </div>
             </section>
 
-            {/* Pain Point vs Solution */}
-            <section className="py-24 bg-gradient-to-b from-marketing-background to-marketing-surface">
-                <div className="container mx-auto px-6 md:px-12">
+            {/* Pain Point vs Solution - Redesigned */}
+            <section className="py-24 bg-gradient-to-b from-marketing-background via-marketing-surface to-marketing-background relative overflow-hidden">
+                <div className="container mx-auto px-6 md:px-12 relative">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         className="text-center mb-16"
                     >
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4">A Better Way to Work</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">
+                            From Chaos to Clarity
+                        </h2>
                         <p className="text-marketing-text-secondary text-lg max-w-2xl mx-auto">
-                            Stop wrestling with spreadsheets and disconnected tools
+                            See how ProductionOS transforms your workflow
                         </p>
                     </motion.div>
 
-                    <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                        {/* The Old Way */}
+                    <div className="grid md:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto items-stretch relative">
+
+                        {/* Connecting Arrow - Desktop Only */}
                         <motion.div
-                            initial={{ opacity: 0, x: -20 }}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.5, duration: 0.6 }}
+                            className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
+                        >
+                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-marketing-surface to-marketing-background border-2 border-cyan-500/30 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                                <svg className="w-8 h-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </div>
+                        </motion.div>
+
+                        {/* The Old Way Card */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -30 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
-                            transition={{ delay: 0.1 }}
+                            transition={{ delay: 0.1, duration: 0.5 }}
                             className="relative group"
                         >
-                            <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-red-900/10 rounded-2xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity" />
-                            <div className="relative bg-gradient-to-br from-gray-900 to-gray-900/80 border border-red-500/20 p-8 rounded-2xl h-full">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-                                        <XIcon className="text-red-400" />
+                            <div className="absolute -inset-1 bg-gradient-to-br from-amber-500/20 via-orange-500/15 to-red-500/10 rounded-2xl blur-xl opacity-50 group-hover:opacity-70 transition-all duration-500" />
+
+                            <div className="relative h-full bg-gradient-to-br from-gray-900 to-gray-900/90 border border-amber-500/20 p-8 rounded-2xl">
+                                {/* Header */}
+                                <div className="flex items-start gap-4 mb-6">
+                                    <div className="w-14 h-14 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-7 h-7 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
                                     </div>
                                     <div>
-                                        <span className="text-xs font-medium text-red-400/70 uppercase tracking-wider">Before</span>
-                                        <h3 className="text-xl font-bold text-red-400">The Old Way</h3>
+                                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold text-amber-400 bg-amber-500/10 uppercase tracking-wider mb-1">Before</span>
+                                        <h3 className="text-xl font-bold text-amber-400">The Old Way</h3>
                                     </div>
                                 </div>
-                                <p className="text-gray-400 leading-relaxed text-lg italic">
-                                    "{data.painPoint}"
-                                </p>
-                                <div className="mt-6 pt-6 border-t border-red-500/10">
-                                    <div className="flex items-center gap-2 text-red-400/60 text-sm">
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span>Hours of manual work</span>
+
+                                {/* Quote */}
+                                <blockquote className="mb-6">
+                                    <p className="text-gray-400 leading-relaxed text-base italic pl-4 border-l-2 border-amber-500/30">
+                                        "{data.painPoint}"
+                                    </p>
+                                </blockquote>
+
+                                {/* Pain points list */}
+                                <div className="space-y-3 pt-6 border-t border-amber-500/10">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                                            <svg className="w-3 h-3 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-sm text-gray-500 line-through decoration-amber-500/40">Hours of manual work</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                                            <svg className="w-3 h-3 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-sm text-gray-500 line-through decoration-amber-500/40">Data scattered everywhere</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                                            <svg className="w-3 h-3 text-amber-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-sm text-gray-500 line-through decoration-amber-500/40">Costly mistakes</span>
                                     </div>
                                 </div>
                             </div>
                         </motion.div>
 
-                        {/* The ProductionOS Way */}
+                        {/* The ProductionOS Way Card */}
                         <motion.div
-                            initial={{ opacity: 0, x: 20 }}
+                            initial={{ opacity: 0, x: 30 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
-                            transition={{ delay: 0.2 }}
+                            transition={{ delay: 0.3, duration: 0.5 }}
                             className="relative group"
                         >
-                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-emerald-900/10 rounded-2xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity" />
-                            <div className="relative bg-gradient-to-br from-gray-900 to-gray-900/80 border border-emerald-500/20 p-8 rounded-2xl h-full">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                                        <CheckIcon className="text-emerald-400" />
-                                    </div>
-                                    <div>
-                                        <span className="text-xs font-medium text-emerald-400/70 uppercase tracking-wider">With ProductionOS</span>
-                                        <h3 className="text-xl font-bold text-emerald-400">The Better Way</h3>
-                                    </div>
-                                </div>
-                                <p className="text-gray-300 leading-relaxed text-lg">
-                                    {data.solution}
-                                </p>
-                                <div className="mt-6 pt-6 border-t border-emerald-500/10">
-                                    <div className="flex items-center gap-2 text-emerald-400/80 text-sm">
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="absolute -inset-1 bg-gradient-to-br from-cyan-500/30 via-blue-500/20 to-cyan-500/20 rounded-2xl blur-xl opacity-60 group-hover:opacity-90 transition-all duration-500" />
+
+                            <div className="relative h-full bg-gradient-to-br from-gray-900 via-cyan-950/20 to-gray-900 border border-cyan-500/30 p-8 rounded-2xl shadow-lg shadow-cyan-500/5">
+                                {/* Header */}
+                                <div className="flex items-start gap-4 mb-6">
+                                    <div className="w-14 h-14 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-7 h-7 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                         </svg>
-                                        <span>Done in minutes, not hours</span>
+                                    </div>
+                                    <div>
+                                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold text-cyan-400 bg-cyan-500/10 uppercase tracking-wider mb-1">With ProductionOS</span>
+                                        <h3 className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">The Better Way</h3>
+                                    </div>
+                                </div>
+
+                                {/* Solution */}
+                                <p className="text-gray-200 leading-relaxed text-base mb-6 pl-4 border-l-2 border-cyan-500/40">
+                                    {data.solution}
+                                </p>
+
+                                {/* Benefits list */}
+                                <div className="space-y-3 pt-6 border-t border-cyan-500/20">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                                            <svg className="w-3 h-3 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-sm text-gray-300 font-medium">Automated in seconds</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                                            <svg className="w-3 h-3 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-sm text-gray-300 font-medium">Single source of truth</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                                            <svg className="w-3 h-3 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-sm text-gray-300 font-medium">Built-in accuracy</span>
                                     </div>
                                 </div>
                             </div>
