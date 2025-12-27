@@ -888,7 +888,7 @@ export default function CallSheetPDF({
 }) {
     const enabledSections = sheet.enabledSections || {};
     const crewByDept = groupCrewByDepartment(crew);
-    const companyName = settings.companyName || 'Tell Productions';
+    const companyName = settings.companyName || settings.company?.name || 'Your Company';
 
     // Check if we have travel/logistics data
     const hasTravel = flights.length > 0 || transfers.length > 0 || accommodation.length > 0;

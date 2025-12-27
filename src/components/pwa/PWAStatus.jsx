@@ -163,7 +163,7 @@ export default function PWAStatus() {
                                 <Download className="w-5 h-5" />
                             </div>
                             <div className="flex-1">
-                                <p className="font-medium text-sm">Install Tell Quote</p>
+                                <p className="font-medium text-sm">Install ProductionOS</p>
                                 <p className="text-xs text-gray-400">Add to home screen for quick access</p>
                             </div>
                         </div>

@@ -773,7 +773,7 @@ export default function FSPage({ onExit }) {
 
                 {/* Footer */}
                 <div className="text-center text-gray-600 text-xs py-4">
-                    Tell Productions Analytics Dashboard &bull; Data refreshes in real-time
+                    ProductionOS Analytics Dashboard &bull; Data refreshes in real-time
                 </div>
             </div>
         </div>

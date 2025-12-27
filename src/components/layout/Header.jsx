@@ -84,7 +84,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
     // In fact, DashboardPage has its own "Welcome back" header now.
     // So distinct global header might be redundant or just needs to be very simple (Logo + User?)
     // Let's make it simple for dashboard similar to clients view but maybe without title if DashboardPage handles it?
-    // Clients view has "Tell Productions Quote Tool".
+    // Clients view has company logo and nav.
     // Let's use the same clean header for Dashboard as for Clients view.
     if (view === 'clients' || view === 'client-detail' || view === 'dashboard' || view === 'quotes' || view === 'rate-card' || view === 'settings' || view === 'opportunities' || view === 'opportunity-detail' || view === 'projects' || view === 'project-detail' || view === 'tasks' || view === 'sop' || view === 'knowledge' || view === 'kit' || view === 'contacts') {
         const activeTab = view === 'opportunity-detail' ? 'opportunities' : view === 'client-detail' ? 'clients' : view === 'project-detail' ? 'projects' : view;
@@ -100,7 +100,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                             className="flex items-center hover:opacity-80 transition-all duration-200 min-h-[44px]"
                             title="Go to Dashboard"
                         >
-                            <img src="/tell-logo.svg" alt="Tell" className="h-7" />
+                            <img src="/productionos-logo.svg" alt="ProductionOS" className="h-8" />
                         </button>
                     </div>
 
@@ -218,7 +218,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                                 </svg>
                             </button>
                             <div className="flex items-center gap-2 sm:gap-3">
-                                <img src="/tell-logo.svg" alt="Tell" className="h-5 sm:h-6 hidden xs:block" />
+                                <img src="/productionos-logo.svg" alt="ProductionOS" className="h-5 sm:h-6 hidden xs:block" style={{ color: '#fff' }} />
                                 <div className="flex items-center gap-1 sm:gap-2">
                                     <span className="text-[10px] sm:text-xs font-mono text-accent-primary">{quote.quoteNumber}</span>
                                     <span className="text-[10px] text-gray-500 border border-gray-800 rounded px-1 hidden sm:inline">

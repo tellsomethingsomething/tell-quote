@@ -18,7 +18,7 @@ const colors = {
     slateLight: '#64748B',     // Darker tertiary text
 
     // Accent - Refined Teal
-    teal: '#0F8B8D',           // Tell brand teal
+    teal: '#0F8B8D',           // Brand teal
     tealLight: '#14B8A6',
     tealPale: '#CCFBF1',
 
@@ -489,7 +489,7 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                         {company?.logo ? (
                             <Image src={company.logo} style={styles.logo} />
                         ) : (
-                            <Text style={styles.companyName}>{company?.name || 'TELL PRODUCTIONS'}</Text>
+                            <Text style={styles.companyName}>{company?.name || 'Your Company'}</Text>
                         )}
                         <View style={styles.accentLine} />
                         <Text style={styles.companyTagline}>Production Services</Text>
@@ -548,7 +548,7 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                     </View>
                     <View style={styles.infoBox}>
                         <Text style={styles.boxLabel}>From</Text>
-                        <Text style={styles.boxTitle}>{company?.name || 'Tell Productions Sdn Bhd'}</Text>
+                        <Text style={styles.boxTitle}>{company?.name || 'Your Company'}</Text>
                         {preparedByName && <Text style={styles.boxText}>Prepared by: {preparedByName}</Text>}
                         {company?.email && <Text style={styles.boxText}>{company.email}</Text>}
                     </View>
@@ -709,9 +709,9 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                 <View style={styles.footer} fixed>
                     <View style={styles.footerContent}>
                         <View style={styles.footerLeft}>
-                            <Text style={styles.footerLogo}>TELL</Text>
-                            <View style={styles.footerDivider} />
-                            <Text style={styles.footerText}>{company?.website || 'www.tell.so'}</Text>
+                            {company?.name && <Text style={styles.footerLogo}>{company.name.split(' ')[0].toUpperCase()}</Text>}
+                            {company?.name && <View style={styles.footerDivider} />}
+                            <Text style={styles.footerText}>{company?.website || ''}</Text>
                         </View>
                         <View style={styles.footerRight}>
                             <Text style={styles.footerQuote}>{quote.quoteNumber}</Text>
@@ -728,6 +728,8 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
                 <TermsPage
                     quoteNumber={quote.quoteNumber}
                     companyWebsite={company?.website}
+                    companyName={company?.name}
+                    companyAddress={company?.address}
                 />
             )}
         </Document>

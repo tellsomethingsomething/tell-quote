@@ -308,7 +308,7 @@ function OverviewTab({ sheet, onUpdate, enabledSections }) {
                         label="Production Company"
                         value={sheet.productionCompany}
                         onChange={(v) => onUpdate({ productionCompany: v })}
-                        placeholder="e.g., Tell Productions"
+                        placeholder="e.g., Acme Productions"
                     />
                     <FormInput
                         label="Episode Title"

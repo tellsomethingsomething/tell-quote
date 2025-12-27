@@ -7,6 +7,7 @@ import EditorPanel from './components/layout/EditorPanel';
 import PreviewPanel from './components/layout/PreviewPanel';
 import LoginPage from './pages/LoginPage';
 import LoadingSpinner from './components/common/LoadingSpinner';
+import CookieConsent from './components/common/CookieConsent';
 import PWAStatus from './components/pwa/PWAStatus';
 import TemplatePickerModal from './components/templates/TemplatePickerModal';
 import { useQuoteStore } from './store/quoteStore';
@@ -31,7 +32,11 @@ import { useCrewBookingStore } from './store/crewBookingStore';
 import { usePurchaseOrderStore } from './store/purchaseOrderStore';
 import { useContractStore } from './store/contractStore';
 import { useEmailStore } from './store/emailStore';
+import { useOrganizationStore } from './store/organizationStore';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
+import OnboardingWizard from './components/onboarding/OnboardingWizard';
+import SubscriptionExpiredPage from './pages/SubscriptionExpiredPage';
+import { checkSubscriptionAccess, ACCESS_LEVELS } from './services/subscriptionGuard';
 
 // Initialize auth store to set up OAuth listeners (must run once on app load)
 useAuthStore.getState().initialize();
@@ -76,10 +81,16 @@ const Pricing = lazy(() => import('./pages/Pricing'));
 const FeaturePage = lazy(() => import('./pages/FeaturePage'));
 const UseCasePage = lazy(() => import('./pages/UseCasePage'));
 const ComparePage = lazy(() => import('./pages/ComparePage'));
+const GoogleOAuthCallback = lazy(() => import('./pages/GoogleOAuthCallback'));
+const TermsPage = lazy(() => import('./pages/legal/TermsPage'));
+const PrivacyPage = lazy(() => import('./pages/legal/PrivacyPage'));
+const GDPRPage = lazy(() => import('./pages/legal/GDPRPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
 // Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings' | 'contacts'
 function App() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const { organization, loading: isOrgLoading, initialize: initializeOrganization } = useOrganizationStore();
   const initializeQuote = useQuoteStore(state => state.initialize);
   const initializeClients = useClientStore(state => state.initialize);
   const initializeRateCard = useRateCardStore(state => state.initialize);
@@ -103,6 +114,13 @@ function App() {
   const initializeEmails = useEmailStore(state => state.initialize);
   const resetQuote = useQuoteStore(state => state.resetQuote);
   const loadQuoteData = useQuoteStore(state => state.loadQuoteData);
+
+  // State for tracking onboarding completion
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // State for subscription access
+  const [subscriptionAccess, setSubscriptionAccess] = useState(null);
+  const [checkingSubscription, setCheckingSubscription] = useState(false);
 
   const [view, setView] = useState('dashboard');
   const [selectedClientId, setSelectedClientId] = useState(null);
@@ -416,37 +434,130 @@ function App() {
     }
   }, [settings.theme]);
 
+  // Initialize organization when authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      // PERFORMANCE: Initialize all stores in parallel instead of sequentially
-      // This significantly reduces initial load time
-      Promise.all([
-        initializeQuote(),
-        initializeClients(),
-        initializeRateCard(),
-        initializeSettings(),
-        initializeOpportunities(),
-        initializeActivities(),
-        initializeTemplates(),
-        initializeDealContext(),
-        initializeKnowledge(),
-        initializeKit(),
-        initializeSops(),
-        initializeProjects(),
-        initializeCrew(),
-        initializeKitBookings(),
-        initializeCallSheets(),
-        initializeInvoices(),
-        initializeExpenses(),
-        initializeCrewBookings(), // Hidden - for P&L crew cost tracking
-        initializePurchaseOrders(),
-        initializeContracts(),
-        initializeEmails(),
-      ]).catch(err => {
-        console.error('Failed to initialize stores:', err);
+    if (isAuthenticated && user?.id) {
+      initializeOrganization(user.id).then(() => {
+        // After org init, check if user needs onboarding
+        const org = useOrganizationStore.getState().organization;
+        if (!org) {
+          setShowOnboarding(true);
+        }
       });
     }
-  }, [isAuthenticated, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities, initializeActivities, initializeTemplates, initializeDealContext, initializeKnowledge, initializeKit, initializeSops, initializeProjects, initializeCrew, initializeKitBookings, initializeCallSheets, initializeInvoices, initializeExpenses, initializeCrewBookings, initializePurchaseOrders, initializeContracts, initializeEmails]);
+  }, [isAuthenticated, user?.id, initializeOrganization]);
+
+  // Check subscription access after organization is loaded
+  // PERFORMANCE: Don't block UI - assume valid until proven otherwise
+  useEffect(() => {
+    if (isAuthenticated && organization?.id && !showOnboarding) {
+      // Check localStorage for cached subscription status to avoid blocking
+      const cachedAccess = localStorage.getItem(`sub_access_${organization.id}`);
+      if (cachedAccess) {
+        try {
+          const parsed = JSON.parse(cachedAccess);
+          // If cache is less than 5 minutes old and was valid, assume still valid
+          if (Date.now() - parsed.timestamp < 5 * 60 * 1000 && parsed.access !== ACCESS_LEVELS.BLOCKED) {
+            setSubscriptionAccess(parsed);
+          }
+        } catch (e) { /* ignore parse errors */ }
+      }
+
+      // Always check in background for accuracy
+      checkSubscriptionAccess(organization.id)
+        .then((result) => {
+          setSubscriptionAccess(result);
+          setCheckingSubscription(false);
+          // Cache the result
+          localStorage.setItem(`sub_access_${organization.id}`, JSON.stringify({
+            ...result,
+            timestamp: Date.now(),
+          }));
+        })
+        .catch((err) => {
+          console.error('Failed to check subscription:', err);
+          // Fail open - allow access on error
+          setSubscriptionAccess({ access: ACCESS_LEVELS.FULL });
+          setCheckingSubscription(false);
+        });
+    }
+  }, [isAuthenticated, organization?.id, showOnboarding]);
+
+  // Handler to retry subscription check
+  const handleRetrySubscriptionCheck = useCallback(() => {
+    if (organization?.id) {
+      setCheckingSubscription(true);
+      checkSubscriptionAccess(organization.id)
+        .then((result) => {
+          setSubscriptionAccess(result);
+          setCheckingSubscription(false);
+        })
+        .catch(() => {
+          setSubscriptionAccess({ access: ACCESS_LEVELS.FULL });
+          setCheckingSubscription(false);
+        });
+    }
+  }, [organization?.id]);
+
+  // PERFORMANCE: Only load essential stores on startup
+  // Other stores are lazy-loaded when user navigates to their pages
+  useEffect(() => {
+    if (isAuthenticated && organization) {
+      // Essential stores - load immediately (settings affects UI rendering)
+      initializeSettings();
+
+      // Primary data - load in background after short delay
+      const primaryTimeout = setTimeout(() => {
+        Promise.all([
+          initializeClients(),
+          initializeOpportunities(),
+          initializeActivities(),
+        ]).catch(err => console.error('Primary stores init failed:', err));
+      }, 100);
+
+      // Secondary data - load after UI is interactive
+      const secondaryTimeout = setTimeout(() => {
+        Promise.all([
+          initializeQuote(),
+          initializeRateCard(),
+          initializeTemplates(),
+          initializeProjects(),
+        ]).catch(err => console.error('Secondary stores init failed:', err));
+      }, 500);
+
+      // Tertiary data - load when user might need it
+      const tertiaryTimeout = setTimeout(() => {
+        Promise.all([
+          initializeDealContext(),
+          initializeCrew(),
+          initializeInvoices(),
+          initializeExpenses(),
+        ]).catch(err => console.error('Tertiary stores init failed:', err));
+      }, 1500);
+
+      // Low priority - load last
+      const lowPriorityTimeout = setTimeout(() => {
+        Promise.all([
+          initializeKnowledge(),
+          initializeKit(),
+          initializeSops(),
+          initializeKitBookings(),
+          initializeCallSheets(),
+          initializeCrewBookings(),
+          initializePurchaseOrders(),
+          initializeContracts(),
+          initializeEmails(),
+        ]).catch(err => console.error('Low priority stores init failed:', err));
+      }, 3000);
+
+      return () => {
+        clearTimeout(primaryTimeout);
+        clearTimeout(secondaryTimeout);
+        clearTimeout(tertiaryTimeout);
+        clearTimeout(lowPriorityTimeout);
+      };
+    }
+  }, [isAuthenticated, organization, initializeQuote, initializeClients, initializeRateCard, initializeSettings, initializeOpportunities, initializeActivities, initializeTemplates, initializeDealContext, initializeKnowledge, initializeKit, initializeSops, initializeProjects, initializeCrew, initializeKitBookings, initializeCallSheets, initializeInvoices, initializeExpenses, initializeCrewBookings, initializePurchaseOrders, initializeContracts, initializeEmails]);
 
   // Show marketing site if not authenticated
   if (!isAuthenticated) {
@@ -470,17 +581,75 @@ function App() {
             {/* Auth Routes */}
             <Route path="/auth/login" element={<LoginPage />} />
             <Route path="/auth/signup" element={<div className="pt-32 text-center text-marketing-text-primary px-4"><h1 className="text-2xl font-bold mb-4">Signup Coming Soon</h1><p>We are currently in private beta.</p></div>} />
+            <Route path="/auth/google-callback" element={<GoogleOAuthCallback />} />
+            <Route path="/reset-password" element={<ResetPasswordPage onComplete={() => window.location.href = '/auth/login'} />} />
+
+            {/* Legal Pages */}
+            <Route path="/legal/terms" element={<TermsPage />} />
+            <Route path="/legal/privacy" element={<PrivacyPage />} />
+            <Route path="/legal/gdpr" element={<GDPRPage />} />
 
             {/* Resources & Company Placeholders */}
             <Route path="/resources/*" element={<Navigate to="/" replace />} />
             <Route path="/company/*" element={<Navigate to="/" replace />} />
-            <Route path="/legal/*" element={<Navigate to="/" replace />} />
 
             {/* Catch all redirect to Home for marketing site */}
             <Route path="*" element={<Home />} />
           </Routes>
+          <CookieConsent />
         </Suspense>
       </HelmetProvider>
+    );
+  }
+
+  // Show loading while checking organization
+  if (isOrgLoading) {
+    return <LoadingSpinner text="Setting up your workspace..." />;
+  }
+
+  // Show onboarding wizard for new users without an organization
+  if (showOnboarding || (!organization && !isOrgLoading)) {
+    const handleOnboardingComplete = (newOrg) => {
+      setShowOnboarding(false);
+      // Reset subscription access so it gets rechecked
+      setSubscriptionAccess(null);
+      // The organization store will be updated by the wizard
+    };
+
+    return (
+      <OnboardingWizard
+        userId={user?.id}
+        onComplete={handleOnboardingComplete}
+      />
+    );
+  }
+
+  // Only block if subscription check returned BLOCKED (not while checking)
+  // This allows the app to render immediately while checking in background
+
+  // Show subscription expired page if access is blocked
+  if (subscriptionAccess?.access === ACCESS_LEVELS.BLOCKED) {
+    return (
+      <SubscriptionExpiredPage
+        type={subscriptionAccess.trialExpired ? 'trial_expired' : 'expired'}
+        message={subscriptionAccess.message}
+        hoursRemaining={subscriptionAccess.hoursRemaining}
+        subscription={subscriptionAccess.subscription}
+        onRetry={handleRetrySubscriptionCheck}
+      />
+    );
+  }
+
+  // Show subscription expired page for grace period with warning
+  if (subscriptionAccess?.access === ACCESS_LEVELS.GRACE) {
+    return (
+      <SubscriptionExpiredPage
+        type="grace"
+        message={subscriptionAccess.message}
+        hoursRemaining={subscriptionAccess.hoursRemaining}
+        subscription={subscriptionAccess.subscription}
+        onRetry={handleRetrySubscriptionCheck}
+      />
     );
   }
 

@@ -202,10 +202,10 @@ export default function CommercialTasksPage() {
             };
 
             const companyInfo = settings?.company || {};
-            const prompt = `You are a commercial task generator for ${companyInfo.name || 'Tell Productions'} - a broadcast/streaming production company.
+            const prompt = `You are a commercial task generator for ${companyInfo.name || 'the company'} - a production company.
 
 COMPANY INFO:
-- Name: ${companyInfo.name || 'Tell Productions'}
+- Name: ${companyInfo.name || 'Your Company'}
 - Based in: ${companyInfo.country || 'Malaysia'}
 - Website: ${companyInfo.website || ''}
 

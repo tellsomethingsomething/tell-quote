@@ -78,7 +78,8 @@ ${senderName}`;
         try {
             const total = formatCurrency(totals.totalCharge, quote.currency);
 
-            const prompt = `Generate a client email to accompany a production services quote from Tell Productions Sdn Bhd.
+            const companyName = settings.company?.name || 'our company';
+            const prompt = `Generate a client email to accompany a production services quote from ${companyName}.
 
 ## Input Data
 

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { fetchLiveRates } from '../utils/currency';
 
 // PO statuses
 export const PO_STATUSES = {
@@ -68,6 +69,8 @@ function fromDbFormat(po) {
         attachments: po.attachments || [],
         approvedBy: po.approved_by,
         approvedAt: po.approved_at,
+        // Exchange rates locked at PO creation - prices never change
+        lockedExchangeRates: po.locked_exchange_rates || null,
         createdAt: po.created_at,
         updatedAt: po.updated_at,
     };
@@ -101,6 +104,8 @@ function toDbFormat(po) {
         attachments: po.attachments || [],
         approved_by: po.approvedBy || null,
         approved_at: po.approvedAt || null,
+        // Exchange rates locked at PO creation
+        locked_exchange_rates: po.lockedExchangeRates || null,
     };
 }
 
@@ -177,11 +182,24 @@ export const usePurchaseOrderStore = create(
                 const state = get();
                 const poNumber = poData.poNumber || generatePONumber(state.purchaseOrders);
 
+                // Lock exchange rates at PO creation time
+                // CRITICAL: These rates will be used for all calculations on this PO
+                let lockedExchangeRates = poData.lockedExchangeRates;
+                if (!lockedExchangeRates) {
+                    const { rates } = await fetchLiveRates();
+                    lockedExchangeRates = {
+                        rates,
+                        lockedAt: new Date().toISOString(),
+                        baseCurrency: 'USD',
+                    };
+                }
+
                 const newPO = {
                     ...poData,
                     poNumber,
                     status: poData.status || 'draft',
                     issueDate: poData.issueDate || new Date().toISOString().split('T')[0],
+                    lockedExchangeRates,
                 };
 
                 const { data, error } = await supabase

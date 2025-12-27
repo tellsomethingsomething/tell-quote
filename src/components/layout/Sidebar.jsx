@@ -178,7 +178,7 @@ export default function Sidebar({
                             onClick={() => handleNavClick('dashboard')}
                             className="flex items-center hover:opacity-80 transition-opacity"
                         >
-                            <img src="/tell-logo.svg" alt="Tell" className="h-7" />
+                            <img src="/productionos-logo.svg" alt="ProductionOS" className="h-8" style={{ color: isDark ? '#fff' : '#143642' }} />
                         </button>
                     )}
                     {isMobile ? (

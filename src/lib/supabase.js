@@ -23,7 +23,7 @@ export const supabase = supabaseUrl && supabaseAnonKey
         // Global headers for all requests
         global: {
             headers: {
-                'x-application-name': 'tell-quote-tool',
+                'x-application-name': 'productionos',
             },
         },
         // Database settings

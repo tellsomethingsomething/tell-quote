@@ -6,10 +6,14 @@ import { useOpportunityStore, REGIONS } from '../store/opportunityStore';
 import { useActivityStore } from '../store/activityStore';
 import { useKnowledgeStore, FRAGMENT_TYPES } from '../store/knowledgeStore';
 import { useContactStore } from '../store/contactStore';
+import { useAuthStore } from '../store/authStore';
+import { useOrgContext } from '../hooks/useOrgContext';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { CURRENCIES } from '../data/currencies';
 import CRMMetricsGrid from '../components/dashboard/CRMMetricsWidgets';
+import OnboardingChecklist from '../components/onboarding/OnboardingChecklist';
+import TrialBanner from '../components/onboarding/TrialBanner';
 
 // Status colors aligned with brand palette for visual harmony
 const STATUSES = [
@@ -51,13 +55,15 @@ function isFollowUpOverdue(nextFollowUpDate) {
     return new Date(nextFollowUpDate) < new Date();
 }
 
-export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportunities, onGoToKnowledge }) {
+export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportunities, onGoToKnowledge, onNavigate }) {
     const { savedQuotes, clients, updateQuoteStatus } = useClientStore();
     const { rates, ratesUpdated, refreshRates, ratesLoading } = useQuoteStore();
     const { settings, setDashboardPreferences } = useSettingsStore();
     const { opportunities } = useOpportunityStore();
     const { getOverdueFollowUps, activities } = useActivityStore();
     const { fragments, learnings, getStats, getPendingReview } = useKnowledgeStore();
+    const { user } = useAuthStore();
+    const { organizationId } = useOrgContext();
     const [selectedMonth, setSelectedMonth] = useState('all');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [draggedQuoteId, setDraggedQuoteId] = useState(null);
@@ -504,6 +510,21 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
                             <span className="hidden sm:inline">New Quote</span>
                         </button>
                     </div>
+                </div>
+
+                {/* Trial Banner */}
+                <TrialBanner
+                    organizationId={organizationId}
+                    onUpgrade={() => onNavigate?.({ view: 'settings', tab: 'billing' })}
+                />
+
+                {/* Onboarding Checklist Widget */}
+                <div className="mb-4">
+                    <OnboardingChecklist
+                        userId={user?.userId}
+                        organizationId={organizationId}
+                        onNavigate={onNavigate}
+                    />
                 </div>
 
                 {/* Filters - Stack on mobile */}

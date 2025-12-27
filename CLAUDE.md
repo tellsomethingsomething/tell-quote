@@ -4,7 +4,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Quote is a quote/proposal generation tool for Tell Productions. It allows creating detailed project quotes with line items organized by sections (Production Team, Production Equipment, Creative, Logistics, Expenses), managing clients and opportunities, and exporting to PDF.
+**ProductionOS** is a multi-tenant SaaS platform for production companies. It provides CRM, quoting, project management, and financial tools for managing production workflows.
+
+### SaaS Design Principles
+
+**IMPORTANT**: This is a SaaS product designed for ANY production company, not just Tell Productions. All features must be:
+
+1. **Fully Configurable** - No hardcoded company-specific data (regions, currencies, project types, etc.)
+2. **Multi-tenant Ready** - Settings, data, and preferences are user/organization-specific
+3. **Self-Service** - Users can customize everything through Settings without code changes
+4. **White-Label Ready** - Company branding, colors, and terminology are configurable
+
+### Key Configurable Elements (via Settings)
+
+- **Regions & Countries** - Users define their own geographic markets
+- **Currencies** - Support for any currency with configurable defaults per region
+- **Project Types** - Customizable workflow categories
+- **Rate Cards** - User-defined pricing with regional variations
+- **Company Info** - Branding, contact details, tax info, bank details
+- **Document Templates** - PDF quotes, invoices, proposals
+
+When building new features, always pull configuration from `settingsStore.js` rather than hardcoding values.
 
 ## Commands
 

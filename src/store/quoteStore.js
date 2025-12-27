@@ -242,6 +242,10 @@ function createEmptyQuote() {
         isLocked: false,    // Whether quote is locked for editing
         lockedAt: null,     // ISO timestamp when locked
         lockedBy: null,     // User ID who locked it
+        // Exchange rates at time of quote creation/finalization
+        // CRITICAL: Once set, these rates are used for all calculations on this quote
+        // Live rates should never change the prices on an existing quote
+        lockedExchangeRates: null, // { rates: {}, lockedAt: timestamp, baseCurrency: 'USD' }
     };
 }
 
@@ -866,10 +870,23 @@ export const useQuoteStore = create(
                     }
                 ];
 
+                // Lock exchange rates when quote is sent (or any finalized status)
+                // This ensures the prices never change after quote is delivered to client
+                const finalizedStatuses = ['sent', 'accepted', 'won'];
+                let lockedExchangeRates = state.quote.lockedExchangeRates;
+                if (finalizedStatuses.includes(newStatus) && !lockedExchangeRates) {
+                    lockedExchangeRates = {
+                        rates: { ...state.rates },
+                        lockedAt: new Date().toISOString(),
+                        baseCurrency: 'USD',
+                    };
+                }
+
                 const updated = {
                     ...state.quote,
                     status: newStatus,
                     statusHistory,
+                    lockedExchangeRates,
                     updatedAt: new Date().toISOString()
                 };
                 saveQuoteWithLibrarySync(updated);
@@ -928,14 +945,23 @@ export const useQuoteStore = create(
             });
         },
 
-        // Lock quote (prevent editing)
+        // Lock quote (prevent editing) and capture exchange rates
         lockQuote: (userId = 'default') => {
             set(state => {
+                // Capture current exchange rates at lock time
+                // These rates will be used for all future calculations on this quote
+                const lockedExchangeRates = state.quote.lockedExchangeRates || {
+                    rates: { ...state.rates },
+                    lockedAt: new Date().toISOString(),
+                    baseCurrency: 'USD',
+                };
+
                 const updated = {
                     ...state.quote,
                     isLocked: true,
                     lockedAt: new Date().toISOString(),
                     lockedBy: userId,
+                    lockedExchangeRates,
                     updatedAt: new Date().toISOString()
                 };
                 saveQuoteWithLibrarySync(updated);
@@ -947,7 +973,7 @@ export const useQuoteStore = create(
                     field: 'isLocked',
                     oldValue: false,
                     newValue: true,
-                    description: `Locked quote for editing`,
+                    description: `Locked quote for editing (exchange rates frozen)`,
                 });
 
                 return { quote: updated };

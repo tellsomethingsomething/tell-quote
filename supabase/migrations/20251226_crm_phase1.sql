@@ -159,14 +159,10 @@ CREATE INDEX IF NOT EXISTS idx_email_tracking_occurred ON email_tracking_events(
 -- RLS policies for email_tracking_events (read-only for users)
 ALTER TABLE email_tracking_events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view tracking for their messages"
-    ON email_tracking_events FOR SELECT
-    USING (
-        message_id IN (
-            SELECT id FROM email_messages
-            WHERE user_id = auth.uid()
-        )
-    );
+-- Email tracking follows email_messages permissions (allow all for now, proper org RLS added later)
+CREATE POLICY "Allow all email_tracking_events"
+    ON email_tracking_events FOR ALL
+    USING (true) WITH CHECK (true);
 
 -- ============================================================
 -- LEAD SCORING

@@ -32,7 +32,7 @@ export const TARGET_REGIONS = {
 // Research prompt for AI assistant
 export const RESEARCH_PROMPT = `**Sports Event Research Assistant**
 
-You are a market research assistant for Tell Productions, a sports production company specialising in broadcast graphics and stadium visuals.
+You are a market research assistant for a sports production company specialising in broadcast graphics and stadium visuals.
 
 **Your task:** Identify upcoming sporting events that represent production opportunities.
 

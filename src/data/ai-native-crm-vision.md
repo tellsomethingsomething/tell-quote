@@ -62,7 +62,7 @@ You don't tell it "log this call." You tell it "we want to win the AFC rights pa
 - Coordinates touchpoints across your team
 - Adjusts strategy based on signals
 
-## TELL PRODUCTIONS IMPLEMENTATION STEPS
+## IMPLEMENTATION STEPS
 
 ### Phase 1: Connect Data Sources (Week 1-2)
 1. **Gmail Integration**

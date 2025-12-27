@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { fetchLiveRates } from '../utils/currency';
 
 // Invoice statuses
 export const INVOICE_STATUSES = {
@@ -49,6 +50,8 @@ function fromDbFormat(inv) {
         clientEmail: inv.client_email || '',
         clientAddress: inv.client_address || '',
         quoteNumber: inv.quote_number || '',
+        // Exchange rates locked at invoice creation - prices never change
+        lockedExchangeRates: inv.locked_exchange_rates || null,
         createdAt: inv.created_at,
         updatedAt: inv.updated_at,
     };
@@ -76,6 +79,8 @@ function toDbFormat(inv) {
         client_email: inv.clientEmail || '',
         client_address: inv.clientAddress || '',
         quote_number: inv.quoteNumber || '',
+        // Exchange rates locked at invoice creation
+        locked_exchange_rates: inv.lockedExchangeRates || null,
     };
 }
 
@@ -152,11 +157,24 @@ export const useInvoiceStore = create(
                 const state = get();
                 const invoiceNumber = invoiceData.invoiceNumber || generateInvoiceNumber(state.invoices);
 
+                // Lock exchange rates at invoice creation time
+                // CRITICAL: These rates will be used for all calculations on this invoice
+                let lockedExchangeRates = invoiceData.lockedExchangeRates;
+                if (!lockedExchangeRates) {
+                    const { rates } = await fetchLiveRates();
+                    lockedExchangeRates = {
+                        rates,
+                        lockedAt: new Date().toISOString(),
+                        baseCurrency: 'USD',
+                    };
+                }
+
                 const newInvoice = {
                     ...invoiceData,
                     invoiceNumber,
                     status: invoiceData.status || 'draft',
                     issueDate: invoiceData.issueDate || new Date().toISOString().split('T')[0],
+                    lockedExchangeRates,
                 };
 
                 const { data, error } = await supabase

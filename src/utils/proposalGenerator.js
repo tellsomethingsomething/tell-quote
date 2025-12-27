@@ -81,7 +81,7 @@ export function createProposalPrompt(context, proposalInputs = {}) {
 
     const { context: briefContext, keyPoints, tone } = proposalInputs;
 
-    return `Generate a professional 1-page proposal for Tell Productions Sdn Bhd sports production services.
+    return `Generate a professional 1-page proposal for ${context.company} production services.
 
 ## INPUT DATA
 
@@ -135,7 +135,7 @@ ${tone ? `Tone: ${tone}` : ''}
 
 ## COMPANY CONTEXT
 
-Tell Productions Sdn Bhd is a Malaysian sports production company specializing in live football broadcast production, venue presentation and LED content, broadcast graphics systems, and REMI production. Operating across Southeast Asia, the Gulf, and Central Asia.
+${context.company} provides professional production services. Frame the proposal around the services being offered in this quote.
 
 Output the four sections only, with section headings in caps. No pricing (this is a summary, not a quote).`;
 }
@@ -207,7 +207,7 @@ export function generateFallbackProposal(context) {
 
     const overview = `PROJECT OVERVIEW\n\n${project.title}${project.type ? ` — a ${project.type.toLowerCase()} production` : ''}${project.venue ? ` at ${project.venue}` : ''}${project.startDate ? `. Taking place ${project.startDate}${project.endDate && project.endDate !== project.startDate ? ` to ${project.endDate}` : ''}` : ''}. We've worked with ${client.name} to scope out exactly what's needed for this event.`;
 
-    const whatWeDo = `WHAT WE'LL DO\n\nTell Productions will provide comprehensive production services covering ${servicesList}. ${sections.slice(0, 2).map(s => `For ${s.section.toLowerCase()}, we're providing ${s.items.slice(0, 3).map(i => i.name).join(', ')}${s.items.length > 3 ? ' and additional equipment' : ''}`).join('. ')}. All equipment and services have been selected to meet the specific requirements of this production.`;
+    const whatWeDo = `WHAT WE'LL DO\n\n${company} will provide comprehensive production services covering ${servicesList}. ${sections.slice(0, 2).map(s => `For ${s.section.toLowerCase()}, we're providing ${s.items.slice(0, 3).map(i => i.name).join(', ')}${s.items.length > 3 ? ' and additional equipment' : ''}`).join('. ')}. All equipment and services have been selected to meet the specific requirements of this production.`;
 
     const howWeDo = `HOW WE'LL DO IT\n\nOur team will arrive ahead of the event for setup and technical rehearsals, ensuring all systems are tested and integrated before we go live. During show days, we'll operate from the venue, delivering broadcast-quality output throughout. We'll handle coordination between all production elements and ensure clear communication at every stage.`;
 

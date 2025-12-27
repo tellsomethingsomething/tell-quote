@@ -8,11 +8,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt', // Prompt user to update when new version available
-      includeAssets: ['favicon.svg', 'tell-logo.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.svg', 'productionos-logo.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Tell Quote - Proposal Generator',
-        short_name: 'Tell Quote',
-        description: 'Professional quote and proposal generation tool for Tell Productions',
+        name: 'ProductionOS - Production Management',
+        short_name: 'ProductionOS',
+        description: 'Multi-tenant SaaS platform for production companies - CRM, quoting, project management, and financial tools',
         theme_color: '#143642',
         background_color: '#0D0D0D',
         display: 'standalone',

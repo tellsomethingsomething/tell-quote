@@ -36,13 +36,15 @@ export default function Footer() {
 
                     {/* Links Columns */}
                     <div>
-                        <h4 className="font-semibold text-marketing-text-primary mb-6">Product</h4>
+                        <h4 className="font-semibold text-marketing-text-primary mb-6">Features</h4>
                         <ul className="space-y-4 text-sm text-marketing-text-secondary">
-                            <li><Link to="/features/crm" className="hover:text-marketing-primary transition-colors">Sales & CRM</Link></li>
-                            <li><Link to="/features/quoting" className="hover:text-marketing-primary transition-colors">Quoting</Link></li>
+                            <li><Link to="/features/quoting" className="hover:text-marketing-primary transition-colors">Quoting & Proposals</Link></li>
                             <li><Link to="/features/projects" className="hover:text-marketing-primary transition-colors">Project Management</Link></li>
+                            <li><Link to="/features/financials" className="hover:text-marketing-primary transition-colors">Finance & Invoicing</Link></li>
                             <li><Link to="/features/crew" className="hover:text-marketing-primary transition-colors">Crew Network</Link></li>
-                            <li><Link to="/features/finance" className="hover:text-marketing-primary transition-colors">Finance & Invoicing</Link></li>
+                            <li><Link to="/features/equipment" className="hover:text-marketing-primary transition-colors">Equipment Tracking</Link></li>
+                            <li><Link to="/features/call-sheets" className="hover:text-marketing-primary transition-colors">Call Sheets</Link></li>
+                            <li><Link to="/features/crm" className="hover:text-marketing-primary transition-colors">CRM</Link></li>
                         </ul>
                     </div>
 

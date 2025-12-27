@@ -60,15 +60,19 @@ export async function fetchLiveRates() {
 }
 
 // Convert amount from one currency to another
-export function convertCurrency(amount, fromCurrency, toCurrency, rates) {
+export function convertCurrency(amount, fromCurrency, toCurrency, rates = {}) {
     if (fromCurrency === toCurrency) return amount;
+    if (!amount || isNaN(amount)) return 0;
 
-    const fromRate = rates[fromCurrency] || FALLBACK_RATES[fromCurrency];
-    const toRate = rates[toCurrency] || FALLBACK_RATES[toCurrency];
+    const fromRate = rates[fromCurrency] || FALLBACK_RATES[fromCurrency] || 1;
+    const toRate = rates[toCurrency] || FALLBACK_RATES[toCurrency] || 1;
 
     // Convert to USD first, then to target currency
     const usdAmount = amount / fromRate;
-    return usdAmount * toRate;
+    const result = usdAmount * toRate;
+
+    // Ensure we never return NaN
+    return isNaN(result) ? 0 : result;
 }
 
 // Convert from USD to target currency
@@ -86,8 +90,11 @@ export function formatCurrency(amount, currencyCode, options = {}) {
     const { showSymbol = true, decimals = 2 } = options;
     const currency = CURRENCIES[currencyCode];
 
+    // Handle invalid amounts
+    const safeAmount = (amount === null || amount === undefined || isNaN(amount)) ? 0 : amount;
+
     if (!currency) {
-        return `${amount.toFixed(decimals)}`;
+        return `${safeAmount.toFixed(decimals)}`;
     }
 
     // Handle special case for currencies with no decimals (like IDR)
@@ -96,7 +103,7 @@ export function formatCurrency(amount, currencyCode, options = {}) {
     const formattedAmount = new Intl.NumberFormat('en-US', {
         minimumFractionDigits: actualDecimals,
         maximumFractionDigits: actualDecimals,
-    }).format(amount);
+    }).format(safeAmount);
 
     if (showSymbol) {
         return `${currency.symbol}${formattedAmount}`;

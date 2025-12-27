@@ -220,31 +220,83 @@ export const useEmailStore = create(
             }
         },
 
-        // Connect Google account (uses Supabase OAuth with Gmail scopes)
+        // Connect Google account using dedicated OAuth flow (doesn't replace session)
         connectGoogle: async () => {
             set({ isConnecting: true, connectionError: null });
 
             try {
-                // Use Supabase's OAuth flow with Gmail scopes
-                const { data, error } = await supabase.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: {
-                        redirectTo: window.location.origin,
-                        queryParams: {
-                            access_type: 'offline',
-                            prompt: 'consent',
-                        },
-                        scopes: GOOGLE_SCOPES,
-                    },
+                const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+                const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+
+                if (!GOOGLE_CLIENT_ID) {
+                    throw new Error('Google Client ID not configured. Please add VITE_GOOGLE_CLIENT_ID to your environment.');
+                }
+
+                // Get current user for state verification
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    throw new Error('Please log in first');
+                }
+
+                // Build Google OAuth URL directly (bypasses Supabase auth replacement)
+                const redirectUri = `${window.location.origin}/auth/google-callback`;
+                const state = `${user.id}|${Date.now()}`; // Include user ID for verification
+
+                // Store state in session for verification on callback
+                sessionStorage.setItem('google_oauth_state', state);
+
+                const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+                authUrl.searchParams.set('client_id', GOOGLE_CLIENT_ID);
+                authUrl.searchParams.set('response_type', 'code');
+                authUrl.searchParams.set('redirect_uri', redirectUri);
+                authUrl.searchParams.set('scope', GOOGLE_SCOPES);
+                authUrl.searchParams.set('access_type', 'offline');
+                authUrl.searchParams.set('prompt', 'consent');
+                authUrl.searchParams.set('state', state);
+
+                // Redirect to Google login (doesn't log out current session)
+                window.location.href = authUrl.toString();
+            } catch (error) {
+                console.error('Failed to initiate Google connection:', error);
+                set({ isConnecting: false, connectionError: error.message });
+            }
+        },
+
+        // Handle Google OAuth callback (called from callback page)
+        handleGoogleCallback: async (code, state) => {
+            set({ isConnecting: true, connectionError: null });
+
+            try {
+                // Verify state
+                const savedState = sessionStorage.getItem('google_oauth_state');
+                if (state !== savedState) {
+                    throw new Error('Invalid OAuth state - please try again');
+                }
+                sessionStorage.removeItem('google_oauth_state');
+
+                // Get current auth token
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    throw new Error('Not authenticated');
+                }
+
+                // Exchange code for tokens via Edge Function
+                const redirectUri = `${window.location.origin}/auth/google-callback`;
+                const { data, error } = await supabase.functions.invoke('google-oauth-callback', {
+                    body: { code, redirect_uri: redirectUri },
                 });
 
                 if (error) throw error;
 
-                // User will be redirected to Google, then back
-                // The authStore's onAuthStateChange will handle saving the connection
+                // Reload connections
+                await get().loadConnections();
+                set({ isConnecting: false });
+
+                return { success: true, connection: data.connection };
             } catch (error) {
-                console.error('Failed to initiate Google connection:', error);
+                console.error('Google OAuth callback failed:', error);
                 set({ isConnecting: false, connectionError: error.message });
+                return { success: false, error: error.message };
             }
         },
 

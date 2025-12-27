@@ -50,7 +50,7 @@ export default function EditorHeader({ onGoToDashboard }) {
                                 </svg>
                             </button>
                             <div className="flex items-center gap-2 sm:gap-3">
-                                <img src="/tell-logo.svg" alt="Tell" className="h-5 sm:h-6 hidden xs:block" />
+                                <img src="/productionos-logo.svg" alt="ProductionOS" className="h-5 sm:h-6 hidden xs:block" style={{ color: '#fff' }} />
                                 <div className="flex items-center gap-1 sm:gap-2">
                                     <span className="text-[10px] sm:text-xs font-mono text-accent-primary">{quote.quoteNumber}</span>
                                     <span className="text-[10px] text-gray-500 border border-gray-800 rounded px-1 hidden sm:inline">

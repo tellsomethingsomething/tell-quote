@@ -134,18 +134,21 @@ const styles = StyleSheet.create({
     },
 });
 
-export default function TermsPage({ quoteNumber, companyWebsite }) {
+export default function TermsPage({ quoteNumber, companyWebsite, companyName, companyAddress }) {
+    const displayName = companyName || 'Your Company';
+    const displayAddress = companyAddress || '';
+
     return (
         <Page size="A4" style={styles.page}>
             {/* Header */}
             <View style={styles.header}>
                 <Text style={styles.title}>General Terms and Conditions</Text>
-                <Text style={styles.company}>TELL PRODUCTIONS SDN BHD</Text>
-                <Text style={styles.address}>8-3, Jalan Jalil 1, Bukit Jalil, 57000 Kuala Lumpur, Malaysia</Text>
+                <Text style={styles.company}>{displayName.toUpperCase()}</Text>
+                {displayAddress && <Text style={styles.address}>{displayAddress}</Text>}
             </View>
 
             <Text style={styles.intro}>
-                These General Terms and Conditions ("Terms") apply to all services provided by Tell Productions Sdn Bhd ("the Company", "we", "us", "our") to any client ("the Client", "you", "your"). By engaging our services, you agree to be bound by these Terms.
+                These General Terms and Conditions ("Terms") apply to all services provided by {displayName} ("the Company", "we", "us", "our") to any client ("the Client", "you", "your"). By engaging our services, you agree to be bound by these Terms.
             </Text>
 
             <View style={styles.columnsContainer}>
@@ -350,9 +353,9 @@ export default function TermsPage({ quoteNumber, companyWebsite }) {
             <View style={styles.footer} fixed>
                 <View style={styles.footerContent}>
                     <View style={styles.footerLeft}>
-                        <Text style={styles.footerLogo}>TELL</Text>
-                        <View style={styles.footerDivider} />
-                        <Text style={styles.footerText}>{companyWebsite || 'www.tell.so'}</Text>
+                        {companyName && <Text style={styles.footerLogo}>{companyName.split(' ')[0].toUpperCase()}</Text>}
+                        {companyName && <View style={styles.footerDivider} />}
+                        <Text style={styles.footerText}>{companyWebsite || ''}</Text>
                     </View>
                     <View style={styles.footerRight}>
                         <Text style={styles.footerQuote}>{quoteNumber}</Text>

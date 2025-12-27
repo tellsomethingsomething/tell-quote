@@ -339,7 +339,7 @@ export default function LandingPage({ onLogin }) {
                         <div className="relative z-10">
                             <h2 className="text-4xl md:text-6xl font-bold mb-8">Ready to upgrade?</h2>
                             <p className="text-lg md:text-xl text-white/50 mb-12 max-w-xl mx-auto">
-                                Join the platform building the future of production. Start your 14-day free trial today.
+                                Join the platform building the future of production. Start your free trial today.
                             </p>
 
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -367,7 +367,7 @@ export default function LandingPage({ onLogin }) {
                             <a href="#" className="hover:text-white transition-colors">Security</a>
                         </div>
                         <div>
-                            &copy; 2025 Tell Productions
+                            &copy; 2025 ProductionOS
                         </div>
                     </footer>
                 </section>

@@ -121,13 +121,13 @@ function TemplateEditor({ template, onSave, onClose }) {
         clientName: 'Acme Corp',
         contactName: 'John Smith',
         contactFirstName: 'John',
-        companyName: 'Tell Productions',
+        companyName: 'Your Company',
         projectName: 'Summer Campaign',
         quoteAmount: '$15,000',
         quoteNumber: 'Q-2025-001',
         quoteDueDate: 'January 15, 2025',
         senderName: 'Jane Doe',
-        senderEmail: 'jane@tell.so',
+        senderEmail: 'jane@example.com',
         todayDate: new Date().toLocaleDateString(),
     });
 

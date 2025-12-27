@@ -13,16 +13,304 @@ import {
 
 const SETTINGS_KEY = 'tell_settings';
 const SENSITIVE_FIELDS = ['anthropicKey', 'openaiKey'];
-const BANK_SENSITIVE_FIELDS = ['accountNumber', 'swiftCode'];
+const BANK_SENSITIVE_FIELDS = ['accountNumber', 'swiftCode', 'iban', 'sortCode', 'routingNumber'];
+
+// Comprehensive list of world currencies
+export const CURRENCIES = [
+    { code: 'USD', name: 'US Dollar', symbol: '$' },
+    { code: 'EUR', name: 'Euro', symbol: '€' },
+    { code: 'GBP', name: 'British Pound', symbol: '£' },
+    { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
+    { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
+    { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
+    { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
+    { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
+    { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$' },
+    { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
+    { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM' },
+    { code: 'THB', name: 'Thai Baht', symbol: '฿' },
+    { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp' },
+    { code: 'PHP', name: 'Philippine Peso', symbol: '₱' },
+    { code: 'VND', name: 'Vietnamese Dong', symbol: '₫' },
+    { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
+    { code: 'PKR', name: 'Pakistani Rupee', symbol: '₨' },
+    { code: 'BDT', name: 'Bangladeshi Taka', symbol: '৳' },
+    { code: 'LKR', name: 'Sri Lankan Rupee', symbol: 'Rs' },
+    { code: 'NPR', name: 'Nepalese Rupee', symbol: 'Rs' },
+    { code: 'KRW', name: 'South Korean Won', symbol: '₩' },
+    { code: 'TWD', name: 'Taiwan Dollar', symbol: 'NT$' },
+    { code: 'NZD', name: 'New Zealand Dollar', symbol: 'NZ$' },
+    { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ' },
+    { code: 'SAR', name: 'Saudi Riyal', symbol: '﷼' },
+    { code: 'QAR', name: 'Qatari Riyal', symbol: 'ر.ق' },
+    { code: 'KWD', name: 'Kuwaiti Dinar', symbol: 'د.ك' },
+    { code: 'BHD', name: 'Bahraini Dinar', symbol: '.د.ب' },
+    { code: 'OMR', name: 'Omani Rial', symbol: 'ر.ع.' },
+    { code: 'JOD', name: 'Jordanian Dinar', symbol: 'د.ا' },
+    { code: 'ILS', name: 'Israeli Shekel', symbol: '₪' },
+    { code: 'TRY', name: 'Turkish Lira', symbol: '₺' },
+    { code: 'EGP', name: 'Egyptian Pound', symbol: 'E£' },
+    { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
+    { code: 'NGN', name: 'Nigerian Naira', symbol: '₦' },
+    { code: 'KES', name: 'Kenyan Shilling', symbol: 'KSh' },
+    { code: 'GHS', name: 'Ghanaian Cedi', symbol: 'GH₵' },
+    { code: 'MAD', name: 'Moroccan Dirham', symbol: 'د.م.' },
+    { code: 'BRL', name: 'Brazilian Real', symbol: 'R$' },
+    { code: 'MXN', name: 'Mexican Peso', symbol: 'MX$' },
+    { code: 'ARS', name: 'Argentine Peso', symbol: 'AR$' },
+    { code: 'CLP', name: 'Chilean Peso', symbol: 'CLP$' },
+    { code: 'COP', name: 'Colombian Peso', symbol: 'COL$' },
+    { code: 'PEN', name: 'Peruvian Sol', symbol: 'S/' },
+    { code: 'SEK', name: 'Swedish Krona', symbol: 'kr' },
+    { code: 'NOK', name: 'Norwegian Krone', symbol: 'kr' },
+    { code: 'DKK', name: 'Danish Krone', symbol: 'kr' },
+    { code: 'PLN', name: 'Polish Zloty', symbol: 'zł' },
+    { code: 'CZK', name: 'Czech Koruna', symbol: 'Kč' },
+    { code: 'HUF', name: 'Hungarian Forint', symbol: 'Ft' },
+    { code: 'RON', name: 'Romanian Leu', symbol: 'lei' },
+    { code: 'BGN', name: 'Bulgarian Lev', symbol: 'лв' },
+    { code: 'HRK', name: 'Croatian Kuna', symbol: 'kn' },
+    { code: 'RUB', name: 'Russian Ruble', symbol: '₽' },
+    { code: 'UAH', name: 'Ukrainian Hryvnia', symbol: '₴' },
+    { code: 'KZT', name: 'Kazakhstani Tenge', symbol: '₸' },
+    { code: 'UZS', name: 'Uzbekistani Som', symbol: 'лв' },
+    { code: 'MMK', name: 'Myanmar Kyat', symbol: 'K' },
+    { code: 'KHR', name: 'Cambodian Riel', symbol: '៛' },
+    { code: 'LAK', name: 'Laotian Kip', symbol: '₭' },
+    { code: 'BND', name: 'Brunei Dollar', symbol: 'B$' },
+    { code: 'IQD', name: 'Iraqi Dinar', symbol: 'ع.د' },
+    { code: 'LBP', name: 'Lebanese Pound', symbol: 'ل.ل' },
+];
+
+// Tax rules for all countries - used for invoicing and country names - COMPREHENSIVE GLOBAL LIST
+export const DEFAULT_TAX_RULES = {
+    // North America
+    'US': { name: 'United States', taxName: 'Sales Tax', rate: 0, taxIdLabel: 'EIN', reverseCharge: false },
+    'CA': { name: 'Canada', taxName: 'GST/HST', rate: 5, taxIdLabel: 'GST/HST Number', reverseCharge: false },
+    'MX': { name: 'Mexico', taxName: 'IVA', rate: 16, taxIdLabel: 'RFC', reverseCharge: false },
+    // Central America & Caribbean
+    'GT': { name: 'Guatemala', taxName: 'IVA', rate: 12, taxIdLabel: 'NIT', reverseCharge: false },
+    'BZ': { name: 'Belize', taxName: 'GST', rate: 12.5, taxIdLabel: 'TIN', reverseCharge: false },
+    'SV': { name: 'El Salvador', taxName: 'IVA', rate: 13, taxIdLabel: 'NIT', reverseCharge: false },
+    'HN': { name: 'Honduras', taxName: 'ISV', rate: 15, taxIdLabel: 'RTN', reverseCharge: false },
+    'NI': { name: 'Nicaragua', taxName: 'IVA', rate: 15, taxIdLabel: 'RUC', reverseCharge: false },
+    'CR': { name: 'Costa Rica', taxName: 'IVA', rate: 13, taxIdLabel: 'Cedula Juridica', reverseCharge: false },
+    'PA': { name: 'Panama', taxName: 'ITBMS', rate: 7, taxIdLabel: 'RUC', reverseCharge: false },
+    'CU': { name: 'Cuba', taxName: 'Sales Tax', rate: 10, taxIdLabel: 'NIT', reverseCharge: false },
+    'JM': { name: 'Jamaica', taxName: 'GCT', rate: 15, taxIdLabel: 'TRN', reverseCharge: false },
+    'HT': { name: 'Haiti', taxName: 'TCA', rate: 10, taxIdLabel: 'NIF', reverseCharge: false },
+    'DO': { name: 'Dominican Republic', taxName: 'ITBIS', rate: 18, taxIdLabel: 'RNC', reverseCharge: false },
+    'PR': { name: 'Puerto Rico', taxName: 'IVU', rate: 11.5, taxIdLabel: 'EIN', reverseCharge: false },
+    'TT': { name: 'Trinidad and Tobago', taxName: 'VAT', rate: 12.5, taxIdLabel: 'BIR', reverseCharge: false },
+    'BB': { name: 'Barbados', taxName: 'VAT', rate: 17.5, taxIdLabel: 'TIN', reverseCharge: false },
+    'BS': { name: 'Bahamas', taxName: 'VAT', rate: 12, taxIdLabel: 'TIN', reverseCharge: false },
+    'LC': { name: 'Saint Lucia', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'GD': { name: 'Grenada', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'VC': { name: 'Saint Vincent', taxName: 'VAT', rate: 16, taxIdLabel: 'TIN', reverseCharge: false },
+    'AG': { name: 'Antigua and Barbuda', taxName: 'ABST', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'DM': { name: 'Dominica', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'KN': { name: 'Saint Kitts and Nevis', taxName: 'VAT', rate: 17, taxIdLabel: 'TIN', reverseCharge: false },
+    // South America
+    'BR': { name: 'Brazil', taxName: 'ICMS', rate: 18, taxIdLabel: 'CNPJ', reverseCharge: false },
+    'AR': { name: 'Argentina', taxName: 'IVA', rate: 21, taxIdLabel: 'CUIT', reverseCharge: false },
+    'CO': { name: 'Colombia', taxName: 'IVA', rate: 19, taxIdLabel: 'NIT', reverseCharge: false },
+    'PE': { name: 'Peru', taxName: 'IGV', rate: 18, taxIdLabel: 'RUC', reverseCharge: false },
+    'VE': { name: 'Venezuela', taxName: 'IVA', rate: 16, taxIdLabel: 'RIF', reverseCharge: false },
+    'CL': { name: 'Chile', taxName: 'IVA', rate: 19, taxIdLabel: 'RUT', reverseCharge: false },
+    'EC': { name: 'Ecuador', taxName: 'IVA', rate: 12, taxIdLabel: 'RUC', reverseCharge: false },
+    'BO': { name: 'Bolivia', taxName: 'IVA', rate: 13, taxIdLabel: 'NIT', reverseCharge: false },
+    'PY': { name: 'Paraguay', taxName: 'IVA', rate: 10, taxIdLabel: 'RUC', reverseCharge: false },
+    'UY': { name: 'Uruguay', taxName: 'IVA', rate: 22, taxIdLabel: 'RUT', reverseCharge: false },
+    'GY': { name: 'Guyana', taxName: 'VAT', rate: 14, taxIdLabel: 'TIN', reverseCharge: false },
+    'SR': { name: 'Suriname', taxName: 'BTW', rate: 10, taxIdLabel: 'TIN', reverseCharge: false },
+    // Western Europe
+    'GB': { name: 'United Kingdom', taxName: 'VAT', rate: 20, taxIdLabel: 'VAT Number', reverseCharge: true },
+    'IE': { name: 'Ireland', taxName: 'VAT', rate: 23, taxIdLabel: 'VAT Number', reverseCharge: true },
+    'FR': { name: 'France', taxName: 'TVA', rate: 20, taxIdLabel: 'TVA Intracommunautaire', reverseCharge: true },
+    'DE': { name: 'Germany', taxName: 'MwSt', rate: 19, taxIdLabel: 'USt-IdNr', reverseCharge: true },
+    'NL': { name: 'Netherlands', taxName: 'BTW', rate: 21, taxIdLabel: 'BTW-nummer', reverseCharge: true },
+    'BE': { name: 'Belgium', taxName: 'BTW/TVA', rate: 21, taxIdLabel: 'BTW nummer', reverseCharge: true },
+    'LU': { name: 'Luxembourg', taxName: 'TVA', rate: 17, taxIdLabel: 'TVA Number', reverseCharge: true },
+    'CH': { name: 'Switzerland', taxName: 'MwSt', rate: 8.1, taxIdLabel: 'MwSt-Nr', reverseCharge: false },
+    'AT': { name: 'Austria', taxName: 'USt', rate: 20, taxIdLabel: 'UID-Nummer', reverseCharge: true },
+    'LI': { name: 'Liechtenstein', taxName: 'MWST', rate: 8.1, taxIdLabel: 'MWST-Nr', reverseCharge: false },
+    // Southern Europe
+    'ES': { name: 'Spain', taxName: 'IVA', rate: 21, taxIdLabel: 'NIF/CIF', reverseCharge: true },
+    'PT': { name: 'Portugal', taxName: 'IVA', rate: 23, taxIdLabel: 'NIF', reverseCharge: true },
+    'IT': { name: 'Italy', taxName: 'IVA', rate: 22, taxIdLabel: 'Partita IVA', reverseCharge: true },
+    'GR': { name: 'Greece', taxName: 'FPA', rate: 24, taxIdLabel: 'AFM', reverseCharge: true },
+    'MT': { name: 'Malta', taxName: 'VAT', rate: 18, taxIdLabel: 'VAT Number', reverseCharge: true },
+    'CY': { name: 'Cyprus', taxName: 'VAT', rate: 19, taxIdLabel: 'VAT Number', reverseCharge: true },
+    'AD': { name: 'Andorra', taxName: 'IGI', rate: 4.5, taxIdLabel: 'NRT', reverseCharge: false },
+    'SM': { name: 'San Marino', taxName: 'IGC', rate: 17, taxIdLabel: 'COE', reverseCharge: false },
+    'MC': { name: 'Monaco', taxName: 'TVA', rate: 20, taxIdLabel: 'TVA Number', reverseCharge: false },
+    'VA': { name: 'Vatican City', taxName: 'None', rate: 0, taxIdLabel: 'None', reverseCharge: false },
+    // Northern Europe
+    'SE': { name: 'Sweden', taxName: 'Moms', rate: 25, taxIdLabel: 'Momsreg.nummer', reverseCharge: true },
+    'NO': { name: 'Norway', taxName: 'MVA', rate: 25, taxIdLabel: 'MVA-nummer', reverseCharge: false },
+    'DK': { name: 'Denmark', taxName: 'Moms', rate: 25, taxIdLabel: 'CVR-nummer', reverseCharge: true },
+    'FI': { name: 'Finland', taxName: 'ALV', rate: 25.5, taxIdLabel: 'ALV-numero', reverseCharge: true },
+    'IS': { name: 'Iceland', taxName: 'VSK', rate: 24, taxIdLabel: 'VSK Number', reverseCharge: false },
+    'EE': { name: 'Estonia', taxName: 'KM', rate: 22, taxIdLabel: 'KMKR', reverseCharge: true },
+    'LV': { name: 'Latvia', taxName: 'PVN', rate: 21, taxIdLabel: 'PVN Number', reverseCharge: true },
+    'LT': { name: 'Lithuania', taxName: 'PVM', rate: 21, taxIdLabel: 'PVM Code', reverseCharge: true },
+    // Eastern Europe
+    'PL': { name: 'Poland', taxName: 'VAT', rate: 23, taxIdLabel: 'NIP', reverseCharge: true },
+    'CZ': { name: 'Czech Republic', taxName: 'DPH', rate: 21, taxIdLabel: 'DIC', reverseCharge: true },
+    'SK': { name: 'Slovakia', taxName: 'DPH', rate: 20, taxIdLabel: 'IC DPH', reverseCharge: true },
+    'HU': { name: 'Hungary', taxName: 'AFA', rate: 27, taxIdLabel: 'EU VAT', reverseCharge: true },
+    'RO': { name: 'Romania', taxName: 'TVA', rate: 19, taxIdLabel: 'CIF', reverseCharge: true },
+    'BG': { name: 'Bulgaria', taxName: 'DDS', rate: 20, taxIdLabel: 'EIK', reverseCharge: true },
+    'UA': { name: 'Ukraine', taxName: 'PDV', rate: 20, taxIdLabel: 'EDRPOU', reverseCharge: false },
+    'BY': { name: 'Belarus', taxName: 'VAT', rate: 20, taxIdLabel: 'UNP', reverseCharge: false },
+    'MD': { name: 'Moldova', taxName: 'TVA', rate: 20, taxIdLabel: 'IDNO', reverseCharge: false },
+    'RU': { name: 'Russia', taxName: 'NDS', rate: 20, taxIdLabel: 'INN', reverseCharge: false },
+    // Balkans
+    'HR': { name: 'Croatia', taxName: 'PDV', rate: 25, taxIdLabel: 'OIB', reverseCharge: true },
+    'SI': { name: 'Slovenia', taxName: 'DDV', rate: 22, taxIdLabel: 'ID za DDV', reverseCharge: true },
+    'RS': { name: 'Serbia', taxName: 'PDV', rate: 20, taxIdLabel: 'PIB', reverseCharge: false },
+    'BA': { name: 'Bosnia and Herzegovina', taxName: 'PDV', rate: 17, taxIdLabel: 'ID', reverseCharge: false },
+    'ME': { name: 'Montenegro', taxName: 'PDV', rate: 21, taxIdLabel: 'PIB', reverseCharge: false },
+    'MK': { name: 'North Macedonia', taxName: 'DDV', rate: 18, taxIdLabel: 'EDB', reverseCharge: false },
+    'AL': { name: 'Albania', taxName: 'TVSH', rate: 20, taxIdLabel: 'NUIS', reverseCharge: false },
+    'XK': { name: 'Kosovo', taxName: 'VAT', rate: 18, taxIdLabel: 'Fiscal Number', reverseCharge: false },
+    // Middle East
+    'AE': { name: 'UAE', taxName: 'VAT', rate: 5, taxIdLabel: 'TRN', reverseCharge: false },
+    'SA': { name: 'Saudi Arabia', taxName: 'VAT', rate: 15, taxIdLabel: 'VAT Registration No', reverseCharge: false },
+    'QA': { name: 'Qatar', taxName: 'None', rate: 0, taxIdLabel: 'QID', reverseCharge: false },
+    'KW': { name: 'Kuwait', taxName: 'None', rate: 0, taxIdLabel: 'Civil ID', reverseCharge: false },
+    'BH': { name: 'Bahrain', taxName: 'VAT', rate: 10, taxIdLabel: 'VAT Registration No', reverseCharge: false },
+    'OM': { name: 'Oman', taxName: 'VAT', rate: 5, taxIdLabel: 'VAT Registration No', reverseCharge: false },
+    'JO': { name: 'Jordan', taxName: 'GST', rate: 16, taxIdLabel: 'Tax Number', reverseCharge: false },
+    'LB': { name: 'Lebanon', taxName: 'VAT', rate: 11, taxIdLabel: 'VAT Number', reverseCharge: false },
+    'SY': { name: 'Syria', taxName: 'VAT', rate: 10, taxIdLabel: 'Tax ID', reverseCharge: false },
+    'IQ': { name: 'Iraq', taxName: 'Sales Tax', rate: 15, taxIdLabel: 'Tax ID', reverseCharge: false },
+    'IR': { name: 'Iran', taxName: 'VAT', rate: 9, taxIdLabel: 'Economic Code', reverseCharge: false },
+    'YE': { name: 'Yemen', taxName: 'GST', rate: 5, taxIdLabel: 'Tax ID', reverseCharge: false },
+    'IL': { name: 'Israel', taxName: 'VAT', rate: 17, taxIdLabel: 'Osek Murshe', reverseCharge: false },
+    'PS': { name: 'Palestine', taxName: 'VAT', rate: 16, taxIdLabel: 'Tax ID', reverseCharge: false },
+    'TR': { name: 'Turkey', taxName: 'KDV', rate: 20, taxIdLabel: 'Vergi No', reverseCharge: false },
+    // Central Asia
+    'KZ': { name: 'Kazakhstan', taxName: 'VAT', rate: 12, taxIdLabel: 'BIN', reverseCharge: false },
+    'UZ': { name: 'Uzbekistan', taxName: 'VAT', rate: 12, taxIdLabel: 'TIN', reverseCharge: false },
+    'TM': { name: 'Turkmenistan', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'TJ': { name: 'Tajikistan', taxName: 'VAT', rate: 18, taxIdLabel: 'TIN', reverseCharge: false },
+    'KG': { name: 'Kyrgyzstan', taxName: 'VAT', rate: 12, taxIdLabel: 'TIN', reverseCharge: false },
+    'AF': { name: 'Afghanistan', taxName: 'BRT', rate: 4, taxIdLabel: 'TIN', reverseCharge: false },
+    // South Asia
+    'IN': { name: 'India', taxName: 'GST', rate: 18, taxIdLabel: 'GSTIN', reverseCharge: false },
+    'PK': { name: 'Pakistan', taxName: 'GST', rate: 18, taxIdLabel: 'NTN', reverseCharge: false },
+    'BD': { name: 'Bangladesh', taxName: 'VAT', rate: 15, taxIdLabel: 'BIN', reverseCharge: false },
+    'LK': { name: 'Sri Lanka', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'NP': { name: 'Nepal', taxName: 'VAT', rate: 13, taxIdLabel: 'PAN', reverseCharge: false },
+    'BT': { name: 'Bhutan', taxName: 'Sales Tax', rate: 0, taxIdLabel: 'TIN', reverseCharge: false },
+    'MV': { name: 'Maldives', taxName: 'GST', rate: 16, taxIdLabel: 'TIN', reverseCharge: false },
+    // Southeast Asia
+    'SG': { name: 'Singapore', taxName: 'GST', rate: 9, taxIdLabel: 'GST Registration No', reverseCharge: false },
+    'MY': { name: 'Malaysia', taxName: 'SST', rate: 6, taxIdLabel: 'SST Registration No', reverseCharge: false },
+    'TH': { name: 'Thailand', taxName: 'VAT', rate: 7, taxIdLabel: 'Tax ID', reverseCharge: false },
+    'ID': { name: 'Indonesia', taxName: 'PPN', rate: 11, taxIdLabel: 'NPWP', reverseCharge: false },
+    'PH': { name: 'Philippines', taxName: 'VAT', rate: 12, taxIdLabel: 'TIN', reverseCharge: false },
+    'VN': { name: 'Vietnam', taxName: 'VAT', rate: 10, taxIdLabel: 'Tax Code', reverseCharge: false },
+    'MM': { name: 'Myanmar', taxName: 'CT', rate: 5, taxIdLabel: 'TIN', reverseCharge: false },
+    'KH': { name: 'Cambodia', taxName: 'VAT', rate: 10, taxIdLabel: 'TIN', reverseCharge: false },
+    'LA': { name: 'Laos', taxName: 'VAT', rate: 10, taxIdLabel: 'TIN', reverseCharge: false },
+    'BN': { name: 'Brunei', taxName: 'None', rate: 0, taxIdLabel: 'BRN', reverseCharge: false },
+    'TL': { name: 'Timor-Leste', taxName: 'Sales Tax', rate: 2.5, taxIdLabel: 'TIN', reverseCharge: false },
+    // East Asia
+    'CN': { name: 'China', taxName: 'VAT', rate: 13, taxIdLabel: 'Tax Registration No', reverseCharge: false },
+    'JP': { name: 'Japan', taxName: 'JCT', rate: 10, taxIdLabel: 'Corporate Number', reverseCharge: false },
+    'KR': { name: 'South Korea', taxName: 'VAT', rate: 10, taxIdLabel: 'Business Reg No', reverseCharge: false },
+    'TW': { name: 'Taiwan', taxName: 'VAT', rate: 5, taxIdLabel: 'Unified Business No', reverseCharge: false },
+    'HK': { name: 'Hong Kong', taxName: 'None', rate: 0, taxIdLabel: 'BR Number', reverseCharge: false },
+    'MO': { name: 'Macau', taxName: 'None', rate: 0, taxIdLabel: 'BRN', reverseCharge: false },
+    'MN': { name: 'Mongolia', taxName: 'VAT', rate: 10, taxIdLabel: 'TIN', reverseCharge: false },
+    // Oceania
+    'AU': { name: 'Australia', taxName: 'GST', rate: 10, taxIdLabel: 'ABN', reverseCharge: false },
+    'NZ': { name: 'New Zealand', taxName: 'GST', rate: 15, taxIdLabel: 'GST Number', reverseCharge: false },
+    'FJ': { name: 'Fiji', taxName: 'VAT', rate: 9, taxIdLabel: 'TIN', reverseCharge: false },
+    'PG': { name: 'Papua New Guinea', taxName: 'GST', rate: 10, taxIdLabel: 'TIN', reverseCharge: false },
+    'WS': { name: 'Samoa', taxName: 'VAGST', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'TO': { name: 'Tonga', taxName: 'CT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'VU': { name: 'Vanuatu', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'SB': { name: 'Solomon Islands', taxName: 'GST', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'NC': { name: 'New Caledonia', taxName: 'TGC', rate: 11, taxIdLabel: 'RIDET', reverseCharge: false },
+    'PF': { name: 'French Polynesia', taxName: 'TVA', rate: 16, taxIdLabel: 'TAHITI', reverseCharge: false },
+    'GU': { name: 'Guam', taxName: 'GRT', rate: 4, taxIdLabel: 'TIN', reverseCharge: false },
+    // North Africa
+    'EG': { name: 'Egypt', taxName: 'VAT', rate: 14, taxIdLabel: 'Tax Reg No', reverseCharge: false },
+    'MA': { name: 'Morocco', taxName: 'TVA', rate: 20, taxIdLabel: 'IF', reverseCharge: false },
+    'DZ': { name: 'Algeria', taxName: 'TVA', rate: 19, taxIdLabel: 'NIF', reverseCharge: false },
+    'TN': { name: 'Tunisia', taxName: 'TVA', rate: 19, taxIdLabel: 'MF', reverseCharge: false },
+    'LY': { name: 'Libya', taxName: 'None', rate: 0, taxIdLabel: 'TIN', reverseCharge: false },
+    'SD': { name: 'Sudan', taxName: 'VAT', rate: 17, taxIdLabel: 'TIN', reverseCharge: false },
+    // West Africa
+    'NG': { name: 'Nigeria', taxName: 'VAT', rate: 7.5, taxIdLabel: 'TIN', reverseCharge: false },
+    'GH': { name: 'Ghana', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'SN': { name: 'Senegal', taxName: 'TVA', rate: 18, taxIdLabel: 'NINEA', reverseCharge: false },
+    'CI': { name: "Cote d'Ivoire", taxName: 'TVA', rate: 18, taxIdLabel: 'CC', reverseCharge: false },
+    'ML': { name: 'Mali', taxName: 'TVA', rate: 18, taxIdLabel: 'NIF', reverseCharge: false },
+    'BF': { name: 'Burkina Faso', taxName: 'TVA', rate: 18, taxIdLabel: 'IFU', reverseCharge: false },
+    'NE': { name: 'Niger', taxName: 'TVA', rate: 19, taxIdLabel: 'NIF', reverseCharge: false },
+    'GN': { name: 'Guinea', taxName: 'TVA', rate: 18, taxIdLabel: 'NIF', reverseCharge: false },
+    'BJ': { name: 'Benin', taxName: 'TVA', rate: 18, taxIdLabel: 'IFU', reverseCharge: false },
+    'TG': { name: 'Togo', taxName: 'TVA', rate: 18, taxIdLabel: 'NIF', reverseCharge: false },
+    'SL': { name: 'Sierra Leone', taxName: 'GST', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'LR': { name: 'Liberia', taxName: 'GST', rate: 10, taxIdLabel: 'TIN', reverseCharge: false },
+    'MR': { name: 'Mauritania', taxName: 'TVA', rate: 16, taxIdLabel: 'NIF', reverseCharge: false },
+    'GM': { name: 'Gambia', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'GW': { name: 'Guinea-Bissau', taxName: 'IGV', rate: 17, taxIdLabel: 'NIF', reverseCharge: false },
+    'CV': { name: 'Cape Verde', taxName: 'IVA', rate: 15, taxIdLabel: 'NIF', reverseCharge: false },
+    // East Africa
+    'KE': { name: 'Kenya', taxName: 'VAT', rate: 16, taxIdLabel: 'KRA PIN', reverseCharge: false },
+    'TZ': { name: 'Tanzania', taxName: 'VAT', rate: 18, taxIdLabel: 'TIN', reverseCharge: false },
+    'UG': { name: 'Uganda', taxName: 'VAT', rate: 18, taxIdLabel: 'TIN', reverseCharge: false },
+    'ET': { name: 'Ethiopia', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'RW': { name: 'Rwanda', taxName: 'VAT', rate: 18, taxIdLabel: 'TIN', reverseCharge: false },
+    'BI': { name: 'Burundi', taxName: 'TVA', rate: 18, taxIdLabel: 'NIF', reverseCharge: false },
+    'SO': { name: 'Somalia', taxName: 'Sales Tax', rate: 5, taxIdLabel: 'TIN', reverseCharge: false },
+    'DJ': { name: 'Djibouti', taxName: 'TVA', rate: 10, taxIdLabel: 'NIF', reverseCharge: false },
+    'ER': { name: 'Eritrea', taxName: 'Sales Tax', rate: 5, taxIdLabel: 'TIN', reverseCharge: false },
+    'SS': { name: 'South Sudan', taxName: 'VAT', rate: 18, taxIdLabel: 'TIN', reverseCharge: false },
+    'MU': { name: 'Mauritius', taxName: 'VAT', rate: 15, taxIdLabel: 'VAT Number', reverseCharge: false },
+    'SC': { name: 'Seychelles', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'MG': { name: 'Madagascar', taxName: 'TVA', rate: 20, taxIdLabel: 'NIF', reverseCharge: false },
+    'KM': { name: 'Comoros', taxName: 'TVA', rate: 10, taxIdLabel: 'NIF', reverseCharge: false },
+    'RE': { name: 'Reunion', taxName: 'TVA', rate: 8.5, taxIdLabel: 'SIRET', reverseCharge: false },
+    // Central Africa
+    'CD': { name: 'DR Congo', taxName: 'TVA', rate: 16, taxIdLabel: 'NIF', reverseCharge: false },
+    'CG': { name: 'Congo', taxName: 'TVA', rate: 18, taxIdLabel: 'NIF', reverseCharge: false },
+    'CF': { name: 'Central African Republic', taxName: 'TVA', rate: 19, taxIdLabel: 'NIF', reverseCharge: false },
+    'CM': { name: 'Cameroon', taxName: 'TVA', rate: 19.25, taxIdLabel: 'NIU', reverseCharge: false },
+    'TD': { name: 'Chad', taxName: 'TVA', rate: 18, taxIdLabel: 'NIF', reverseCharge: false },
+    'GA': { name: 'Gabon', taxName: 'TVA', rate: 18, taxIdLabel: 'NIF', reverseCharge: false },
+    'GQ': { name: 'Equatorial Guinea', taxName: 'IVA', rate: 15, taxIdLabel: 'NIF', reverseCharge: false },
+    'ST': { name: 'Sao Tome and Principe', taxName: 'IVA', rate: 15, taxIdLabel: 'NIF', reverseCharge: false },
+    'AO': { name: 'Angola', taxName: 'IVA', rate: 14, taxIdLabel: 'NIF', reverseCharge: false },
+    // Southern Africa
+    'ZA': { name: 'South Africa', taxName: 'VAT', rate: 15, taxIdLabel: 'VAT Number', reverseCharge: false },
+    'ZW': { name: 'Zimbabwe', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'ZM': { name: 'Zambia', taxName: 'VAT', rate: 16, taxIdLabel: 'TPIN', reverseCharge: false },
+    'BW': { name: 'Botswana', taxName: 'VAT', rate: 14, taxIdLabel: 'TIN', reverseCharge: false },
+    'NA': { name: 'Namibia', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'MZ': { name: 'Mozambique', taxName: 'IVA', rate: 17, taxIdLabel: 'NUIT', reverseCharge: false },
+    'MW': { name: 'Malawi', taxName: 'VAT', rate: 16.5, taxIdLabel: 'TPIN', reverseCharge: false },
+    'SZ': { name: 'Eswatini', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    'LS': { name: 'Lesotho', taxName: 'VAT', rate: 15, taxIdLabel: 'TIN', reverseCharge: false },
+    // Caucasus
+    'GE': { name: 'Georgia', taxName: 'VAT', rate: 18, taxIdLabel: 'TIN', reverseCharge: false },
+    'AM': { name: 'Armenia', taxName: 'VAT', rate: 20, taxIdLabel: 'TIN', reverseCharge: false },
+    'AZ': { name: 'Azerbaijan', taxName: 'VAT', rate: 18, taxIdLabel: 'VOEN', reverseCharge: false },
+};
 
 // Default settings
 const defaultSettings = {
     theme: 'dark', // 'dark' | 'light'
     company: {
-        name: 'Tell Productions Sdn Bhd',
+        name: '', // User sets their company name during onboarding
         address: '',
         city: '',
-        country: 'Malaysia',
+        country: '',
         phone: '',
         email: '',
         website: '',
@@ -33,12 +321,41 @@ const defaultSettings = {
         registrationNumber: '',
         licenses: '',
     },
+    // Tax configuration for invoicing
+    taxConfig: {
+        homeCountry: 'MY', // ISO country code
+        taxRegistered: true, // Whether company is registered for tax
+        domesticTaxRate: 6, // Tax rate for domestic invoicing
+        domesticTaxName: 'SST', // Name of domestic tax (VAT, GST, SST, etc.)
+        applyTaxToInternational: false, // Whether to charge tax on international invoices
+        showTaxBreakdown: true, // Show tax as separate line item
+        reverseChargeEnabled: true, // Enable reverse charge for EU B2B
+        // Invoice wording for different scenarios
+        reverseChargeText: 'Reverse charge: VAT to be accounted for by the recipient as per Article 196 of the EU VAT Directive',
+        exportServicesText: 'Export of services - zero rated for VAT purposes',
+        domesticExemptText: '', // For domestic tax-exempt supplies
+        // B2B requirements
+        requireClientTaxId: false, // Require client VAT/Tax ID for B2B
+        validateTaxId: false, // Validate tax ID format
+        // E-invoicing readiness
+        eInvoicingEnabled: false, // For countries requiring e-invoicing
+        eInvoicingFormat: '', // PEPPOL, FatturaPA, etc.
+        // Custom tax rules (overrides DEFAULT_TAX_RULES)
+        customTaxRules: {},
+    },
     bankDetails: {
         bankName: '',
+        bankAddress: '',
         accountName: '',
         accountNumber: '',
-        swiftCode: '',
+        sortCode: '', // UK sort code
+        iban: '', // International Bank Account Number
+        swiftCode: '', // BIC/SWIFT code
+        routingNumber: '', // US routing number
+        branchCode: '', // Branch code (various countries)
+        bsbNumber: '', // Australian BSB
         currency: 'MYR',
+        additionalInfo: '', // Any other payment instructions
     },
     quoteDefaults: {
         validityDays: 30,
@@ -80,11 +397,14 @@ const defaultSettings = {
         { id: 'other', label: 'Other' },
     ],
     regions: [
-        { id: 'MALAYSIA', label: 'Malaysia', currency: 'MYR' },
-        { id: 'SEA', label: 'South East Asia', currency: 'USD' },
-        { id: 'GULF', label: 'Gulf States', currency: 'USD' },
-        { id: 'CENTRAL_ASIA', label: 'Central Asia', currency: 'USD' },
+        { id: 'SEA', label: 'South East Asia', currency: 'USD', countries: ['Malaysia', 'Singapore', 'Indonesia', 'Thailand', 'Vietnam', 'Philippines', 'Myanmar', 'Cambodia', 'Laos', 'Brunei'] },
+        { id: 'GCC', label: 'Gulf States', currency: 'KWD', countries: ['Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman'] },
+        { id: 'LEVANT', label: 'Levant', currency: 'USD', countries: ['Jordan', 'Lebanon', 'Iraq'] },
+        { id: 'CENTRAL_ASIA', label: 'Central Asia', currency: 'USD', countries: ['Kazakhstan', 'Uzbekistan', 'Turkmenistan', 'Tajikistan', 'Kyrgyzstan'] },
     ],
+    // Preferred currencies - shown in dropdowns throughout the app
+    // User selects which currencies they commonly use
+    preferredCurrencies: ['USD', 'EUR', 'GBP', 'MYR', 'SGD'],
     // Company OKRs that guide research priorities
     okrs: [
         { id: 'okr1', objective: 'Expand into GCC market', keyResult: 'Win 3 major sports broadcast contracts in Saudi Arabia or UAE by end of 2025', priority: 1 },
@@ -151,6 +471,7 @@ function mergeSettings(parsed) {
         theme: parsed.theme || defaultSettings.theme,
         company: { ...defaultSettings.company, ...parsed.company },
         taxInfo: { ...defaultSettings.taxInfo, ...parsed.taxInfo },
+        taxConfig: { ...defaultSettings.taxConfig, ...parsed.taxConfig },
         bankDetails: { ...defaultSettings.bankDetails, ...parsed.bankDetails },
         quoteDefaults: { ...defaultSettings.quoteDefaults, ...parsed.quoteDefaults },
         pdfOptions: { ...defaultSettings.pdfOptions, ...parsed.pdfOptions },
@@ -163,6 +484,62 @@ function mergeSettings(parsed) {
         projectTypes: parsed.projectTypes || defaultSettings.projectTypes,
         regions: parsed.regions || defaultSettings.regions,
         activityLog: parsed.activityLog || defaultSettings.activityLog,
+    };
+}
+
+// Helper function to calculate tax for an invoice
+export function calculateInvoiceTax(settings, clientCountry, subtotal) {
+    const { taxConfig } = settings;
+    const homeCountry = taxConfig.homeCountry;
+
+    // Not registered for tax - no tax charged
+    if (!taxConfig.taxRegistered) {
+        return { taxRate: 0, taxAmount: 0, taxName: '', showTax: false, note: '' };
+    }
+
+    // Domestic invoice - same country
+    if (clientCountry === homeCountry) {
+        const taxAmount = subtotal * (taxConfig.domesticTaxRate / 100);
+        return {
+            taxRate: taxConfig.domesticTaxRate,
+            taxAmount,
+            taxName: taxConfig.domesticTaxName,
+            showTax: taxConfig.showTaxBreakdown,
+            note: '',
+        };
+    }
+
+    // International invoice
+    if (!taxConfig.applyTaxToInternational) {
+        // Check if reverse charge applies (EU B2B)
+        const clientTaxRules = taxConfig.customTaxRules[clientCountry] || DEFAULT_TAX_RULES[clientCountry];
+        if (clientTaxRules?.reverseCharge && taxConfig.reverseChargeEnabled) {
+            return {
+                taxRate: 0,
+                taxAmount: 0,
+                taxName: '',
+                showTax: false,
+                note: 'Reverse charge: VAT to be accounted for by the recipient',
+            };
+        }
+
+        return {
+            taxRate: 0,
+            taxAmount: 0,
+            taxName: '',
+            showTax: false,
+            note: 'Export of services - zero rated',
+        };
+    }
+
+    // Apply tax to international (rare case)
+    const taxAmount = subtotal * (taxConfig.domesticTaxRate / 100);
+    return {
+        taxRate: taxConfig.domesticTaxRate,
+        taxAmount,
+        taxName: taxConfig.domesticTaxName,
+        showTax: taxConfig.showTaxBreakdown,
+        note: '',
     };
 }
 
@@ -344,6 +721,28 @@ export const useSettingsStore = create(
             const updated = {
                 ...state.settings,
                 taxInfo: { ...state.settings.taxInfo, ...taxInfo },
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
+        },
+
+        // Update tax configuration (for invoicing)
+        setTaxConfig: async (taxConfig) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                taxConfig: { ...state.settings.taxConfig, ...taxConfig },
+            };
+            await saveSettingsLocal(updated);
+            set({ settings: updated });
+        },
+
+        // Update preferred currencies (shown in dropdowns throughout the app)
+        setPreferredCurrencies: async (preferredCurrencies) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                preferredCurrencies,
             };
             await saveSettingsLocal(updated);
             set({ settings: updated });
@@ -569,12 +968,12 @@ export const useSettingsStore = create(
         },
 
         // Regions
-        addRegion: async (label, currency = 'USD') => {
+        addRegion: async (label, currency = 'USD', countries = []) => {
             const state = get();
             const id = label.toUpperCase().replace(/\s+/g, '_');
             const updated = {
                 ...state.settings,
-                regions: [...state.settings.regions, { id, label, currency }],
+                regions: [...state.settings.regions, { id, label, currency, countries }],
             };
             await saveSettingsLocal(updated);
             set({ settings: updated });

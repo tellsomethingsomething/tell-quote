@@ -6,6 +6,7 @@ export default function LoginPage() {
         login,
         signup,
         loginWithGoogle,
+        resetPassword,
         error,
         clearError,
         isLoading,
@@ -15,12 +16,14 @@ export default function LoginPage() {
         isSupabaseAuth
     } = useAuthStore();
 
-    const [mode, setMode] = useState('login'); // 'login' or 'signup'
+    const [mode, setMode] = useState('login'); // 'login', 'signup', or 'forgot'
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [signupSuccess, setSignupSuccess] = useState(false);
+    const [resetSuccess, setResetSuccess] = useState(false);
+    const [resetError, setResetError] = useState(null);
     const [lockoutTimer, setLockoutTimer] = useState(0);
     const useSupabase = isSupabaseAuth();
 
@@ -47,6 +50,19 @@ export default function LoginPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (mode === 'forgot' && useSupabase) {
+            // Forgot password mode
+            if (!email) return;
+            setResetError(null);
+            const result = await resetPassword(email);
+            if (result.success) {
+                setResetSuccess(true);
+            } else {
+                setResetError(result.error);
+            }
+            return;
+        }
+
         if (mode === 'signup' && useSupabase) {
             // Signup mode
             if (!name || !email || !password || !confirmPassword) return;
@@ -71,9 +87,11 @@ export default function LoginPage() {
         }
     };
 
-    const switchMode = () => {
-        setMode(mode === 'login' ? 'signup' : 'login');
+    const switchMode = (newMode) => {
+        setMode(newMode);
         setSignupSuccess(false);
+        setResetSuccess(false);
+        setResetError(null);
         clearError();
     };
 
@@ -94,21 +112,47 @@ export default function LoginPage() {
                 {/* Logo & Title */}
                 <div className="text-center mb-8">
                     <img
-                        src="/tell-logo.svg"
-                        alt="Tell Productions Logo"
+                        src="/productionos-logo.svg"
+                        alt="ProductionOS Logo"
                         className="h-10 mx-auto mb-4"
                         role="img"
+                        style={{ color: '#fff' }}
                     />
-                    <h1 className="text-xl font-bold text-white mb-2">Internal Quote Tool</h1>
+                    <h1 className="text-xl font-bold text-white mb-2">ProductionOS</h1>
                     <p className="text-gray-500 text-sm">
-                        {mode === 'login' ? 'Secure Access' : 'Request Access'}
+                        {mode === 'login' ? 'Secure Access' : mode === 'signup' ? 'Request Access' : 'Reset Password'}
                     </p>
                 </div>
 
                 {/* Login Card */}
                 <div className="bg-dark-card border border-dark-border rounded-xl p-6 shadow-2xl">
-                    {/* Signup Success Message */}
-                    {signupSuccess ? (
+                    {/* Password Reset Success Message */}
+                    {resetSuccess ? (
+                        <div className="text-center py-4">
+                            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <h2 className="text-lg font-semibold text-white mb-2">Check Your Email</h2>
+                            <p className="text-gray-400 text-sm mb-4">
+                                We've sent a password reset link to <span className="text-white font-medium">{email}</span>
+                            </p>
+                            <p className="text-gray-500 text-xs mb-6">
+                                Click the link in the email to reset your password. The link will expire in 24 hours.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setResetSuccess(false);
+                                    switchMode('login');
+                                }}
+                                className="btn-primary px-6 py-2"
+                            >
+                                Back to Sign In
+                            </button>
+                        </div>
+                    ) : signupSuccess ? (
                         <div className="text-center py-4">
                             <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,11 +170,7 @@ export default function LoginPage() {
                                 type="button"
                                 onClick={() => {
                                     setSignupSuccess(false);
-                                    setMode('login');
-                                    setName('');
-                                    setEmail('');
-                                    setPassword('');
-                                    setConfirmPassword('');
+                                    switchMode('login');
                                 }}
                                 className="btn-primary px-6 py-2"
                             >
@@ -164,6 +204,13 @@ export default function LoginPage() {
                             </div>
                         )}
 
+                        {/* Forgot Password Description */}
+                        {useSupabase && mode === 'forgot' && (
+                            <p className="text-gray-400 text-sm mb-2">
+                                Enter your email address and we'll send you a link to reset your password.
+                            </p>
+                        )}
+
                         {/* Email field (Supabase only) */}
                         {useSupabase && (
                             <div>
@@ -178,10 +225,11 @@ export default function LoginPage() {
                                     onChange={(e) => {
                                         setEmail(e.target.value);
                                         if (error) clearError();
+                                        if (resetError) setResetError(null);
                                     }}
-                                    placeholder="your.email@tellproductions.com"
+                                    placeholder="your.email@company.com"
                                     className="input"
-                                    autoFocus={mode === 'login'}
+                                    autoFocus={mode === 'login' || mode === 'forgot'}
                                     autoComplete="email"
                                     disabled={rateLimited}
                                     required
@@ -189,7 +237,8 @@ export default function LoginPage() {
                             </div>
                         )}
 
-                        {/* Password field */}
+                        {/* Password field (hidden in forgot mode) */}
+                        {mode !== 'forgot' && (
                         <div>
                             <label htmlFor="password" className="label">
                                 {useSupabase ? 'Password' : 'Access Password'}
@@ -213,6 +262,7 @@ export default function LoginPage() {
                                 required
                             />
                         </div>
+                        )}
 
                         {/* Confirm Password field (Signup only) */}
                         {useSupabase && mode === 'signup' && (
@@ -278,9 +328,22 @@ export default function LoginPage() {
                             </div>
                         )}
 
+                        {/* Reset error message */}
+                        {resetError && (
+                            <div
+                                role="alert"
+                                className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"
+                            >
+                                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <span>{resetError}</span>
+                            </div>
+                        )}
+
                         <button
                             type="submit"
-                            disabled={isLoading || rateLimited || (mode === 'signup' ? !name || !email || !password || !confirmPassword || !passwordsMatch : (useSupabase ? !email || !password : !password))}
+                            disabled={isLoading || rateLimited || (mode === 'forgot' ? !email : mode === 'signup' ? !name || !email || !password || !confirmPassword || !passwordsMatch : (useSupabase ? !email || !password : !password))}
                             className="btn-primary w-full py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
                             aria-busy={isLoading}
                         >
@@ -290,11 +353,13 @@ export default function LoginPage() {
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <span>{mode === 'signup' ? 'Submitting...' : 'Signing in...'}</span>
+                                    <span>{mode === 'forgot' ? 'Sending...' : mode === 'signup' ? 'Submitting...' : 'Signing in...'}</span>
                                     <span className="sr-only">Please wait</span>
                                 </span>
                             ) : rateLimited ? (
                                 'Account Locked'
+                            ) : mode === 'forgot' ? (
+                                'Send Reset Link'
                             ) : mode === 'signup' ? (
                                 'Request Access'
                             ) : (
@@ -338,26 +403,31 @@ export default function LoginPage() {
                                     <>
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                // TODO: Implement password reset flow
-                                                alert('Password reset feature coming soon. Contact admin for assistance.');
-                                            }}
+                                            onClick={() => switchMode('forgot')}
                                             className="text-gray-500 hover:text-gray-400 transition-colors"
                                         >
                                             Forgot password?
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={switchMode}
+                                            onClick={() => switchMode('signup')}
                                             className="text-brand-teal hover:text-brand-teal-light transition-colors"
                                         >
                                             Request access
                                         </button>
                                     </>
+                                ) : mode === 'forgot' ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => switchMode('login')}
+                                        className="text-brand-teal hover:text-brand-teal-light transition-colors w-full text-center"
+                                    >
+                                        ← Back to Sign In
+                                    </button>
                                 ) : (
                                     <button
                                         type="button"
-                                        onClick={switchMode}
+                                        onClick={() => switchMode('login')}
                                         className="text-brand-teal hover:text-brand-teal-light transition-colors w-full text-center"
                                     >
                                         Already have an account? Sign in

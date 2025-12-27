@@ -1,16 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSettingsStore } from '../store/settingsStore';
+import { useSettingsStore, CURRENCIES, DEFAULT_TAX_RULES } from '../store/settingsStore';
 import { useAuthStore } from '../store/authStore';
 import { useEmailStore, formatEmailDate } from '../store/emailStore';
 import { useCalendarStore } from '../store/calendarStore';
 import { fetchAllUsers, createUser, updateUserProfile, deleteUser as deleteDbUser, changePassword, generateRandomPassword, approveUser, suspendUser, AVAILABLE_TABS, DEFAULT_TAB_PERMISSIONS } from '../services/userService';
 import InvoiceDesigner from '../components/invoiceDesigner/InvoiceDesigner';
+import TeamManagement from '../components/settings/TeamManagement';
+import PrivacySettings from '../components/settings/PrivacySettings';
+import BillingSettings from '../components/settings/BillingSettings';
 
 const TABS = [
     { id: 'company', label: 'Company' },
     { id: 'tax', label: 'Tax & Legal' },
     { id: 'bank', label: 'Bank Details' },
     { id: 'users', label: 'Users' },
+    { id: 'team', label: 'Team' },
+    { id: 'billing', label: 'Billing' },
     { id: 'integrations', label: 'Integrations' },
     { id: 'quote', label: 'Quote Defaults' },
     { id: 'terms', label: 'Terms & Conditions' },
@@ -19,6 +24,7 @@ const TABS = [
     { id: 'invoice', label: 'Quote Templates' },
     { id: 'ai', label: 'AI Features' },
     { id: 'activity', label: 'Activity Log' },
+    { id: 'privacy', label: 'Privacy & Data' },
 ];
 
 // User Management Component
@@ -856,6 +862,7 @@ export default function SettingsPage() {
         settings,
         setCompanyInfo,
         setTaxInfo,
+        setTaxConfig,
         setBankDetails,
         setQuoteDefaults,
         setPdfOptions,
@@ -871,6 +878,7 @@ export default function SettingsPage() {
         updateRegion,
         deleteRegion,
         moveRegion,
+        setPreferredCurrencies,
         clearActivityLog,
         exportActivityLog,
     } = useSettingsStore();
@@ -880,6 +888,8 @@ export default function SettingsPage() {
     const [newUser, setNewUser] = useState({ name: '', email: '' });
     const [newProjectType, setNewProjectType] = useState('');
     const [newRegion, setNewRegion] = useState({ label: '', currency: 'USD' });
+    const [expandedRegions, setExpandedRegions] = useState({});
+    const [newCountry, setNewCountry] = useState({});
     const [showSaved, setShowSaved] = useState(false);
     const saveTimeoutRef = useRef(null);
 
@@ -1109,28 +1119,33 @@ export default function SettingsPage() {
 
                 {/* Tax & Legal Tab */}
                 {activeTab === 'tax' && (
-                    <div className="max-w-2xl">
+                    <div className="max-w-3xl">
                         <h3 className="text-xl font-bold text-gray-100 mb-6">Tax & Legal Information</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="label">Tax Registration Number</label>
-                                <input
-                                    type="text"
-                                    value={settings.taxInfo.taxNumber}
-                                    onChange={(e) => saveTaxInfo({ taxNumber: e.target.value })}
-                                    className="input"
-                                    placeholder="e.g. GST-123456789"
-                                />
-                            </div>
-                            <div>
-                                <label className="label">Business Registration Number</label>
-                                <input
-                                    type="text"
-                                    value={settings.taxInfo.registrationNumber}
-                                    onChange={(e) => saveTaxInfo({ registrationNumber: e.target.value })}
-                                    className="input"
-                                    placeholder="e.g. 123456-A"
-                                />
+
+                        {/* Business Registration */}
+                        <div className="space-y-4 mb-8">
+                            <h4 className="text-sm font-semibold text-gray-300 border-b border-dark-border pb-2">Business Registration</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label">Tax Registration Number</label>
+                                    <input
+                                        type="text"
+                                        value={settings.taxInfo.taxNumber}
+                                        onChange={(e) => saveTaxInfo({ taxNumber: e.target.value })}
+                                        className="input"
+                                        placeholder="e.g. GST-123456789"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="label">Business Registration Number</label>
+                                    <input
+                                        type="text"
+                                        value={settings.taxInfo.registrationNumber}
+                                        onChange={(e) => saveTaxInfo({ registrationNumber: e.target.value })}
+                                        className="input"
+                                        placeholder="e.g. 123456-A"
+                                    />
+                                </div>
                             </div>
                             <div>
                                 <label className="label">Licenses / Certifications</label>
@@ -1138,9 +1153,143 @@ export default function SettingsPage() {
                                     value={settings.taxInfo.licenses}
                                     onChange={(e) => saveTaxInfo({ licenses: e.target.value })}
                                     className="input resize-none"
-                                    rows={3}
+                                    rows={2}
                                     placeholder="List any relevant licenses or certifications"
                                 />
+                            </div>
+                        </div>
+
+                        {/* Tax Configuration for Invoicing */}
+                        <div className="space-y-4 mb-8">
+                            <h4 className="text-sm font-semibold text-gray-300 border-b border-dark-border pb-2">Tax Configuration</h4>
+                            <p className="text-xs text-gray-500">Configure how tax is calculated and displayed on invoices</p>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label">Home Country</label>
+                                    <select
+                                        value={settings.taxConfig?.homeCountry || 'MY'}
+                                        onChange={(e) => setTaxConfig({ homeCountry: e.target.value })}
+                                        className="input"
+                                    >
+                                        {Object.entries(DEFAULT_TAX_RULES).map(([code, rule]) => (
+                                            <option key={code} value={code}>{rule.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex items-center pt-6">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={settings.taxConfig?.taxRegistered ?? true}
+                                            onChange={(e) => setTaxConfig({ taxRegistered: e.target.checked })}
+                                            className="w-4 h-4 rounded border-gray-600 bg-dark-bg text-accent-primary focus:ring-accent-primary"
+                                        />
+                                        <span className="text-sm text-gray-300">Registered for tax collection</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {settings.taxConfig?.taxRegistered && (
+                                <>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="label">Domestic Tax Name</label>
+                                            <input
+                                                type="text"
+                                                value={settings.taxConfig?.domesticTaxName || 'VAT'}
+                                                onChange={(e) => setTaxConfig({ domesticTaxName: e.target.value })}
+                                                className="input"
+                                                placeholder="VAT, GST, SST, etc."
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="label">Domestic Tax Rate (%)</label>
+                                            <input
+                                                type="number"
+                                                value={settings.taxConfig?.domesticTaxRate || 0}
+                                                onChange={(e) => setTaxConfig({ domesticTaxRate: parseFloat(e.target.value) || 0 })}
+                                                className="input"
+                                                min="0"
+                                                max="100"
+                                                step="0.1"
+                                            />
+                                        </div>
+                                        <div className="flex items-center pt-6">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={settings.taxConfig?.showTaxBreakdown ?? true}
+                                                    onChange={(e) => setTaxConfig({ showTaxBreakdown: e.target.checked })}
+                                                    className="w-4 h-4 rounded border-gray-600 bg-dark-bg text-accent-primary focus:ring-accent-primary"
+                                                />
+                                                <span className="text-sm text-gray-300">Show tax breakdown</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-dark-bg/50 rounded-lg border border-dark-border">
+                                        <h5 className="text-sm font-medium text-gray-300 mb-3">International Invoicing</h5>
+                                        <div className="space-y-3">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={settings.taxConfig?.applyTaxToInternational ?? false}
+                                                    onChange={(e) => setTaxConfig({ applyTaxToInternational: e.target.checked })}
+                                                    className="w-4 h-4 rounded border-gray-600 bg-dark-bg text-accent-primary focus:ring-accent-primary"
+                                                />
+                                                <span className="text-sm text-gray-300">Charge tax on international invoices</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={settings.taxConfig?.reverseChargeEnabled ?? true}
+                                                    onChange={(e) => setTaxConfig({ reverseChargeEnabled: e.target.checked })}
+                                                    className="w-4 h-4 rounded border-gray-600 bg-dark-bg text-accent-primary focus:ring-accent-primary"
+                                                />
+                                                <span className="text-sm text-gray-300">Enable reverse charge for EU B2B</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={settings.taxConfig?.requireClientTaxId ?? false}
+                                                    onChange={(e) => setTaxConfig({ requireClientTaxId: e.target.checked })}
+                                                    className="w-4 h-4 rounded border-gray-600 bg-dark-bg text-accent-primary focus:ring-accent-primary"
+                                                />
+                                                <span className="text-sm text-gray-300">Require client VAT/Tax ID for B2B invoices</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Invoice Wording */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-semibold text-gray-300 border-b border-dark-border pb-2">Invoice Wording</h4>
+                            <p className="text-xs text-gray-500">Customize the text that appears on invoices for different tax scenarios</p>
+
+                            <div>
+                                <label className="label">Reverse Charge Text</label>
+                                <textarea
+                                    value={settings.taxConfig?.reverseChargeText || ''}
+                                    onChange={(e) => setTaxConfig({ reverseChargeText: e.target.value })}
+                                    className="input resize-none text-sm"
+                                    rows={2}
+                                    placeholder="Reverse charge: VAT to be accounted for by the recipient..."
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Shown on B2B invoices to EU countries where reverse charge applies</p>
+                            </div>
+                            <div>
+                                <label className="label">Export Services Text</label>
+                                <textarea
+                                    value={settings.taxConfig?.exportServicesText || ''}
+                                    onChange={(e) => setTaxConfig({ exportServicesText: e.target.value })}
+                                    className="input resize-none text-sm"
+                                    rows={2}
+                                    placeholder="Export of services - zero rated for VAT purposes"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Shown on invoices to countries outside your tax jurisdiction</p>
                             </div>
                         </div>
                     </div>
@@ -1150,15 +1299,42 @@ export default function SettingsPage() {
                 {activeTab === 'bank' && (
                     <div className="max-w-2xl">
                         <h3 className="text-xl font-bold text-gray-100 mb-6">Bank Details</h3>
+                        <p className="text-sm text-gray-500 mb-6">
+                            These details will appear on your invoices. Fill in the fields relevant to your country.
+                        </p>
                         <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label">Bank Name</label>
+                                    <input
+                                        type="text"
+                                        value={settings.bankDetails.bankName}
+                                        onChange={(e) => saveBankDetails({ bankName: e.target.value })}
+                                        className="input"
+                                        placeholder="e.g. Maybank, HSBC, Barclays"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="label">Default Currency</label>
+                                    <select
+                                        value={settings.bankDetails.currency}
+                                        onChange={(e) => saveBankDetails({ currency: e.target.value })}
+                                        className="input"
+                                    >
+                                        {CURRENCIES.map(c => (
+                                            <option key={c.code} value={c.code}>{c.code} - {c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
                             <div>
-                                <label className="label">Bank Name</label>
-                                <input
-                                    type="text"
-                                    value={settings.bankDetails.bankName}
-                                    onChange={(e) => saveBankDetails({ bankName: e.target.value })}
-                                    className="input"
-                                    placeholder="e.g. Maybank"
+                                <label className="label">Bank Address</label>
+                                <textarea
+                                    value={settings.bankDetails.bankAddress || ''}
+                                    onChange={(e) => saveBankDetails({ bankAddress: e.target.value })}
+                                    className="input resize-none"
+                                    rows={2}
+                                    placeholder="Bank branch address"
                                 />
                             </div>
                             <div>
@@ -1168,30 +1344,95 @@ export default function SettingsPage() {
                                     value={settings.bankDetails.accountName}
                                     onChange={(e) => saveBankDetails({ accountName: e.target.value })}
                                     className="input"
-                                    placeholder="Account holder name"
+                                    placeholder="Account holder name (as it appears on the account)"
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">Account Number</label>
-                                    <input
-                                        type="text"
-                                        value={settings.bankDetails.accountNumber}
-                                        onChange={(e) => saveBankDetails({ accountNumber: e.target.value })}
-                                        className="input"
-                                        placeholder="1234567890"
-                                    />
+
+                            <div className="border-t border-dark-border pt-4 mt-4">
+                                <h4 className="text-sm font-semibold text-gray-300 mb-3">Account Numbers</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="label">Account Number</label>
+                                        <input
+                                            type="text"
+                                            value={settings.bankDetails.accountNumber}
+                                            onChange={(e) => saveBankDetails({ accountNumber: e.target.value })}
+                                            className="input"
+                                            placeholder="1234567890"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Sort Code <span className="text-gray-500">(UK)</span></label>
+                                        <input
+                                            type="text"
+                                            value={settings.bankDetails.sortCode || ''}
+                                            onChange={(e) => saveBankDetails({ sortCode: e.target.value })}
+                                            className="input"
+                                            placeholder="12-34-56"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">IBAN <span className="text-gray-500">(International)</span></label>
+                                        <input
+                                            type="text"
+                                            value={settings.bankDetails.iban || ''}
+                                            onChange={(e) => saveBankDetails({ iban: e.target.value })}
+                                            className="input"
+                                            placeholder="GB82 WEST 1234 5698 7654 32"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">SWIFT/BIC Code</label>
+                                        <input
+                                            type="text"
+                                            value={settings.bankDetails.swiftCode}
+                                            onChange={(e) => saveBankDetails({ swiftCode: e.target.value })}
+                                            className="input"
+                                            placeholder="MBBEMYKL"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Routing Number <span className="text-gray-500">(US)</span></label>
+                                        <input
+                                            type="text"
+                                            value={settings.bankDetails.routingNumber || ''}
+                                            onChange={(e) => saveBankDetails({ routingNumber: e.target.value })}
+                                            className="input"
+                                            placeholder="123456789"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Branch Code</label>
+                                        <input
+                                            type="text"
+                                            value={settings.bankDetails.branchCode || ''}
+                                            onChange={(e) => saveBankDetails({ branchCode: e.target.value })}
+                                            className="input"
+                                            placeholder="Branch code"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">BSB Number <span className="text-gray-500">(AU)</span></label>
+                                        <input
+                                            type="text"
+                                            value={settings.bankDetails.bsbNumber || ''}
+                                            onChange={(e) => saveBankDetails({ bsbNumber: e.target.value })}
+                                            className="input"
+                                            placeholder="123-456"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="label">SWIFT Code</label>
-                                    <input
-                                        type="text"
-                                        value={settings.bankDetails.swiftCode}
-                                        onChange={(e) => saveBankDetails({ swiftCode: e.target.value })}
-                                        className="input"
-                                        placeholder="MBBEMYKL"
-                                    />
-                                </div>
+                            </div>
+
+                            <div className="border-t border-dark-border pt-4 mt-4">
+                                <label className="label">Additional Payment Instructions</label>
+                                <textarea
+                                    value={settings.bankDetails.additionalInfo || ''}
+                                    onChange={(e) => saveBankDetails({ additionalInfo: e.target.value })}
+                                    className="input resize-none"
+                                    rows={3}
+                                    placeholder="Any additional payment instructions, reference requirements, or alternative payment methods..."
+                                />
                             </div>
                         </div>
                     </div>
@@ -1354,65 +1595,130 @@ export default function SettingsPage() {
 
                         {/* Regions */}
                         <div>
-                            <h4 className="text-sm font-semibold text-gray-300 mb-4">Regions</h4>
-                            <div className="space-y-2 mb-4">
+                            <h4 className="text-sm font-semibold text-gray-300 mb-2">Regions</h4>
+                            <p className="text-xs text-gray-500 mb-4">Define geographic regions with their currencies and countries for opportunities and quoting.</p>
+                            <div className="space-y-3 mb-4">
                                 {(settings.regions || []).map((region, index) => (
-                                    <div key={region.id} className="flex items-center gap-2 p-2 bg-dark-bg/50 rounded group">
-                                        <div className="flex flex-col gap-0.5">
+                                    <div key={region.id} className="bg-dark-bg/50 rounded-lg border border-dark-border overflow-hidden">
+                                        {/* Region Header */}
+                                        <div className="flex items-center gap-2 p-3">
+                                            <div className="flex flex-col gap-0.5">
+                                                <button
+                                                    onClick={() => { moveRegion(region.id, 'up'); triggerSaved(); }}
+                                                    disabled={index === 0}
+                                                    className="text-gray-600 hover:text-gray-300 disabled:opacity-30"
+                                                >
+                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    onClick={() => { moveRegion(region.id, 'down'); triggerSaved(); }}
+                                                    disabled={index === settings.regions.length - 1}
+                                                    className="text-gray-600 hover:text-gray-300 disabled:opacity-30"
+                                                >
+                                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                </button>
+                                            </div>
                                             <button
-                                                onClick={() => { moveRegion(region.id, 'up'); triggerSaved(); }}
-                                                disabled={index === 0}
-                                                className="text-gray-600 hover:text-gray-300 disabled:opacity-30"
+                                                onClick={() => setExpandedRegions(prev => ({ ...prev, [region.id]: !prev[region.id] }))}
+                                                className="p-1 text-gray-500 hover:text-gray-300"
                                             >
-                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                                <svg className={`w-4 h-4 transform transition-transform ${expandedRegions[region.id] ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                                 </svg>
                                             </button>
-                                            <button
-                                                onClick={() => { moveRegion(region.id, 'down'); triggerSaved(); }}
-                                                disabled={index === settings.regions.length - 1}
-                                                className="text-gray-600 hover:text-gray-300 disabled:opacity-30"
+                                            <input
+                                                type="text"
+                                                value={region.label}
+                                                onChange={(e) => { updateRegion(region.id, { label: e.target.value }); triggerSaved(); }}
+                                                className="flex-1 bg-transparent text-sm text-gray-300 focus:bg-dark-bg rounded px-2 py-1 border border-transparent focus:border-dark-border font-medium"
+                                            />
+                                            <select
+                                                value={region.currency}
+                                                onChange={(e) => { updateRegion(region.id, { currency: e.target.value }); triggerSaved(); }}
+                                                className="input w-28 text-sm"
                                             >
-                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                {CURRENCIES.map(c => (
+                                                    <option key={c.code} value={c.code}>{c.code}</option>
+                                                ))}
+                                            </select>
+                                            <span className="text-xs text-gray-500 w-20 text-right">
+                                                {(region.countries || []).length} countries
+                                            </span>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm(`Delete "${region.label}"?`)) {
+                                                        deleteRegion(region.id);
+                                                        triggerSaved();
+                                                    }
+                                                }}
+                                                className="p-1 text-gray-600 hover:text-red-400"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
                                             </button>
                                         </div>
-                                        <input
-                                            type="text"
-                                            value={region.label}
-                                            onChange={(e) => { updateRegion(region.id, { label: e.target.value }); triggerSaved(); }}
-                                            className="flex-1 bg-transparent text-sm text-gray-300 focus:bg-dark-bg rounded px-2 py-1 border border-transparent focus:border-dark-border"
-                                        />
-                                        <select
-                                            value={region.currency}
-                                            onChange={(e) => { updateRegion(region.id, { currency: e.target.value }); triggerSaved(); }}
-                                            className="input w-24 text-sm"
-                                        >
-                                            <option value="USD">USD</option>
-                                            <option value="MYR">MYR</option>
-                                            <option value="SGD">SGD</option>
-                                            <option value="GBP">GBP</option>
-                                            <option value="AED">AED</option>
-                                            <option value="SAR">SAR</option>
-                                            <option value="QAR">QAR</option>
-                                            <option value="KWD">KWD</option>
-                                            <option value="THB">THB</option>
-                                            <option value="IDR">IDR</option>
-                                        </select>
-                                        <button
-                                            onClick={() => {
-                                                if (confirm(`Delete "${region.label}"?`)) {
-                                                    deleteRegion(region.id);
-                                                    triggerSaved();
-                                                }
-                                            }}
-                                            className="p-1 text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
+                                        {/* Countries List (Expandable) */}
+                                        {expandedRegions[region.id] && (
+                                            <div className="border-t border-dark-border p-3 bg-dark-bg/30">
+                                                <div className="flex flex-wrap gap-2 mb-3">
+                                                    {(region.countries || []).map((country, cIdx) => (
+                                                        <span key={cIdx} className="inline-flex items-center gap-1 px-2 py-1 bg-dark-card rounded text-xs text-gray-300">
+                                                            {country}
+                                                            <button
+                                                                onClick={() => {
+                                                                    const updated = region.countries.filter((_, i) => i !== cIdx);
+                                                                    updateRegion(region.id, { countries: updated });
+                                                                    triggerSaved();
+                                                                }}
+                                                                className="text-gray-500 hover:text-red-400"
+                                                            >
+                                                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                    {(region.countries || []).length === 0 && (
+                                                        <span className="text-xs text-gray-500 italic">No countries added</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={newCountry[region.id] || ''}
+                                                        onChange={(e) => setNewCountry(prev => ({ ...prev, [region.id]: e.target.value }))}
+                                                        placeholder="Add country..."
+                                                        className="input flex-1 text-sm"
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' && newCountry[region.id]?.trim()) {
+                                                                const updated = [...(region.countries || []), newCountry[region.id].trim()];
+                                                                updateRegion(region.id, { countries: updated });
+                                                                setNewCountry(prev => ({ ...prev, [region.id]: '' }));
+                                                                triggerSaved();
+                                                            }
+                                                        }}
+                                                    />
+                                                    <button
+                                                        onClick={() => {
+                                                            if (newCountry[region.id]?.trim()) {
+                                                                const updated = [...(region.countries || []), newCountry[region.id].trim()];
+                                                                updateRegion(region.id, { countries: updated });
+                                                                setNewCountry(prev => ({ ...prev, [region.id]: '' }));
+                                                                triggerSaved();
+                                                            }
+                                                        }}
+                                                        className="btn-secondary text-sm"
+                                                    >
+                                                        Add
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -1425,7 +1731,7 @@ export default function SettingsPage() {
                                     className="input flex-1"
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter' && newRegion.label.trim()) {
-                                            addRegion(newRegion.label.trim(), newRegion.currency);
+                                            addRegion(newRegion.label.trim(), newRegion.currency, []);
                                             setNewRegion({ label: '', currency: 'USD' });
                                             triggerSaved();
                                         }
@@ -1434,18 +1740,16 @@ export default function SettingsPage() {
                                 <select
                                     value={newRegion.currency}
                                     onChange={(e) => setNewRegion({ ...newRegion, currency: e.target.value })}
-                                    className="input w-24"
+                                    className="input w-28"
                                 >
-                                    <option value="USD">USD</option>
-                                    <option value="MYR">MYR</option>
-                                    <option value="SGD">SGD</option>
-                                    <option value="GBP">GBP</option>
-                                    <option value="AED">AED</option>
+                                    {CURRENCIES.map(c => (
+                                        <option key={c.code} value={c.code}>{c.code}</option>
+                                    ))}
                                 </select>
                                 <button
                                     onClick={() => {
                                         if (newRegion.label.trim()) {
-                                            addRegion(newRegion.label.trim(), newRegion.currency);
+                                            addRegion(newRegion.label.trim(), newRegion.currency, []);
                                             setNewRegion({ label: '', currency: 'USD' });
                                             triggerSaved();
                                         }
@@ -1455,6 +1759,65 @@ export default function SettingsPage() {
                                     Add
                                 </button>
                             </div>
+                        </div>
+
+                        {/* Preferred Currencies */}
+                        <div className="mt-8">
+                            <h4 className="text-sm font-semibold text-gray-300 mb-2">Preferred Currencies</h4>
+                            <p className="text-xs text-gray-500 mb-4">
+                                Select the currencies you commonly use. These will appear first in currency dropdowns throughout the app.
+                                Exchange rates update automatically in real-time.
+                            </p>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {(settings.preferredCurrencies || []).map((code) => {
+                                    const currency = CURRENCIES.find(c => c.code === code);
+                                    return (
+                                        <span key={code} className="inline-flex items-center gap-2 px-3 py-2 bg-accent-primary/10 border border-accent-primary/30 rounded-lg text-sm text-gray-200">
+                                            <span className="font-medium">{code}</span>
+                                            <span className="text-gray-400 text-xs">{currency?.name}</span>
+                                            <button
+                                                onClick={() => {
+                                                    const updated = settings.preferredCurrencies.filter(c => c !== code);
+                                                    setPreferredCurrencies(updated);
+                                                    triggerSaved();
+                                                }}
+                                                className="text-gray-500 hover:text-red-400 ml-1"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </span>
+                                    );
+                                })}
+                                {(settings.preferredCurrencies || []).length === 0 && (
+                                    <span className="text-xs text-gray-500 italic">No preferred currencies selected</span>
+                                )}
+                            </div>
+                            <div className="flex gap-2">
+                                <select
+                                    value=""
+                                    onChange={(e) => {
+                                        if (e.target.value && !(settings.preferredCurrencies || []).includes(e.target.value)) {
+                                            const updated = [...(settings.preferredCurrencies || []), e.target.value];
+                                            setPreferredCurrencies(updated);
+                                            triggerSaved();
+                                        }
+                                    }}
+                                    className="input flex-1"
+                                >
+                                    <option value="">Add currency...</option>
+                                    {CURRENCIES
+                                        .filter(c => !(settings.preferredCurrencies || []).includes(c.code))
+                                        .map(c => (
+                                            <option key={c.code} value={c.code}>{c.code} - {c.name}</option>
+                                        ))
+                                    }
+                                </select>
+                            </div>
+                            <p className="text-xs text-amber-400/70 mt-3">
+                                Note: Exchange rates are locked when quotes, invoices, and POs are created to ensure prices never change.
+                            </p>
                         </div>
 
                         {/* Company OKRs */}
@@ -1697,6 +2060,27 @@ export default function SettingsPage() {
                         <p className="text-xs text-gray-600 mt-4">
                             Activity log stores up to 1,000 entries. Older entries are automatically removed.
                         </p>
+                    </div>
+                )}
+
+                {/* Team Tab */}
+                {activeTab === 'team' && (
+                    <TeamManagement />
+                )}
+
+                {/* Billing Tab */}
+                {activeTab === 'billing' && (
+                    <div className="max-w-4xl">
+                        <h3 className="text-xl font-bold text-gray-100 mb-6">Billing & Subscription</h3>
+                        <BillingSettings />
+                    </div>
+                )}
+
+                {/* Privacy & Data Tab */}
+                {activeTab === 'privacy' && (
+                    <div className="max-w-2xl">
+                        <h3 className="text-xl font-bold text-gray-100 mb-6">Privacy & Data</h3>
+                        <PrivacySettings />
                     </div>
                 )}
             </div>

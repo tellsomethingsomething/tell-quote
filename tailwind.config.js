@@ -23,6 +23,7 @@ export default {
         },
         // Existing Brand colors (Preserved)
         brand: {
+          primary: '#0F8B8D',  // Primary brand color (teal) - used for buttons, links, selections
           navy: '#143642',
           teal: '#0F8B8D',
           orange: '#FE7F2D',

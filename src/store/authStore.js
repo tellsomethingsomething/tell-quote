@@ -598,6 +598,66 @@ export const useAuthStore = create((set, get) => ({
     },
 
     /**
+     * Request password reset email
+     */
+    resetPassword: async (email) => {
+        if (!isSupabaseConfigured()) {
+            return { success: false, error: 'Password reset requires Supabase configuration' };
+        }
+
+        set({ isLoading: true, error: null });
+
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/reset-password`,
+            });
+
+            if (error) {
+                set({ isLoading: false });
+                return { success: false, error: error.message };
+            }
+
+            logSecurityEvent('password_reset_requested', { email });
+            set({ isLoading: false });
+            return { success: true };
+        } catch (e) {
+            console.error('Password reset error:', e);
+            set({ isLoading: false });
+            return { success: false, error: 'An error occurred. Please try again.' };
+        }
+    },
+
+    /**
+     * Update password (after clicking reset link)
+     */
+    updatePassword: async (newPassword) => {
+        if (!isSupabaseConfigured()) {
+            return { success: false, error: 'Password update requires Supabase configuration' };
+        }
+
+        set({ isLoading: true, error: null });
+
+        try {
+            const { error } = await supabase.auth.updateUser({
+                password: newPassword,
+            });
+
+            if (error) {
+                set({ isLoading: false });
+                return { success: false, error: error.message };
+            }
+
+            logSecurityEvent('password_updated');
+            set({ isLoading: false });
+            return { success: true };
+        } catch (e) {
+            console.error('Password update error:', e);
+            set({ isLoading: false });
+            return { success: false, error: 'An error occurred. Please try again.' };
+        }
+    },
+
+    /**
      * Logout
      */
     logout: async () => {
