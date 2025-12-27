@@ -1,13 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, HelpCircle, X } from 'lucide-react';
 import Layout from '../components/layout/Layout';
-import { plans, pricingFaqs, comparisonTable } from '../data/pricing';
+import { plans, pricingFaqs, comparisonTable, detectUserCurrency, formatPrice } from '../data/pricing';
 
 export default function Pricing() {
     const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' | 'annual'
+    const [currency, setCurrency] = useState('USD');
+
+    useEffect(() => {
+        setCurrency(detectUserCurrency());
+    }, []);
+
+    const getPrice = (plan, cycle) => {
+        const pricing = plan.pricing[currency] || plan.pricing.USD;
+        return cycle === 'monthly' ? pricing.monthly : pricing.annual;
+    };
 
     return (
         <Layout>
@@ -62,18 +72,18 @@ export default function Pricing() {
                             <div className="mb-8">
                                 <AnimatePresence mode="wait">
                                     <motion.div
-                                        key={billingCycle}
+                                        key={`${billingCycle}-${currency}`}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -10 }}
                                         className="flex items-baseline gap-1"
                                     >
-                                        <span className="text-4xl font-bold">${billingCycle === 'monthly' ? plan.price : plan.priceAnnual}</span>
+                                        <span className="text-4xl font-bold">{formatPrice(getPrice(plan, billingCycle), currency)}</span>
                                         <span className="text-marketing-text-secondary">/mo</span>
                                     </motion.div>
                                 </AnimatePresence>
                                 <div className="text-xs text-marketing-text-secondary mt-1">
-                                    {billingCycle === 'annual' ? `Billed $${plan.priceAnnual * 12} yearly` : 'Billed monthly'}
+                                    {billingCycle === 'annual' ? `Billed ${formatPrice(getPrice(plan, 'annual') * 12, currency)} yearly` : 'Billed monthly'}
                                 </div>
                             </div>
 
