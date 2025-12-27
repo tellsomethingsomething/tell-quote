@@ -43,10 +43,10 @@ export default function Home() {
                             </p>
 
                             <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-16">
-                                <Link to="/auth/signup" className="px-8 py-4 bg-marketing-primary text-white text-lg font-bold rounded-xl hover:bg-marketing-primary/90 transition-all shadow-lg hover:shadow-marketing-primary/25 hover:-translate-y-1">
+                                <Link to="/auth/signup" className="px-8 py-4 bg-marketing-primary text-white text-lg font-bold rounded-xl hover:bg-marketing-primary/90 transition-all shadow-lg hover:shadow-marketing-primary/25 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background" aria-label="Start your free 48-hour trial of ProductionOS">
                                     Start Free Trial
                                 </Link>
-                                <Link to="/pricing" className="px-8 py-4 bg-marketing-surface/50 border border-marketing-border text-marketing-text-primary text-lg font-bold rounded-xl hover:bg-marketing-border/50 transition-all backdrop-blur-sm">
+                                <Link to="/pricing" className="px-8 py-4 bg-marketing-surface/50 border border-marketing-border text-marketing-text-primary text-lg font-bold rounded-xl hover:bg-marketing-border/50 transition-all backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-marketing-background">
                                     View Pricing
                                 </Link>
                             </div>
@@ -132,17 +132,19 @@ export default function Home() {
 
                 {/* Auto-scrolling testimonials marquee */}
                 <div className="relative">
-                    <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-marketing-background to-transparent z-10" />
-                    <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-marketing-background to-transparent z-10" />
+                    <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-marketing-background to-transparent z-10" aria-hidden="true" />
+                    <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-marketing-background to-transparent z-10" aria-hidden="true" />
 
                     <motion.div
                         className="flex gap-6"
+                        role="region"
+                        aria-label="Customer testimonials"
                         animate={{
-                            x: [0, -1920]
+                            x: [0, -(testimonials.length * 424)] // 400px card width + 24px gap
                         }}
                         transition={{
                             x: {
-                                duration: 30,
+                                duration: testimonials.length * 6, // 6 seconds per testimonial
                                 repeat: Infinity,
                                 ease: "linear"
                             }
@@ -151,13 +153,13 @@ export default function Home() {
                         {/* Double the testimonials for seamless loop */}
                         {[...testimonials, ...testimonials].map((t, i) => (
                             <div
-                                key={i}
+                                key={`${t.author}-${i}`}
                                 className="flex-shrink-0 w-[400px] p-8 bg-marketing-surface/50 backdrop-blur-sm border border-marketing-border/50 rounded-3xl"
                             >
-                                <div className="flex text-marketing-primary mb-6">
-                                    {[...Array(5)].map((_, j) => <Star key={j} size={18} fill="currentColor" className="opacity-80" />)}
+                                <div className="flex text-marketing-primary mb-6" role="img" aria-label="5 out of 5 stars">
+                                    {[...Array(5)].map((_, j) => <Star key={j} size={18} fill="currentColor" className="opacity-80" aria-hidden="true" />)}
                                 </div>
-                                <p className="text-lg mb-8 leading-relaxed font-medium text-marketing-text-primary/90">"{t.quote}"</p>
+                                <p className="text-lg mb-8 leading-relaxed font-medium text-marketing-text-primary/90 line-clamp-3">"{t.quote}"</p>
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-marketing-primary to-marketing-accent flex items-center justify-center font-bold text-white text-lg shadow-lg">
                                         {t.author[0]}
@@ -182,10 +184,10 @@ export default function Home() {
                             Join the operating system used by the world's leading production teams. Start your free trial today.
                         </p>
                         <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-                            <Link to="/auth/signup" className="px-10 py-5 bg-marketing-primary text-white text-xl font-bold rounded-xl hover:bg-marketing-primary/90 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1">
+                            <Link to="/auth/signup" className="px-10 py-5 bg-marketing-primary text-white text-xl font-bold rounded-xl hover:bg-marketing-primary/90 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background">
                                 Start Free Trial
                             </Link>
-                            <Link to="/pricing" className="px-10 py-5 bg-transparent border border-white/20 text-white text-xl font-bold rounded-xl hover:bg-white/10 transition-all">
+                            <Link to="/pricing" className="px-10 py-5 bg-transparent border border-white/20 text-white text-xl font-bold rounded-xl hover:bg-white/10 transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-marketing-background">
                                 View Pricing
                             </Link>
                         </div>

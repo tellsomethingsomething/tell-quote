@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const demoData = {
@@ -25,13 +25,23 @@ const demoData = {
 export default function DataSyncDemo() {
     const [stage, setStage] = useState('quote'); // quote, transitioning, project
     const [isAnimating, setIsAnimating] = useState(false);
+    const timeoutRef = useRef(null);
+
+    // Cleanup timeout on unmount to prevent memory leak
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
 
     const handleWinQuote = () => {
         if (isAnimating) return;
         setIsAnimating(true);
         setStage('transitioning');
 
-        setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
             setStage('project');
             setIsAnimating(false);
         }, 1500);

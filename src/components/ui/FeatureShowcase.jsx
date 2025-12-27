@@ -111,11 +111,12 @@ export default function FeatureShowcase() {
 
                 {/* Progress Dots (Mobile) */}
                 <div className="flex justify-center gap-2 mt-4 sm:hidden">
-                    {features.map((_, index) => (
+                    {features.map((feature, index) => (
                         <button
                             key={index}
                             onClick={() => scrollTo(index)}
-                            className={`w-2 h-2 rounded-full transition-all ${
+                            aria-label={`View ${feature.title}`}
+                            className={`w-2 h-2 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-1 focus:ring-offset-gray-900 ${
                                 activeIndex === index ? 'bg-white w-6' : 'bg-gray-600'
                             }`}
                         />
@@ -178,24 +179,28 @@ export default function FeatureShowcase() {
                 <button
                     onClick={() => scrollTo(Math.max(0, activeIndex - 1))}
                     disabled={activeIndex === 0}
-                    className={`p-3 rounded-full border transition-all ${
+                    tabIndex={activeIndex === 0 ? -1 : 0}
+                    aria-label="Previous feature"
+                    className={`p-3 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-900 ${
                         activeIndex === 0
                             ? 'border-gray-700 text-gray-600 cursor-not-allowed'
                             : 'border-gray-600 text-gray-400 hover:border-white hover:text-white'
                     }`}
                 >
-                    <ChevronLeft className="w-5 h-5" />
+                    <ChevronLeft className="w-5 h-5" aria-hidden="true" />
                 </button>
                 <button
                     onClick={() => scrollTo(Math.min(features.length - 1, activeIndex + 1))}
                     disabled={activeIndex === features.length - 1}
-                    className={`p-3 rounded-full border transition-all ${
+                    tabIndex={activeIndex === features.length - 1 ? -1 : 0}
+                    aria-label="Next feature"
+                    className={`p-3 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-900 ${
                         activeIndex === features.length - 1
                             ? 'border-gray-700 text-gray-600 cursor-not-allowed'
                             : 'border-gray-600 text-gray-400 hover:border-white hover:text-white'
                     }`}
                 >
-                    <ChevronRight className="w-5 h-5" />
+                    <ChevronRight className="w-5 h-5" aria-hidden="true" />
                 </button>
             </div>
         </div>
