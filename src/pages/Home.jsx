@@ -19,8 +19,8 @@ export default function Home() {
     return (
         <Layout>
             <Helmet>
-                <title>ProductionOS - The Operating System for Modern Production</title>
-                <meta name="description" content="Unify quotes, projects, crew, and finances. The enterprise-grade platform for video production companies, agencies, and event organizers." />
+                <title>ProductionOS - The Profit Platform for Production Companies</title>
+                <meta name="description" content="CRM, quoting, kit, and crew management in one platform. Know your margins on every job. Stop running your production company from spreadsheets." />
             </Helmet>
 
             {/* --- HERO SECTION --- */}
@@ -33,13 +33,13 @@ export default function Home() {
                             transition={{ duration: 0.6 }}
                         >
                             <span className="inline-block py-1 px-3 rounded-full bg-marketing-surface border border-marketing-border text-marketing-text-secondary text-xs font-medium mb-8 uppercase tracking-widest">
-                                Streamline Your Workflow
+                                CRM + Quoting + Kit + Crew
                             </span>
                             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-tight text-white">
-                                The first CRM built for <br className="hidden md:block" /> <span className="text-marketing-primary bg-clip-text text-transparent bg-gradient-to-r from-marketing-primary to-marketing-accent">Production companies</span>
+                                The profit platform for <br className="hidden md:block" /> <span className="text-marketing-primary bg-clip-text text-transparent bg-gradient-to-r from-marketing-primary to-marketing-accent">production companies</span>
                             </h1>
                             <p className="text-xl md:text-2xl text-marketing-text-secondary max-w-3xl mx-auto mb-12 leading-relaxed">
-                                Quotes, projects, crew, kit, and finances unified in one platform built for video and event production.
+                                Know your margins on every job. Stop running your business from spreadsheets.
                             </p>
 
                             <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-16">
@@ -71,9 +71,9 @@ export default function Home() {
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-20">
                         <h2 className="text-marketing-primary font-bold tracking-widest uppercase text-sm mb-3">WHY PRODUCTIONOS</h2>
-                        <h3 className="text-3xl md:text-5xl font-bold mb-4">Three things production companies <br />actually need.</h3>
+                        <h3 className="text-3xl md:text-5xl font-bold mb-4">Finally know if you're <br />making money.</h3>
                         <p className="text-xl text-marketing-text-secondary max-w-2xl mx-auto">
-                            Not another generic tool. Purpose-built features for how production companies actually work.
+                            Most production companies can't answer "are we profitable?" until it's too late. We fix that.
                         </p>
                     </div>
 
@@ -111,9 +111,9 @@ export default function Home() {
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-12">
                         <h2 className="text-marketing-primary font-bold tracking-widest uppercase text-sm mb-3">THE PLATFORM</h2>
-                        <h3 className="text-3xl md:text-5xl font-bold mb-6">See it in action.</h3>
+                        <h3 className="text-3xl md:text-5xl font-bold mb-6">Everything in one place.</h3>
                         <p className="text-xl text-marketing-text-secondary max-w-2xl mx-auto">
-                            One platform for quotes, kit, crew, and finances. Know your profit on every job.
+                            CRM, quoting, kit tracking, crew management, and financials. No more spreadsheet chaos.
                         </p>
                     </div>
 
@@ -179,9 +179,9 @@ export default function Home() {
             <AuroraBackground showRadialGradient={false}>
                 <section className="py-32 relative text-center w-full z-10">
                     <div className="container mx-auto px-6">
-                        <h2 className="text-4xl md:text-6xl font-bold mb-8 text-white">Ready to professionalize your workflow?</h2>
+                        <h2 className="text-4xl md:text-6xl font-bold mb-8 text-white">Ready to know your margins?</h2>
                         <p className="text-xl text-marketing-text-secondary mb-12 max-w-2xl mx-auto">
-                            Join the operating system used by the world's leading production teams. Start your free trial today.
+                            Stop guessing if jobs are profitable. Start your free trial and see your numbers clearly.
                         </p>
                         <div className="flex flex-col md:flex-row items-center justify-center gap-4">
                             <Link to="/auth/signup" className="px-10 py-5 bg-marketing-primary text-white text-xl font-bold rounded-xl hover:bg-marketing-primary/90 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background">
