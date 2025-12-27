@@ -141,37 +141,23 @@ Output the four sections only, with section headings in caps. No pricing (this i
 }
 
 /**
- * Calls Claude API to generate proposal
+ * Calls AI service to generate proposal
+ * Uses server-side token management - no API key needed
  */
-export async function generateAIProposal(quote, currency, settings, apiKey, proposalInputs = {}) {
+export async function generateAIProposal(quote, currency, settings, _apiKey, proposalInputs = {}) {
     const context = gatherQuoteContext(quote, currency, settings);
     const prompt = createProposalPrompt(context, proposalInputs);
 
     try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
-                'anthropic-dangerous-direct-browser-access': 'true'
-            },
-            body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 1024,
-                messages: [
-                    { role: 'user', content: prompt }
-                ]
-            })
+        // Dynamic import to avoid circular dependencies
+        const { generateAIContent } = await import('../services/aiService.js');
+
+        const result = await generateAIContent({
+            prompt,
+            maxTokens: 1024,
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error?.message || 'API request failed');
-        }
-
-        const data = await response.json();
-        const text = data.content[0]?.text || '';
+        const text = result.content || '';
 
         // Split into paragraphs
         const paragraphs = text.split('\n\n').filter(p => p.trim());
@@ -180,10 +166,24 @@ export async function generateAIProposal(quote, currency, settings, apiKey, prop
             success: true,
             paragraphs,
             fullText: text,
-            context
+            context,
+            tokensUsed: result.tokensUsed,
+            tokensRemaining: result.tokensRemaining,
         };
     } catch (error) {
         console.error('AI Proposal generation failed:', error);
+
+        // Handle insufficient tokens error
+        if (error.code === 'INSUFFICIENT_TOKENS') {
+            return {
+                success: false,
+                error: error.message,
+                code: 'INSUFFICIENT_TOKENS',
+                availableTokens: error.availableTokens,
+                ...generateFallbackProposal(context)
+            };
+        }
+
         return {
             success: false,
             error: error.message,

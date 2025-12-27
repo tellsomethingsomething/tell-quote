@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useKitStore, KIT_STATUS, KIT_STATUS_CONFIG, KIT_CONDITION, KIT_CONDITION_CONFIG, DEFAULT_CATEGORIES } from '../store/kitStore';
 import { useRateCardStore } from '../store/rateCardStore';
 import { formatCurrency } from '../utils/currency';
+import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
 
 // Stats Card Component
 function StatsCard({ stats }) {
@@ -858,6 +859,9 @@ export default function KitListPage() {
     const [editItem, setEditItem] = useState(null);
     const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
 
+    // Feature gating for equipment creation
+    const { checkAndProceed, PromptComponent } = useFeatureGuard(FEATURES.ADD_EQUIPMENT);
+
     useEffect(() => {
         initialize();
     }, [initialize]);
@@ -872,8 +876,10 @@ export default function KitListPage() {
     }, [filteredItems]);
 
     const handleAdd = () => {
-        setEditItem(null);
-        setShowModal(true);
+        checkAndProceed(() => {
+            setEditItem(null);
+            setShowModal(true);
+        });
     };
 
     const handleEdit = (item) => {
@@ -1112,6 +1118,9 @@ export default function KitListPage() {
                     onClose={() => { setShowModal(false); setEditItem(null); }}
                 />
             )}
+
+            {/* Upgrade prompt for feature gate */}
+            <PromptComponent />
         </div>
     );
 }

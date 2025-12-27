@@ -8,6 +8,8 @@ import FinanceMockup from '../mockups/FinanceMockup';
 import DashboardMockup from '../mockups/DashboardMockup';
 import CrewMockup from '../mockups/CrewMockup';
 import EquipmentMockup from '../mockups/EquipmentMockup';
+import CallSheetMockup from '../mockups/CallSheetMockup';
+import DeliverablesMockup from '../mockups/DeliverablesMockup';
 
 const features = [
     {
@@ -57,6 +59,22 @@ const features = [
         description: 'Check-in/out tracking, kit management, and conflict detection. Never double-book a camera again.',
         link: '/features/equipment',
         mockup: EquipmentMockup
+    },
+    {
+        id: 'call-sheets',
+        title: 'Call Sheets',
+        subtitle: 'Professional call sheets in seconds',
+        description: 'Auto-populated from project data with crew contacts, locations, and schedules. Export and send with one click.',
+        link: '/features/call-sheets',
+        mockup: CallSheetMockup
+    },
+    {
+        id: 'deliverables',
+        title: 'Deliverables',
+        subtitle: 'Track every asset to delivery',
+        description: 'Version control, client approvals, and delivery tracking. Know exactly what\'s been delivered and when.',
+        link: '/features/deliverables',
+        mockup: DeliverablesMockup
     }
 ];
 
@@ -169,28 +187,16 @@ export default function FeatureShowcase() {
             {/* Navigation Arrows (Desktop) */}
             <div className="hidden sm:flex justify-center gap-4 mt-8">
                 <button
-                    onClick={() => scrollTo(Math.max(0, activeIndex - 1))}
-                    disabled={activeIndex === 0}
-                    tabIndex={activeIndex === 0 ? -1 : 0}
+                    onClick={() => scrollTo(activeIndex === 0 ? features.length - 1 : activeIndex - 1)}
                     aria-label="Previous feature"
-                    className={`p-3 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background ${
-                        activeIndex === 0
-                            ? 'border-marketing-border text-marketing-text-secondary/40 cursor-not-allowed'
-                            : 'border-marketing-border text-marketing-text-secondary hover:border-marketing-primary hover:text-marketing-text-primary'
-                    }`}
+                    className="p-3 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background border-marketing-border text-marketing-text-secondary hover:border-marketing-primary hover:text-marketing-text-primary"
                 >
                     <ChevronLeft className="w-5 h-5" aria-hidden="true" />
                 </button>
                 <button
-                    onClick={() => scrollTo(Math.min(features.length - 1, activeIndex + 1))}
-                    disabled={activeIndex === features.length - 1}
-                    tabIndex={activeIndex === features.length - 1 ? -1 : 0}
+                    onClick={() => scrollTo(activeIndex === features.length - 1 ? 0 : activeIndex + 1)}
                     aria-label="Next feature"
-                    className={`p-3 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background ${
-                        activeIndex === features.length - 1
-                            ? 'border-marketing-border text-marketing-text-secondary/40 cursor-not-allowed'
-                            : 'border-marketing-border text-marketing-text-secondary hover:border-marketing-primary hover:text-marketing-text-primary'
-                    }`}
+                    className="p-3 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background border-marketing-border text-marketing-text-secondary hover:border-marketing-primary hover:text-marketing-text-primary"
                 >
                     <ChevronRight className="w-5 h-5" aria-hidden="true" />
                 </button>

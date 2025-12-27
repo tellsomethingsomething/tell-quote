@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { supabase, isSupabaseConfigured, shouldUseSupabaseAuth } from '../lib/supabase';
 import { logSecurityEvent } from '../utils/encryption';
+import { trackConversion, Events, trackEvent } from '../services/analyticsService';
+import { setUserContext } from '../services/errorTrackingService';
 
 const AUTH_KEY = 'tell_auth_session';
 const RATE_LIMIT_KEY = 'tell_auth_attempts';
@@ -370,6 +372,9 @@ export const useAuthStore = create((set, get) => ({
 
                 set({ isLoading: false });
                 logSecurityEvent('signup_request', { email });
+
+                // Track signup
+                trackConversion(Events.SIGNUP_COMPLETED);
                 return true;
             }
 
@@ -461,6 +466,9 @@ export const useAuthStore = create((set, get) => ({
                     isLoading: false,
                 });
 
+                // Set user context for error tracking
+                setUserContext({ id: data.user.id });
+                trackEvent('Login', { provider: 'email' });
                 return true;
             }
 

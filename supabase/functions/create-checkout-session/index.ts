@@ -37,10 +37,15 @@ serve(async (req: Request) => {
             throw new Error('Not authenticated');
         }
 
-        const { priceId, organizationId, successUrl, cancelUrl } = await req.json();
+        const { priceId, organizationId, successUrl, cancelUrl, mode = 'subscription' } = await req.json();
 
         if (!priceId || !organizationId) {
             throw new Error('Missing required parameters');
+        }
+
+        // Validate mode
+        if (mode !== 'subscription' && mode !== 'payment') {
+            throw new Error('Invalid mode. Must be "subscription" or "payment"');
         }
 
         // Get or create Stripe customer
@@ -77,10 +82,10 @@ serve(async (req: Request) => {
                 .eq('id', organizationId);
         }
 
-        // Create checkout session
-        const session = await stripe.checkout.sessions.create({
+        // Build checkout session options
+        const sessionOptions: any = {
             customer: customerId,
-            mode: 'subscription',
+            mode,
             payment_method_types: ['card'],
             line_items: [
                 {
@@ -94,14 +99,21 @@ serve(async (req: Request) => {
                 organizationId,
                 userId: user.id,
             },
-            subscription_data: {
+            allow_promotion_codes: true,
+        };
+
+        // Add subscription_data only for subscription mode
+        if (mode === 'subscription') {
+            sessionOptions.subscription_data = {
                 metadata: {
                     organizationId,
                     userId: user.id,
                 },
-            },
-            allow_promotion_codes: true,
-        });
+            };
+        }
+
+        // Create checkout session
+        const session = await stripe.checkout.sessions.create(sessionOptions);
 
         return new Response(
             JSON.stringify({ url: session.url }),

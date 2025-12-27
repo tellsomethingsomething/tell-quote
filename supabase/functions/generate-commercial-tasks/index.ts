@@ -23,7 +23,13 @@ serve(async (req) => {
             )
         }
 
-        // Verify Supabase auth
+        // Create admin client for token operations
+        const supabaseAdmin = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        )
+
+        // Create user client for auth
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -38,7 +44,7 @@ serve(async (req) => {
             )
         }
 
-        const { prompt } = await req.json()
+        const { prompt, max_tokens = 2048, system } = await req.json()
 
         if (!prompt) {
             return new Response(
@@ -54,6 +60,61 @@ serve(async (req) => {
             )
         }
 
+        // Get user's organization
+        const { data: orgMember, error: orgError } = await supabaseAdmin
+            .from('organization_members')
+            .select('organization_id')
+            .eq('user_id', user.id)
+            .single()
+
+        if (orgError || !orgMember) {
+            return new Response(
+                JSON.stringify({ error: 'User not in any organization' }),
+                { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
+        const organizationId = orgMember.organization_id
+
+        // Check available tokens (estimate: ~4 chars per token, prompt + max response)
+        const estimatedTokens = Math.ceil((prompt.length + (system?.length || 0)) / 4) + max_tokens
+
+        const { data: availableTokens, error: tokenError } = await supabaseAdmin
+            .rpc('get_available_ai_tokens', { org_id: organizationId })
+
+        if (tokenError) {
+            console.error('Token check error:', tokenError)
+            return new Response(
+                JSON.stringify({ error: 'Failed to check token balance' }),
+                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
+        if (availableTokens < 100) { // Minimum threshold
+            return new Response(
+                JSON.stringify({
+                    error: 'Insufficient AI tokens. Please purchase more tokens or wait for your monthly reset.',
+                    availableTokens,
+                    code: 'INSUFFICIENT_TOKENS'
+                }),
+                { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
+        // Build messages array
+        const messages = [{ role: 'user', content: prompt }]
+
+        // Build request body
+        const requestBody: Record<string, unknown> = {
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: Math.min(max_tokens, 4096),
+            messages,
+        }
+
+        if (system) {
+            requestBody.system = system
+        }
+
         const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -61,11 +122,7 @@ serve(async (req) => {
                 'anthropic-version': '2023-06-01',
                 'content-type': 'application/json',
             },
-            body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 2048,
-                messages: [{ role: 'user', content: prompt }],
-            }),
+            body: JSON.stringify(requestBody),
         })
 
         if (!response.ok) {
@@ -79,8 +136,31 @@ serve(async (req) => {
         const data = await response.json()
         const content = data.content[0]?.text
 
+        // Calculate actual tokens used from Anthropic response
+        const tokensUsed = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)
+
+        // Consume tokens
+        const { data: consumed, error: consumeError } = await supabaseAdmin
+            .rpc('consume_ai_tokens', {
+                org_id: organizationId,
+                tokens_to_use: tokensUsed
+            })
+
+        if (consumeError) {
+            console.error('Token consumption error:', consumeError)
+            // Don't fail the request if consumption fails - log and continue
+        }
+
+        // Get remaining tokens
+        const { data: remainingTokens } = await supabaseAdmin
+            .rpc('get_available_ai_tokens', { org_id: organizationId })
+
         return new Response(
-            JSON.stringify({ content }),
+            JSON.stringify({
+                content,
+                tokensUsed,
+                tokensRemaining: remainingTokens || 0
+            }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         )
     } catch (error) {

@@ -80,7 +80,7 @@ export default function DeliverablesDemo() {
                         <button
                             key={type}
                             onClick={() => setTypeFilter(type)}
-                            className={`min-h-[36px] sm:min-h-0 px-2 sm:px-2 py-1.5 sm:py-1 rounded text-xs font-medium transition-colors whitespace-nowrap ${typeFilter === type
+                            className={`min-h-[44px] sm:min-h-0 px-2 sm:px-2 py-1.5 sm:py-1 rounded text-xs font-medium transition-colors whitespace-nowrap ${typeFilter === type
                                     ? 'bg-indigo-600 text-white'
                                     : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                                 }`}
@@ -131,7 +131,7 @@ export default function DeliverablesDemo() {
                                         <select
                                             value={item.status}
                                             onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                                            className={`min-h-[32px] sm:min-h-0 px-1 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-opacity-20 border-0 cursor-pointer focus:outline-none ${getStatusColor(item.status)} ${item.status === 'delivered' ? 'text-green-400' :
+                                            className={`min-h-[44px] sm:min-h-0 px-1 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium bg-opacity-20 border-0 cursor-pointer focus:outline-none ${getStatusColor(item.status)} ${item.status === 'delivered' ? 'text-green-400' :
                                                     item.status === 'review' ? 'text-amber-400' :
                                                         item.status === 'in-progress' ? 'text-blue-400' :
                                                             'text-gray-400'
@@ -150,7 +150,7 @@ export default function DeliverablesDemo() {
                                 {/* Add Version Button */}
                                 <button
                                     onClick={() => setShowVersionModal(item)}
-                                    className="min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 text-gray-500 hover:text-indigo-400 transition-colors p-2 sm:p-1 flex items-center justify-center flex-shrink-0"
+                                    className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-gray-500 hover:text-indigo-400 transition-colors p-2 sm:p-1 flex items-center justify-center flex-shrink-0"
                                     title="Add version"
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
     Building2, Globe2, Users, Target, Upload, CreditCard, Rocket,
     CheckCircle, ArrowRight, ArrowLeft, Loader2, X, Video, Camera,
-    Radio, Film, Calendar, Plus, AlertCircle, Download, Sparkles
+    Radio, Film, Calendar, Plus, AlertCircle, Download, Sparkles,
+    Briefcase, TrendingUp, Activity, Image
 } from 'lucide-react';
 import { useOrganizationStore } from '../../store/organizationStore';
 import { CURRENCIES, DEFAULT_TAX_RULES } from '../../store/settingsStore';
@@ -16,6 +17,9 @@ import {
     PAYMENT_TERMS,
     DEFAULT_CREW_ROLES,
     DEFAULT_EQUIPMENT_CATEGORIES,
+    CLIENT_SECTORS,
+    PRODUCTION_TYPES,
+    CONTACT_TYPES,
     getOnboardingProgress,
     updateOnboardingProgress,
     completeStep,
@@ -33,10 +37,14 @@ import {
     importCrew,
     importEquipment,
 } from '../../services/dataImportService';
+import { createSetupIntent, STRIPE_PRICES } from '../../services/billingService';
+import StripeProvider from '../billing/StripeProvider';
+import { CardSetupForm } from '../billing/PaymentMethodForm';
 
 // Step icons mapping
 const STEP_ICONS = {
     company_setup: Building2,
+    target_market: TrendingUp,
     billing: CreditCard,
     pain_points: Target,
     company_profile: Building2,
@@ -55,6 +63,9 @@ const TYPE_ICONS = {
     calendar: Calendar,
     building: Building2,
     plus: Plus,
+    activity: Activity,
+    image: Image,
+    briefcase: Briefcase,
 };
 
 // All country codes - sorted A-Z by name using DEFAULT_TAX_RULES
@@ -92,6 +103,8 @@ export default function OnboardingWizard({ userId, onComplete }) {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState(null);
     const [progress, setProgress] = useState(null);
+    const [organizationId, setOrganizationId] = useState(null);
+    const [userEmail, setUserEmail] = useState(null);
 
     const { createOrganization, createInvitation } = useOrganizationStore();
 
@@ -104,6 +117,11 @@ export default function OnboardingWizard({ userId, onComplete }) {
         teamSize: '',
         country: '',
         currency: 'USD',
+
+        // Target Market - Industries & Clients
+        idealClients: [],       // Free-form list of their ideal clients (e.g., "Nike", "Tech startups", "Sports brands")
+        productionTypes: [],    // What content they create
+        contactTypes: [],       // Who they work with
 
         // Pain Points
         painPoints: [],
@@ -141,9 +159,20 @@ export default function OnboardingWizard({ userId, onComplete }) {
         }
 
         try {
+            // Get user email
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) {
+                setUserEmail(user.email);
+            }
+
             const data = await getOnboardingProgress(userId);
             if (data) {
                 setProgress(data);
+
+                // Check if organization was already created
+                if (data.organization_id) {
+                    setOrganizationId(data.organization_id);
+                }
 
                 // Find current step index
                 const stepIndex = ONBOARDING_STEPS.findIndex(s => s.id === data.current_step);
@@ -291,9 +320,26 @@ export default function OnboardingWizard({ userId, onComplete }) {
             case 'team_invite': {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 const filledInvites = formData.teamInvites.filter(inv => inv.email.trim());
+                const seenEmails = new Set();
+
                 for (const invite of filledInvites) {
+                    const normalizedEmail = invite.email.trim().toLowerCase();
+
                     if (!emailRegex.test(invite.email.trim())) {
                         setError(`Invalid email format: ${invite.email}`);
+                        return false;
+                    }
+
+                    // Check for duplicates within batch
+                    if (seenEmails.has(normalizedEmail)) {
+                        setError(`Duplicate email: ${invite.email}`);
+                        return false;
+                    }
+                    seenEmails.add(normalizedEmail);
+
+                    // Check for self-invite
+                    if (userEmail && normalizedEmail === userEmail.toLowerCase()) {
+                        setError("You can't invite yourself");
                         return false;
                     }
                 }
@@ -315,6 +361,16 @@ export default function OnboardingWizard({ userId, onComplete }) {
             const updates = getStepUpdates(step.id);
             await updateOnboardingProgress(userId, updates);
             await completeStep(userId, step.id);
+
+            // Create organization after company_setup step to enable billing step
+            if (step.id === 'company_setup' && !organizationId && formData.companyName) {
+                const org = await createOrganization(formData.companyName, userId);
+                if (org?.id) {
+                    setOrganizationId(org.id);
+                    // Store org ID in onboarding progress
+                    await updateOnboardingProgress(userId, { organization_id: org.id });
+                }
+            }
 
             // Move to next step
             if (currentStep < ONBOARDING_STEPS.length - 1) {
@@ -393,6 +449,12 @@ export default function OnboardingWizard({ userId, onComplete }) {
                     primary_focus: formData.primaryFocus,
                     team_size: formData.teamSize,
                 };
+            case 'target_market':
+                return {
+                    ideal_clients: formData.idealClients,
+                    production_types: formData.productionTypes,
+                    contact_types: formData.contactTypes,
+                };
             case 'pain_points':
                 return {
                     pain_points: formData.painPoints,
@@ -429,11 +491,23 @@ export default function OnboardingWizard({ userId, onComplete }) {
         setIsSaving(true);
 
         try {
-            // 1. Create the organization
-            const org = await createOrganization(formData.companyName, userId);
+            // 1. Get or create the organization
+            let org;
+            if (organizationId) {
+                // Organization was already created during company_setup step
+                const { data } = await supabase
+                    .from('organizations')
+                    .select('*')
+                    .eq('id', organizationId)
+                    .single();
+                org = data;
+            } else {
+                // Create the organization now (fallback)
+                org = await createOrganization(formData.companyName, userId);
+            }
 
             if (!org) {
-                throw new Error('Failed to create organization');
+                throw new Error('Failed to get or create organization');
             }
 
             // 2. Update organization settings
@@ -458,6 +532,10 @@ export default function OnboardingWizard({ userId, onComplete }) {
                     companyType: formData.companyType,
                     primaryFocus: formData.primaryFocus,
                     painPoints: formData.painPoints,
+                    // Target market data for AI Research
+                    idealClients: formData.idealClients,
+                    productionTypes: formData.productionTypes,
+                    contactTypes: formData.contactTypes,
                 },
             };
 
@@ -493,9 +571,35 @@ export default function OnboardingWizard({ userId, onComplete }) {
             // 2c. Send team invitations (with proper token generation and email sending)
             if (formData.teamInvites?.length > 0) {
                 const validInvites = formData.teamInvites.filter(inv => inv.email?.trim());
+                const inviteResults = { sent: 0, skipped: 0, errors: [] };
+
                 for (const invite of validInvites) {
-                    // createInvitation generates token, saves to DB, and sends email via edge function
-                    await createInvitation(invite.email.trim(), invite.role || 'member', []);
+                    try {
+                        // createInvitation generates token, saves to DB, and sends email via edge function
+                        await createInvitation(invite.email.trim(), invite.role || 'member', []);
+                        inviteResults.sent++;
+                    } catch (inviteErr) {
+                        // Handle specific error cases gracefully
+                        const errorMsg = inviteErr.message || '';
+                        if (errorMsg.includes('already exists') || errorMsg.includes('already a member')) {
+                            // User already exists - skip silently (they can be added manually)
+                            inviteResults.skipped++;
+                            console.log(`Skipped invite for ${invite.email}: user already exists`);
+                        } else if (errorMsg.includes('already invited')) {
+                            // Already invited - skip silently
+                            inviteResults.skipped++;
+                            console.log(`Skipped invite for ${invite.email}: already invited`);
+                        } else {
+                            // Other errors - log but don't fail the whole onboarding
+                            inviteResults.errors.push(invite.email);
+                            console.error(`Failed to invite ${invite.email}:`, inviteErr);
+                        }
+                    }
+                }
+
+                // Store results for potential display
+                if (inviteResults.sent > 0 || inviteResults.skipped > 0) {
+                    console.log(`Invitations: ${inviteResults.sent} sent, ${inviteResults.skipped} skipped`);
                 }
             }
 
@@ -538,14 +642,22 @@ export default function OnboardingWizard({ userId, onComplete }) {
         switch (step.id) {
             case 'company_setup':
                 return <CompanySetupStep formData={formData} updateField={updateField} handleCountryChange={handleCountryChange} toggleArrayItem={toggleArrayItem} />;
+            case 'target_market':
+                return <TargetMarketStep formData={formData} updateField={updateField} toggleArrayItem={toggleArrayItem} />;
             case 'billing':
-                return <BillingStep formData={formData} updateField={updateField} onBillingComplete={(data) => updateField('billingComplete', true)} />;
+                return <BillingStep
+                    formData={formData}
+                    updateField={updateField}
+                    onBillingComplete={() => updateField('billingComplete', true)}
+                    organizationId={organizationId}
+                    userEmail={userEmail}
+                />;
             case 'pain_points':
                 return <PainPointsStep formData={formData} toggleArrayItem={toggleArrayItem} />;
             case 'company_profile':
                 return <CompanyProfileStep formData={formData} updateField={updateField} />;
             case 'team_invite':
-                return <TeamInviteStep formData={formData} updateField={updateField} />;
+                return <TeamInviteStep formData={formData} updateField={updateField} userEmail={userEmail} />;
             case 'data_import':
                 return <DataImportStep formData={formData} updateField={updateField} />;
             case 'rate_card':
@@ -701,23 +813,29 @@ function CompanySetupStep({ formData, updateField, handleCountryChange, toggleAr
             {/* Company Type */}
             <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Company Type *
+                    What type of company are you? *
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {COMPANY_TYPES.map(type => {
                         const Icon = TYPE_ICONS[type.icon] || Building2;
+                        const isSelected = formData.companyType === type.id;
                         return (
                             <button
                                 key={type.id}
                                 onClick={() => updateField('companyType', type.id)}
-                                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                                    formData.companyType === type.id
-                                        ? 'border-brand-primary bg-brand-primary/10 text-white'
-                                        : 'border-dark-border bg-dark-bg text-gray-300 hover:border-gray-600'
+                                className={`flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
+                                    isSelected
+                                        ? 'border-brand-primary bg-brand-primary/10'
+                                        : 'border-dark-border bg-dark-bg hover:border-gray-600'
                                 }`}
                             >
-                                <Icon className="w-5 h-5" />
-                                <span>{type.label}</span>
+                                <Icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${isSelected ? 'text-brand-primary' : 'text-gray-400'}`} />
+                                <div>
+                                    <span className={isSelected ? 'text-white' : 'text-gray-300'}>{type.label}</span>
+                                    {type.description && (
+                                        <p className="text-xs text-gray-500 mt-0.5">{type.description}</p>
+                                    )}
+                                </div>
                             </button>
                         );
                     })}
@@ -946,12 +1064,36 @@ function CompanyProfileStep({ formData, updateField }) {
     );
 }
 
-function TeamInviteStep({ formData, updateField }) {
+function TeamInviteStep({ formData, updateField, userEmail }) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const isValidEmail = (email) => {
         if (!email.trim()) return true; // Empty is valid (optional)
         return emailRegex.test(email.trim());
+    };
+
+    // Check for duplicate emails within the batch
+    const isDuplicate = (email, currentIndex) => {
+        const normalizedEmail = email.trim().toLowerCase();
+        if (!normalizedEmail) return false;
+
+        // Check against other invites
+        const duplicateInBatch = formData.teamInvites.some((inv, i) =>
+            i !== currentIndex && inv.email.trim().toLowerCase() === normalizedEmail
+        );
+
+        // Check against current user's email
+        const isSelfInvite = userEmail && normalizedEmail === userEmail.toLowerCase();
+
+        return duplicateInBatch || isSelfInvite;
+    };
+
+    const getDuplicateMessage = (email, currentIndex) => {
+        const normalizedEmail = email.trim().toLowerCase();
+        if (userEmail && normalizedEmail === userEmail.toLowerCase()) {
+            return "You can't invite yourself";
+        }
+        return 'This email is already in the list';
     };
 
     const addInvite = () => {
@@ -968,6 +1110,11 @@ function TeamInviteStep({ formData, updateField }) {
         updateField('teamInvites', formData.teamInvites.filter((_, i) => i !== index));
     };
 
+    // Count valid invites for summary
+    const validInviteCount = formData.teamInvites.filter(inv =>
+        inv.email.trim() && isValidEmail(inv.email) && !isDuplicate(inv.email, formData.teamInvites.indexOf(inv))
+    ).length;
+
     return (
         <div className="space-y-6">
             <p className="text-gray-400">
@@ -976,7 +1123,11 @@ function TeamInviteStep({ formData, updateField }) {
 
             <div className="space-y-3">
                 {formData.teamInvites.map((invite, index) => {
-                    const showError = invite.email.trim() && !isValidEmail(invite.email);
+                    const hasEmail = invite.email.trim();
+                    const invalidFormat = hasEmail && !isValidEmail(invite.email);
+                    const duplicate = hasEmail && !invalidFormat && isDuplicate(invite.email, index);
+                    const hasError = invalidFormat || duplicate;
+
                     return (
                         <div key={index} className="space-y-1">
                             <div className="flex gap-3">
@@ -985,7 +1136,7 @@ function TeamInviteStep({ formData, updateField }) {
                                     value={invite.email}
                                     onChange={(e) => updateInvite(index, 'email', e.target.value)}
                                     placeholder="colleague@company.com"
-                                    className={`input flex-1 ${showError ? 'border-red-500 focus:border-red-500' : ''}`}
+                                    className={`input flex-1 ${hasError ? 'border-red-500 focus:border-red-500' : ''}`}
                                 />
                                 <select
                                     value={invite.role}
@@ -1002,8 +1153,11 @@ function TeamInviteStep({ formData, updateField }) {
                                     </button>
                                 )}
                             </div>
-                            {showError && (
+                            {invalidFormat && (
                                 <p className="text-red-500 text-sm pl-1">Please enter a valid email address</p>
+                            )}
+                            {duplicate && (
+                                <p className="text-red-500 text-sm pl-1">{getDuplicateMessage(invite.email, index)}</p>
                             )}
                         </div>
                     );
@@ -1017,6 +1171,15 @@ function TeamInviteStep({ formData, updateField }) {
                 <Plus className="w-4 h-4" />
                 Add another
             </button>
+
+            {validInviteCount > 0 && (
+                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <p className="text-sm text-green-400 flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4" />
+                        {validInviteCount} invitation{validInviteCount !== 1 ? 's' : ''} ready to send
+                    </p>
+                </div>
+            )}
         </div>
     );
 }
@@ -1299,37 +1462,273 @@ function FirstActionStep({ formData, updateField }) {
     );
 }
 
-// Billing Step - Shows plan info, can be skipped (billing configured later)
-function BillingStep({ formData, updateField, onBillingComplete }) {
-    const [selectedPlan, setSelectedPlan] = useState('starter');
+// Target Market Step - Industry, production types, and client types
+function TargetMarketStep({ formData, updateField, toggleArrayItem }) {
+    const [clientInput, setClientInput] = useState('');
+
+    const addIdealClient = (value) => {
+        const trimmed = value.trim();
+        if (trimmed && !formData.idealClients.includes(trimmed)) {
+            updateField('idealClients', [...formData.idealClients, trimmed]);
+        }
+        setClientInput('');
+    };
+
+    const removeIdealClient = (client) => {
+        updateField('idealClients', formData.idealClients.filter(c => c !== client));
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addIdealClient(clientInput);
+        }
+    };
+
+    // Filter out sectors already added
+    const availableSectors = CLIENT_SECTORS.filter(
+        sector => !formData.idealClients.includes(sector.label)
+    );
+
+    return (
+        <div className="space-y-8">
+            {/* Ideal Clients - Free-form tag input */}
+            <div>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                    Who are your ideal clients?
+                </h3>
+                <p className="text-sm text-gray-400 mb-4">
+                    Add the types of clients, industries, or specific brands you want to work with. Type and press Enter, or click suggestions below.
+                </p>
+
+                {/* Tag Input */}
+                <div className="bg-dark-bg border border-dark-border rounded-lg p-3 min-h-[80px]">
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-2 mb-2">
+                        {formData.idealClients.map((client, i) => (
+                            <span
+                                key={i}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary/20 text-brand-primary border border-brand-primary/30 rounded-full text-sm"
+                            >
+                                {client}
+                                <button
+                                    onClick={() => removeIdealClient(client)}
+                                    className="hover:text-white transition-colors"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            </span>
+                        ))}
+                    </div>
+
+                    {/* Input */}
+                    <input
+                        type="text"
+                        value={clientInput}
+                        onChange={(e) => setClientInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder={formData.idealClients.length === 0
+                            ? "Type a client type and press Enter..."
+                            : "Add another..."}
+                        className="w-full bg-transparent border-none outline-none text-white placeholder-gray-500 text-sm"
+                    />
+                </div>
+
+                {/* Sector Suggestions */}
+                {availableSectors.length > 0 && (
+                    <div className="mt-3">
+                        <p className="text-xs text-gray-500 mb-2">Quick add industries:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                            {availableSectors.map(sector => (
+                                <button
+                                    key={sector.id}
+                                    onClick={() => addIdealClient(sector.label)}
+                                    className="px-2.5 py-1 text-xs rounded-full border border-dark-border text-gray-400 hover:border-gray-500 hover:text-gray-300 transition-colors"
+                                >
+                                    + {sector.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Production Types */}
+            <div>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                    What do you produce?
+                </h3>
+                <p className="text-sm text-gray-400 mb-4">
+                    Select the types of content or events you create.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {PRODUCTION_TYPES.map(type => {
+                        const isSelected = formData.productionTypes.includes(type.id);
+
+                        return (
+                            <button
+                                key={type.id}
+                                onClick={() => toggleArrayItem('productionTypes', type.id)}
+                                className={`p-3 rounded-lg border text-left transition-all ${
+                                    isSelected
+                                        ? 'border-brand-primary bg-brand-primary/10 text-white'
+                                        : 'border-dark-border bg-dark-bg text-gray-400 hover:border-gray-600 hover:text-gray-300'
+                                }`}
+                            >
+                                <span className="text-sm">{type.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Contact Types */}
+            <div>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                    Who do you work with?
+                </h3>
+                <p className="text-sm text-gray-400 mb-4">
+                    Select the types of contacts you typically work with.
+                </p>
+                <div className="grid gap-2">
+                    {CONTACT_TYPES.map(contact => {
+                        const isSelected = formData.contactTypes.includes(contact.id);
+
+                        return (
+                            <button
+                                key={contact.id}
+                                onClick={() => toggleArrayItem('contactTypes', contact.id)}
+                                className={`p-3 rounded-lg border text-left transition-all ${
+                                    isSelected
+                                        ? 'border-brand-primary bg-brand-primary/10'
+                                        : 'border-dark-border bg-dark-bg hover:border-gray-600'
+                                }`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <span className={`font-medium ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+                                            {contact.label}
+                                        </span>
+                                        <p className="text-sm text-gray-500">{contact.description}</p>
+                                    </div>
+                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                        isSelected ? 'border-brand-primary bg-brand-primary' : 'border-gray-600'
+                                    }`}>
+                                        {isSelected && <CheckCircle className="w-3 h-3 text-white" />}
+                                    </div>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            <div className="p-4 bg-dark-bg/50 border border-dark-border rounded-lg">
+                <div className="flex items-start gap-3">
+                    <Sparkles className="w-5 h-5 text-brand-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                        <h4 className="font-medium text-white mb-1">Why we ask</h4>
+                        <p className="text-sm text-gray-400">
+                            This information helps our AI Research feature find relevant industry news, competitor activity, and opportunities tailored to your specific market.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Billing Step - Payment method capture with 5-day trial
+function BillingStep({ formData, updateField, onBillingComplete, organizationId, userEmail }) {
+    const [selectedPlan, setSelectedPlan] = useState(formData.selectedPlan || 'individual');
+    const [clientSecret, setClientSecret] = useState(null);
+    const [isLoadingSecret, setIsLoadingSecret] = useState(false);
+    const [setupError, setSetupError] = useState(null);
+    const [paymentSaved, setPaymentSaved] = useState(false);
+    const [showSkipConfirm, setShowSkipConfirm] = useState(false);
+    const [retryKey, setRetryKey] = useState(0);
 
     const plans = [
         {
-            id: 'starter',
-            name: 'Starter',
-            price: '$29',
+            id: 'individual',
+            name: 'Individual',
+            price: '$24',
             period: '/month',
-            features: ['Unlimited quotes', 'Up to 50 clients', '5 team members', 'Custom templates'],
+            features: ['Unlimited quotes', 'Up to 50 clients', '2,500 AI tokens/month', 'PDF exports'],
             recommended: true,
         },
         {
-            id: 'professional',
-            name: 'Professional',
-            price: '$79',
+            id: 'team',
+            name: 'Team',
+            price: '$49',
             period: '/month',
-            features: ['Everything in Starter', 'Unlimited clients', '15 team members', 'API access', 'Priority support'],
+            features: ['Everything in Individual', 'Unlimited clients', 'Up to 10 team members', '10,000 AI tokens/month', 'Priority support'],
         },
     ];
+
+    // Load SetupIntent when a paid plan is selected
+    useEffect(() => {
+        if (selectedPlan !== 'free' && organizationId && !clientSecret && !paymentSaved) {
+            loadSetupIntent();
+        }
+    }, [selectedPlan, organizationId, retryKey]);
+
+    const loadSetupIntent = async () => {
+        setIsLoadingSecret(true);
+        setSetupError(null);
+        try {
+            const result = await createSetupIntent(organizationId, userEmail);
+            if (result.clientSecret) {
+                setClientSecret(result.clientSecret);
+            } else {
+                setSetupError('Unable to initialize payment form');
+            }
+        } catch (err) {
+            console.error('SetupIntent error:', err);
+            setSetupError('Unable to initialize payment form. Please try again.');
+        } finally {
+            setIsLoadingSecret(false);
+        }
+    };
+
+    const handlePaymentSuccess = (setupIntent) => {
+        setPaymentSaved(true);
+        updateField('selectedPlan', selectedPlan);
+        updateField('paymentMethodId', setupIntent.payment_method);
+        onBillingComplete?.();
+    };
+
+    const handlePaymentError = (error) => {
+        // Error is already shown in CardSetupForm, no need to duplicate
+        console.error('Payment error:', error);
+    };
+
+    const handleRetry = () => {
+        // Reset the form by getting a new SetupIntent
+        setClientSecret(null);
+        setSetupError(null);
+        setRetryKey(prev => prev + 1);
+    };
+
+    const handleSkipBilling = () => {
+        setShowSkipConfirm(true);
+    };
+
+    const confirmSkipBilling = () => {
+        setShowSkipConfirm(false);
+        updateField('selectedPlan', 'free');
+        onBillingComplete?.();
+    };
 
     return (
         <div className="space-y-6">
             <div className="text-center mb-6">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-400 rounded-full text-sm mb-4">
                     <Sparkles className="w-4 h-4" />
-                    48-Hour Free Trial
+                    5-Day Free Trial
                 </div>
                 <p className="text-gray-400">
-                    Explore ProductionOS with full access. Choose a plan anytime from Settings.
+                    Try ProductionOS free for 5 days. Add a payment method to continue after the trial.
                 </p>
             </div>
 
@@ -1340,13 +1739,16 @@ function BillingStep({ formData, updateField, onBillingComplete }) {
                         key={plan.id}
                         onClick={() => {
                             setSelectedPlan(plan.id);
-                            updateField('selectedPlan', plan.id);
+                            if (plan.id !== selectedPlan) {
+                                setClientSecret(null); // Reset to trigger new SetupIntent
+                            }
                         }}
+                        disabled={paymentSaved}
                         className={`relative p-5 rounded-xl border text-left transition-all ${
                             selectedPlan === plan.id
                                 ? 'border-brand-primary bg-brand-primary/10'
                                 : 'border-dark-border bg-dark-bg hover:border-gray-600'
-                        }`}
+                        } ${paymentSaved ? 'opacity-60 cursor-not-allowed' : ''}`}
                     >
                         {plan.recommended && (
                             <span className="absolute -top-3 left-4 px-2 py-1 bg-brand-primary text-white text-xs font-medium rounded">
@@ -1379,25 +1781,132 @@ function BillingStep({ formData, updateField, onBillingComplete }) {
                 ))}
             </div>
 
-            {/* Free Trial Info */}
-            <div className="bg-dark-bg border border-dark-border rounded-lg p-4">
+            {/* Payment Form */}
+            {!paymentSaved && (
+                <div className="bg-dark-bg border border-dark-border rounded-lg p-4">
+                    <h4 className="font-medium text-white mb-3 flex items-center gap-2">
+                        <CreditCard className="w-4 h-4" />
+                        Payment Method
+                    </h4>
+
+                    {isLoadingSecret ? (
+                        <div className="flex items-center justify-center py-8">
+                            <Loader2 className="w-6 h-6 animate-spin text-brand-primary" />
+                        </div>
+                    ) : setupError ? (
+                        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm mb-3">
+                            {setupError}
+                            <button
+                                onClick={loadSetupIntent}
+                                className="ml-2 underline hover:no-underline"
+                            >
+                                Retry
+                            </button>
+                        </div>
+                    ) : clientSecret ? (
+                        <StripeProvider clientSecret={clientSecret} key={retryKey}>
+                            <CardSetupForm
+                                onSuccess={handlePaymentSuccess}
+                                onError={handlePaymentError}
+                                onRetry={handleRetry}
+                            />
+                        </StripeProvider>
+                    ) : null}
+                </div>
+            )}
+
+            {/* Payment Saved Confirmation */}
+            {paymentSaved && (
+                <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg text-center">
+                    <div className="flex items-center justify-center gap-2 text-green-400 mb-1">
+                        <CheckCircle className="w-5 h-5" />
+                        <span className="font-medium">Payment method saved</span>
+                    </div>
+                    <p className="text-sm text-gray-400">
+                        You won't be charged until your 5-day trial ends.
+                    </p>
+                </div>
+            )}
+
+            {/* Skip Option */}
+            {!paymentSaved && (
+                <div className="text-center">
+                    <button
+                        onClick={handleSkipBilling}
+                        className="text-sm text-gray-500 hover:text-gray-400 underline"
+                    >
+                        Skip for now - continue with limited free plan
+                    </button>
+                </div>
+            )}
+
+            {/* Trial Info */}
+            <div className="bg-dark-bg/50 border border-dark-border rounded-lg p-4">
                 <div className="flex items-start gap-3">
                     <Sparkles className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                     <div>
                         <h4 className="font-medium text-white mb-1">What you get in the trial</h4>
                         <ul className="text-sm text-gray-400 space-y-1">
-                            <li>• Full access to all features</li>
+                            <li>• Full access to all features for 5 days</li>
                             <li>• Unlimited quotes and projects</li>
-                            <li>• 5-day trial period</li>
-                            <li>• Upgrade anytime from Settings</li>
+                            <li>• Cancel anytime before trial ends</li>
+                            <li>• You'll be charged only after the trial</li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            <p className="text-xs text-center text-gray-500">
-                Click Continue below to start exploring ProductionOS.
-            </p>
+            {/* Skip Billing Confirmation Modal */}
+            {showSkipConfirm && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+                    <div className="bg-dark-card border border-dark-border rounded-xl max-w-md w-full p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                                <AlertCircle className="w-5 h-5 text-yellow-500" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-white">Skip payment setup?</h3>
+                        </div>
+                        <p className="text-gray-400 mb-4">
+                            The free plan has limited features:
+                        </p>
+                        <ul className="text-sm text-gray-400 space-y-2 mb-6">
+                            <li className="flex items-center gap-2">
+                                <X className="w-4 h-4 text-red-400" />
+                                Only 3 projects
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <X className="w-4 h-4 text-red-400" />
+                                10 clients max
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <X className="w-4 h-4 text-red-400" />
+                                No AI features
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <X className="w-4 h-4 text-red-400" />
+                                Watermarked PDFs
+                            </li>
+                        </ul>
+                        <p className="text-sm text-gray-500 mb-6">
+                            You can upgrade anytime from Settings.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowSkipConfirm(false)}
+                                className="flex-1 py-2.5 bg-brand-primary text-white font-medium rounded-lg hover:bg-brand-primary/90 transition-colors"
+                            >
+                                Add Payment Method
+                            </button>
+                            <button
+                                onClick={confirmSkipBilling}
+                                className="flex-1 py-2.5 border border-dark-border text-gray-400 font-medium rounded-lg hover:bg-dark-bg transition-colors"
+                            >
+                                Continue Free
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

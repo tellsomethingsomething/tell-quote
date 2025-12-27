@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useCrewStore, CREW_DEPARTMENTS, AVAILABILITY_STATUS } from '../store/crewStore';
+import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
 
 // Crew Card Component
 function CrewCard({ member, onSelect, onToggleFavorite }) {
@@ -343,6 +344,9 @@ export default function CrewPage({ onSelectCrew }) {
     const [showModal, setShowModal] = useState(false);
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
+    // Feature gating for crew creation
+    const { checkAndProceed, PromptComponent } = useFeatureGuard(FEATURES.ADD_CREW);
+
     const stats = getStats();
 
     // Filter crew
@@ -382,7 +386,7 @@ export default function CrewPage({ onSelectCrew }) {
                     <p className="text-gray-400 text-sm">Manage your talent database</p>
                 </div>
                 <button
-                    onClick={() => setShowModal(true)}
+                    onClick={() => checkAndProceed(() => setShowModal(true))}
                     className="px-4 py-2 bg-accent-primary text-white rounded-lg font-medium hover:bg-accent-primary/90 transition-colors flex items-center gap-2"
                 >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -391,6 +395,9 @@ export default function CrewPage({ onSelectCrew }) {
                     Add Crew
                 </button>
             </div>
+
+            {/* Upgrade prompt for feature gate */}
+            <PromptComponent />
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -509,7 +516,7 @@ export default function CrewPage({ onSelectCrew }) {
                     </p>
                     {!search && !departmentFilter && !availabilityFilter && (
                         <button
-                            onClick={() => setShowModal(true)}
+                            onClick={() => checkAndProceed(() => setShowModal(true))}
                             className="px-4 py-2 bg-accent-primary text-white rounded-lg font-medium hover:bg-accent-primary/90 transition-colors"
                         >
                             Add Crew Member

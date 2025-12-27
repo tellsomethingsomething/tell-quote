@@ -6,109 +6,263 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useOrganizationStore } from '../store/organizationStore';
 
+// Use test mode in development
+const isTestMode = import.meta.env.DEV || import.meta.env.VITE_STRIPE_TEST_MODE === 'true';
+
+// Stripe Products (Live Mode)
+export const STRIPE_PRODUCTS = {
+    individual: 'prod_TgOJZ4SQjfFaSH',
+    team: 'prod_TgOJvRtalQa4WF',
+    tokenPack5k: 'prod_TgOJC2A4LtwwXx',
+    tokenPack25k: 'prod_TgOJMoTRYLdAW8',
+    tokenPack100k: 'prod_TgOJx8k1JwniR9',
+};
+
+// Stripe Products (Test Mode)
+export const STRIPE_PRODUCTS_TEST = {
+    individual: 'prod_TgOxfFUv2amuIK',
+    team: 'prod_TgOxdkKikv5qgx',
+    tokenPack5k: 'prod_TgPMQNI85ggTaT',
+    tokenPack25k: 'prod_TgPMvoxPkeCxXc',
+    tokenPack100k: 'prod_TgPMdCe4rYpaYx',
+};
+
+// Stripe Price IDs by currency and billing cycle (Live Mode)
+const STRIPE_PRICES_LIVE = {
+    individual: {
+        USD: {
+            monthly: 'price_1Sj1XBLE30d1czmdCbD6Kg9V',
+            annual: 'price_1Sj1XCLE30d1czmdi2UKwktG',
+        },
+        GBP: {
+            monthly: 'price_1Sj1XDLE30d1czmdWHrCT59f',
+            annual: 'price_1Sj1XDLE30d1czmdGv9wtuLD',
+        },
+        EUR: {
+            monthly: 'price_1Sj1XELE30d1czmdO2Vz955B',
+            annual: 'price_1Sj1XFLE30d1czmdwwDRbACg',
+        },
+    },
+    team: {
+        USD: {
+            monthly: 'price_1Sj1XYLE30d1czmdzldBwYTB',
+            annual: 'price_1Sj1XYLE30d1czmdLUNjPxbg',
+        },
+        GBP: {
+            monthly: 'price_1Sj1XZLE30d1czmd2oBHlWtC',
+            annual: 'price_1Sj1XaLE30d1czmd5DsbtbFN',
+        },
+        EUR: {
+            monthly: 'price_1Sj1XaLE30d1czmdIAxyupGE',
+            annual: 'price_1Sj1XbLE30d1czmdkSIGXZCQ',
+        },
+    },
+};
+
+// Stripe Price IDs (Test Mode)
+const STRIPE_PRICES_TEST = {
+    individual: {
+        USD: {
+            monthly: 'price_1Sj2Y4LE30d1czmdNFSZ2TOH',
+            annual: 'price_1Sj2Y5LE30d1czmdTb3GqNrr',
+        },
+        GBP: {
+            monthly: 'price_1Sj2Y6LE30d1czmdZ7U9fbjf',
+            annual: 'price_1Sj2Y7LE30d1czmd16o5FTvp',
+        },
+        EUR: {
+            monthly: 'price_1Sj2Y8LE30d1czmd97QfUxC0',
+            annual: 'price_1Sj2Y9LE30d1czmdNn46kL5B',
+        },
+    },
+    team: {
+        USD: {
+            monthly: 'price_1Sj2YdLE30d1czmdNopdqYTj',
+            annual: 'price_1Sj2YdLE30d1czmdSzOW3rrY',
+        },
+        GBP: {
+            monthly: 'price_1Sj2YeLE30d1czmdaci4C18S',
+            annual: 'price_1Sj2YfLE30d1czmdKINVzc7y',
+        },
+        EUR: {
+            monthly: 'price_1Sj2YgLE30d1czmd3XWoxg8g',
+            annual: 'price_1Sj2YhLE30d1czmdRrlAeRxh',
+        },
+    },
+};
+
+// Token Pack Prices (Live Mode)
+const TOKEN_PACK_PRICES_LIVE = {
+    '5000': {
+        USD: 'price_1Sj1XxLE30d1czmdEEBt5q8O',
+        GBP: 'price_1Sj1XyLE30d1czmdkFf9mcs2',
+        EUR: 'price_1Sj1XzLE30d1czmdbvVUUb1M',
+    },
+    '25000': {
+        USD: 'price_1Sj1XzLE30d1czmdAvrfublS',
+        GBP: 'price_1Sj1Y0LE30d1czmdoZhyNiq2',
+        EUR: 'price_1Sj1Y1LE30d1czmdHuHTtYZM',
+    },
+    '100000': {
+        USD: 'price_1Sj1Y1LE30d1czmd79RiK6eB',
+        GBP: 'price_1Sj1Y2LE30d1czmdMwBDZQ0w',
+        EUR: 'price_1Sj1Y3LE30d1czmdqngP2zV7',
+    },
+};
+
+// Token Pack Prices (Test Mode)
+const TOKEN_PACK_PRICES_TEST = {
+    '5000': {
+        USD: 'price_1Sj2Z7LE30d1czmdb4ulGv3e',
+        GBP: 'price_1Sj2Z8LE30d1czmdstOAIod4',
+        EUR: 'price_1Sj2Z9LE30d1czmd5QSHe1fM',
+    },
+    '25000': {
+        USD: 'price_1Sj2ZALE30d1czmd7O5yIKye',
+        GBP: 'price_1Sj2ZBLE30d1czmd4tBU4Dz5',
+        EUR: 'price_1Sj2ZCLE30d1czmdckdVSYfI',
+    },
+    '100000': {
+        USD: 'price_1Sj2ZDLE30d1czmddEVuI7VR',
+        GBP: 'price_1Sj2ZELE30d1czmdCWDVUD6J',
+        EUR: 'price_1Sj2ZFLE30d1czmdkIE1DSvc',
+    },
+};
+
+// Export the appropriate prices based on mode
+export const STRIPE_PRICES = isTestMode ? STRIPE_PRICES_TEST : STRIPE_PRICES_LIVE;
+export const TOKEN_PACK_PRICES = isTestMode ? TOKEN_PACK_PRICES_TEST : TOKEN_PACK_PRICES_LIVE;
+
 // Stripe Plans Configuration
 export const PLANS = {
     free: {
         id: 'free',
         name: 'Free',
-        description: 'For individuals getting started',
-        priceMonthly: 0,
-        priceYearly: 0,
-        stripePriceIdMonthly: null,
-        stripePriceIdYearly: null,
+        description: 'Get started and explore the platform.',
+        pricing: {
+            USD: { monthly: 0, annual: 0 },
+            GBP: { monthly: 0, annual: 0 },
+            EUR: { monthly: 0, annual: 0 },
+        },
         features: [
-            'Up to 5 quotes per month',
-            'Up to 3 clients',
-            '1 team member',
-            'Basic templates',
-            'Email support',
+            '3 active projects',
+            'Proposals & Quotes (watermarked)',
+            '10 crew contacts',
+            '10 equipment items',
+            'Basic project tracking',
         ],
         limits: {
-            quotesPerMonth: 5,
-            clients: 3,
+            projects: 3,
+            crewContacts: 10,
+            equipmentItems: 10,
+            regions: 1,
             teamMembers: 1,
-            storage: 100, // MB
+            aiTokens: 0,
         },
     },
-    starter: {
-        id: 'starter',
-        name: 'Starter',
-        description: 'For small production companies',
-        priceMonthly: 29,
-        priceYearly: 290,
-        stripePriceIdMonthly: 'price_starter_monthly',
-        stripePriceIdYearly: 'price_starter_yearly',
-        features: [
-            'Unlimited quotes',
-            'Up to 50 clients',
-            'Up to 5 team members',
-            'Custom templates',
-            'Invoice generation',
-            'Priority email support',
-        ],
-        limits: {
-            quotesPerMonth: -1, // unlimited
-            clients: 50,
-            teamMembers: 5,
-            storage: 1000, // MB
+    individual: {
+        id: 'individual',
+        name: 'Individual',
+        description: 'Everything you need as a freelancer.',
+        pricing: {
+            USD: { monthly: 24, annual: 228 },
+            GBP: { monthly: 19, annual: 180 },
+            EUR: { monthly: 22, annual: 216 },
         },
-    },
-    professional: {
-        id: 'professional',
-        name: 'Professional',
-        description: 'For growing production teams',
-        priceMonthly: 79,
-        priceYearly: 790,
-        stripePriceIdMonthly: 'price_professional_monthly',
-        stripePriceIdYearly: 'price_professional_yearly',
         features: [
-            'Everything in Starter',
-            'Unlimited clients',
-            'Up to 20 team members',
-            'Project management',
-            'Crew & kit booking',
-            'API access',
-            'Phone support',
+            'Unlimited projects',
+            'Proposals, Quotes & Invoices',
+            '100 crew contacts',
+            '50 equipment items',
+            'Call sheets & calendar sync',
+            '10,000 AI tokens/month',
         ],
         limits: {
-            quotesPerMonth: -1,
-            clients: -1,
-            teamMembers: 20,
-            storage: 10000, // MB
+            projects: -1,
+            crewContacts: 100,
+            equipmentItems: 50,
+            regions: 3,
+            teamMembers: 1,
+            aiTokens: 10000,
         },
         popular: true,
     },
-    enterprise: {
-        id: 'enterprise',
-        name: 'Enterprise',
-        description: 'For large production houses',
-        priceMonthly: 199,
-        priceYearly: 1990,
-        stripePriceIdMonthly: 'price_enterprise_monthly',
-        stripePriceIdYearly: 'price_enterprise_yearly',
+    team: {
+        id: 'team',
+        name: 'Team',
+        description: 'For production companies with 3+ users.',
+        pricing: {
+            USD: { monthly: 49, annual: 468 },
+            GBP: { monthly: 39, annual: 372 },
+            EUR: { monthly: 45, annual: 432 },
+        },
         features: [
-            'Everything in Professional',
-            'Unlimited team members',
-            'Multi-organization support',
-            'Advanced analytics',
-            'Custom integrations',
-            'SLA guarantee',
-            'Dedicated account manager',
+            'Everything in Individual',
+            '3 users included (+$10/user)',
+            'Purchase Orders',
+            '50,000 AI tokens/month',
+            'AI SOP Generator',
+            'Team collaboration',
+            'Custom branding',
         ],
         limits: {
-            quotesPerMonth: -1,
-            clients: -1,
-            teamMembers: -1,
-            storage: -1, // unlimited
+            projects: -1,
+            crewContacts: -1,
+            equipmentItems: -1,
+            regions: -1,
+            teamMembers: 3, // +$10/user for additional
+            aiTokens: 50000,
         },
     },
 };
+
+// Token Packs Configuration
+export const TOKEN_PACKS = {
+    '5000': {
+        id: '5000',
+        tokens: 5000,
+        pricing: { USD: 5, GBP: 4, EUR: 5 },
+        popular: false,
+    },
+    '25000': {
+        id: '25000',
+        tokens: 25000,
+        pricing: { USD: 20, GBP: 16, EUR: 18 },
+        popular: true,
+    },
+    '100000': {
+        id: '100000',
+        tokens: 100000,
+        pricing: { USD: 60, GBP: 48, EUR: 55 },
+        popular: false,
+    },
+};
+
+/**
+ * Get Stripe price ID for a plan
+ */
+export function getStripePriceId(planId, currency = 'USD', billingCycle = 'monthly') {
+    if (planId === 'free') return null;
+    const planPrices = STRIPE_PRICES[planId];
+    if (!planPrices) return null;
+    const currencyPrices = planPrices[currency] || planPrices.USD;
+    return currencyPrices[billingCycle] || currencyPrices.monthly;
+}
+
+/**
+ * Get Stripe price ID for a token pack
+ */
+export function getTokenPackPriceId(tokens, currency = 'USD') {
+    const packPrices = TOKEN_PACK_PRICES[tokens.toString()];
+    if (!packPrices) return null;
+    return packPrices[currency] || packPrices.USD;
+}
 
 /**
  * Create a Stripe checkout session for trial with billing capture
  * Sets up subscription but doesn't charge until trial ends (5 days)
  */
-export async function createTrialCheckoutSession(planId = 'starter', organizationId, userEmail) {
+export async function createTrialCheckoutSession(planId = 'individual', organizationId, userEmail, currency = 'USD') {
     if (!isSupabaseConfigured()) {
         throw new Error('Database not configured');
     }
@@ -116,7 +270,7 @@ export async function createTrialCheckoutSession(planId = 'starter', organizatio
     const plan = PLANS[planId];
     if (!plan) throw new Error('Invalid plan');
 
-    const priceId = plan.stripePriceIdMonthly;
+    const priceId = getStripePriceId(planId, currency, 'monthly');
     if (!priceId) {
         throw new Error('This plan does not support subscriptions');
     }
@@ -161,7 +315,7 @@ export async function createSetupIntent(organizationId, userEmail) {
 /**
  * Create a Stripe checkout session for subscription
  */
-export async function createCheckoutSession(planId, billingCycle = 'monthly') {
+export async function createCheckoutSession(planId, billingCycle = 'monthly', currency = 'USD') {
     if (!isSupabaseConfigured()) {
         throw new Error('Database not configured');
     }
@@ -175,10 +329,7 @@ export async function createCheckoutSession(planId, billingCycle = 'monthly') {
     const plan = PLANS[planId];
     if (!plan) throw new Error('Invalid plan');
 
-    const priceId = billingCycle === 'yearly'
-        ? plan.stripePriceIdYearly
-        : plan.stripePriceIdMonthly;
-
+    const priceId = getStripePriceId(planId, currency, billingCycle);
     if (!priceId) {
         throw new Error('This plan does not support paid subscriptions');
     }
@@ -190,6 +341,40 @@ export async function createCheckoutSession(planId, billingCycle = 'monthly') {
             organizationId,
             successUrl: `${window.location.origin}/settings?tab=billing&success=true`,
             cancelUrl: `${window.location.origin}/settings?tab=billing&canceled=true`,
+        },
+    });
+
+    if (error) throw error;
+    return data;
+}
+
+/**
+ * Create a Stripe checkout session for purchasing a token pack
+ */
+export async function createTokenPackCheckoutSession(tokens, currency = 'USD') {
+    if (!isSupabaseConfigured()) {
+        throw new Error('Database not configured');
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const organizationId = useOrganizationStore.getState().getOrganizationId();
+    if (!organizationId) throw new Error('No organization selected');
+
+    const priceId = getTokenPackPriceId(tokens, currency);
+    if (!priceId) {
+        throw new Error('Invalid token pack');
+    }
+
+    // Call Supabase Edge Function to create Stripe checkout session
+    const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+            priceId,
+            organizationId,
+            mode: 'payment', // One-time payment, not subscription
+            successUrl: `${window.location.origin}/settings?tab=billing&tokens=success`,
+            cancelUrl: `${window.location.origin}/settings?tab=billing&tokens=canceled`,
         },
     });
 
@@ -424,7 +609,15 @@ export function getAllPlans() {
 
 export default {
     PLANS,
+    TOKEN_PACKS,
+    STRIPE_PRODUCTS,
+    STRIPE_PRICES,
+    TOKEN_PACK_PRICES,
+    getStripePriceId,
+    getTokenPackPriceId,
     createCheckoutSession,
+    createTokenPackCheckoutSession,
+    createTrialCheckoutSession,
     createPortalSession,
     getSubscriptionStatus,
     getUsageStats,

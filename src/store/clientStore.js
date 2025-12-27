@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useActivityStore } from './activityStore';
+import { trackConversion, Events } from '../services/analyticsService';
 
 const CLIENTS_STORAGE_KEY = 'tell_clients';
 const SAVED_QUOTES_KEY = 'tell_saved_quotes';
@@ -886,7 +887,11 @@ export const useClientStore = create(
                             .select()
                             .single();
                         if (error) throw error;
-                        if (data) serverId = data.id;
+                        if (data) {
+                            serverId = data.id;
+                            // Track new quote creation
+                            trackConversion(Events.QUOTE_CREATED);
+                        }
                     }
 
                     // Mark as synced

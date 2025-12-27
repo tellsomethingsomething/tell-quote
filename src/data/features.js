@@ -6,7 +6,10 @@ import {
     Camera,
     BarChart3,
     FileSpreadsheet,
-    Layers
+    Layers,
+    Sparkles,
+    ClipboardList,
+    Mail
 } from 'lucide-react';
 
 export const features = [
@@ -128,6 +131,51 @@ export const features = [
             'Version control (v1, v2...)',
             'Due date tracking & alerts',
             'Client delivery tracking'
+        ]
+    },
+    {
+        id: 'ai-research',
+        title: 'AI Research',
+        headline: 'Find opportunities faster',
+        description: 'AI-powered research tailored to your market. Find brand activity, agency movements, industry news, and new business opportunities before your competitors do.',
+        icon: Sparkles,
+        path: '/features/ai-research',
+        bullets: [
+            'Industry news monitoring',
+            'Brand activity tracking',
+            'Agency movement alerts',
+            'Opportunity identification',
+            'Personalized to your market'
+        ]
+    },
+    {
+        id: 'sops',
+        title: 'SOPs & Workflows',
+        headline: 'Standardize your processes',
+        description: 'Document and automate your production workflows. Create reusable checklists, standard operating procedures, and templates that ensure consistency across every project.',
+        icon: ClipboardList,
+        path: '/features/sops',
+        bullets: [
+            'Process documentation',
+            'Reusable checklists',
+            'Workflow templates',
+            'Team training resources',
+            'Quality consistency'
+        ]
+    },
+    {
+        id: 'email-sequences',
+        title: 'Email Sequences',
+        headline: 'Outreach on autopilot',
+        description: 'Automated email sequences that nurture leads and follow up with clients. Set up once, let it run. Never forget to follow up again.',
+        icon: Mail,
+        path: '/features/email-sequences',
+        bullets: [
+            'Automated follow-up sequences',
+            'Personalized email templates',
+            'Send timing optimization',
+            'Open and click tracking',
+            'CRM integration'
         ]
     }
 ];
@@ -312,5 +360,71 @@ export const featurePageData = {
             company: "Framelight Productions"
         },
         related: ['projects', 'financials']
+    },
+    "ai-research": {
+        title: "AI that knows your market. Finds your next opportunity.",
+        subtitle: "Stop spending hours on LinkedIn and Google searching for leads. ProductionOS AI Research monitors your target industries, tracks brand activity, and surfaces opportunities tailored to exactly what you do.",
+        seoTitle: "AI Research for Production Companies | ProductionOS",
+        seoDesc: "AI-powered business development for production companies. Industry monitoring, brand tracking, opportunity identification. Find leads before competitors. Start free trial.",
+        painPoint: "New business development is a time sink. Hours scrolling LinkedIn, checking marketing news sites, searching for RFPs. By the time you find an opportunity, three other companies have already pitched.",
+        solution: "AI Research monitors your market while you work. Morning briefings with relevant industry moves, brand activity, and opportunities matched to your ideal client profile.",
+        benefits: [
+            { title: "Personalized to your market", desc: "Tell us your ideal clients during onboarding. AI Research focuses only on industries, brands, and opportunities relevant to you." },
+            { title: "Industry news monitoring", desc: "Track news across your target sectors. Know when a brand launches a campaign, hires a new marketing director, or announces an event." },
+            { title: "Brand activity tracking", desc: "See what your target clients are doing. New campaigns, awards, product launches: signals that they might need production work." },
+            { title: "Agency movement alerts", desc: "Track agency wins, losses, and movements. When an agency wins a new account, they often need production partners." },
+            { title: "Opportunity matching", desc: "AI identifies opportunities based on your production types. Sports production company? We'll surface sports brand activity first." },
+            { title: "Morning briefings", desc: "Start each day with a curated list of relevant news and opportunities. No more scrolling—just actionable insights." }
+        ],
+        testimonial: {
+            quote: "AI Research surfaced a sports brand launching a new campaign before anyone else knew. We pitched early, got the job. That's a $40,000 project I would have missed.",
+            author: "Marcus Webb",
+            company: "Red Door Films"
+        },
+        related: ['crm', 'quoting', 'projects']
+    },
+    sops: {
+        title: "Your playbook. Every process, documented and repeatable.",
+        subtitle: "Stop reinventing the wheel on every project. ProductionOS SOPs let you document your workflows, create reusable checklists, and ensure every project runs the same proven way—whether you're there or not.",
+        seoTitle: "SOPs & Workflow Templates for Production | ProductionOS",
+        seoDesc: "Document production workflows, create reusable checklists, standardize processes. Build a scalable production company. Start free trial.",
+        painPoint: "Every project feels like starting from scratch. Your best processes live in people's heads. When key team members are busy or leave, quality drops. You can't scale because everything depends on you.",
+        solution: "Document every workflow once, use it forever. Pre-shoot checklists, post-production workflows, client onboarding processes. Your entire operation, standardized and scalable.",
+        benefits: [
+            { title: "Process documentation", desc: "Step-by-step guides for every workflow. Pre-production, shoot day, post, delivery. Written once, used everywhere." },
+            { title: "Reusable checklists", desc: "Create checklists for any process. Equipment prep, client briefing, project kickoff. Never miss a step again." },
+            { title: "Workflow templates", desc: "Templates for different project types. Corporate video workflow vs. event coverage workflow. Select and go." },
+            { title: "Team training", desc: "New hires learn your processes instantly. SOPs become your training manual. Consistent quality from day one." },
+            { title: "Quality consistency", desc: "Every project follows the same proven process. Client experience stays consistent regardless of who's running the job." },
+            { title: "Continuous improvement", desc: "Update SOPs as you learn. Capture improvements from every project. Your processes get better over time." }
+        ],
+        testimonial: {
+            quote: "I used to spend half my time making sure everyone was doing things 'my way.' Now the SOPs handle that. I actually took a holiday last month without the phone blowing up.",
+            author: "Sarah Okonkwo",
+            company: "Prism Productions"
+        },
+        related: ['projects', 'crew', 'call-sheets']
+    },
+    "email-sequences": {
+        title: "Follow up automatically. Close more deals.",
+        subtitle: "Stop forgetting to follow up. ProductionOS Email Sequences sends the right message at the right time, automatically. Nurture leads, re-engage past clients, and keep opportunities warm without lifting a finger.",
+        seoTitle: "Email Sequences for Production Companies | ProductionOS",
+        seoDesc: "Automated email sequences for production companies. Follow up with leads, nurture opportunities, re-engage past clients. Never miss a follow-up again. Start free trial.",
+        painPoint: "You had a great meeting. You said you'd follow up. Three weeks later, you remember: they've already hired someone else. Production companies lose work not because they're bad at what they do, but because they're bad at staying in touch.",
+        solution: "Set up sequences once, they run forever. New lead? Auto-sequence nurtures them. Quote sent? Sequence follows up. Past client went quiet? Re-engagement sequence brings them back.",
+        benefits: [
+            { title: "Automated follow-ups", desc: "After sending a quote, sequence sends follow-ups at day 3, 7, and 14 automatically. No more 'just checking in' emails you have to remember." },
+            { title: "Lead nurturing", desc: "New lead comes in? Drip sequence introduces your work, shares case studies, builds trust over weeks—while you focus on shoots." },
+            { title: "Re-engagement campaigns", desc: "Past clients go quiet? Automatic check-ins every 60-90 days keep you top of mind for their next project." },
+            { title: "Personalized templates", desc: "Your voice, your style. Templates with merge fields pull in client name, project type, past work references." },
+            { title: "Send timing optimization", desc: "Schedule emails for optimal times. Tuesday 9am gets better response than Friday 5pm. Set it and forget it." },
+            { title: "Full tracking", desc: "See who opened, who clicked, who replied. Know exactly when a cold lead turns warm so you can pick up the phone." }
+        ],
+        testimonial: {
+            quote: "I closed a $25,000 project from a lead that went cold 6 months ago. The re-engagement sequence brought them back at exactly the right moment. That's money I would have left behind.",
+            author: "Thomas Lindqvist",
+            company: "Northern Light Media"
+        },
+        related: ['crm', 'ai-research', 'quoting']
     }
 };

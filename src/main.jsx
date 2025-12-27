@@ -9,6 +9,13 @@ import { ToastProvider } from './components/common/Toast.jsx';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 
+// Initialize error tracking and analytics
+import { initErrorTracking } from './services/errorTrackingService';
+import { initAnalytics } from './services/analyticsService';
+
+initErrorTracking();
+initAnalytics();
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>

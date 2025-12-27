@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useProjectStore, PROJECT_STATUSES } from '../store/projectStore';
 import { useClientStore } from '../store/clientStore';
 import { formatCurrency } from '../utils/currency';
+import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
 
 // Format date helper
 const formatDate = (dateStr) => {
@@ -313,6 +314,9 @@ export default function ProjectsPage({ onSelectProject }) {
     const [showNewModal, setShowNewModal] = useState(false);
     const [viewMode, setViewMode] = useState('grid'); // grid or list
 
+    // Feature gating for project creation
+    const { checkAndProceed, PromptComponent } = useFeatureGuard(FEATURES.CREATE_PROJECT);
+
     // Initialize on mount
     useEffect(() => {
         initialize();
@@ -380,7 +384,7 @@ export default function ProjectsPage({ onSelectProject }) {
                     </p>
                 </div>
                 <button
-                    onClick={() => setShowNewModal(true)}
+                    onClick={() => checkAndProceed(() => setShowNewModal(true))}
                     className="btn-primary flex items-center gap-2"
                 >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -389,6 +393,9 @@ export default function ProjectsPage({ onSelectProject }) {
                     New Project
                 </button>
             </div>
+
+            {/* Upgrade prompt for feature gate */}
+            <PromptComponent />
 
             {/* Stats cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
@@ -493,7 +500,7 @@ export default function ProjectsPage({ onSelectProject }) {
                     </p>
                     {!searchQuery && statusFilter === 'all' && (
                         <button
-                            onClick={() => setShowNewModal(true)}
+                            onClick={() => checkAndProceed(() => setShowNewModal(true))}
                             className="btn-primary"
                         >
                             Create Project

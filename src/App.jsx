@@ -37,6 +37,7 @@ import { useUnsavedChanges } from './hooks/useUnsavedChanges';
 import OnboardingWizard from './components/onboarding/OnboardingWizard';
 import SubscriptionExpiredPage from './pages/SubscriptionExpiredPage';
 import { checkSubscriptionAccess, ACCESS_LEVELS } from './services/subscriptionGuard';
+import { SubscriptionProvider } from './hooks/useSubscription';
 
 // Initialize auth store to set up OAuth listeners (must run once on app load)
 useAuthStore.getState().initialize();
@@ -88,6 +89,9 @@ const GDPRPage = lazy(() => import('./pages/legal/GDPRPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const BlogPage = lazy(() => import('./pages/resources/BlogPage'));
 const BlogPostPage = lazy(() => import('./pages/resources/BlogPostPage'));
+const HelpCenterPage = lazy(() => import('./pages/resources/HelpCenterPage'));
+const HelpArticlePage = lazy(() => import('./pages/resources/HelpArticlePage'));
+const HelpCategoryPage = lazy(() => import('./pages/resources/HelpCategoryPage'));
 const AboutPage = lazy(() => import('./pages/company/AboutPage'));
 const ContactPage = lazy(() => import('./pages/company/ContactPage'));
 
@@ -597,6 +601,11 @@ function App() {
             <Route path="/resources/blog" element={<BlogPage />} />
             <Route path="/resources/blog/:slug" element={<BlogPostPage />} />
 
+            {/* Help Center */}
+            <Route path="/help" element={<HelpCenterPage />} />
+            <Route path="/help/category/:categoryId" element={<HelpCategoryPage />} />
+            <Route path="/help/:slug" element={<HelpArticlePage />} />
+
             {/* Company Pages */}
             <Route path="/company/about" element={<AboutPage />} />
             <Route path="/company/contact" element={<ContactPage />} />
@@ -1047,43 +1056,45 @@ function App() {
   }
 
   return (
-    <div className={`min-h-screen flex ${settings.theme === 'light' ? 'bg-light-bg' : 'bg-dark-bg'}`}>
-      <PWAStatus />
+    <SubscriptionProvider>
+      <div className={`min-h-screen flex ${settings.theme === 'light' ? 'bg-light-bg' : 'bg-dark-bg'}`}>
+        <PWAStatus />
 
-      {/* Sidebar - shown on all views except editor and full screen */}
-      {!isEditorView && (
-        <Sidebar
-          activeTab={activeTab}
-          onTabChange={handleSidebarTabChange}
-          onGoToFS={handleGoToFS}
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={handleToggleSidebar}
-        />
-      )}
-
-      {/* Main Content */}
-      <div className={`flex-1 flex flex-col min-h-screen overflow-hidden ${!isEditorView && !sidebarCollapsed ? 'lg:ml-0' : ''}`}>
-        {/* Editor has its own header */}
-        {isEditorView && (
-          <EditorHeader
-            onGoToDashboard={handleGoToDashboard}
+        {/* Sidebar - shown on all views except editor and full screen */}
+        {!isEditorView && (
+          <Sidebar
+            activeTab={activeTab}
+            onTabChange={handleSidebarTabChange}
+            onGoToFS={handleGoToFS}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={handleToggleSidebar}
           />
         )}
 
-        {/* Page Content */}
-        <div className="flex-1 overflow-y-auto">
-          {renderView()}
-        </div>
-      </div>
+        {/* Main Content */}
+        <div className={`flex-1 flex flex-col min-h-screen overflow-hidden ${!isEditorView && !sidebarCollapsed ? 'lg:ml-0' : ''}`}>
+          {/* Editor has its own header */}
+          {isEditorView && (
+            <EditorHeader
+              onGoToDashboard={handleGoToDashboard}
+            />
+          )}
 
-      {/* Template Picker Modal */}
-      <TemplatePickerModal
-        isOpen={showTemplatePicker}
-        onClose={handleCloseTemplatePicker}
-        onSelectTemplate={handleSelectTemplate}
-        onStartBlank={handleStartBlank}
-      />
-    </div>
+          {/* Page Content */}
+          <div className="flex-1 overflow-y-auto">
+            {renderView()}
+          </div>
+        </div>
+
+        {/* Template Picker Modal */}
+        <TemplatePickerModal
+          isOpen={showTemplatePicker}
+          onClose={handleCloseTemplatePicker}
+          onSelectTemplate={handleSelectTemplate}
+          onStartBlank={handleStartBlank}
+        />
+      </div>
+    </SubscriptionProvider>
   );
 }
 

@@ -43,10 +43,10 @@ export default function Home() {
                             </p>
 
                             <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-16">
-                                <Link to="/auth/signup" className="px-8 py-4 bg-marketing-primary text-white text-lg font-bold rounded-xl hover:bg-marketing-primary/90 transition-all shadow-lg hover:shadow-marketing-primary/25 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background" aria-label="Start your free 5-day trial of ProductionOS">
+                                <Link to="/auth/signup" className="px-8 py-4 bg-gradient-to-r from-marketing-accent to-marketing-primary text-white text-lg font-bold rounded-xl hover:shadow-glow transition-all shadow-lg hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-2 focus:ring-offset-marketing-background" aria-label="Start your free 5-day trial of ProductionOS">
                                     Start Free Trial
                                 </Link>
-                                <Link to="/pricing" className="px-8 py-4 bg-marketing-surface/50 border border-marketing-border text-marketing-text-primary text-lg font-bold rounded-xl hover:bg-marketing-border/50 transition-all backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-marketing-background">
+                                <Link to="/pricing" className="px-8 py-4 bg-marketing-surface/50 border border-marketing-border text-marketing-text-primary text-lg font-bold rounded-xl hover:bg-marketing-border/50 hover:border-marketing-primary/50 hover:shadow-glow/30 transition-all backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-marketing-background">
                                     View Pricing
                                 </Link>
                             </div>

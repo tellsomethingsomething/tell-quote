@@ -40,7 +40,7 @@ export default function Navbar() {
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-2 group">
-                        <div className="w-8 h-8 bg-gradient-to-tr from-marketing-primary to-marketing-accent rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:shadow-marketing-primary/25 transition-all">
+                        <div className="w-8 h-8 bg-gradient-to-br from-marketing-accent to-marketing-primary rounded-[10px] flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:shadow-glow transition-all">
                             P
                         </div>
                         <span className="text-xl font-bold text-marketing-text-primary tracking-tight">
@@ -94,7 +94,7 @@ export default function Navbar() {
                         </Link>
                         <Link
                             to="/auth/signup"
-                            className="px-5 py-2.5 bg-marketing-text-primary text-marketing-background text-sm font-bold rounded-lg hover:bg-white transition-colors hover:shadow-lg hover:shadow-white/10 active:scale-95 transform duration-200"
+                            className="px-5 py-2.5 bg-gradient-to-r from-marketing-accent to-marketing-primary text-white text-sm font-bold rounded-lg hover:shadow-glow transition-all active:scale-95 transform duration-200"
                         >
                             Start free trial
                         </Link>

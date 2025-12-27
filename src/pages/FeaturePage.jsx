@@ -15,6 +15,9 @@ import EquipmentDemo from '../components/mockups/demos/EquipmentDemo';
 import FinancialsFeatureDemo from '../components/mockups/demos/FinancialsFeatureDemo';
 import CallSheetDemo from '../components/mockups/demos/CallSheetDemo';
 import DeliverablesDemo from '../components/mockups/demos/DeliverablesDemo';
+import AIResearchDemo from '../components/mockups/demos/AIResearchDemo';
+import EmailSequencesDemo from '../components/mockups/demos/EmailSequencesDemo';
+import SOPsDemo from '../components/mockups/demos/SOPsDemo';
 
 // Map feature IDs to their interactive demo components
 const getDemoForFeature = (featureId) => {
@@ -27,6 +30,9 @@ const getDemoForFeature = (featureId) => {
         case 'financials': return <FinancialsFeatureDemo />;
         case 'call-sheets': return <CallSheetDemo />;
         case 'deliverables': return <DeliverablesDemo />;
+        case 'ai-research': return <AIResearchDemo />;
+        case 'sops': return <SOPsDemo />;
+        case 'email-sequences': return <EmailSequencesDemo />;
         default: return <QuotingDemo />;
     }
 };

@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { validatePassword, getPasswordStrength } from '../utils/validation';
 
 export default function LoginPage({ initialMode = 'login' }) {
+    const [searchParams] = useSearchParams();
+
+    // Read plan selection from URL params (passed from Pricing page)
+    const selectedPlan = searchParams.get('plan'); // 'individual' or 'team'
+    const selectedCycle = searchParams.get('cycle') || 'monthly';
+    const selectedCurrency = searchParams.get('currency') || 'USD';
     const {
         login,
         signup,
@@ -17,7 +24,8 @@ export default function LoginPage({ initialMode = 'login' }) {
         isSupabaseAuth
     } = useAuthStore();
 
-    const [mode, setMode] = useState(initialMode); // 'login', 'signup', or 'forgot'
+    // Default to signup mode if a plan is selected from URL
+    const [mode, setMode] = useState(selectedPlan ? 'signup' : initialMode); // 'login', 'signup', or 'forgot'
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -78,6 +86,14 @@ export default function LoginPage({ initialMode = 'login' }) {
             }
             const result = await signup(name, email, password);
             if (result) {
+                // Store plan selection for onboarding if a paid plan was selected
+                if (selectedPlan && selectedPlan !== 'free') {
+                    localStorage.setItem('pendingPlanSelection', JSON.stringify({
+                        plan: selectedPlan,
+                        cycle: selectedCycle,
+                        currency: selectedCurrency,
+                    }));
+                }
                 setSignupSuccess(true);
             }
             return;
@@ -166,13 +182,28 @@ export default function LoginPage({ initialMode = 'login' }) {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h2 className="text-lg font-semibold text-white mb-2">Request Submitted</h2>
-                            <p className="text-gray-400 text-sm mb-4">
-                                Your access request has been submitted. An administrator will review and approve your account.
-                            </p>
-                            <p className="text-gray-500 text-xs mb-6">
-                                You will be able to sign in once your account is approved.
-                            </p>
+                            <h2 className="text-lg font-semibold text-white mb-2">
+                                {selectedPlan && selectedPlan !== 'free' ? 'Almost There!' : 'Request Submitted'}
+                            </h2>
+                            {selectedPlan && selectedPlan !== 'free' ? (
+                                <>
+                                    <p className="text-gray-400 text-sm mb-4">
+                                        Your account has been created. Once approved, you'll be able to start your <span className="text-brand-teal font-semibold capitalize">{selectedPlan}</span> plan trial.
+                                    </p>
+                                    <p className="text-gray-500 text-xs mb-6">
+                                        We'll notify you by email when your account is ready. Your plan selection has been saved.
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="text-gray-400 text-sm mb-4">
+                                        Your access request has been submitted. An administrator will review and approve your account.
+                                    </p>
+                                    <p className="text-gray-500 text-xs mb-6">
+                                        You will be able to sign in once your account is approved.
+                                    </p>
+                                </>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => {
@@ -186,6 +217,16 @@ export default function LoginPage({ initialMode = 'login' }) {
                         </div>
                     ) : (
                     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+                        {/* Selected Plan Banner (if coming from Pricing page) */}
+                        {mode === 'signup' && selectedPlan && selectedPlan !== 'free' && (
+                            <div className="bg-brand-teal/10 border border-brand-teal/30 rounded-lg p-3 mb-2">
+                                <p className="text-sm text-brand-teal text-center">
+                                    Signing up for <span className="font-bold capitalize">{selectedPlan}</span> plan
+                                    <span className="text-brand-teal/70"> ({selectedCycle})</span>
+                                </p>
+                            </div>
+                        )}
+
                         {/* Name field (Signup only) */}
                         {useSupabase && mode === 'signup' && (
                             <div>

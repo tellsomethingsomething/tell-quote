@@ -11,7 +11,7 @@ export default function Footer() {
                     {/* Brand Column */}
                     <div className="lg:col-span-2">
                         <Link to="/" className="flex items-center gap-2 mb-6">
-                            <div className="w-8 h-8 bg-gradient-to-tr from-marketing-primary to-marketing-accent rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                            <div className="w-8 h-8 bg-gradient-to-br from-marketing-accent to-marketing-primary rounded-[10px] flex items-center justify-center text-white font-bold text-lg">
                                 P
                             </div>
                             <span className="text-xl font-bold text-marketing-text-primary tracking-tight">
@@ -44,6 +44,7 @@ export default function Footer() {
                             <li><Link to="/features/crew" className="hover:text-marketing-primary transition-colors">Crew Network</Link></li>
                             <li><Link to="/features/equipment" className="hover:text-marketing-primary transition-colors">Equipment Tracking</Link></li>
                             <li><Link to="/features/call-sheets" className="hover:text-marketing-primary transition-colors">Call Sheets</Link></li>
+                            <li><Link to="/features/deliverables" className="hover:text-marketing-primary transition-colors">Deliverables</Link></li>
                             <li><Link to="/features/crm" className="hover:text-marketing-primary transition-colors">CRM</Link></li>
                         </ul>
                     </div>
@@ -56,6 +57,7 @@ export default function Footer() {
                             <li><Link to="/use-cases/photography" className="hover:text-marketing-primary transition-colors">Photography</Link></li>
                             <li><Link to="/use-cases/live-streaming" className="hover:text-marketing-primary transition-colors">Live Streaming</Link></li>
                             <li><Link to="/use-cases/corporate-video" className="hover:text-marketing-primary transition-colors">Corporate Video</Link></li>
+                            <li><Link to="/use-cases/post-production" className="hover:text-marketing-primary transition-colors">Post Production</Link></li>
                         </ul>
                     </div>
 
@@ -63,8 +65,17 @@ export default function Footer() {
                         <h4 className="font-semibold text-marketing-text-primary mb-6">Resources</h4>
                         <ul className="space-y-4 text-sm text-marketing-text-secondary">
                             <li><Link to="/resources/blog" className="hover:text-marketing-primary transition-colors">Blog</Link></li>
-                            <li><Link to="/company/contact" className="hover:text-marketing-primary transition-colors">Help Center</Link></li>
+                            <li><Link to="/help" className="hover:text-marketing-primary transition-colors">Help Center</Link></li>
                             <li><Link to="/company/about" className="hover:text-marketing-primary transition-colors">About Us</Link></li>
+                            <li><Link to="/company/contact" className="hover:text-marketing-primary transition-colors">Contact</Link></li>
+                        </ul>
+
+                        <h4 className="font-semibold text-marketing-text-primary mb-4 mt-8">Compare</h4>
+                        <ul className="space-y-3 text-sm text-marketing-text-secondary">
+                            <li><Link to="/resources/blog/productionos-vs-rentman" className="hover:text-marketing-primary transition-colors">vs Rentman</Link></li>
+                            <li><Link to="/resources/blog/productionos-vs-currentrms" className="hover:text-marketing-primary transition-colors">vs Current RMS</Link></li>
+                            <li><Link to="/resources/blog/productionos-vs-studiobinder" className="hover:text-marketing-primary transition-colors">vs StudioBinder</Link></li>
+                            <li><Link to="/resources/blog/productionos-vs-monday" className="hover:text-marketing-primary transition-colors">vs Monday.com</Link></li>
                         </ul>
                     </div>
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { captureError } from '../../services/errorTrackingService';
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -14,6 +15,16 @@ class ErrorBoundary extends React.Component {
     componentDidCatch(error, errorInfo) {
         this.setState({ error, errorInfo });
         console.error("Uncaught error:", error, errorInfo);
+
+        // Report to Sentry
+        captureError(error, {
+            extra: {
+                componentStack: errorInfo?.componentStack,
+            },
+            tags: {
+                errorBoundary: true,
+            },
+        });
     }
 
     handleReset = () => {

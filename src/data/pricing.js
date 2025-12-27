@@ -1,20 +1,26 @@
 export const comparisonTable = [
-    { feature: "Unlimited Projects", solo: true, team: true, agency: true },
-    { feature: "Quote Builder", solo: true, team: true, agency: true },
-    { feature: "Regional Rate Cards", solo: true, team: true, agency: true },
-    { feature: "Multi-Currency Quoting", solo: true, team: true, agency: true },
-    { feature: "Project Status Workflow", solo: true, team: true, agency: true },
-    { feature: "Deliverables Tracking", solo: true, team: true, agency: true },
-    { feature: "Crew Database", solo: "Basic", team: "Advanced", agency: "Advanced" },
-    { feature: "Equipment Inventory", solo: "50 items", team: "Unlimited", agency: "Unlimited" },
-    { feature: "Call Sheet Generator", solo: false, team: true, agency: true },
-    { feature: "Financial Reports (P&L)", solo: false, team: "Basic", agency: "Advanced" },
-    { feature: "Google Calendar Sync", solo: false, team: true, agency: true },
-    { feature: "QuickBooks Integration", solo: false, team: false, agency: true },
-    { feature: "Purchase Orders", solo: false, team: false, agency: true },
-    { feature: "Agency Dashboard", solo: false, team: false, agency: true },
-    { feature: "Custom Branding", solo: false, team: "Logo only", agency: "Full White Label" },
-    { feature: "Priority Support", solo: false, team: false, agency: true },
+    { feature: "Projects", free: "3 active", individual: "Unlimited", team: "Unlimited" },
+    { feature: "Proposals", free: "Watermarked", individual: true, team: true },
+    { feature: "Quotes", free: "Watermarked", individual: true, team: true },
+    { feature: "Invoices", free: false, individual: true, team: true },
+    { feature: "Purchase Orders", free: false, individual: true, team: true },
+    { feature: "Regional Rate Cards", free: "1 region", individual: "3 regions", team: "Unlimited" },
+    { feature: "Multi-Currency Quoting", free: false, individual: true, team: true },
+    { feature: "Project Status Workflow", free: true, individual: true, team: true },
+    { feature: "Deliverables Tracking", free: "Basic", individual: true, team: true },
+    { feature: "Crew Database", free: "10 contacts", individual: "100 contacts", team: "Unlimited" },
+    { feature: "Equipment Inventory", free: "10 items", individual: "50 items", team: "Unlimited" },
+    { feature: "Call Sheet Generator", free: false, individual: true, team: true },
+    { feature: "Financial Reports (P&L)", free: false, individual: "Basic", team: "Advanced" },
+    { feature: "Google Calendar Sync", free: false, individual: true, team: true },
+    { feature: "CRM & Pipeline", free: false, individual: true, team: true },
+    { feature: "AI Tokens", free: false, individual: "10,000/mo", team: "50,000/mo" },
+    { feature: "AI Research & SOP Tools", free: false, individual: true, team: true },
+    { feature: "Buy Extra Tokens", free: false, individual: true, team: true },
+    { feature: "Team Collaboration", free: false, individual: false, team: true },
+    { feature: "User Roles & Permissions", free: false, individual: false, team: true },
+    { feature: "Custom Branding", free: false, individual: "Logo only", team: "Full White Label" },
+    { feature: "Priority Support", free: false, individual: false, team: true },
 ];
 
 // Multi-currency pricing
@@ -26,42 +32,107 @@ export const currencyConfig = {
 
 export const plans = [
     {
-        name: "Solo",
+        id: 'free',
+        name: "Free",
         pricing: {
-            USD: { monthly: 29, annual: 24 },
-            GBP: { monthly: 24, annual: 19 },
-            EUR: { monthly: 27, annual: 22 },
+            USD: { monthly: 0, annual: 0 },
+            GBP: { monthly: 0, annual: 0 },
+            EUR: { monthly: 0, annual: 0 },
         },
-        description: "Perfect for freelancers and owner-operators.",
-        features: ["Unlimited projects", "Full quote builder", "Basic CRM", "50 equipment items"],
-        cta: "Start Solo Trial",
+        description: "Get started and explore the platform.",
+        features: [
+            "3 active projects",
+            "Proposals & Quotes (watermarked)",
+            "10 crew contacts",
+            "10 equipment items",
+            "Basic project tracking"
+        ],
+        cta: "Get Started Free",
         popular: false
     },
     {
-        name: "Team",
+        id: 'individual',
+        name: "Individual",
         pricing: {
-            USD: { monthly: 79, annual: 65 },
-            GBP: { monthly: 65, annual: 52 },
-            EUR: { monthly: 75, annual: 60 },
+            USD: { monthly: 24, annual: 19 },
+            GBP: { monthly: 19, annual: 15 },
+            EUR: { monthly: 22, annual: 18 },
         },
-        description: "For small production companies growing fast.",
-        features: ["Everything in Solo", "3 Users included", "Call sheet generator", "Calendar sync", "Unlimited equipment"],
-        cta: "Start Team Trial",
+        description: "Everything you need as a freelancer.",
+        features: [
+            "Unlimited projects",
+            "Proposals, Quotes & Invoices",
+            "100 crew contacts",
+            "50 equipment items",
+            "Call sheets & calendar sync",
+            "10,000 AI tokens/month"
+        ],
+        tokens: 10000,
+        cta: "Start 5-day trial",
         popular: true
     },
     {
-        name: "Agency",
+        id: 'team',
+        name: "Team",
         pricing: {
-            USD: { monthly: 149, annual: 119 },
-            GBP: { monthly: 119, annual: 95 },
-            EUR: { monthly: 139, annual: 110 },
+            USD: { monthly: 49, annual: 39 },
+            GBP: { monthly: 39, annual: 31 },
+            EUR: { monthly: 45, annual: 36 },
         },
-        description: "For established agencies managing multiple productions.",
-        features: ["Everything in Team", "5 Users included", "Financial reporting", "QuickBooks integration", "White labeling"],
-        cta: "Start Agency Trial",
+        description: "For production companies with 3+ users.",
+        features: [
+            "Everything in Individual",
+            "3 users included (+£10/user)",
+            "Purchase Orders",
+            "50,000 AI tokens/month",
+            "AI SOP Generator",
+            "Team collaboration",
+            "Custom branding"
+        ],
+        tokens: 50000,
+        cta: "Start 5-day trial",
         popular: false
     }
 ];
+
+// Token packs for purchasing additional AI tokens
+export const tokenPacks = [
+    {
+        tokens: 5000,
+        pricing: {
+            USD: 5,
+            GBP: 4,
+            EUR: 5,
+        },
+        popular: false
+    },
+    {
+        tokens: 25000,
+        pricing: {
+            USD: 20,
+            GBP: 16,
+            EUR: 18,
+        },
+        popular: true
+    },
+    {
+        tokens: 100000,
+        pricing: {
+            USD: 60,
+            GBP: 48,
+            EUR: 55,
+        },
+        popular: false
+    }
+];
+
+// Token usage estimates (for UI display)
+export const tokenEstimates = {
+    quickResearch: { tokens: 200, label: 'Quick research query' },
+    deepResearch: { tokens: 500, label: 'Deep research analysis' },
+    sopGeneration: { tokens: 1000, label: 'SOP document generation' },
+    documentAnalysis: { tokens: 400, label: 'Document analysis' },
+};
 
 // Detect user's preferred currency based on locale/timezone
 export function detectUserCurrency() {
@@ -106,6 +177,7 @@ export function detectUserCurrency() {
 // Format price with currency symbol
 export function formatPrice(amount, currencyCode = 'USD') {
     const config = currencyConfig[currencyCode] || currencyConfig.USD;
+    if (amount === 0) return 'Free';
     return config.position === 'before'
         ? `${config.symbol}${amount}`
         : `${amount}${config.symbol}`;
@@ -113,19 +185,35 @@ export function formatPrice(amount, currencyCode = 'USD') {
 
 export const pricingFaqs = [
     {
-        q: "How long is the free trial?",
-        a: "You get a 5-day free trial to explore all features. After that, choose a plan that fits your needs."
+        q: "Is the Free plan really free?",
+        a: "Yes! The Free plan lets you manage up to 3 active projects with basic features. No credit card required. Upgrade anytime when you need more."
     },
     {
-        q: "Can I cancel anytime?",
-        a: "Yes, you can cancel your subscription at any time. There are no long-term contracts or cancellation fees. You'll keep access until the end of your billing period."
+        q: "Can I upgrade or downgrade anytime?",
+        a: "Absolutely. Upgrade instantly to unlock more features, or downgrade at the end of your billing period. No long-term contracts."
+    },
+    {
+        q: "How many users are included in Team?",
+        a: "Team includes 3 users. Additional users are £10/month each. All team members get full access to projects, quotes, and collaboration features."
+    },
+    {
+        q: "How do AI tokens work?",
+        a: "AI tokens are shared across your entire team. Each AI action (research, SOP generation, document analysis) uses tokens based on complexity. Your allowance resets monthly. Need more? Buy token packs anytime."
+    },
+    {
+        q: "What can I do with AI tokens?",
+        a: "Use tokens for research queries (~200 tokens), deep analysis (~500 tokens), SOP generation (~1,000 tokens), and document analysis (~400 tokens). The AI helps with vendor research, location scouting, and creating production documents."
+    },
+    {
+        q: "Do you offer discounts for annual billing?",
+        a: "Yes! Save 20% when you pay annually. That's 2 months free on any paid plan."
+    },
+    {
+        q: "What happens to my data if I downgrade?",
+        a: "Your data is always safe. If you exceed the limits of your new plan, you'll have read-only access to older items until you upgrade again or archive them."
     },
     {
         q: "What falls under 'equipment items'?",
         a: "An equipment item is any single asset you track in your inventory, like a camera body, a lens, or a lighting kit. Accessories can be grouped into kits to save space."
-    },
-    {
-        q: "Do you offer enterprise plans?",
-        a: "Yes, for organizations with more than 10 users or specific security requirements, please contact our sales team for a custom quote."
     }
 ];

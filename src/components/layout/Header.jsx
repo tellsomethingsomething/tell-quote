@@ -6,6 +6,7 @@ import { useSettingsStore } from '../../store/settingsStore';
 import Navigation from './Navigation';
 import { useToast } from '../common/Toast';
 import SaveAsTemplateModal from '../templates/SaveAsTemplateModal';
+import SubscriptionBadge from '../billing/SubscriptionBadge';
 
 // Theme Toggle Component
 function ThemeToggle() {
@@ -125,8 +126,11 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                         />
                     </div>
 
-                    {/* Right Side - Theme Toggle, FS Button & User Menu */}
+                    {/* Right Side - Subscription Badge, Theme Toggle, FS Button & User Menu */}
                     <div className="flex items-center gap-2 sm:gap-3 relative">
+                        {/* Subscription Status Badge */}
+                        <SubscriptionBadge onUpgrade={onGoToSettings} />
+
                         {/* Theme Toggle */}
                         <ThemeToggle />
 

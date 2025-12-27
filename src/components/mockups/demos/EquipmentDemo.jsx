@@ -88,7 +88,7 @@ export default function EquipmentDemo() {
                         <button
                             key={cat}
                             onClick={() => setCategoryFilter(cat)}
-                            className={`min-h-[36px] sm:min-h-0 px-3 py-1.5 sm:py-1 rounded-full text-xs font-medium transition-colors ${categoryFilter === cat
+                            className={`min-h-[44px] sm:min-h-0 px-3 py-1.5 sm:py-1 rounded-full text-xs font-medium transition-colors ${categoryFilter === cat
                                     ? 'bg-indigo-600 text-white'
                                     : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                                 }`}
@@ -100,7 +100,7 @@ export default function EquipmentDemo() {
 
                 <button
                     onClick={() => setShowAvailableOnly(!showAvailableOnly)}
-                    className={`min-h-[36px] sm:min-h-0 flex items-center gap-2 px-3 py-1.5 sm:py-1 rounded-full text-xs font-medium transition-colors ${showAvailableOnly
+                    className={`min-h-[44px] sm:min-h-0 flex items-center gap-2 px-3 py-1.5 sm:py-1 rounded-full text-xs font-medium transition-colors ${showAvailableOnly
                             ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                             : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                         }`}
@@ -152,14 +152,14 @@ export default function EquipmentDemo() {
                             {item.status === 'available' ? (
                                 <button
                                     onClick={() => handleCheckout(item)}
-                                    className="w-full min-h-[36px] sm:min-h-0 py-1.5 sm:py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded transition-colors"
+                                    className="w-full min-h-[44px] sm:min-h-0 py-1.5 sm:py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded transition-colors"
                                 >
                                     Check Out
                                 </button>
                             ) : (
                                 <button
                                     onClick={() => handleCheckin(item.id)}
-                                    className="w-full min-h-[36px] sm:min-h-0 py-1.5 sm:py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded transition-colors"
+                                    className="w-full min-h-[44px] sm:min-h-0 py-1.5 sm:py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded transition-colors"
                                 >
                                     Check In
                                 </button>

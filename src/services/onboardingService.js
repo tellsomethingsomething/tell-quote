@@ -8,6 +8,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 // Onboarding Steps
 export const ONBOARDING_STEPS = [
     { id: 'company_setup', label: 'Company Setup', required: true },
+    { id: 'target_market', label: 'Your Market', required: false }, // New: Industry & clients
     { id: 'billing', label: 'Start Trial', required: false }, // Skip if billing not configured
     { id: 'pain_points', label: 'Pain Points', required: false },
     { id: 'company_profile', label: 'Company Profile', required: false },
@@ -19,13 +20,16 @@ export const ONBOARDING_STEPS = [
 
 // Company Types
 export const COMPANY_TYPES = [
-    { id: 'video_production', label: 'Video Production', icon: 'video' },
-    { id: 'event_production', label: 'Event Production', icon: 'calendar' },
-    { id: 'photography', label: 'Photography', icon: 'camera' },
-    { id: 'live_streaming', label: 'Live Streaming / Broadcast', icon: 'radio' },
-    { id: 'post_production', label: 'Post-Production', icon: 'film' },
-    { id: 'corporate', label: 'Corporate / In-house Team', icon: 'building' },
-    { id: 'other', label: 'Other', icon: 'plus' },
+    { id: 'content_production', label: 'Content Production Company', icon: 'video', description: 'Brand films, commercials, branded content' },
+    { id: 'event_production', label: 'Event Production Company', icon: 'calendar', description: 'Corporate events, conferences, live shows' },
+    { id: 'sports_production', label: 'Sports Production Company', icon: 'activity', description: 'Sports broadcasts, athlete content, fitness' },
+    { id: 'corporate_inhouse', label: 'Corporate / In-house Team', icon: 'building', description: 'Internal video or comms team' },
+    { id: 'videographer', label: 'Videographer (Freelance)', icon: 'camera', description: 'Solo operator or small crew' },
+    { id: 'photo_studio', label: 'Photographer / Photo Studio', icon: 'image', description: 'Commercial, product, or portrait photography' },
+    { id: 'live_streaming', label: 'Live Streaming / Broadcast', icon: 'radio', description: 'Webinars, live events, hybrid production' },
+    { id: 'post_production', label: 'Post-Production / Edit House', icon: 'film', description: 'Editing, color, VFX, motion graphics' },
+    { id: 'full_service', label: 'Full-Service Agency', icon: 'briefcase', description: 'Creative agency with production capabilities' },
+    { id: 'other', label: 'Other', icon: 'plus', description: 'Something else entirely' },
 ];
 
 // Primary Focus Options
@@ -47,6 +51,62 @@ export const TEAM_SIZE_OPTIONS = [
     { id: '2-5', label: '2-5 people', value: 5 },
     { id: '6-15', label: '6-15 people', value: 15 },
     { id: '16+', label: '16+ people', value: 100 },
+];
+
+// Client Industry Sectors - Who do they make content for?
+export const CLIENT_SECTORS = [
+    { id: 'corporate', label: 'Corporate / Enterprise', icon: 'building' },
+    { id: 'finance', label: 'Finance & Banking', icon: 'dollar' },
+    { id: 'technology', label: 'Technology / SaaS', icon: 'cpu' },
+    { id: 'healthcare', label: 'Healthcare / Pharma', icon: 'heart' },
+    { id: 'sport', label: 'Sport', icon: 'activity' },
+    { id: 'fitness', label: 'Fitness / Wellness', icon: 'dumbbell' },
+    { id: 'entertainment', label: 'Entertainment / Media', icon: 'film' },
+    { id: 'fashion', label: 'Fashion & Beauty', icon: 'star' },
+    { id: 'fmcg', label: 'FMCG / Consumer Goods', icon: 'package' },
+    { id: 'automotive', label: 'Automotive', icon: 'car' },
+    { id: 'hospitality', label: 'Hospitality / Travel', icon: 'map' },
+    { id: 'education', label: 'Education / Training', icon: 'book' },
+    { id: 'nonprofit', label: 'Non-Profit / NGO', icon: 'heart' },
+    { id: 'government', label: 'Government / Public Sector', icon: 'landmark' },
+    { id: 'retail', label: 'Retail / E-commerce', icon: 'shopping-bag' },
+    { id: 'realestate', label: 'Real Estate / Property', icon: 'home' },
+    { id: 'agencies', label: 'Agencies / Studios', icon: 'briefcase' },
+];
+
+// Production Types - What specific content do they create?
+export const PRODUCTION_TYPES = [
+    { id: 'brand_films', label: 'Brand Films', category: 'video' },
+    { id: 'tv_commercials', label: 'TV Commercials', category: 'video' },
+    { id: 'online_ads', label: 'Online / Social Ads', category: 'video' },
+    { id: 'corporate_videos', label: 'Corporate Videos', category: 'video' },
+    { id: 'training_videos', label: 'Training / E-Learning', category: 'video' },
+    { id: 'product_videos', label: 'Product Videos', category: 'video' },
+    { id: 'testimonials', label: 'Testimonials / Case Studies', category: 'video' },
+    { id: 'documentaries', label: 'Documentaries', category: 'video' },
+    { id: 'music_videos', label: 'Music Videos', category: 'video' },
+    { id: 'short_films', label: 'Short Films / Narrative', category: 'video' },
+    { id: 'live_events', label: 'Live Events', category: 'events' },
+    { id: 'conferences', label: 'Conferences / Summits', category: 'events' },
+    { id: 'product_launches', label: 'Product Launches', category: 'events' },
+    { id: 'activations', label: 'Brand Activations', category: 'events' },
+    { id: 'live_streams', label: 'Live Streams / Webinars', category: 'digital' },
+    { id: 'podcasts', label: 'Podcasts / Audio', category: 'digital' },
+    { id: 'photography', label: 'Photography', category: 'photo' },
+    { id: 'animation', label: 'Animation / Motion Graphics', category: 'post' },
+];
+
+// Contact Types - What kind of contacts do they work with?
+export const CONTACT_TYPES = [
+    { id: 'brands', label: 'Brands (Direct)', description: 'Work directly with brand teams' },
+    { id: 'agencies_creative', label: 'Creative Agencies', description: 'Ad agencies, creative shops' },
+    { id: 'agencies_media', label: 'Media Agencies', description: 'Media buying, planning agencies' },
+    { id: 'agencies_pr', label: 'PR / Comms Agencies', description: 'PR firms, communications agencies' },
+    { id: 'agencies_event', label: 'Event Agencies', description: 'Event management companies' },
+    { id: 'broadcasters', label: 'Broadcasters / Networks', description: 'TV, streaming platforms' },
+    { id: 'production_companies', label: 'Other Production Companies', description: 'White-label, overflow work' },
+    { id: 'freelancers', label: 'Freelance Crew', description: 'Individual contractors' },
+    { id: 'vendors', label: 'Vendors / Suppliers', description: 'Equipment, locations, catering' },
 ];
 
 // Pain Points

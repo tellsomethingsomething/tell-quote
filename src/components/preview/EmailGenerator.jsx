@@ -14,7 +14,7 @@ export default function EmailGenerator() {
 
     const { client, project, sections, fees } = quote;
     const totals = calculateGrandTotalWithFees(sections, fees || {});
-    const hasAnthropicKey = !!settings.aiSettings?.anthropicKey;
+    const [tokenError, setTokenError] = useState(null);
 
     // Get preparer name
     const preparedByUser = settings.users?.find(u => u.id === quote.preparedBy);
@@ -70,15 +70,15 @@ ${senderName}`;
         return `${services.slice(0, -1).join(', ')}, and ${services[services.length - 1]}`;
     };
 
-    // AI Email Generation
+    // AI Email Generation - uses server-side tokens
     const generateAIEmail = async () => {
-        if (!hasAnthropicKey) return;
-
         setIsGenerating(true);
+        setTokenError(null);
+
         try {
             const total = formatCurrency(totals.totalCharge, quote.currency);
-
             const companyName = settings.company?.name || 'our company';
+
             const prompt = `Generate a client email to accompany a production services quote from ${companyName}.
 
 ## Input Data
@@ -98,7 +98,7 @@ SENDER: ${senderName}
 
 ## Writing Style
 
-Write in Tom's voice: professional but casual, direct, efficient. Never stuffy.
+Professional but casual, direct, efficient. Never stuffy.
 
 Tone rules:
 - Use contractions naturally (I'm, we're, it's, we've)
@@ -135,25 +135,14 @@ Return ONLY a JSON object:
 
 Keep it under 120 words. No bullet points.`;
 
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': settings.aiSettings.anthropicKey,
-                    'anthropic-version': '2023-06-01',
-                    'anthropic-dangerous-direct-browser-access': 'true'
-                },
-                body: JSON.stringify({
-                    model: 'claude-sonnet-4-20250514',
-                    max_tokens: 500,
-                    messages: [{ role: 'user', content: prompt }]
-                })
+            // Use centralized AI service
+            const { generateAIContent } = await import('../../services/aiService.js');
+            const result = await generateAIContent({
+                prompt,
+                maxTokens: 500,
             });
 
-            if (!response.ok) throw new Error('API request failed');
-
-            const data = await response.json();
-            const text = data.content[0]?.text || '';
+            const text = result.content || '';
 
             // Parse JSON response
             const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -163,6 +152,9 @@ Keep it under 120 words. No bullet points.`;
             }
         } catch (error) {
             console.error('Email generation failed:', error);
+            if (error.code === 'INSUFFICIENT_TOKENS') {
+                setTokenError('Insufficient AI tokens. Purchase more tokens in Settings.');
+            }
         } finally {
             setIsGenerating(false);
         }
@@ -235,17 +227,20 @@ Keep it under 120 words. No bullet points.`;
                         </div>
                     </div>
 
+                    {/* Token Error Display */}
+                    {tokenError && (
+                        <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded px-2 py-1.5 mb-2">
+                            {tokenError}
+                        </div>
+                    )}
+
                     {/* Action Buttons */}
                     <div className="flex gap-2">
                         <button
                             onClick={generateAIEmail}
-                            disabled={isGenerating || !hasAnthropicKey}
-                            title={!hasAnthropicKey ? 'Add Anthropic API key in Settings' : ''}
-                            className={`flex-1 py-2 rounded text-xs font-medium transition-all flex items-center justify-center gap-2 ${
-                                hasAnthropicKey
-                                    ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30'
-                                    : 'bg-gray-700/50 text-gray-500 border border-gray-600/30 cursor-not-allowed'
-                            } disabled:opacity-50`}
+                            disabled={isGenerating}
+                            title="Generate AI email"
+                            className="flex-1 py-2 rounded text-xs font-medium transition-all flex items-center justify-center gap-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 hover:bg-purple-500/30 disabled:opacity-50"
                         >
                             {isGenerating ? (
                                 <>

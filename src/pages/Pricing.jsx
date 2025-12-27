@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, HelpCircle, X } from 'lucide-react';
+import { Check, HelpCircle, X, Loader2 } from 'lucide-react';
 import Layout from '../components/layout/Layout';
+import TokenPacks from '../components/ui/TokenPacks';
 import { plans, pricingFaqs, comparisonTable, detectUserCurrency, formatPrice } from '../data/pricing';
+import { useAuthStore } from '../store/authStore';
+import { createCheckoutSession } from '../services/billingService';
 
 export default function Pricing() {
     const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' | 'annual'
     const [currency, setCurrency] = useState('USD');
+    const [loadingPlan, setLoadingPlan] = useState(null); // Track which plan is loading
+    const [error, setError] = useState(null);
+
+    const navigate = useNavigate();
+    const { isAuthenticated } = useAuthStore();
 
     useEffect(() => {
         setCurrency(detectUserCurrency());
@@ -19,11 +27,47 @@ export default function Pricing() {
         return cycle === 'monthly' ? pricing.monthly : pricing.annual;
     };
 
+    const handleSelectPlan = async (plan) => {
+        setError(null);
+
+        // Free plan - just go to signup
+        if (plan.id === 'free') {
+            navigate('/auth/signup');
+            return;
+        }
+
+        // Paid plans
+        if (isAuthenticated) {
+            // User is logged in - go directly to Stripe checkout
+            setLoadingPlan(plan.id);
+            try {
+                const { url } = await createCheckoutSession(plan.id, billingCycle, currency);
+                if (url) {
+                    window.location.href = url;
+                } else {
+                    throw new Error('No checkout URL returned');
+                }
+            } catch (err) {
+                console.error('Checkout error:', err);
+                setError('Unable to start checkout. Please try again.');
+                setLoadingPlan(null);
+            }
+        } else {
+            // User is not logged in - redirect to signup with plan selection
+            const params = new URLSearchParams({
+                plan: plan.id,
+                cycle: billingCycle,
+                currency: currency,
+            });
+            navigate(`/auth/signup?${params.toString()}`);
+        }
+    };
+
     return (
         <Layout>
             <Helmet>
                 <title>Pricing - ProductionOS</title>
-                <meta name="description" content="Simple pricing for production companies. Solo, Team, and Agency plans. Start your free trial today." />
+                <meta name="description" content="Simple pricing for production companies. Free, Individual, and Team plans. Start free today, upgrade when you're ready." />
             </Helmet>
 
             {/* Header */}
@@ -50,6 +94,13 @@ export default function Pricing() {
                         Annual <span className="text-marketing-success text-xs ml-1 font-bold">SAVE 20%</span>
                     </span>
                 </div>
+
+                {/* Error Message */}
+                {error && (
+                    <div className="max-w-md mx-auto mb-8 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">
+                        {error}
+                    </div>
+                )}
 
                 {/* Plans Grid */}
                 <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto relative z-10 px-2 md:px-0">
@@ -87,12 +138,20 @@ export default function Pricing() {
                                 </div>
                             </div>
 
-                            <Link
-                                to="/auth/signup"
-                                className={`w-full py-3 rounded-xl font-bold text-center mb-8 transition-colors ${plan.popular ? 'bg-marketing-primary text-white hover:bg-marketing-primary/90' : 'bg-marketing-text-primary text-marketing-background hover:bg-white'}`}
+                            <button
+                                onClick={() => handleSelectPlan(plan)}
+                                disabled={loadingPlan === plan.id}
+                                className={`w-full py-3 rounded-xl font-bold text-center mb-8 transition-all disabled:opacity-70 disabled:cursor-wait ${plan.popular ? 'bg-gradient-to-r from-marketing-accent to-marketing-primary text-white hover:shadow-glow' : 'bg-marketing-text-primary text-marketing-background hover:bg-white hover:shadow-lg'}`}
                             >
-                                {plan.cta}
-                            </Link>
+                                {loadingPlan === plan.id ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <Loader2 size={18} className="animate-spin" />
+                                        Loading...
+                                    </span>
+                                ) : (
+                                    plan.cta
+                                )}
+                            </button>
 
                             <p className="text-xs font-bold text-marketing-text-secondary uppercase mb-4 tracking-wider">Includes:</p>
                             <div className="space-y-3 flex-1">
@@ -112,7 +171,7 @@ export default function Pricing() {
             <section className="py-12 md:py-16 text-center max-w-4xl mx-auto px-4 md:px-6">
                 <h3 className="text-base md:text-lg font-bold mb-6 md:mb-8 uppercase tracking-widest text-marketing-text-secondary">Every plan includes</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 text-xs md:text-sm">
-                    {['5-day free trial', 'Cancel anytime', 'Data export', 'Bank-level security', 'Regular updates', '99.9% uptime'].map(item => (
+                    {['No credit card for Free', 'Cancel anytime', 'Data export', 'Bank-level security', 'Regular updates', '99.9% uptime'].map(item => (
                         <div key={item} className="flex items-center justify-center gap-2 text-marketing-text-primary font-medium p-3 bg-marketing-surface border border-marketing-border rounded-lg">
                             <Check size={14} className="text-marketing-success" /> {item}
                         </div>
@@ -129,9 +188,9 @@ export default function Pricing() {
                             <thead>
                                 <tr>
                                     <th className="p-4 border-b border-marketing-border text-marketing-text-secondary font-medium w-1/4">Feature</th>
-                                    <th className="p-4 border-b border-marketing-border text-marketing-text-primary font-bold text-lg w-1/4">Solo</th>
-                                    <th className="p-4 border-b border-marketing-border text-marketing-primary font-bold text-lg w-1/4 bg-marketing-primary/5 rounded-t-xl">Team</th>
-                                    <th className="p-4 border-b border-marketing-border text-marketing-text-primary font-bold text-lg w-1/4">Agency</th>
+                                    <th className="p-4 border-b border-marketing-border text-marketing-text-primary font-bold text-lg w-1/4">Free</th>
+                                    <th className="p-4 border-b border-marketing-border text-marketing-primary font-bold text-lg w-1/4 bg-marketing-primary/5 rounded-t-xl">Individual</th>
+                                    <th className="p-4 border-b border-marketing-border text-marketing-text-primary font-bold text-lg w-1/4">Team</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -139,13 +198,13 @@ export default function Pricing() {
                                     <tr key={i} className="border-b border-marketing-border/50 hover:bg-marketing-background/50">
                                         <td className="p-4 font-medium text-marketing-text-primary">{row.feature}</td>
                                         <td className="p-4 text-marketing-text-secondary">
-                                            {row.solo === true ? <Check className="text-marketing-success" size={20} /> : row.solo === false ? <span className="opacity-20">-</span> : row.solo}
+                                            {row.free === true ? <Check className="text-marketing-success" size={20} /> : row.free === false ? <span className="opacity-20">-</span> : row.free}
                                         </td>
                                         <td className="p-4 bg-marketing-primary/5 text-marketing-text-primary font-medium">
-                                            {row.team === true ? <Check className="text-marketing-success" size={20} /> : row.team === false ? <span className="opacity-20">-</span> : row.team}
+                                            {row.individual === true ? <Check className="text-marketing-success" size={20} /> : row.individual === false ? <span className="opacity-20">-</span> : row.individual}
                                         </td>
                                         <td className="p-4 text-marketing-text-secondary">
-                                            {row.agency === true ? <Check className="text-marketing-success" size={20} /> : row.agency === false ? <span className="opacity-20">-</span> : row.agency}
+                                            {row.team === true ? <Check className="text-marketing-success" size={20} /> : row.team === false ? <span className="opacity-20">-</span> : row.team}
                                         </td>
                                     </tr>
                                 ))}
@@ -155,8 +214,17 @@ export default function Pricing() {
                 </div>
             </section>
 
+            {/* Token Packs */}
+            <section className="py-20 container mx-auto px-6 md:px-12 max-w-5xl">
+                <h2 className="text-3xl font-bold text-center mb-4">Need More AI Tokens?</h2>
+                <p className="text-marketing-text-secondary text-center mb-12 max-w-2xl mx-auto">
+                    Buy additional tokens anytime. Tokens are shared across your entire team and never expire.
+                </p>
+                <TokenPacks currency={currency} />
+            </section>
+
             {/* FAQ */}
-            <section className="py-20 container mx-auto px-6 md:px-12 max-w-4xl">
+            <section className="py-20 container mx-auto px-6 md:px-12 max-w-4xl border-t border-marketing-border">
                 <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
                 <div className="grid md:grid-cols-2 gap-8">
                     {pricingFaqs.map((faq, i) => (
@@ -172,10 +240,10 @@ export default function Pricing() {
             <section className="py-20 text-center border-t border-marketing-border">
                 <h2 className="text-3xl font-bold mb-6">Ready to run your production business properly?</h2>
                 <p className="text-marketing-text-secondary mb-8">Join 200+ production companies already using ProductionOS.</p>
-                <Link to="/auth/signup" className="inline-block px-8 py-4 bg-marketing-primary text-white font-bold rounded-xl hover:bg-marketing-primary/90 transition-colors">
+                <Link to="/auth/signup" className="inline-block px-8 py-4 bg-gradient-to-r from-marketing-accent to-marketing-primary text-white font-bold rounded-xl hover:shadow-glow hover:-translate-y-1 transition-all">
                     Start free trial
                 </Link>
-                <p className="mt-4 text-sm text-marketing-text-secondary">5-day free trial</p>
+                <p className="mt-4 text-sm text-marketing-text-secondary">No credit card required for Free plan</p>
             </section>
         </Layout>
     );

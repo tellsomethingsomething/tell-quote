@@ -13,8 +13,8 @@ export default {
           background: '#0A0A0B',
           surface: '#141416',
           border: '#2A2A2E',
-          primary: '#6366F1',
-          accent: '#8B5CF6',
+          primary: '#6E44FF',      // Purple (darker end of gradient)
+          accent: '#A881FF',       // Purple (lighter end of gradient)
           success: '#10B981',
           text: {
             primary: '#FAFAFA',
@@ -84,11 +84,29 @@ export default {
             backgroundPosition: "350% 50%, 350% 50%",
           },
         },
+        glow: {
+          '0%, 100%': {
+            boxShadow: '0 0 5px rgba(110, 68, 255, 0.3), 0 0 10px rgba(168, 129, 255, 0.2)',
+          },
+          '50%': {
+            boxShadow: '0 0 15px rgba(110, 68, 255, 0.5), 0 0 25px rgba(168, 129, 255, 0.3)',
+          },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
       },
       animation: {
         'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
         'fade-in': 'fadeIn 0.5s ease-out forwards',
         aurora: "aurora 60s linear infinite",
+        glow: "glow 2s ease-in-out infinite",
+        shimmer: "shimmer 2s ease-in-out infinite",
+      },
+      boxShadow: {
+        'glow': '0 0 15px rgba(110, 68, 255, 0.4), 0 0 30px rgba(168, 129, 255, 0.2)',
+        'glow-lg': '0 0 25px rgba(110, 68, 255, 0.5), 0 0 50px rgba(168, 129, 255, 0.3)',
       },
     },
   },

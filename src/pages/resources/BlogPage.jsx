@@ -6,6 +6,52 @@ import { Calendar, Clock, ArrowRight, User } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 
 const blogPosts = [
+    // Comparison Posts (SEO)
+    {
+        id: 101,
+        slug: "productionos-vs-rentman",
+        title: "ProductionOS vs Rentman: Which is Right for Your Production Company?",
+        excerpt: "A detailed comparison of ProductionOS and Rentman for video production workflows, pricing, and features.",
+        category: "Comparison",
+        author: "ProductionOS Team",
+        date: "Dec 27, 2025",
+        readTime: "10 min read",
+        image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=450&fit=crop",
+    },
+    {
+        id: 102,
+        slug: "productionos-vs-currentrms",
+        title: "ProductionOS vs Current RMS: Complete Feature Comparison",
+        excerpt: "See how ProductionOS stacks up against Current RMS for production management, equipment tracking, and crew scheduling.",
+        category: "Comparison",
+        author: "ProductionOS Team",
+        date: "Dec 26, 2025",
+        readTime: "9 min read",
+        image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=450&fit=crop",
+    },
+    {
+        id: 103,
+        slug: "productionos-vs-studiobinder",
+        title: "ProductionOS vs StudioBinder: Best for Video Production Teams",
+        excerpt: "Compare ProductionOS and StudioBinder for call sheets, project management, and production planning.",
+        category: "Comparison",
+        author: "ProductionOS Team",
+        date: "Dec 25, 2025",
+        readTime: "8 min read",
+        image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&h=450&fit=crop",
+    },
+    {
+        id: 104,
+        slug: "productionos-vs-monday",
+        title: "ProductionOS vs Monday.com for Production Companies",
+        excerpt: "Why a purpose-built production tool beats generic project management. Features, pricing, and workflow comparison.",
+        category: "Comparison",
+        author: "ProductionOS Team",
+        date: "Dec 24, 2025",
+        readTime: "7 min read",
+        image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=450&fit=crop",
+    },
+    // Regular Posts
     {
         id: 1,
         slug: "how-to-price-production-services-2025",

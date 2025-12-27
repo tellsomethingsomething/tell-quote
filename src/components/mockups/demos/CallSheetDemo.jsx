@@ -133,7 +133,7 @@ export default function CallSheetDemo() {
                                     type="time"
                                     value={callSheet.callTime}
                                     onChange={(e) => handleGeneralCallChange(e.target.value)}
-                                    className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-base sm:text-lg font-bold w-full focus:outline-none focus:border-indigo-500 min-h-[40px]"
+                                    className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white text-base sm:text-lg font-bold w-full focus:outline-none focus:border-indigo-500 min-h-[44px]"
                                 />
                             </div>
                             <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 border border-gray-700/50">
@@ -181,7 +181,7 @@ export default function CallSheetDemo() {
                                         ) : (
                                             <button
                                                 onClick={() => setEditingCrew(crew.id)}
-                                                className="min-h-[36px] min-w-[60px] text-indigo-400 font-bold text-sm hover:text-indigo-300 px-2 py-1 rounded hover:bg-indigo-500/10 flex-shrink-0"
+                                                className="min-h-[44px] min-w-[60px] text-indigo-400 font-bold text-sm hover:text-indigo-300 px-2 py-1 rounded hover:bg-indigo-500/10 flex-shrink-0"
                                             >
                                                 {crew.call}
                                             </button>

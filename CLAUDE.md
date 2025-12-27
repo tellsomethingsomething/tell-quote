@@ -176,3 +176,75 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 # Anthropic (for AI features)
 # ANTHROPIC_API_KEY=sk-ant-...
 ```
+
+## Project Notes
+
+- **Domain:** productionos.io purchased for $30.00
+- **Google Site Verification:** `google-site-verification=nLujpcTKo26KbNv-M8dEoUpNlUxPIfTplY7j0Kpz0-4` (TXT record)
+
+## Stripe Products & Prices
+
+### Products
+| Product | ID |
+|---------|-----|
+| ProductionOS Individual | `prod_TgOJZ4SQjfFaSH` |
+| ProductionOS Team | `prod_TgOJvRtalQa4WF` |
+| AI Token Pack - 5,000 | `prod_TgOJC2A4LtwwXx` |
+| AI Token Pack - 25,000 | `prod_TgOJMoTRYLdAW8` |
+| AI Token Pack - 100,000 | `prod_TgOJx8k1JwniR9` |
+
+### Individual Plan Prices
+| Currency | Monthly | Annual |
+|----------|---------|--------|
+| USD | `price_1Sj1XBLE30d1czmdCbD6Kg9V` ($24) | `price_1Sj1XCLE30d1czmdi2UKwktG` ($228) |
+| GBP | `price_1Sj1XDLE30d1czmdWHrCT59f` (£19) | `price_1Sj1XDLE30d1czmdGv9wtuLD` (£180) |
+| EUR | `price_1Sj1XELE30d1czmdO2Vz955B` (€22) | `price_1Sj1XFLE30d1czmdwwDRbACg` (€216) |
+
+### Team Plan Prices
+| Currency | Monthly | Annual |
+|----------|---------|--------|
+| USD | `price_1Sj1XYLE30d1czmdzldBwYTB` ($49) | `price_1Sj1XYLE30d1czmdLUNjPxbg` ($468) |
+| GBP | `price_1Sj1XZLE30d1czmd2oBHlWtC` (£39) | `price_1Sj1XaLE30d1czmd5DsbtbFN` (£372) |
+| EUR | `price_1Sj1XaLE30d1czmdIAxyupGE` (€45) | `price_1Sj1XbLE30d1czmdkSIGXZCQ` (€432) |
+
+### Token Pack Prices (One-time)
+| Pack | USD | GBP | EUR |
+|------|-----|-----|-----|
+| 5K | `price_1Sj1XxLE30d1czmdEEBt5q8O` ($5) | `price_1Sj1XyLE30d1czmdkFf9mcs2` (£4) | `price_1Sj1XzLE30d1czmdbvVUUb1M` (€5) |
+| 25K | `price_1Sj1XzLE30d1czmdAvrfublS` ($20) | `price_1Sj1Y0LE30d1czmdoZhyNiq2` (£16) | `price_1Sj1Y1LE30d1czmdHuHTtYZM` (€18) |
+| 100K | `price_1Sj1Y1LE30d1czmd79RiK6eB` ($60) | `price_1Sj1Y2LE30d1czmdMwBDZQ0w` (£48) | `price_1Sj1Y3LE30d1czmdqngP2zV7` (€55) |
+
+## Stripe Test Mode Products & Prices
+
+### Test Products
+| Product | ID |
+|---------|-----|
+| ProductionOS Individual | `prod_TgOxfFUv2amuIK` |
+| ProductionOS Team | `prod_TgOxdkKikv5qgx` |
+| AI Token Pack - 5,000 | `prod_TgPMQNI85ggTaT` |
+| AI Token Pack - 25,000 | `prod_TgPMvoxPkeCxXc` |
+| AI Token Pack - 100,000 | `prod_TgPMdCe4rYpaYx` |
+
+### Test Individual Plan Prices
+| Currency | Monthly | Annual |
+|----------|---------|--------|
+| USD | `price_1Sj2Y4LE30d1czmdNFSZ2TOH` ($24) | `price_1Sj2Y5LE30d1czmdTb3GqNrr` ($228) |
+| GBP | `price_1Sj2Y6LE30d1czmdZ7U9fbjf` (£19) | `price_1Sj2Y7LE30d1czmd16o5FTvp` (£180) |
+| EUR | `price_1Sj2Y8LE30d1czmd97QfUxC0` (€22) | `price_1Sj2Y9LE30d1czmdNn46kL5B` (€216) |
+
+### Test Team Plan Prices
+| Currency | Monthly | Annual |
+|----------|---------|--------|
+| USD | `price_1Sj2YdLE30d1czmdNopdqYTj` ($49) | `price_1Sj2YdLE30d1czmdSzOW3rrY` ($468) |
+| GBP | `price_1Sj2YeLE30d1czmdaci4C18S` (£39) | `price_1Sj2YfLE30d1czmdKINVzc7y` (£372) |
+| EUR | `price_1Sj2YgLE30d1czmd3XWoxg8g` (€45) | `price_1Sj2YhLE30d1czmdRrlAeRxh` (€432) |
+
+### Test Token Pack Prices (One-time)
+| Pack | USD | GBP | EUR |
+|------|-----|-----|-----|
+| 5K | `price_1Sj2Z7LE30d1czmdb4ulGv3e` ($5) | `price_1Sj2Z8LE30d1czmdstOAIod4` (£4) | `price_1Sj2Z9LE30d1czmd5QSHe1fM` (€5) |
+| 25K | `price_1Sj2ZALE30d1czmd7O5yIKye` ($20) | `price_1Sj2ZBLE30d1czmd4tBU4Dz5` (£16) | `price_1Sj2ZCLE30d1czmdckdVSYfI` (€18) |
+| 100K | `price_1Sj2ZDLE30d1czmddEVuI7VR` ($60) | `price_1Sj2ZELE30d1czmdCWDVUD6J` (£48) | `price_1Sj2ZFLE30d1czmdkIE1DSvc` (€55) |
+
+### Test Payment Link
+- Individual Monthly (USD): https://buy.stripe.com/test_eVq5kE71V4bl30VcIR8k801
