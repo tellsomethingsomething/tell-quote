@@ -55,7 +55,7 @@ export default function FinancialDemo() {
         <div className="p-4 sm:p-6 space-y-5">
             {/* Quote Header */}
             <div className="flex items-center justify-between">
-                <div>
+                <div className="text-left">
                     <h3 className="text-white font-semibold text-lg">{demoQuote.title}</h3>
                     <p className="text-gray-400 text-sm">{demoQuote.client}</p>
                 </div>

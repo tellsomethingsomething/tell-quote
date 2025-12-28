@@ -20,7 +20,7 @@ export default function Home() {
         <Layout>
             <Helmet>
                 <title>ProductionOS - The Profit Platform for Production Companies</title>
-                <meta name="description" content="The first CRM built for production companies. Manage your company and see your real profit on every job. Quotes, kit, crew, and finances in one platform for video and event production." />
+                <meta name="description" content="The first CRM built for production companies. Manage your company and see your profit on every job. Quotes, kit, crew, and finances in one platform for video and event production." />
             </Helmet>
 
             {/* --- HERO SECTION --- */}
@@ -39,7 +39,7 @@ export default function Home() {
                                 The first CRM built for <br className="hidden md:block" /> <span className="text-marketing-primary bg-clip-text text-transparent bg-gradient-to-r from-marketing-primary to-marketing-accent">Production companies</span>
                             </h1>
                             <p className="text-xl md:text-2xl text-marketing-text-secondary max-w-3xl mx-auto mb-12 leading-relaxed">
-                                Manage your company and see your real profit on every job. Quotes, kit, crew, and finances in one platform for video and event production.
+                                Manage your company and see your profit on every job. Quotes, kit, crew, and finances in one platform for video and event production.
                             </p>
 
                             <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-16">
