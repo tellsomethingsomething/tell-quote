@@ -134,14 +134,14 @@ export default function LoginPage({ initialMode = 'login' }) {
             <div className="w-full max-w-md">
                 {/* Logo & Title */}
                 <div className="text-center mb-8">
-                    <img
-                        src="/productionos-logo.svg"
-                        alt="ProductionOS Logo"
-                        className="h-10 mx-auto mb-4"
-                        role="img"
-                        style={{ color: '#fff' }}
-                    />
-                    <h1 className="text-xl font-bold text-white mb-2">ProductionOS</h1>
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-[10px] flex items-center justify-center text-white font-bold text-xl">
+                            P
+                        </div>
+                        <span className="text-2xl font-bold text-white tracking-tight">
+                            Production<span className="text-purple-500">OS</span>
+                        </span>
+                    </div>
                     <p className="text-gray-500 text-sm">
                         {mode === 'login' ? 'Secure Access' : mode === 'signup' ? 'Request Access' : 'Reset Password'}
                     </p>
