@@ -21,9 +21,9 @@ export default function Navbar() {
     }, [location]);
 
     const features = [
+        { name: 'CRM', path: '/features/crm' },
         { name: 'Quoting', path: '/features/quoting' },
         { name: 'Projects', path: '/features/projects' },
-        { name: 'CRM', path: '/features/crm' },
         { name: 'Crew Database', path: '/features/crew' },
         { name: 'Equipment', path: '/features/equipment' },
         { name: 'Financials', path: '/features/financials' },
