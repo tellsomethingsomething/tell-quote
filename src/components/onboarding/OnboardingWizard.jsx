@@ -783,14 +783,16 @@ function BillingStep({ formData, updateField, onBillingComplete, organizationId,
         setSetupError(null);
         try {
             const result = await createSetupIntent(organizationId, userEmail);
-            if (result.clientSecret) {
+            console.log('SetupIntent result:', result);
+            if (result && typeof result.clientSecret === 'string' && result.clientSecret) {
                 setClientSecret(result.clientSecret);
             } else {
+                console.error('Invalid SetupIntent result:', result);
                 setSetupError('Unable to initialize payment form');
             }
         } catch (err) {
             console.error('SetupIntent error:', err);
-            setSetupError('Unable to initialize payment form. Please try again.');
+            setSetupError(err?.message || 'Unable to initialize payment form. Please try again.');
         } finally {
             setIsLoadingSecret(false);
         }
@@ -902,7 +904,7 @@ function BillingStep({ formData, updateField, onBillingComplete, organizationId,
                         </div>
                     ) : setupError ? (
                         <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm mb-3">
-                            {setupError}
+                            {String(setupError)}
                             <button
                                 onClick={loadSetupIntent}
                                 className="ml-2 underline hover:no-underline"
