@@ -144,21 +144,6 @@ export default function FeaturePage() {
 
                     <div className="grid md:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto items-stretch relative">
 
-                        {/* Connecting Arrow - Desktop Only */}
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.5, duration: 0.6 }}
-                            className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
-                        >
-                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-marketing-surface to-marketing-background border-2 border-cyan-500/30 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                                <svg className="w-8 h-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                </svg>
-                            </div>
-                        </motion.div>
-
                         {/* The Old Way Card */}
                         <motion.div
                             initial={{ opacity: 0, x: -30 }}
