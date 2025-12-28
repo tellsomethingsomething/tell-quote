@@ -247,9 +247,9 @@ export const useAuthStore = create((set, get) => ({
                                 auth_user_id: session.user.id,
                                 name: name,
                                 email: session.user.email,
-                                role: 'user',
-                                status: 'pending',
-                                tab_permissions: [],
+                                role: 'owner',
+                                status: 'active',
+                                tab_permissions: ['dashboard', 'quotes', 'clients', 'projects', 'crew', 'equipment', 'rate-card', 'settings'],
                             })
                             .select()
                             .single();
@@ -264,21 +264,8 @@ export const useAuthStore = create((set, get) => ({
                                 status: newProfile.status,
                                 tabPermissions: newProfile.tab_permissions || [],
                             };
-                            logSecurityEvent('signup_request_oauth', { email: session.user.email });
+                            logSecurityEvent('signup_completed_oauth', { email: session.user.email });
                         }
-                    }
-
-                    // Check if user is pending/suspended
-                    if (profile?.status === 'pending') {
-                        await supabase.auth.signOut();
-                        saveAuthSession(null);
-                        set({
-                            isAuthenticated: false,
-                            user: null,
-                            error: 'Your account is pending approval. Please wait for an administrator to activate your account.',
-                            isLoading: false
-                        });
-                        return;
                     }
 
                     if (profile?.status === 'suspended') {
@@ -323,13 +310,13 @@ export const useAuthStore = create((set, get) => ({
     },
 
     /**
-     * Signup with Supabase Auth (creates user with pending status)
+     * Signup with Supabase Auth (creates active user, requires email verification)
      */
     signup: async (name, email, password) => {
         set({ isLoading: true, error: null });
 
         try {
-            // 1. Create auth user
+            // 1. Create auth user (Supabase will send verification email if enabled)
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
@@ -349,33 +336,34 @@ export const useAuthStore = create((set, get) => ({
             }
 
             if (data.user) {
-                // 2. Create user profile with pending status
+                // 2. Create user profile with active status (ready to use after email verification)
                 const { error: profileError } = await supabase
                     .from('user_profiles')
                     .insert({
                         auth_user_id: data.user.id,
                         name: name,
                         email: email,
-                        role: 'user',
-                        status: 'pending',
-                        tab_permissions: [], // No permissions until approved
+                        role: 'owner',
+                        status: 'active',
+                        tab_permissions: ['dashboard', 'quotes', 'clients', 'projects', 'crew', 'equipment', 'rate-card', 'settings'],
                     });
 
                 if (profileError) {
                     console.error('Failed to create user profile:', profileError);
-                    // Profile creation failed, but auth user exists
-                    // Admin will need to manually create profile
                 }
 
-                // 3. Sign out immediately (user needs admin approval)
-                await supabase.auth.signOut();
-
                 set({ isLoading: false });
-                logSecurityEvent('signup_request', { email });
+                logSecurityEvent('signup_completed', { email });
 
                 // Track signup
                 trackConversion(Events.SIGNUP_COMPLETED);
-                return true;
+
+                // Return whether email confirmation is needed
+                // If identities is empty, email confirmation is required
+                return {
+                    success: true,
+                    needsEmailConfirmation: !data.session
+                };
             }
 
             return false;
@@ -425,27 +413,14 @@ export const useAuthStore = create((set, get) => ({
                 // Fetch user profile
                 const profile = await fetchUserProfile(data.user.id);
 
-                // Check if user account is approved
-                if (profile) {
-                    if (profile.status === 'pending') {
-                        // Sign out and show pending message
-                        await supabase.auth.signOut();
-                        set({
-                            error: 'Your account is pending approval. Please wait for an administrator to activate your account.',
-                            isLoading: false
-                        });
-                        return false;
-                    }
-
-                    if (profile.status === 'suspended') {
-                        // Sign out and show suspended message
-                        await supabase.auth.signOut();
-                        set({
-                            error: 'Your account has been suspended. Please contact an administrator.',
-                            isLoading: false
-                        });
-                        return false;
-                    }
+                // Check if user account is suspended
+                if (profile?.status === 'suspended') {
+                    await supabase.auth.signOut();
+                    set({
+                        error: 'Your account has been suspended. Please contact support.',
+                        isLoading: false
+                    });
+                    return false;
                 }
 
                 recordLoginAttempt(true);

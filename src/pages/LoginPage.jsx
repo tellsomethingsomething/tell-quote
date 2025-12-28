@@ -85,7 +85,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                 return; // Show validation error instead
             }
             const result = await signup(name, email, password);
-            if (result) {
+            if (result && result.success) {
                 // Store plan selection for onboarding if a paid plan was selected
                 if (selectedPlan && selectedPlan !== 'free') {
                     localStorage.setItem('pendingPlanSelection', JSON.stringify({
@@ -143,7 +143,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                         </span>
                     </div>
                     <p className="text-gray-500 text-sm">
-                        {mode === 'login' ? 'Secure Access' : mode === 'signup' ? 'Request Access' : 'Reset Password'}
+                        {mode === 'login' ? 'Sign in to your account' : mode === 'signup' ? 'Create your account' : 'Reset Password'}
                     </p>
                 </div>
 
@@ -179,31 +179,19 @@ export default function LoginPage({ initialMode = 'login' }) {
                         <div className="text-center py-4">
                             <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
                             </div>
-                            <h2 className="text-lg font-semibold text-white mb-2">
-                                {selectedPlan && selectedPlan !== 'free' ? 'Almost There!' : 'Request Submitted'}
-                            </h2>
-                            {selectedPlan && selectedPlan !== 'free' ? (
-                                <>
-                                    <p className="text-gray-400 text-sm mb-4">
-                                        Your account has been created. Once approved, you'll be able to start your <span className="text-brand-teal font-semibold capitalize">{selectedPlan}</span> plan trial.
-                                    </p>
-                                    <p className="text-gray-500 text-xs mb-6">
-                                        We'll notify you by email when your account is ready. Your plan selection has been saved.
-                                    </p>
-                                </>
-                            ) : (
-                                <>
-                                    <p className="text-gray-400 text-sm mb-4">
-                                        Your access request has been submitted. An administrator will review and approve your account.
-                                    </p>
-                                    <p className="text-gray-500 text-xs mb-6">
-                                        You will be able to sign in once your account is approved.
-                                    </p>
-                                </>
-                            )}
+                            <h2 className="text-lg font-semibold text-white mb-2">Check Your Email</h2>
+                            <p className="text-gray-400 text-sm mb-4">
+                                We've sent a verification link to <span className="text-white font-medium">{email}</span>
+                            </p>
+                            <p className="text-gray-500 text-xs mb-6">
+                                Click the link in your email to verify your account and get started.
+                                {selectedPlan && selectedPlan !== 'free' && (
+                                    <> Your <span className="text-purple-400 font-semibold capitalize">{selectedPlan}</span> plan selection has been saved.</>
+                                )}
+                            </p>
                             <button
                                 type="button"
                                 onClick={() => {
@@ -501,7 +489,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                             ) : mode === 'forgot' ? (
                                 'Send Reset Link'
                             ) : mode === 'signup' ? (
-                                'Request Access'
+                                'Create Account'
                             ) : (
                                 'Sign In'
                             )}
@@ -553,7 +541,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                                             onClick={() => switchMode('signup')}
                                             className="text-brand-teal hover:text-brand-teal-light transition-colors"
                                         >
-                                            Request access
+                                            Create account
                                         </button>
                                     </>
                                 ) : mode === 'forgot' ? (
