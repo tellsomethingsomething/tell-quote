@@ -68,7 +68,7 @@ export default function CRMDemo() {
                 <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0">
                     NK
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 text-left">
                     <h3 className="text-white font-semibold text-lg truncate">{demoClient.name}</h3>
                     <p className="text-gray-400 text-sm">{demoClient.company}</p>
                     <div className="flex flex-wrap gap-2 mt-2">

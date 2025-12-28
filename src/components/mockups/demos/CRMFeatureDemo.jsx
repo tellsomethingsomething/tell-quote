@@ -225,7 +225,7 @@ export default function CRMFeatureDemo() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-start justify-between gap-3 mb-4">
-                                <div className="min-w-0 flex-1">
+                                <div className="min-w-0 flex-1 text-left">
                                     <h3 className="text-white font-bold text-base sm:text-lg truncate">{selectedDeal.company}</h3>
                                     <span className={`text-xs px-2 py-0.5 rounded ${pipelineStages.find(s => s.id === selectedDeal.stage)?.color} bg-opacity-20 text-white`}>
                                         {pipelineStages.find(s => s.id === selectedDeal.stage)?.label}

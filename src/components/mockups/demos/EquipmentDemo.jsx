@@ -210,7 +210,7 @@ export default function EquipmentDemo() {
                                     <div className="text-indigo-400">
                                         {getCategoryIcon(checkoutModal.category)}
                                     </div>
-                                    <div className="min-w-0 flex-1">
+                                    <div className="min-w-0 flex-1 text-left">
                                         <p className="text-white font-medium text-sm sm:text-base truncate">{checkoutModal.name}</p>
                                         <p className="text-gray-500 text-xs">SN: {checkoutModal.serial}</p>
                                     </div>

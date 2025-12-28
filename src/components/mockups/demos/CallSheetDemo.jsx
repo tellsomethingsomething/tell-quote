@@ -39,7 +39,7 @@ export default function CallSheetDemo() {
         <div className="p-3 sm:p-6 space-y-3 sm:space-y-4 max-w-full overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 text-left">
                     <h3 className="text-white font-semibold text-base sm:text-lg truncate">{callSheet.project}</h3>
                     <p className="text-gray-400 text-xs sm:text-sm">{callSheet.date}</p>
                 </div>

@@ -173,7 +173,7 @@ export default function CrewDemo() {
                                 <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-base sm:text-lg flex-shrink-0">
                                     {selectedCrew.name.split(' ').map(n => n[0]).join('')}
                                 </div>
-                                <div className="flex-1 min-w-0">
+                                <div className="flex-1 min-w-0 text-left">
                                     <h3 className="text-white font-bold text-base sm:text-lg truncate">{selectedCrew.name}</h3>
                                     <p className="text-gray-400 text-sm truncate">{selectedCrew.role}</p>
                                     <div className="flex items-center gap-1 mt-1">

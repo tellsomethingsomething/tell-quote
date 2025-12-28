@@ -115,7 +115,7 @@ export default function FinancialsFeatureDemo() {
                     {/* Revenue & Invoice */}
                     <div className="bg-gray-800/50 rounded-lg p-3 sm:p-4 border border-gray-700/50">
                         <div className="flex items-center justify-between mb-3 gap-2">
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 text-left">
                                 <p className="text-gray-400 text-xs sm:text-sm">Total Revenue</p>
                                 <p className="text-xl sm:text-2xl font-bold text-white">{formatPrice(selectedProject.revenue)}</p>
                             </div>

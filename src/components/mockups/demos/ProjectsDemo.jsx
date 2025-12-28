@@ -178,7 +178,7 @@ export default function ProjectsDemo() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-start justify-between gap-3 mb-4">
-                                <div className="min-w-0 flex-1">
+                                <div className="min-w-0 flex-1 text-left">
                                     <h3 className="text-white font-bold text-base sm:text-lg truncate">{selectedProject.title}</h3>
                                     <p className="text-gray-400 text-sm truncate">{selectedProject.client}</p>
                                 </div>

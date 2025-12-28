@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import QuoteBuilderMockup from '../mockups/QuoteBuilderMockup';
 import KanbanMockup from '../mockups/KanbanMockup';
 import FinanceMockup from '../mockups/FinanceMockup';
@@ -159,10 +159,9 @@ export default function FeatureShowcase() {
                         </p>
                         <Link
                             to={features[activeIndex].link}
-                            className="inline-flex items-center gap-2 text-marketing-primary hover:text-marketing-primary/80 text-sm font-medium transition-colors group"
+                            className="text-marketing-primary hover:text-marketing-primary/80 text-sm font-medium transition-colors"
                         >
                             Learn more
-                            <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </motion.div>
                 </AnimatePresence>
