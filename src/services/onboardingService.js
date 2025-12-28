@@ -5,29 +5,27 @@
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
-// Onboarding Steps
+// Onboarding Steps - Simplified flow
 export const ONBOARDING_STEPS = [
     { id: 'company_setup', label: 'Company Setup', required: true },
-    { id: 'target_market', label: 'Your Market', required: false }, // New: Industry & clients
-    { id: 'billing', label: 'Start Trial', required: false }, // Skip if billing not configured
-    { id: 'pain_points', label: 'Pain Points', required: false },
-    { id: 'company_profile', label: 'Company Profile', required: false },
-    { id: 'team_invite', label: 'Invite Team', required: false, conditional: true },
-    { id: 'data_import', label: 'Import Data', required: false },
-    { id: 'rate_card', label: 'Rate Card', required: false },
+    { id: 'billing', label: 'Choose Plan', required: false },
     { id: 'first_action', label: 'Get Started', required: true },
 ];
 
 // Company Types
 export const COMPANY_TYPES = [
     { id: 'content_production', label: 'Content Production Company', icon: 'video', description: 'Brand films, commercials, branded content' },
-    { id: 'event_production', label: 'Event Production Company', icon: 'calendar', description: 'Corporate events, conferences, live shows' },
-    { id: 'sports_production', label: 'Sports Production Company', icon: 'activity', description: 'Sports broadcasts, athlete content, fitness' },
-    { id: 'corporate_inhouse', label: 'Corporate / In-house Team', icon: 'building', description: 'Internal video or comms team' },
-    { id: 'videographer', label: 'Videographer (Freelance)', icon: 'camera', description: 'Solo operator or small crew' },
-    { id: 'photo_studio', label: 'Photographer / Photo Studio', icon: 'image', description: 'Commercial, product, or portrait photography' },
-    { id: 'live_streaming', label: 'Live Streaming / Broadcast', icon: 'radio', description: 'Webinars, live events, hybrid production' },
-    { id: 'post_production', label: 'Post-Production / Edit House', icon: 'film', description: 'Editing, color, VFX, motion graphics' },
+    { id: 'corporate_video', label: 'Corporate Video Production', icon: 'building', description: 'Training videos, internal comms, corporate films' },
+    { id: 'live_events', label: 'Live Events / Broadcast', icon: 'radio', description: 'Conferences, live streams, hybrid events, OB' },
+    { id: 'sports_production', label: 'Sports Production Company', icon: 'activity', description: 'Sports broadcasts, athlete content, federations' },
+    { id: 'documentary_film', label: 'Documentary / Film Production', icon: 'film', description: 'Documentaries, indie films, short films' },
+    { id: 'music_entertainment', label: 'Music Video / Entertainment', icon: 'video', description: 'Music videos, artist content, entertainment' },
+    { id: 'wedding_social', label: 'Wedding / Social Events', icon: 'calendar', description: 'Weddings, celebrations, social videography' },
+    { id: 'post_production', label: 'Post-Production / Edit House', icon: 'film', description: 'Editing, color, VFX, finishing' },
+    { id: 'animation_motion', label: 'Animation / Motion Studio', icon: 'video', description: 'Animation, motion graphics, explainers' },
+    { id: 'photo_studio', label: 'Photo Studio / Photographer', icon: 'image', description: 'Commercial, product, portrait photography' },
+    { id: 'equipment_rental', label: 'Equipment Rental / Facilities', icon: 'building', description: 'Kit hire, studios, production facilities' },
+    { id: 'freelancer', label: 'Freelancer / Solo Operator', icon: 'camera', description: 'Independent creator or small crew' },
     { id: 'full_service', label: 'Full-Service Agency', icon: 'briefcase', description: 'Creative agency with production capabilities' },
     { id: 'other', label: 'Other', icon: 'plus', description: 'Something else entirely' },
 ];

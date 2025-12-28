@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Building2, Globe2, Users, Target, Upload, CreditCard, Rocket,
-    CheckCircle, ArrowRight, ArrowLeft, Loader2, X, Video, Camera,
-    Radio, Film, Calendar, Plus, AlertCircle, Download, Sparkles,
-    Briefcase, TrendingUp, Activity, Image
+    Building2, Globe2, CreditCard, Rocket, Film,
+    CheckCircle, ArrowRight, ArrowLeft, Loader2, X,
+    AlertCircle, Sparkles, Video, Camera, Radio,
+    Calendar, Activity, Image, Briefcase, Plus
 } from 'lucide-react';
 import { useOrganizationStore } from '../../store/organizationStore';
 import { CURRENCIES, DEFAULT_TAX_RULES } from '../../store/settingsStore';
@@ -11,46 +11,21 @@ import { supabase } from '../../lib/supabase';
 import {
     ONBOARDING_STEPS,
     COMPANY_TYPES,
-    PRIMARY_FOCUS_OPTIONS,
     TEAM_SIZE_OPTIONS,
-    PAIN_POINTS,
-    PAYMENT_TERMS,
-    DEFAULT_CREW_ROLES,
-    DEFAULT_EQUIPMENT_CATEGORIES,
-    CLIENT_SECTORS,
-    PRODUCTION_TYPES,
-    CONTACT_TYPES,
     getOnboardingProgress,
     updateOnboardingProgress,
     completeStep,
     skipStep,
     completeOnboarding,
-    getSuggestedRates,
-    getDefaultCrewRoles,
 } from '../../services/onboardingService';
-import {
-    processImportFile,
-    mapHeaders,
-    validateImportData,
-    downloadTemplate,
-    importClients,
-    importCrew,
-    importEquipment,
-} from '../../services/dataImportService';
-import { createSetupIntent, STRIPE_PRICES } from '../../services/billingService';
+import { createSetupIntent } from '../../services/billingService';
 import StripeProvider from '../billing/StripeProvider';
 import { CardSetupForm } from '../billing/PaymentMethodForm';
 
 // Step icons mapping
 const STEP_ICONS = {
     company_setup: Building2,
-    target_market: TrendingUp,
     billing: CreditCard,
-    pain_points: Target,
-    company_profile: Building2,
-    team_invite: Users,
-    data_import: Upload,
-    rate_card: CreditCard,
     first_action: Rocket,
 };
 
@@ -106,45 +81,23 @@ export default function OnboardingWizard({ userId, onComplete }) {
     const [organizationId, setOrganizationId] = useState(null);
     const [userEmail, setUserEmail] = useState(null);
 
-    const { createOrganization, createInvitation } = useOrganizationStore();
+    const { createOrganization } = useOrganizationStore();
 
-    // Form data
+    // Form data - simplified
     const [formData, setFormData] = useState({
         // Company Setup
         companyName: '',
         companyType: '',
-        primaryFocus: [],
         teamSize: '',
         country: '',
         currency: 'USD',
 
-        // Target Market - Industries & Clients
-        idealClients: [],       // Free-form list of their ideal clients (e.g., "Nike", "Tech startups", "Sports brands")
-        productionTypes: [],    // What content they create
-        contactTypes: [],       // Who they work with
-
-        // Pain Points
-        painPoints: [],
-
-        // Company Profile
-        logo: null,
-        address: '',
-        phone: '',
-        website: '',
-        paymentTerms: 'net_30',
-
-        // Team Invite
-        teamInvites: [{ email: '', role: 'member' }],
-
-        // Rate Card
-        crewRates: {},
-        equipmentRates: {},
-
-        // Data Imports (from CSV)
-        dataImports: {},
+        // Billing
+        selectedPlan: 'individual',
+        billingComplete: false,
 
         // First Action
-        firstAction: 'create_quote',
+        firstAction: 'explore_dashboard',
     });
 
     // Load existing progress
@@ -184,13 +137,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
                 setFormData(prev => ({
                     ...prev,
                     companyType: data.company_type || '',
-                    primaryFocus: data.primary_focus || [],
                     teamSize: data.team_size || '',
-                    painPoints: data.pain_points || [],
-                    address: data.company_address || '',
-                    phone: data.company_phone || '',
-                    website: data.company_website || '',
-                    paymentTerms: data.payment_terms || 'net_30',
                 }));
             }
         } catch (err) {
@@ -203,19 +150,6 @@ export default function OnboardingWizard({ userId, onComplete }) {
     const updateField = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         setError(null);
-    };
-
-    const toggleArrayItem = (field, item, max = null) => {
-        setFormData(prev => {
-            const current = prev[field] || [];
-            if (current.includes(item)) {
-                return { ...prev, [field]: current.filter(i => i !== item) };
-            }
-            if (max && current.length >= max) {
-                return prev;
-            }
-            return { ...prev, [field]: [...current, item] };
-        });
     };
 
     const handleCountryChange = (country) => {
@@ -316,35 +250,6 @@ export default function OnboardingWizard({ userId, onComplete }) {
                     return false;
                 }
                 break;
-
-            case 'team_invite': {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                const filledInvites = formData.teamInvites.filter(inv => inv.email.trim());
-                const seenEmails = new Set();
-
-                for (const invite of filledInvites) {
-                    const normalizedEmail = invite.email.trim().toLowerCase();
-
-                    if (!emailRegex.test(invite.email.trim())) {
-                        setError(`Invalid email format: ${invite.email}`);
-                        return false;
-                    }
-
-                    // Check for duplicates within batch
-                    if (seenEmails.has(normalizedEmail)) {
-                        setError(`Duplicate email: ${invite.email}`);
-                        return false;
-                    }
-                    seenEmails.add(normalizedEmail);
-
-                    // Check for self-invite
-                    if (userEmail && normalizedEmail === userEmail.toLowerCase()) {
-                        setError("You can't invite yourself");
-                        return false;
-                    }
-                }
-                break;
-            }
         }
 
         return true;
@@ -374,16 +279,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
 
             // Move to next step
             if (currentStep < ONBOARDING_STEPS.length - 1) {
-                // Check if next step should be skipped (conditional steps)
-                let nextIndex = currentStep + 1;
-                const nextStep = ONBOARDING_STEPS[nextIndex];
-
-                // Skip team invite if solo
-                if (nextStep.id === 'team_invite' && formData.teamSize === 'just_me') {
-                    nextIndex++;
-                }
-
-                setCurrentStep(nextIndex);
+                setCurrentStep(currentStep + 1);
             } else {
                 await handleComplete();
             }
@@ -408,15 +304,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
 
             // Move to next step
             if (currentStep < ONBOARDING_STEPS.length - 1) {
-                let nextIndex = currentStep + 1;
-                const nextStep = ONBOARDING_STEPS[nextIndex];
-
-                // Skip team invite if solo
-                if (nextStep.id === 'team_invite' && formData.teamSize === 'just_me') {
-                    nextIndex++;
-                }
-
-                setCurrentStep(nextIndex);
+                setCurrentStep(currentStep + 1);
             } else {
                 await handleComplete();
             }
@@ -429,15 +317,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
 
     const handleBack = () => {
         if (currentStep > 0) {
-            let prevIndex = currentStep - 1;
-            const prevStep = ONBOARDING_STEPS[prevIndex];
-
-            // Skip team invite if solo when going back
-            if (prevStep.id === 'team_invite' && formData.teamSize === 'just_me') {
-                prevIndex--;
-            }
-
-            setCurrentStep(Math.max(0, prevIndex));
+            setCurrentStep(currentStep - 1);
         }
     };
 
@@ -446,37 +326,11 @@ export default function OnboardingWizard({ userId, onComplete }) {
             case 'company_setup':
                 return {
                     company_type: formData.companyType,
-                    primary_focus: formData.primaryFocus,
                     team_size: formData.teamSize,
                 };
-            case 'target_market':
+            case 'billing':
                 return {
-                    ideal_clients: formData.idealClients,
-                    production_types: formData.productionTypes,
-                    contact_types: formData.contactTypes,
-                };
-            case 'pain_points':
-                return {
-                    pain_points: formData.painPoints,
-                };
-            case 'company_profile':
-                return {
-                    company_logo_url: formData.logo,
-                    company_address: formData.address,
-                    company_phone: formData.phone,
-                    company_website: formData.website,
-                    payment_terms: formData.paymentTerms,
-                };
-            case 'rate_card':
-                return {
-                    rate_card_configured: Object.keys(formData.crewRates).length > 0,
-                    // Store the actual crew rates for later processing
-                    crew_rates: formData.crewRates,
-                };
-            case 'team_invite':
-                return {
-                    team_invites: formData.teamInvites.filter(inv => inv.email.trim()),
-                    team_invites_sent: formData.teamInvites.filter(inv => inv.email.trim()).length,
+                    selected_plan: formData.selectedPlan,
                 };
             case 'first_action':
                 return {
@@ -494,7 +348,6 @@ export default function OnboardingWizard({ userId, onComplete }) {
             // 1. Get or create the organization
             let org;
             if (organizationId) {
-                // Organization was already created during company_setup step
                 const { data } = await supabase
                     .from('organizations')
                     .select('*')
@@ -502,7 +355,6 @@ export default function OnboardingWizard({ userId, onComplete }) {
                     .single();
                 org = data;
             } else {
-                // Create the organization now (fallback)
                 org = await createOrganization(formData.companyName, userId);
             }
 
@@ -515,27 +367,16 @@ export default function OnboardingWizard({ userId, onComplete }) {
                 company: {
                     name: formData.companyName,
                     country: formData.country,
-                    address: formData.address,
-                    phone: formData.phone,
-                    website: formData.website,
-                    logo: formData.logo,
                 },
                 quoteDefaults: {
                     currency: formData.currency,
                     validityDays: 30,
-                    paymentTerms: formData.paymentTerms,
                 },
                 preferredCurrencies: [formData.currency, 'USD', 'EUR', 'GBP']
                     .filter((v, i, a) => a.indexOf(v) === i)
                     .slice(0, 5),
                 personalization: {
                     companyType: formData.companyType,
-                    primaryFocus: formData.primaryFocus,
-                    painPoints: formData.painPoints,
-                    // Target market data for AI Research
-                    idealClients: formData.idealClients,
-                    productionTypes: formData.productionTypes,
-                    contactTypes: formData.contactTypes,
                 },
             };
 
@@ -543,78 +384,6 @@ export default function OnboardingWizard({ userId, onComplete }) {
                 .from('settings')
                 .update(settingsData)
                 .eq('organization_id', org.id);
-
-            // 2b. Create rate card items from crew rates
-            if (Object.keys(formData.crewRates).length > 0) {
-                const rateCardItems = Object.entries(formData.crewRates)
-                    .filter(([_, rate]) => rate && parseFloat(rate) > 0)
-                    .map(([role, rate]) => ({
-                        organization_id: org.id,
-                        name: role,
-                        description: `${role} day rate`,
-                        section: 'prod_production',
-                        unit: 'day',
-                        is_active: true,
-                        pricing: {
-                            DEFAULT: {
-                                cost: { amount: parseFloat(rate) * 0.7, baseCurrency: formData.currency },
-                                charge: { amount: parseFloat(rate), baseCurrency: formData.currency },
-                            }
-                        }
-                    }));
-
-                if (rateCardItems.length > 0) {
-                    await supabase.from('rate_cards').insert(rateCardItems);
-                }
-            }
-
-            // 2c. Send team invitations (with proper token generation and email sending)
-            if (formData.teamInvites?.length > 0) {
-                const validInvites = formData.teamInvites.filter(inv => inv.email?.trim());
-                const inviteResults = { sent: 0, skipped: 0, errors: [] };
-
-                for (const invite of validInvites) {
-                    try {
-                        // createInvitation generates token, saves to DB, and sends email via edge function
-                        await createInvitation(invite.email.trim(), invite.role || 'member', []);
-                        inviteResults.sent++;
-                    } catch (inviteErr) {
-                        // Handle specific error cases gracefully
-                        const errorMsg = inviteErr.message || '';
-                        if (errorMsg.includes('already exists') || errorMsg.includes('already a member')) {
-                            // User already exists - skip silently (they can be added manually)
-                            inviteResults.skipped++;
-                            console.log(`Skipped invite for ${invite.email}: user already exists`);
-                        } else if (errorMsg.includes('already invited')) {
-                            // Already invited - skip silently
-                            inviteResults.skipped++;
-                            console.log(`Skipped invite for ${invite.email}: already invited`);
-                        } else {
-                            // Other errors - log but don't fail the whole onboarding
-                            inviteResults.errors.push(invite.email);
-                            console.error(`Failed to invite ${invite.email}:`, inviteErr);
-                        }
-                    }
-                }
-
-                // Store results for potential display
-                if (inviteResults.sent > 0 || inviteResults.skipped > 0) {
-                    console.log(`Invitations: ${inviteResults.sent} sent, ${inviteResults.skipped} skipped`);
-                }
-            }
-
-            // 2d. Import data from CSV uploads
-            if (formData.dataImports) {
-                if (formData.dataImports.clients?.length > 0) {
-                    await importClients(formData.dataImports.clients, org.id, userId);
-                }
-                if (formData.dataImports.crew?.length > 0) {
-                    await importCrew(formData.dataImports.crew, org.id, userId);
-                }
-                if (formData.dataImports.equipment?.length > 0) {
-                    await importEquipment(formData.dataImports.equipment, org.id, userId);
-                }
-            }
 
             // 3. Mark onboarding as complete
             await completeOnboarding(userId, org.id);
@@ -641,9 +410,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
 
         switch (step.id) {
             case 'company_setup':
-                return <CompanySetupStep formData={formData} updateField={updateField} handleCountryChange={handleCountryChange} toggleArrayItem={toggleArrayItem} />;
-            case 'target_market':
-                return <TargetMarketStep formData={formData} updateField={updateField} toggleArrayItem={toggleArrayItem} />;
+                return <CompanySetupStep formData={formData} updateField={updateField} handleCountryChange={handleCountryChange} />;
             case 'billing':
                 return <BillingStep
                     formData={formData}
@@ -652,16 +419,6 @@ export default function OnboardingWizard({ userId, onComplete }) {
                     organizationId={organizationId}
                     userEmail={userEmail}
                 />;
-            case 'pain_points':
-                return <PainPointsStep formData={formData} toggleArrayItem={toggleArrayItem} />;
-            case 'company_profile':
-                return <CompanyProfileStep formData={formData} updateField={updateField} />;
-            case 'team_invite':
-                return <TeamInviteStep formData={formData} updateField={updateField} userEmail={userEmail} />;
-            case 'data_import':
-                return <DataImportStep formData={formData} updateField={updateField} />;
-            case 'rate_card':
-                return <RateCardStep formData={formData} updateField={updateField} />;
             case 'first_action':
                 return <FirstActionStep formData={formData} updateField={updateField} />;
             default:
@@ -792,7 +549,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
 
 // Step Components
 
-function CompanySetupStep({ formData, updateField, handleCountryChange, toggleArrayItem }) {
+function CompanySetupStep({ formData, updateField, handleCountryChange }) {
     return (
         <div className="space-y-6">
             {/* Company Name */}
@@ -842,28 +599,6 @@ function CompanySetupStep({ formData, updateField, handleCountryChange, toggleAr
                 </div>
             </div>
 
-            {/* Primary Focus */}
-            <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Primary Focus <span className="text-gray-500">(select up to 3)</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                    {PRIMARY_FOCUS_OPTIONS.map(focus => (
-                        <button
-                            key={focus.id}
-                            onClick={() => toggleArrayItem('primaryFocus', focus.id, 3)}
-                            className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                                formData.primaryFocus.includes(focus.id)
-                                    ? 'bg-brand-primary text-white'
-                                    : 'bg-dark-bg text-gray-400 border border-dark-border hover:border-gray-600'
-                            }`}
-                        >
-                            {focus.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
             {/* Team Size */}
             <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -910,7 +645,7 @@ function CompanySetupStep({ formData, updateField, handleCountryChange, toggleAr
 
                 <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Default Currency
+                        Primary Currency
                     </label>
                     <select
                         value={formData.currency}
@@ -929,464 +664,6 @@ function CompanySetupStep({ formData, updateField, handleCountryChange, toggleAr
     );
 }
 
-function PainPointsStep({ formData, toggleArrayItem }) {
-    return (
-        <div className="space-y-4">
-            <p className="text-gray-400 mb-4">
-                What's your biggest challenge right now? <span className="text-gray-500">(select up to 3)</span>
-            </p>
-
-            <div className="space-y-3">
-                {PAIN_POINTS.map(point => (
-                    <button
-                        key={point.id}
-                        onClick={() => toggleArrayItem('painPoints', point.id, 3)}
-                        className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-left ${
-                            formData.painPoints.includes(point.id)
-                                ? 'border-brand-primary bg-brand-primary/10'
-                                : 'border-dark-border bg-dark-bg hover:border-gray-600'
-                        }`}
-                    >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            formData.painPoints.includes(point.id)
-                                ? 'border-brand-primary bg-brand-primary'
-                                : 'border-gray-600'
-                        }`}>
-                            {formData.painPoints.includes(point.id) && (
-                                <CheckCircle className="w-3 h-3 text-white" />
-                            )}
-                        </div>
-                        <span className={formData.painPoints.includes(point.id) ? 'text-white' : 'text-gray-300'}>
-                            {point.label}
-                        </span>
-                    </button>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-function CompanyProfileStep({ formData, updateField }) {
-    const handleLogoUpload = (e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                updateField('logo', event.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    return (
-        <div className="space-y-6">
-            <p className="text-gray-400">
-                Add your company details. These will appear on your quotes and invoices.
-            </p>
-
-            {/* Logo Upload */}
-            <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Company Logo
-                </label>
-                <div className="flex items-center gap-4">
-                    <div className="w-24 h-16 bg-dark-bg border border-dark-border rounded-lg flex items-center justify-center overflow-hidden">
-                        {formData.logo ? (
-                            <img src={formData.logo} alt="Logo" className="max-w-full max-h-full object-contain" />
-                        ) : (
-                            <span className="text-gray-500 text-xs">No logo</span>
-                        )}
-                    </div>
-                    <div>
-                        <label className="btn-secondary text-sm cursor-pointer">
-                            Upload Logo
-                            <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-                        </label>
-                        {formData.logo && (
-                            <button onClick={() => updateField('logo', null)} className="ml-2 text-xs text-red-400">
-                                Remove
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Address */}
-            <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Address</label>
-                <textarea
-                    value={formData.address}
-                    onChange={(e) => updateField('address', e.target.value)}
-                    placeholder="123 Main Street, City, Country"
-                    className="input w-full resize-none"
-                    rows={2}
-                />
-            </div>
-
-            {/* Phone & Website */}
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Phone</label>
-                    <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => updateField('phone', e.target.value)}
-                        placeholder="+1 234 567 8900"
-                        className="input w-full"
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Website</label>
-                    <input
-                        type="url"
-                        value={formData.website}
-                        onChange={(e) => updateField('website', e.target.value)}
-                        placeholder="https://www.yourcompany.com"
-                        className="input w-full"
-                    />
-                </div>
-            </div>
-
-            {/* Payment Terms */}
-            <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Default Payment Terms</label>
-                <select
-                    value={formData.paymentTerms}
-                    onChange={(e) => updateField('paymentTerms', e.target.value)}
-                    className="input w-full"
-                >
-                    {PAYMENT_TERMS.map(term => (
-                        <option key={term.id} value={term.id}>{term.label}</option>
-                    ))}
-                </select>
-            </div>
-        </div>
-    );
-}
-
-function TeamInviteStep({ formData, updateField, userEmail }) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    const isValidEmail = (email) => {
-        if (!email.trim()) return true; // Empty is valid (optional)
-        return emailRegex.test(email.trim());
-    };
-
-    // Check for duplicate emails within the batch
-    const isDuplicate = (email, currentIndex) => {
-        const normalizedEmail = email.trim().toLowerCase();
-        if (!normalizedEmail) return false;
-
-        // Check against other invites
-        const duplicateInBatch = formData.teamInvites.some((inv, i) =>
-            i !== currentIndex && inv.email.trim().toLowerCase() === normalizedEmail
-        );
-
-        // Check against current user's email
-        const isSelfInvite = userEmail && normalizedEmail === userEmail.toLowerCase();
-
-        return duplicateInBatch || isSelfInvite;
-    };
-
-    const getDuplicateMessage = (email, currentIndex) => {
-        const normalizedEmail = email.trim().toLowerCase();
-        if (userEmail && normalizedEmail === userEmail.toLowerCase()) {
-            return "You can't invite yourself";
-        }
-        return 'This email is already in the list';
-    };
-
-    const addInvite = () => {
-        updateField('teamInvites', [...formData.teamInvites, { email: '', role: 'member' }]);
-    };
-
-    const updateInvite = (index, field, value) => {
-        const newInvites = [...formData.teamInvites];
-        newInvites[index] = { ...newInvites[index], [field]: value };
-        updateField('teamInvites', newInvites);
-    };
-
-    const removeInvite = (index) => {
-        updateField('teamInvites', formData.teamInvites.filter((_, i) => i !== index));
-    };
-
-    // Count valid invites for summary
-    const validInviteCount = formData.teamInvites.filter(inv =>
-        inv.email.trim() && isValidEmail(inv.email) && !isDuplicate(inv.email, formData.teamInvites.indexOf(inv))
-    ).length;
-
-    return (
-        <div className="space-y-6">
-            <p className="text-gray-400">
-                Invite your team members to collaborate. They'll receive an email invitation.
-            </p>
-
-            <div className="space-y-3">
-                {formData.teamInvites.map((invite, index) => {
-                    const hasEmail = invite.email.trim();
-                    const invalidFormat = hasEmail && !isValidEmail(invite.email);
-                    const duplicate = hasEmail && !invalidFormat && isDuplicate(invite.email, index);
-                    const hasError = invalidFormat || duplicate;
-
-                    return (
-                        <div key={index} className="space-y-1">
-                            <div className="flex gap-3">
-                                <input
-                                    type="email"
-                                    value={invite.email}
-                                    onChange={(e) => updateInvite(index, 'email', e.target.value)}
-                                    placeholder="colleague@company.com"
-                                    className={`input flex-1 ${hasError ? 'border-red-500 focus:border-red-500' : ''}`}
-                                />
-                                <select
-                                    value={invite.role}
-                                    onChange={(e) => updateInvite(index, 'role', e.target.value)}
-                                    className="input w-32"
-                                >
-                                    <option value="admin">Admin</option>
-                                    <option value="member">Member</option>
-                                    <option value="viewer">Viewer</option>
-                                </select>
-                                {formData.teamInvites.length > 1 && (
-                                    <button onClick={() => removeInvite(index)} className="text-gray-500 hover:text-red-400">
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                )}
-                            </div>
-                            {invalidFormat && (
-                                <p className="text-red-500 text-sm pl-1">Please enter a valid email address</p>
-                            )}
-                            {duplicate && (
-                                <p className="text-red-500 text-sm pl-1">{getDuplicateMessage(invite.email, index)}</p>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-
-            <button
-                onClick={addInvite}
-                className="flex items-center gap-2 text-brand-primary hover:text-brand-primary/80"
-            >
-                <Plus className="w-4 h-4" />
-                Add another
-            </button>
-
-            {validInviteCount > 0 && (
-                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                    <p className="text-sm text-green-400 flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4" />
-                        {validInviteCount} invitation{validInviteCount !== 1 ? 's' : ''} ready to send
-                    </p>
-                </div>
-            )}
-        </div>
-    );
-}
-
-function DataImportStep({ formData, updateField }) {
-    const [importStatus, setImportStatus] = useState({});
-    const [processing, setProcessing] = useState({});
-
-    const handleFileSelect = async (type, file) => {
-        if (!file) return;
-
-        setProcessing(prev => ({ ...prev, [type]: true }));
-        setImportStatus(prev => ({ ...prev, [type]: null }));
-
-        try {
-            // Process the file
-            const { headers, rows, format } = await processImportFile(file);
-
-            if (rows.length === 0) {
-                setImportStatus(prev => ({ ...prev, [type]: { error: 'No data found in file' } }));
-                return;
-            }
-
-            // Map headers to schema fields
-            const mapping = mapHeaders(headers, type);
-
-            // Validate the data
-            const { validRows, invalidRows, errors } = validateImportData(rows, mapping, type);
-
-            if (validRows.length === 0) {
-                setImportStatus(prev => ({
-                    ...prev,
-                    [type]: {
-                        error: `No valid records found. ${errors.length} errors: ${errors.slice(0, 3).join(', ')}${errors.length > 3 ? '...' : ''}`
-                    }
-                }));
-                return;
-            }
-
-            // Store valid data for import during handleComplete
-            updateField('dataImports', {
-                ...formData.dataImports,
-                [type]: validRows
-            });
-
-            setImportStatus(prev => ({
-                ...prev,
-                [type]: {
-                    success: true,
-                    count: validRows.length,
-                    invalidCount: invalidRows.length
-                }
-            }));
-        } catch (err) {
-            setImportStatus(prev => ({
-                ...prev,
-                [type]: { error: err.message || 'Failed to process file' }
-            }));
-        } finally {
-            setProcessing(prev => ({ ...prev, [type]: false }));
-        }
-    };
-
-    const handleTemplateDownload = (type) => {
-        downloadTemplate(type);
-    };
-
-    const clearImport = (type) => {
-        updateField('dataImports', {
-            ...formData.dataImports,
-            [type]: null
-        });
-        setImportStatus(prev => ({ ...prev, [type]: null }));
-    };
-
-    return (
-        <div className="space-y-6">
-            <p className="text-gray-400">
-                Import your existing data to get started quickly, or start fresh.
-            </p>
-
-            <div className="grid gap-4">
-                {['clients', 'crew', 'equipment'].map(type => {
-                    const status = importStatus[type];
-                    const isProcessing = processing[type];
-                    const hasData = formData.dataImports?.[type]?.length > 0;
-
-                    return (
-                        <div key={type} className="p-4 bg-dark-bg border border-dark-border rounded-lg">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h4 className="text-white font-medium capitalize">{type}</h4>
-                                    <p className="text-sm text-gray-500">
-                                        {hasData ? (
-                                            <span className="text-green-400">
-                                                {formData.dataImports[type].length} records ready to import
-                                            </span>
-                                        ) : (
-                                            'Import from CSV'
-                                        )}
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handleTemplateDownload(type)}
-                                        className="text-sm text-brand-primary hover:underline flex items-center gap-1"
-                                    >
-                                        <Download className="w-3 h-3" />
-                                        Template
-                                    </button>
-                                    {hasData ? (
-                                        <button
-                                            onClick={() => clearImport(type)}
-                                            className="btn-secondary text-sm flex items-center gap-1"
-                                        >
-                                            <X className="w-4 h-4" />
-                                            Clear
-                                        </button>
-                                    ) : (
-                                        <label className={`btn-secondary text-sm cursor-pointer flex items-center gap-1 ${isProcessing ? 'opacity-50 cursor-wait' : ''}`}>
-                                            {isProcessing ? (
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                <Upload className="w-4 h-4" />
-                                            )}
-                                            Upload
-                                            <input
-                                                type="file"
-                                                accept=".csv"
-                                                className="hidden"
-                                                disabled={isProcessing}
-                                                onChange={(e) => handleFileSelect(type, e.target.files?.[0])}
-                                            />
-                                        </label>
-                                    )}
-                                </div>
-                            </div>
-                            {status?.error && (
-                                <div className="mt-2 text-sm text-red-400 flex items-center gap-1">
-                                    <AlertCircle className="w-4 h-4" />
-                                    {status.error}
-                                </div>
-                            )}
-                            {status?.success && status.invalidCount > 0 && (
-                                <div className="mt-2 text-sm text-yellow-400">
-                                    {status.invalidCount} rows skipped due to validation errors
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-
-            <div className="text-center pt-4">
-                <p className="text-sm text-gray-500">
-                    You can also import data later from Settings
-                </p>
-            </div>
-        </div>
-    );
-}
-
-function RateCardStep({ formData, updateField }) {
-    const suggestedRates = getSuggestedRates(formData.country);
-    const crewRoles = getDefaultCrewRoles(formData.companyType);
-
-    const updateRate = (role, value) => {
-        updateField('crewRates', {
-            ...formData.crewRates,
-            [role]: value,
-        });
-    };
-
-    return (
-        <div className="space-y-6">
-            <p className="text-gray-400">
-                Set your default day rates. These will be used when creating quotes.
-            </p>
-
-            <div className="space-y-3">
-                {crewRoles.map(role => (
-                    <div key={role} className="flex items-center gap-4">
-                        <span className="text-white w-48">{role}</span>
-                        <div className="flex-1 relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                                {formData.currency}
-                            </span>
-                            <input
-                                type="number"
-                                value={formData.crewRates[role] || ''}
-                                onChange={(e) => updateRate(role, e.target.value)}
-                                placeholder={suggestedRates.mid.toString()}
-                                className="input w-full pl-14"
-                            />
-                        </div>
-                        <span className="text-gray-500 text-sm">/day</span>
-                    </div>
-                ))}
-            </div>
-
-            <p className="text-xs text-gray-500">
-                Suggested rates for your region: {formData.currency} {suggestedRates.junior} - {suggestedRates.senior}/day
-            </p>
-        </div>
-    );
-}
-
 function FirstActionStep({ formData, updateField }) {
     const options = [
         {
@@ -1394,20 +671,19 @@ function FirstActionStep({ formData, updateField }) {
             label: 'Create a quote',
             description: 'Start with a new quote for a client',
             icon: CreditCard,
-            recommended: formData.painPoints.includes('quoting_slow'),
         },
         {
             id: 'add_project',
             label: 'Add a project',
             description: 'Set up your first production project',
             icon: Film,
-            recommended: formData.painPoints.includes('no_visibility'),
         },
         {
             id: 'explore_dashboard',
             label: 'Explore the dashboard',
             description: 'Take a tour of all the features',
             icon: Globe2,
+            recommended: true,
         },
     ];
 
@@ -1457,182 +733,6 @@ function FirstActionStep({ formData, updateField }) {
                         </div>
                     </button>
                 ))}
-            </div>
-        </div>
-    );
-}
-
-// Target Market Step - Industry, production types, and client types
-function TargetMarketStep({ formData, updateField, toggleArrayItem }) {
-    const [clientInput, setClientInput] = useState('');
-
-    const addIdealClient = (value) => {
-        const trimmed = value.trim();
-        if (trimmed && !formData.idealClients.includes(trimmed)) {
-            updateField('idealClients', [...formData.idealClients, trimmed]);
-        }
-        setClientInput('');
-    };
-
-    const removeIdealClient = (client) => {
-        updateField('idealClients', formData.idealClients.filter(c => c !== client));
-    };
-
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addIdealClient(clientInput);
-        }
-    };
-
-    // Filter out sectors already added
-    const availableSectors = CLIENT_SECTORS.filter(
-        sector => !formData.idealClients.includes(sector.label)
-    );
-
-    return (
-        <div className="space-y-8">
-            {/* Ideal Clients - Free-form tag input */}
-            <div>
-                <h3 className="text-lg font-semibold text-white mb-2">
-                    Who are your ideal clients?
-                </h3>
-                <p className="text-sm text-gray-400 mb-4">
-                    Add the types of clients, industries, or specific brands you want to work with. Type and press Enter, or click suggestions below.
-                </p>
-
-                {/* Tag Input */}
-                <div className="bg-dark-bg border border-dark-border rounded-lg p-3 min-h-[80px]">
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-2">
-                        {formData.idealClients.map((client, i) => (
-                            <span
-                                key={i}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary/20 text-brand-primary border border-brand-primary/30 rounded-full text-sm"
-                            >
-                                {client}
-                                <button
-                                    onClick={() => removeIdealClient(client)}
-                                    className="hover:text-white transition-colors"
-                                >
-                                    <X className="w-3.5 h-3.5" />
-                                </button>
-                            </span>
-                        ))}
-                    </div>
-
-                    {/* Input */}
-                    <input
-                        type="text"
-                        value={clientInput}
-                        onChange={(e) => setClientInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={formData.idealClients.length === 0
-                            ? "Type a client type and press Enter..."
-                            : "Add another..."}
-                        className="w-full bg-transparent border-none outline-none text-white placeholder-gray-500 text-sm"
-                    />
-                </div>
-
-                {/* Sector Suggestions */}
-                {availableSectors.length > 0 && (
-                    <div className="mt-3">
-                        <p className="text-xs text-gray-500 mb-2">Quick add industries:</p>
-                        <div className="flex flex-wrap gap-1.5">
-                            {availableSectors.map(sector => (
-                                <button
-                                    key={sector.id}
-                                    onClick={() => addIdealClient(sector.label)}
-                                    className="px-2.5 py-1 text-xs rounded-full border border-dark-border text-gray-400 hover:border-gray-500 hover:text-gray-300 transition-colors"
-                                >
-                                    + {sector.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Production Types */}
-            <div>
-                <h3 className="text-lg font-semibold text-white mb-2">
-                    What do you produce?
-                </h3>
-                <p className="text-sm text-gray-400 mb-4">
-                    Select the types of content or events you create.
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {PRODUCTION_TYPES.map(type => {
-                        const isSelected = formData.productionTypes.includes(type.id);
-
-                        return (
-                            <button
-                                key={type.id}
-                                onClick={() => toggleArrayItem('productionTypes', type.id)}
-                                className={`p-3 rounded-lg border text-left transition-all ${
-                                    isSelected
-                                        ? 'border-brand-primary bg-brand-primary/10 text-white'
-                                        : 'border-dark-border bg-dark-bg text-gray-400 hover:border-gray-600 hover:text-gray-300'
-                                }`}
-                            >
-                                <span className="text-sm">{type.label}</span>
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Contact Types */}
-            <div>
-                <h3 className="text-lg font-semibold text-white mb-2">
-                    Who do you work with?
-                </h3>
-                <p className="text-sm text-gray-400 mb-4">
-                    Select the types of contacts you typically work with.
-                </p>
-                <div className="grid gap-2">
-                    {CONTACT_TYPES.map(contact => {
-                        const isSelected = formData.contactTypes.includes(contact.id);
-
-                        return (
-                            <button
-                                key={contact.id}
-                                onClick={() => toggleArrayItem('contactTypes', contact.id)}
-                                className={`p-3 rounded-lg border text-left transition-all ${
-                                    isSelected
-                                        ? 'border-brand-primary bg-brand-primary/10'
-                                        : 'border-dark-border bg-dark-bg hover:border-gray-600'
-                                }`}
-                            >
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <span className={`font-medium ${isSelected ? 'text-white' : 'text-gray-300'}`}>
-                                            {contact.label}
-                                        </span>
-                                        <p className="text-sm text-gray-500">{contact.description}</p>
-                                    </div>
-                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                        isSelected ? 'border-brand-primary bg-brand-primary' : 'border-gray-600'
-                                    }`}>
-                                        {isSelected && <CheckCircle className="w-3 h-3 text-white" />}
-                                    </div>
-                                </div>
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-
-            <div className="p-4 bg-dark-bg/50 border border-dark-border rounded-lg">
-                <div className="flex items-start gap-3">
-                    <Sparkles className="w-5 h-5 text-brand-primary flex-shrink-0 mt-0.5" />
-                    <div>
-                        <h4 className="font-medium text-white mb-1">Why we ask</h4>
-                        <p className="text-sm text-gray-400">
-                            This information helps our AI Research feature find relevant industry news, competitor activity, and opportunities tailored to your specific market.
-                        </p>
-                    </div>
-                </div>
             </div>
         </div>
     );
@@ -1755,9 +855,15 @@ function BillingStep({ formData, updateField, onBillingComplete, organizationId,
                                 Recommended
                             </span>
                         )}
-                        <div className="flex items-baseline gap-1 mb-3">
-                            <span className="text-2xl font-bold text-white">{plan.price}</span>
-                            <span className="text-gray-500">{plan.period}</span>
+                        <div className="mb-3">
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-3xl font-bold text-green-400">$0</span>
+                                <span className="text-gray-500">for 5 days</span>
+                            </div>
+                            <div className="flex items-baseline gap-1 mt-1">
+                                <span className="text-sm text-gray-500 line-through">{plan.price}{plan.period}</span>
+                                <span className="text-sm text-gray-500">after trial</span>
+                            </div>
                         </div>
                         <h4 className="font-semibold text-white mb-2">{plan.name}</h4>
                         <ul className="space-y-1">

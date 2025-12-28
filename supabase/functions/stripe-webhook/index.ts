@@ -106,6 +106,12 @@ serve(async (req: Request) => {
                 break;
             }
 
+            case 'charge.succeeded': {
+                const charge = event.data.object as Stripe.Charge;
+                await handleCardCountryValidation(charge);
+                break;
+            }
+
             default:
                 console.log(`Unhandled event type: ${event.type}`);
         }
@@ -472,7 +478,7 @@ async function handleTrialWillEnd(supabase: any, subscription: Stripe.Subscripti
 
 // Stripe Price ID to Plan ID mapping
 const PRICE_TO_PLAN: Record<string, string> = {
-    // ===== LIVE MODE =====
+    // ===== LIVE MODE - TIER 1 (Full Price) =====
     // Individual Plan - USD
     'price_1Sj1XBLE30d1czmdCbD6Kg9V': 'individual', // Monthly
     'price_1Sj1XCLE30d1czmdi2UKwktG': 'individual', // Annual
@@ -491,6 +497,67 @@ const PRICE_TO_PLAN: Record<string, string> = {
     // Team Plan - EUR
     'price_1Sj1XaLE30d1czmdIAxyupGE': 'team', // Monthly
     'price_1Sj1XbLE30d1czmdkSIGXZCQ': 'team', // Annual
+
+    // ===== LIVE MODE - TIER 2 ($20/$40) =====
+    'price_1SjNHrLE30d1czmdygjzgQnx': 'individual', // Monthly $20
+    'price_1SjNHsLE30d1czmdt7CLsthn': 'individual', // Annual $200
+    'price_1SjNHsLE30d1czmdlucbT5dM': 'team', // Monthly $40
+    'price_1SjNHtLE30d1czmd2XpDrr9A': 'team', // Annual $400
+
+    // ===== LIVE MODE - TIER 3 ($12/$25) =====
+    'price_1SjNI7LE30d1czmdIH20zKQX': 'individual', // Monthly $12
+    'price_1SjNI7LE30d1czmdVdUlflim': 'individual', // Annual $120
+    'price_1SjNI8LE30d1czmdyDAtpFGr': 'team', // Monthly $25
+    'price_1SjNI9LE30d1czmdCGR4PY2g': 'team', // Annual $250
+
+    // ===== LIVE MODE - TIER 4 ($8/$16) =====
+    'price_1SjNIOLE30d1czmdgPMhfo4o': 'individual', // Monthly $8
+    'price_1SjNIPLE30d1czmdEj0zT9Yc': 'individual', // Annual $80
+    'price_1SjNIQLE30d1czmdO25rUJdT': 'team', // Monthly $16
+    'price_1SjNIRLE30d1czmdZlEwEJPz': 'team', // Annual $160
+
+    // ===== LIVE MODE - TIER 5 ($6/$12) =====
+    'price_1SjNIgLE30d1czmdDrZE1lmT': 'individual', // Monthly $6
+    'price_1SjNIhLE30d1czmdYwsZBuUF': 'individual', // Annual $60
+    'price_1SjNIiLE30d1czmdutSGH32M': 'team', // Monthly $12
+    'price_1SjNIjLE30d1czmdCFzkxKxm': 'team', // Annual $120
+
+    // ===== LIVE MODE - LOCAL CURRENCIES =====
+    // MYR (Malaysia)
+    'price_1SjNIxLE30d1czmdcKoycTK1': 'individual', // Monthly RM55
+    'price_1SjNIyLE30d1czmdrebRMoH4': 'individual', // Annual RM550
+    'price_1SjNIzLE30d1czmdJRROuWyT': 'team', // Monthly RM115
+    'price_1SjNJ0LE30d1czmdvFRXym7X': 'team', // Annual RM1150
+    // SGD (Singapore)
+    'price_1SjNJBLE30d1czmdq8v4Wr1h': 'individual', // Monthly S$27
+    'price_1SjNJBLE30d1czmdQM1TijWE': 'individual', // Annual S$270
+    'price_1SjNJCLE30d1czmdrLYsLdyL': 'team', // Monthly S$54
+    'price_1SjNJDLE30d1czmdMchkOLWs': 'team', // Annual S$540
+    // THB (Thailand)
+    'price_1SjNJTLE30d1czmdEgcglf1j': 'individual', // Monthly ฿420
+    'price_1SjNJTLE30d1czmdey99KeIQ': 'individual', // Annual ฿4200
+    'price_1SjNJVLE30d1czmdhOHatiLI': 'team', // Monthly ฿880
+    'price_1SjNJVLE30d1czmdzPIjf6Kg': 'team', // Annual ฿8800
+    // INR (India)
+    'price_1SjNJWLE30d1czmdeNnougdH': 'individual', // Monthly ₹650
+    'price_1SjNJXLE30d1czmd5tY7qpoQ': 'individual', // Annual ₹6500
+    'price_1SjNJYLE30d1czmdwLDQDwPk': 'team', // Monthly ₹1300
+    'price_1SjNJZLE30d1czmdE9MZjJru': 'team', // Annual ₹13000
+    // AUD (Australia)
+    'price_1SjNJtLE30d1czmdNoD6M5kV': 'individual', // Monthly A$36
+    'price_1SjNJuLE30d1czmdUrR8uR8j': 'individual', // Annual A$342
+    'price_1SjNJvLE30d1czmdymGDP9F8': 'team', // Monthly A$74
+    'price_1SjNJvLE30d1czmdnA2E091P': 'team', // Annual A$702
+    // PHP (Philippines)
+    'price_1SjNJwLE30d1czmdZkPFhsA4': 'individual', // Monthly ₱450
+    'price_1SjNJxLE30d1czmd6NADrl3B': 'individual', // Annual ₱4500
+    'price_1SjNJyLE30d1czmdsWjFnldX': 'team', // Monthly ₱900
+    'price_1SjNJyLE30d1czmdqi56eo4e': 'team', // Annual ₱9000
+    // IDR (Indonesia)
+    'price_1SjNK8LE30d1czmdyXLirLGO': 'individual', // Monthly Rp125000
+    'price_1SjNK9LE30d1czmd9wRWUFK4': 'individual', // Annual Rp1250000
+    'price_1SjNKALE30d1czmdT6a49lls': 'team', // Monthly Rp250000
+    'price_1SjNKBLE30d1czmdZA0FFcUg': 'team', // Annual Rp2500000
 
     // ===== TEST MODE =====
     // Individual Plan - USD
@@ -554,4 +621,57 @@ function getTokensFromPriceId(priceId: string): number | null {
 
 function isTokenPackPurchase(priceId: string): boolean {
     return priceId in PRICE_TO_TOKENS;
+}
+
+// Validate card country matches pricing tier
+async function handleCardCountryValidation(charge: Stripe.Charge) {
+    const metadata = charge.metadata || {};
+
+    // Only validate if explicitly required (non-tier1 purchases)
+    if (metadata.requires_country_validation !== 'true') {
+        return;
+    }
+
+    const allowedCountriesStr = metadata.allowed_countries;
+    if (!allowedCountriesStr) {
+        console.log('No allowed_countries in metadata, skipping validation');
+        return;
+    }
+
+    // Get card country from payment method
+    const cardCountry = charge.payment_method_details?.card?.country;
+    if (!cardCountry) {
+        console.log('No card country available, skipping validation');
+        return;
+    }
+
+    const allowedCountries = allowedCountriesStr.split(',');
+
+    if (!allowedCountries.includes(cardCountry)) {
+        console.log(`Card country ${cardCountry} not in allowed list for tier: ${metadata.pricing_tier}`);
+        console.log(`Allowed countries: ${allowedCountriesStr}`);
+
+        // Refund the charge - card country mismatch
+        try {
+            await stripe.refunds.create({
+                charge: charge.id,
+                reason: 'fraudulent', // This is the closest reason for geographic mismatch
+                metadata: {
+                    reason: 'card_country_mismatch',
+                    card_country: cardCountry,
+                    pricing_tier: metadata.pricing_tier,
+                    allowed_countries: allowedCountriesStr,
+                },
+            });
+
+            console.log(`Refunded charge ${charge.id} due to card country mismatch`);
+
+            // Note: The customer will see the refund and may need to repurchase
+            // at their correct regional pricing
+        } catch (refundError) {
+            console.error('Failed to refund charge:', refundError);
+        }
+    } else {
+        console.log(`Card country ${cardCountry} validated for tier ${metadata.pricing_tier}`);
+    }
 }

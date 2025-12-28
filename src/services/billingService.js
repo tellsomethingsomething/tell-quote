@@ -28,6 +28,7 @@ export const STRIPE_PRODUCTS_TEST = {
 };
 
 // Stripe Price IDs by currency and billing cycle (Live Mode)
+// Tier 1: Full price (US, UK, EU, AU, CA, JP, etc.)
 const STRIPE_PRICES_LIVE = {
     individual: {
         USD: {
@@ -58,6 +59,91 @@ const STRIPE_PRICES_LIVE = {
         },
     },
 };
+
+// Regional/PPP Pricing Tiers (Live Mode)
+// Tier 2: $20/$40 (SG, AE, IL, KR, NZ, etc.)
+const STRIPE_PRICES_TIER2 = {
+    individual: {
+        USD: { monthly: 'price_1SjNHrLE30d1czmdygjzgQnx', annual: 'price_1SjNHsLE30d1czmdt7CLsthn' },
+    },
+    team: {
+        USD: { monthly: 'price_1SjNHsLE30d1czmdlucbT5dM', annual: 'price_1SjNHtLE30d1czmd2XpDrr9A' },
+    },
+};
+
+// Tier 3: $12/$25 (MY, TH, MX, BR, PL, etc.)
+const STRIPE_PRICES_TIER3 = {
+    individual: {
+        USD: { monthly: 'price_1SjNI7LE30d1czmdIH20zKQX', annual: 'price_1SjNI7LE30d1czmdVdUlflim' },
+    },
+    team: {
+        USD: { monthly: 'price_1SjNI8LE30d1czmdyDAtpFGr', annual: 'price_1SjNI9LE30d1czmdCGR4PY2g' },
+    },
+};
+
+// Tier 4: $8/$16 (IN, ID, PH, VN, ZA, etc.)
+const STRIPE_PRICES_TIER4 = {
+    individual: {
+        USD: { monthly: 'price_1SjNIOLE30d1czmdgPMhfo4o', annual: 'price_1SjNIPLE30d1czmdEj0zT9Yc' },
+    },
+    team: {
+        USD: { monthly: 'price_1SjNIQLE30d1czmdO25rUJdT', annual: 'price_1SjNIRLE30d1czmdZlEwEJPz' },
+    },
+};
+
+// Tier 5: $6/$12 (PK, BD, NG, KE, EG, etc.)
+const STRIPE_PRICES_TIER5 = {
+    individual: {
+        USD: { monthly: 'price_1SjNIgLE30d1czmdDrZE1lmT', annual: 'price_1SjNIhLE30d1czmdYwsZBuUF' },
+    },
+    team: {
+        USD: { monthly: 'price_1SjNIiLE30d1czmdutSGH32M', annual: 'price_1SjNIjLE30d1czmdCFzkxKxm' },
+    },
+};
+
+// Local Currency Prices (Live Mode)
+const STRIPE_PRICES_LOCAL = {
+    MYR: {
+        individual: { monthly: 'price_1SjNIxLE30d1czmdcKoycTK1', annual: 'price_1SjNIyLE30d1czmdrebRMoH4' },
+        team: { monthly: 'price_1SjNIzLE30d1czmdJRROuWyT', annual: 'price_1SjNJ0LE30d1czmdvFRXym7X' },
+    },
+    SGD: {
+        individual: { monthly: 'price_1SjNJBLE30d1czmdq8v4Wr1h', annual: 'price_1SjNJBLE30d1czmdQM1TijWE' },
+        team: { monthly: 'price_1SjNJCLE30d1czmdrLYsLdyL', annual: 'price_1SjNJDLE30d1czmdMchkOLWs' },
+    },
+    THB: {
+        individual: { monthly: 'price_1SjNJTLE30d1czmdEgcglf1j', annual: 'price_1SjNJTLE30d1czmdey99KeIQ' },
+        team: { monthly: 'price_1SjNJVLE30d1czmdhOHatiLI', annual: 'price_1SjNJVLE30d1czmdzPIjf6Kg' },
+    },
+    INR: {
+        individual: { monthly: 'price_1SjNJWLE30d1czmdeNnougdH', annual: 'price_1SjNJXLE30d1czmd5tY7qpoQ' },
+        team: { monthly: 'price_1SjNJYLE30d1czmdwLDQDwPk', annual: 'price_1SjNJZLE30d1czmdE9MZjJru' },
+    },
+    AUD: {
+        individual: { monthly: 'price_1SjNJtLE30d1czmdNoD6M5kV', annual: 'price_1SjNJuLE30d1czmdUrR8uR8j' },
+        team: { monthly: 'price_1SjNJvLE30d1czmdymGDP9F8', annual: 'price_1SjNJvLE30d1czmdnA2E091P' },
+    },
+    PHP: {
+        individual: { monthly: 'price_1SjNJwLE30d1czmdZkPFhsA4', annual: 'price_1SjNJxLE30d1czmd6NADrl3B' },
+        team: { monthly: 'price_1SjNJyLE30d1czmdsWjFnldX', annual: 'price_1SjNJyLE30d1czmdqi56eo4e' },
+    },
+    IDR: {
+        individual: { monthly: 'price_1SjNK8LE30d1czmdyXLirLGO', annual: 'price_1SjNK9LE30d1czmd9wRWUFK4' },
+        team: { monthly: 'price_1SjNKALE30d1czmdT6a49lls', annual: 'price_1SjNKBLE30d1czmdZA0FFcUg' },
+    },
+};
+
+// Map pricing tier names to price objects
+export const STRIPE_PRICES_BY_TIER = {
+    tier1: STRIPE_PRICES_LIVE,
+    tier2: STRIPE_PRICES_TIER2,
+    tier3: STRIPE_PRICES_TIER3,
+    tier4: STRIPE_PRICES_TIER4,
+    tier5: STRIPE_PRICES_TIER5,
+};
+
+// Export local currency prices
+export { STRIPE_PRICES_LOCAL };
 
 // Stripe Price IDs (Test Mode)
 const STRIPE_PRICES_TEST = {
@@ -240,13 +326,74 @@ export const TOKEN_PACKS = {
 
 /**
  * Get Stripe price ID for a plan
+ * @param {string} planId - Plan ID (individual or team)
+ * @param {string} currency - Currency code
+ * @param {string} billingCycle - 'monthly' or 'annual'
+ * @param {string} tier - Optional pricing tier (tier1-tier5)
  */
-export function getStripePriceId(planId, currency = 'USD', billingCycle = 'monthly') {
+export function getStripePriceId(planId, currency = 'USD', billingCycle = 'monthly', tier = null) {
     if (planId === 'free') return null;
+
+    // If a specific tier is provided, use tiered pricing
+    if (tier && tier !== 'tier1') {
+        // Check for local currency price first
+        const localPrices = STRIPE_PRICES_LOCAL[currency];
+        if (localPrices && localPrices[planId]) {
+            return localPrices[planId][billingCycle] || localPrices[planId].monthly;
+        }
+
+        // Fall back to tier USD pricing
+        const tierPrices = STRIPE_PRICES_BY_TIER[tier];
+        if (tierPrices && tierPrices[planId]) {
+            const currencyPrices = tierPrices[planId].USD;
+            return currencyPrices[billingCycle] || currencyPrices.monthly;
+        }
+    }
+
+    // Check for local currency prices (MYR, SGD, THB, etc.)
+    const localPrices = STRIPE_PRICES_LOCAL[currency];
+    if (localPrices && localPrices[planId]) {
+        return localPrices[planId][billingCycle] || localPrices[planId].monthly;
+    }
+
+    // Default to tier 1 pricing
     const planPrices = STRIPE_PRICES[planId];
     if (!planPrices) return null;
     const currencyPrices = planPrices[currency] || planPrices.USD;
     return currencyPrices[billingCycle] || currencyPrices.monthly;
+}
+
+/**
+ * Get Stripe price ID for a plan with PPP/regional pricing
+ * @param {string} planId - Plan ID (individual or team)
+ * @param {string} billingCycle - 'monthly' or 'annual'
+ * @param {Object} pricingInfo - Pricing info from pppService.getPricingForUser()
+ */
+export function getRegionalStripePriceId(planId, billingCycle, pricingInfo) {
+    if (planId === 'free') return null;
+
+    const { tier, currency } = pricingInfo;
+
+    // Check for local currency price first
+    const localPrices = STRIPE_PRICES_LOCAL[currency];
+    if (localPrices && localPrices[planId]) {
+        return localPrices[planId][billingCycle] || localPrices[planId].monthly;
+    }
+
+    // Fall back to tier USD pricing
+    const tierPrices = STRIPE_PRICES_BY_TIER[tier] || STRIPE_PRICES_BY_TIER.tier1;
+    if (tierPrices && tierPrices[planId]) {
+        const currencyPrices = tierPrices[planId].USD || tierPrices[planId];
+        if (currencyPrices.USD) {
+            return currencyPrices.USD[billingCycle] || currencyPrices.USD.monthly;
+        }
+        return currencyPrices[billingCycle] || currencyPrices.monthly;
+    }
+
+    // Fallback to default tier 1 pricing
+    const planPrices = STRIPE_PRICES[planId];
+    if (!planPrices) return null;
+    return planPrices.USD[billingCycle] || planPrices.USD.monthly;
 }
 
 /**
@@ -314,8 +461,12 @@ export async function createSetupIntent(organizationId, userEmail) {
 
 /**
  * Create a Stripe checkout session for subscription
+ * @param {string} planId - Plan ID (individual or team)
+ * @param {string} billingCycle - 'monthly' or 'annual'
+ * @param {string} currency - Currency code
+ * @param {string} tier - Optional pricing tier from PPP service
  */
-export async function createCheckoutSession(planId, billingCycle = 'monthly', currency = 'USD') {
+export async function createCheckoutSession(planId, billingCycle = 'monthly', currency = 'USD', tier = null) {
     if (!isSupabaseConfigured()) {
         throw new Error('Database not configured');
     }
@@ -329,16 +480,20 @@ export async function createCheckoutSession(planId, billingCycle = 'monthly', cu
     const plan = PLANS[planId];
     if (!plan) throw new Error('Invalid plan');
 
-    const priceId = getStripePriceId(planId, currency, billingCycle);
+    // Get price ID based on tier and currency
+    const priceId = getStripePriceId(planId, currency, billingCycle, tier);
     if (!priceId) {
         throw new Error('This plan does not support paid subscriptions');
     }
 
     // Call Supabase Edge Function to create Stripe checkout session
+    // Include tier info for card country validation
     const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: {
             priceId,
             organizationId,
+            tier: tier || 'tier1',
+            currency,
             successUrl: `${window.location.origin}/settings?tab=billing&success=true`,
             cancelUrl: `${window.location.origin}/settings?tab=billing&canceled=true`,
         },
@@ -612,8 +767,11 @@ export default {
     TOKEN_PACKS,
     STRIPE_PRODUCTS,
     STRIPE_PRICES,
+    STRIPE_PRICES_BY_TIER,
+    STRIPE_PRICES_LOCAL,
     TOKEN_PACK_PRICES,
     getStripePriceId,
+    getRegionalStripePriceId,
     getTokenPackPriceId,
     createCheckoutSession,
     createTokenPackCheckoutSession,

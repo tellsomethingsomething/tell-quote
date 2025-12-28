@@ -37,11 +37,21 @@ serve(async (req: Request) => {
             throw new Error('Not authenticated');
         }
 
-        const { priceId, organizationId, successUrl, cancelUrl, mode = 'subscription' } = await req.json();
+        const { priceId, organizationId, successUrl, cancelUrl, mode = 'subscription', tier = 'tier1', currency = 'USD' } = await req.json();
 
         if (!priceId || !organizationId) {
             throw new Error('Missing required parameters');
         }
+
+        // Define allowed countries per pricing tier (for card country validation)
+        const TIER_COUNTRIES: Record<string, string[]> = {
+            tier1: ['US', 'GB', 'DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'IE', 'FI', 'PT',
+                    'AU', 'CA', 'JP', 'CH', 'NO', 'DK', 'SE', 'LU', 'IS'],
+            tier2: ['SG', 'AE', 'IL', 'KR', 'NZ', 'HK', 'QA', 'KW', 'BH', 'OM', 'SA'],
+            tier3: ['MY', 'TH', 'MX', 'BR', 'PL', 'CZ', 'HU', 'TW', 'CL', 'AR', 'CR', 'PA', 'UY'],
+            tier4: ['IN', 'ID', 'PH', 'VN', 'ZA', 'CO', 'PE', 'UA', 'RO', 'BG', 'RS', 'HR', 'SK', 'LV', 'LT', 'EE'],
+            tier5: ['PK', 'BD', 'NG', 'KE', 'EG', 'ET', 'GH', 'TZ', 'UG', 'ZW', 'ZM', 'MW', 'NP', 'MM', 'KH', 'LA'],
+        };
 
         // Validate mode
         if (mode !== 'subscription' && mode !== 'payment') {
@@ -82,6 +92,9 @@ serve(async (req: Request) => {
                 .eq('id', organizationId);
         }
 
+        // Get allowed countries for this tier (used for Stripe Radar rules)
+        const allowedCountries = TIER_COUNTRIES[tier] || TIER_COUNTRIES.tier1;
+
         // Build checkout session options
         const sessionOptions: any = {
             customer: customerId,
@@ -98,16 +111,34 @@ serve(async (req: Request) => {
             metadata: {
                 organizationId,
                 userId: user.id,
+                pricing_tier: tier,
+                pricing_currency: currency,
+                allowed_countries: allowedCountries.join(','),
             },
             allow_promotion_codes: true,
         };
 
-        // Add subscription_data only for subscription mode
+        // Add subscription_data with tier info for subscription mode
         if (mode === 'subscription') {
             sessionOptions.subscription_data = {
                 metadata: {
                     organizationId,
                     userId: user.id,
+                    pricing_tier: tier,
+                    pricing_currency: currency,
+                    allowed_countries: allowedCountries.join(','),
+                },
+            };
+        }
+
+        // Add payment_intent_data for card country validation
+        // This metadata can be used by Stripe Radar rules or webhook validation
+        if (tier !== 'tier1') {
+            sessionOptions.payment_intent_data = {
+                metadata: {
+                    pricing_tier: tier,
+                    allowed_countries: allowedCountries.join(','),
+                    requires_country_validation: 'true',
                 },
             };
         }

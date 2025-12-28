@@ -23,11 +23,18 @@ export const comparisonTable = [
     { feature: "Priority Support", free: false, individual: false, team: true },
 ];
 
-// Multi-currency pricing
+// Multi-currency pricing (extended with local currencies)
 export const currencyConfig = {
     USD: { symbol: '$', code: 'USD', position: 'before' },
     GBP: { symbol: '£', code: 'GBP', position: 'before' },
     EUR: { symbol: '€', code: 'EUR', position: 'before' },
+    AUD: { symbol: 'A$', code: 'AUD', position: 'before' },
+    SGD: { symbol: 'S$', code: 'SGD', position: 'before' },
+    MYR: { symbol: 'RM', code: 'MYR', position: 'before' },
+    THB: { symbol: '฿', code: 'THB', position: 'before' },
+    INR: { symbol: '₹', code: 'INR', position: 'before' },
+    PHP: { symbol: '₱', code: 'PHP', position: 'before' },
+    IDR: { symbol: 'Rp', code: 'IDR', position: 'before', separator: '.' },
 };
 
 export const plans = [
