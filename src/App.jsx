@@ -4,8 +4,10 @@ import { HelmetProvider } from 'react-helmet-async';
 import Sidebar from './components/layout/Sidebar';
 import EditorHeader from './components/layout/EditorHeader';
 import EditorPanel from './components/layout/EditorPanel';
-import PreviewPanel from './components/layout/PreviewPanel';
 import LoginPage from './pages/LoginPage';
+
+// Lazy load PreviewPanel to avoid loading 1.5MB PDF library on initial page load
+const PreviewPanel = lazy(() => import('./components/layout/PreviewPanel'));
 import LoadingSpinner from './components/common/LoadingSpinner';
 import CookieConsent from './components/common/CookieConsent';
 import PWAStatus from './components/pwa/PWAStatus';
@@ -97,7 +99,7 @@ const ContactPage = lazy(() => import('./pages/company/ContactPage'));
 
 // Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings' | 'contacts'
 function App() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, needsOnboarding, setNeedsOnboarding } = useAuthStore();
   const { organization, loading: isOrgLoading, initialize: initializeOrganization } = useOrganizationStore();
   const initializeQuote = useQuoteStore(state => state.initialize);
   const initializeClients = useClientStore(state => state.initialize);
@@ -444,8 +446,8 @@ function App() {
 
   // Initialize organization when authenticated
   useEffect(() => {
-    if (isAuthenticated && user?.id) {
-      initializeOrganization(user.id).then(() => {
+    if (isAuthenticated && user?.userId) {
+      initializeOrganization(user.userId).then(() => {
         // After org init, check if user needs onboarding
         const org = useOrganizationStore.getState().organization;
         if (!org) {
@@ -453,7 +455,7 @@ function App() {
         }
       });
     }
-  }, [isAuthenticated, user?.id, initializeOrganization]);
+  }, [isAuthenticated, user?.userId, initializeOrganization]);
 
   // Check subscription access after organization is loaded
   // PERFORMANCE: Don't block UI - assume valid until proven otherwise
@@ -625,9 +627,10 @@ function App() {
   }
 
   // Show onboarding wizard for new users without an organization
-  if (showOnboarding || (!organization && !isOrgLoading)) {
+  if (showOnboarding || needsOnboarding || (!organization && !isOrgLoading)) {
     const handleOnboardingComplete = (newOrg) => {
       setShowOnboarding(false);
+      setNeedsOnboarding(false);
       // Reset subscription access so it gets rechecked
       setSubscriptionAccess(null);
       // The organization store will be updated by the wizard
@@ -995,7 +998,9 @@ function App() {
 
             {/* Preview Panel - Hidden on mobile when editor is shown */}
             <div className={`${showMobilePreview ? 'flex' : 'hidden lg:flex'} w-full lg:w-[320px] lg:min-w-[320px]`}>
-              <PreviewPanel />
+              <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><LoadingSpinner text="Loading preview..." /></div>}>
+                <PreviewPanel />
+              </Suspense>
             </div>
           </main>
         );

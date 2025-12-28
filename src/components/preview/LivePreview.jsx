@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import { pdf } from '@react-pdf/renderer';
-import CleanPDF from '../pdf/CleanPDF';
+import { useState, createElement, useCallback } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { formatCurrency, convertFromUSD } from '../../utils/currency';
@@ -11,6 +9,7 @@ export default function LivePreview() {
     const { quote, rates } = useQuoteStore();
     const { settings } = useSettingsStore();
     const [includeTerms, setIncludeTerms] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
     const client = quote.client || {};
     const fees = quote.fees || {};
     const currencySymbol = CURRENCIES[quote.currency]?.symbol || '$';
@@ -26,21 +25,32 @@ export default function LivePreview() {
 
     const isDistributed = quote.fees?.distributeFees;
 
-    // Generate Quote PDF only
-    const generateQuotePDF = async () => {
-        const blob = await pdf(
-            <CleanPDF quote={quote} currency={quote.currency} includeTerms={includeTerms} />
-        ).toBlob();
+    // Generate Quote PDF with dynamic import to avoid 1.5MB bundle on initial load
+    const generateQuotePDF = useCallback(async () => {
+        setIsGenerating(true);
+        try {
+            // Lazy load PDF dependencies only when needed
+            const [{ pdf }, { default: CleanPDF }] = await Promise.all([
+                import('@react-pdf/renderer'),
+                import('../pdf/CleanPDF')
+            ]);
 
-        const filename = `${client.company || 'Client'} - ${quote.project.title || 'Project'} - ${quote.quoteDate} - Quote.pdf`;
+            const blob = await pdf(
+                createElement(CleanPDF, { quote, currency: quote.currency, includeTerms })
+            ).toBlob();
 
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(url);
-    };
+            const filename = `${client.company || 'Client'} - ${quote.project.title || 'Project'} - ${quote.quoteDate} - Quote.pdf`;
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(url);
+        } finally {
+            setIsGenerating(false);
+        }
+    }, [quote, includeTerms, client.company]);
 
     return (
         <div className="bg-white text-black p-4 text-[10px] font-sans shadow-lg min-h-[800px] relative group">
@@ -199,12 +209,25 @@ export default function LivePreview() {
                 {/* Export Quote PDF Button */}
                 <button
                     onClick={generateQuotePDF}
-                    className="px-6 py-3 rounded-full font-bold shadow-xl transform transition flex items-center gap-2 w-56 justify-center bg-accent-primary hover:bg-accent-secondary hover:scale-105 text-white"
+                    disabled={isGenerating}
+                    className="px-6 py-3 rounded-full font-bold shadow-xl transform transition flex items-center gap-2 w-56 justify-center bg-accent-primary hover:bg-accent-secondary hover:scale-105 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Export PDF
+                    {isGenerating ? (
+                        <>
+                            <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Loading...
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Export PDF
+                        </>
+                    )}
                 </button>
 
                 {/* T&C Option */}

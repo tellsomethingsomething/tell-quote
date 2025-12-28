@@ -1,17 +1,18 @@
 import { useQuoteStore } from '../../store/quoteStore';
 import { formatCurrency } from '../../utils/currency';
 import { calculateGrandTotalWithFees } from '../../utils/calculations';
-import { pdf } from '@react-pdf/renderer';
-import CleanPDF from '../pdf/CleanPDF';
-import { useState } from 'react';
 import { useToast } from '../common/Toast';
+import { usePdfExport } from '../../hooks/usePdfExport';
 
 export default function QuoteSummary() {
     const { quote } = useQuoteStore();
     const toast = useToast();
 
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [isPreviewing, setIsPreviewing] = useState(false);
+    // Use the hook with dynamic imports for PDF library (avoids 1.5MB bundle on initial load)
+    const { exportPdf, previewPdf, isGenerating, isPreviewing } = usePdfExport(
+        (msg) => toast.success(msg),
+        (err) => toast.error('Failed to generate PDF')
+    );
 
     // Calculate all totals
     const totals = calculateGrandTotalWithFees(quote.sections, quote.fees);
@@ -24,50 +25,8 @@ export default function QuoteSummary() {
     const profit = (totals.totalCharge || 0) - (totals.totalCost || 0);
     const marginPercent = totals.totalCharge > 0 ? (profit / totals.totalCharge) * 100 : 0;
 
-    const handlePreviewPDF = async () => {
-        setIsPreviewing(true);
-        try {
-            const blob = await pdf(
-                <CleanPDF quote={quote} currency={quote.currency} />
-            ).toBlob();
-
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-            setTimeout(() => URL.revokeObjectURL(url), 5000);
-        } catch (e) {
-            console.error(e);
-            toast.error('Failed to generate preview');
-        } finally {
-            setIsPreviewing(false);
-        }
-    };
-
-    const handleExportPDF = async () => {
-        setIsGenerating(true);
-        try {
-            const blob = await pdf(
-                <CleanPDF quote={quote} currency={quote.currency} />
-            ).toBlob();
-
-            const clientName = quote.client?.company || 'Client';
-            const projectTitle = quote.project?.title || 'Project';
-            const date = quote.quoteDate || new Date().toISOString().split('T')[0];
-            const filename = `${clientName} - ${projectTitle} - ${date} - Quote.pdf`;
-
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            link.click();
-            URL.revokeObjectURL(url);
-            toast.success('PDF downloaded successfully');
-        } catch (e) {
-            console.error(e);
-            toast.error('Failed to generate PDF');
-        } finally {
-            setIsGenerating(false);
-        }
-    };
+    const handlePreviewPDF = () => previewPdf(quote, quote.currency);
+    const handleExportPDF = () => exportPdf(quote, quote.currency);
 
     return (
         <div className="space-y-6 text-gray-100 p-2">

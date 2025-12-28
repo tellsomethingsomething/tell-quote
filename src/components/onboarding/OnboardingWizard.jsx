@@ -1858,7 +1858,7 @@ function BillingStep({ formData, updateField, onBillingComplete, organizationId,
 
             {/* Skip Billing Confirmation Modal */}
             {showSkipConfirm && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-dark-card border border-dark-border rounded-xl max-w-md w-full p-6">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">

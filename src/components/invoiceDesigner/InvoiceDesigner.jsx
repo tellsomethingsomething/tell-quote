@@ -1,7 +1,5 @@
-import { useState } from 'react';
+import { useState, createElement, useCallback } from 'react';
 import { useSettingsStore } from '../../store/settingsStore';
-import { pdf } from '@react-pdf/renderer';
-import CleanPDF from '../pdf/CleanPDF';
 
 // Sample quote data for preview
 const getSampleQuote = (settings) => ({
@@ -87,12 +85,19 @@ export default function InvoiceDesigner() {
         });
     };
 
-    const handlePreviewPDF = async () => {
+    // Dynamic import for PDF library to avoid 1.5MB bundle on initial load
+    const handlePreviewPDF = useCallback(async () => {
         setGeneratingPreview(true);
         try {
+            // Lazy load PDF dependencies only when needed
+            const [{ pdf }, { default: CleanPDF }] = await Promise.all([
+                import('@react-pdf/renderer'),
+                import('../pdf/CleanPDF')
+            ]);
+
             const sampleQuote = getSampleQuote(settings);
             const blob = await pdf(
-                <CleanPDF quote={sampleQuote} currency="USD" />
+                createElement(CleanPDF, { quote: sampleQuote, currency: 'USD' })
             ).toBlob();
 
             const url = URL.createObjectURL(blob);
@@ -104,7 +109,7 @@ export default function InvoiceDesigner() {
         } finally {
             setGeneratingPreview(false);
         }
-    };
+    }, [settings]);
 
     return (
         <div className="flex flex-col h-full bg-dark-bg">

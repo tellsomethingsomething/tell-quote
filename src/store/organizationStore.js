@@ -180,46 +180,54 @@ export const useOrganizationStore = create(
         /**
          * Create a new organization
          * Called during onboarding for new users
+         * Uses the onboard-organization edge function for atomic setup with proper trial
          */
-        createOrganization: async (name, userId) => {
+        createOrganization: async (name, userId, userName = null) => {
             if (!isSupabaseConfigured()) return null;
 
             try {
-                const slug = generateSlug(name);
+                // Get current session for auth token
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.access_token) {
+                    throw new Error('No valid session');
+                }
 
-                // Check if slug is unique
-                const { data: existing } = await supabase
-                    .from('organizations')
-                    .select('id')
-                    .eq('slug', slug)
-                    .single();
+                // Get user name if not provided
+                let finalUserName = userName;
+                if (!finalUserName) {
+                    const { data: profile } = await supabase
+                        .from('user_profiles')
+                        .select('name')
+                        .eq('auth_user_id', userId)
+                        .single();
+                    finalUserName = profile?.name || session.user?.email?.split('@')[0] || 'User';
+                }
 
-                const finalSlug = existing ? `${slug}-${Date.now().toString(36)}` : slug;
+                // Call the onboard-organization edge function
+                // This handles: org creation, membership, user profile, and trial setup atomically
+                const response = await fetch(
+                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/onboard-organization`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${session.access_token}`,
+                            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                        },
+                        body: JSON.stringify({
+                            organizationName: name,
+                            userName: finalUserName,
+                        }),
+                    }
+                );
 
-                // Create organization
-                const { data: org, error: orgError } = await supabase
-                    .from('organizations')
-                    .insert({
-                        name,
-                        slug: finalSlug,
-                        subscription_status: 'trialing',
-                        subscription_plan: 'free',
-                    })
-                    .select()
-                    .single();
+                const result = await response.json();
 
-                if (orgError) throw orgError;
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to create organization');
+                }
 
-                // Add user as owner
-                const { error: memberError } = await supabase
-                    .from('organization_members')
-                    .insert({
-                        organization_id: org.id,
-                        user_id: userId,
-                        role: 'owner',
-                    });
-
-                if (memberError) throw memberError;
+                const org = result.organization;
 
                 // Create default settings for org
                 const { error: settingsError } = await supabase
@@ -233,12 +241,6 @@ export const useOrganizationStore = create(
                 if (settingsError) {
                     console.error('Failed to create org settings:', settingsError);
                 }
-
-                // Update user_profiles with organization_id
-                await supabase
-                    .from('user_profiles')
-                    .update({ organization_id: org.id })
-                    .eq('auth_user_id', userId);
 
                 const orgWithRole = { ...org, userRole: 'owner' };
 

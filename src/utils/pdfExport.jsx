@@ -1,10 +1,15 @@
-import { pdf } from '@react-pdf/renderer';
-import CleanPDF from '../components/pdf/CleanPDF';
+import { createElement } from 'react';
 
 export async function exportQuoteToPDF(quote, currency) {
     try {
+        // Lazy load PDF dependencies to avoid 1.5MB bundle on initial load
+        const [{ pdf }, { default: CleanPDF }] = await Promise.all([
+            import('@react-pdf/renderer'),
+            import('../components/pdf/CleanPDF')
+        ]);
+
         // Generate PDF blob
-        const blob = await pdf(<CleanPDF quote={quote} currency={currency} />).toBlob();
+        const blob = await pdf(createElement(CleanPDF, { quote, currency })).toBlob();
 
         // Create download link
         const url = URL.createObjectURL(blob);

@@ -172,6 +172,7 @@ export const useAuthStore = create((set, get) => ({
     isLoading: false,
     rateLimited: false,
     lockoutTimeRemaining: 0,
+    needsOnboarding: false,
 
     /**
      * Initialize Supabase auth session (if configured)
@@ -295,6 +296,9 @@ export const useAuthStore = create((set, get) => ({
                         error: null,
                         isLoading: false
                     });
+
+                    // Check if user needs onboarding (no organization)
+                    setTimeout(() => get().checkNeedsOnboarding(), 100);
                 } else if (event === 'SIGNED_OUT') {
                     saveAuthSession(null);
                     set({
@@ -444,6 +448,10 @@ export const useAuthStore = create((set, get) => ({
                 // Set user context for error tracking
                 setUserContext({ id: data.user.id });
                 trackEvent('Login', { provider: 'email' });
+
+                // Check if user needs onboarding (no organization)
+                setTimeout(() => get().checkNeedsOnboarding(), 100);
+
                 return true;
             }
 
@@ -774,6 +782,123 @@ export const useAuthStore = create((set, get) => ({
             saveAuthSession(updatedUser);
             set({ user: updatedUser });
         }
+    },
+
+    /**
+     * Check if user needs onboarding (no organization membership)
+     */
+    checkNeedsOnboarding: async () => {
+        const { user } = get();
+        if (!user?.userId || user.provider === 'password') {
+            set({ needsOnboarding: false });
+            return false;
+        }
+
+        try {
+            // Check if user has any organization membership
+            const { data, error } = await supabase
+                .from('organization_members')
+                .select('id')
+                .eq('user_id', user.userId)
+                .limit(1);
+
+            if (error) {
+                console.error('Failed to check organization membership:', error);
+                return false;
+            }
+
+            const needsOnboarding = !data || data.length === 0;
+            set({ needsOnboarding });
+            return needsOnboarding;
+        } catch (e) {
+            console.error('Error checking onboarding status:', e);
+            return false;
+        }
+    },
+
+    /**
+     * Onboard user with a new organization
+     * Calls the onboard-organization edge function
+     */
+    onboardOrganization: async (organizationName, userName) => {
+        const { user } = get();
+        if (!user?.userId) {
+            return { success: false, error: 'Not authenticated' };
+        }
+
+        set({ isLoading: true, error: null });
+
+        try {
+            // Get current session for auth token
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+                set({ isLoading: false });
+                return { success: false, error: 'No valid session' };
+            }
+
+            // Call the onboard-organization edge function
+            const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/onboard-organization`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                    },
+                    body: JSON.stringify({
+                        organizationName,
+                        userName: userName || user.profile?.name || user.email?.split('@')[0],
+                    }),
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                set({ isLoading: false });
+                return { success: false, error: result.error || 'Onboarding failed' };
+            }
+
+            // Refresh the user profile to get updated organization info
+            const profile = await fetchUserProfile(user.userId);
+            if (profile) {
+                const updatedUser = { ...user, profile };
+                saveAuthSession(updatedUser);
+                set({
+                    user: updatedUser,
+                    needsOnboarding: false,
+                    isLoading: false
+                });
+            } else {
+                set({ needsOnboarding: false, isLoading: false });
+            }
+
+            logSecurityEvent('organization_onboarded', {
+                organizationName,
+                organizationId: result.organization?.id
+            });
+
+            return {
+                success: true,
+                organization: result.organization,
+                profile: result.profile
+            };
+        } catch (e) {
+            console.error('Onboarding error:', e);
+            set({
+                error: 'An error occurred during onboarding',
+                isLoading: false
+            });
+            return { success: false, error: e.message };
+        }
+    },
+
+    /**
+     * Clear the needs onboarding flag
+     */
+    setNeedsOnboarding: (value) => {
+        set({ needsOnboarding: value });
     },
 }));
 
