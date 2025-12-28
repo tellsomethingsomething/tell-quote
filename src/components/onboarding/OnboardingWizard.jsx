@@ -679,6 +679,12 @@ function FirstActionStep({ formData, updateField }) {
             icon: Film,
         },
         {
+            id: 'setup_profile',
+            label: 'Setup company profile',
+            description: 'Complete your company profile in Settings',
+            icon: Building2,
+        },
+        {
             id: 'explore_dashboard',
             label: 'Explore the dashboard',
             description: 'Take a tour of all the features',
@@ -745,7 +751,6 @@ function BillingStep({ formData, updateField, onBillingComplete, organizationId,
     const [isLoadingSecret, setIsLoadingSecret] = useState(false);
     const [setupError, setSetupError] = useState(null);
     const [paymentSaved, setPaymentSaved] = useState(false);
-    const [showSkipConfirm, setShowSkipConfirm] = useState(false);
     const [retryKey, setRetryKey] = useState(0);
 
     const plans = [
@@ -811,12 +816,8 @@ function BillingStep({ formData, updateField, onBillingComplete, organizationId,
     };
 
     const handleSkipBilling = () => {
-        setShowSkipConfirm(true);
-    };
-
-    const confirmSkipBilling = () => {
-        setShowSkipConfirm(false);
         updateField('selectedPlan', 'free');
+        updateField('billingComplete', true);
         onBillingComplete?.();
     };
 
@@ -861,7 +862,7 @@ function BillingStep({ formData, updateField, onBillingComplete, organizationId,
                                 <span className="text-gray-500">for 5 days</span>
                             </div>
                             <div className="flex items-baseline gap-1 mt-1">
-                                <span className="text-sm text-gray-500 line-through">{plan.price}{plan.period}</span>
+                                <span className="text-sm text-gray-500">{plan.price}{plan.period}</span>
                                 <span className="text-sm text-gray-500">after trial</span>
                             </div>
                         </div>
@@ -939,7 +940,7 @@ function BillingStep({ formData, updateField, onBillingComplete, organizationId,
                 <div className="text-center">
                     <button
                         onClick={handleSkipBilling}
-                        className="text-sm text-gray-500 hover:text-gray-400 underline"
+                        className="text-sm text-gray-500 hover:text-brand-primary underline"
                     >
                         Skip for now - continue with limited free plan
                     </button>
@@ -962,57 +963,6 @@ function BillingStep({ formData, updateField, onBillingComplete, organizationId,
                 </div>
             </div>
 
-            {/* Skip Billing Confirmation Modal */}
-            {showSkipConfirm && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-dark-card border border-dark-border rounded-xl max-w-md w-full p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                                <AlertCircle className="w-5 h-5 text-yellow-500" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-white">Skip payment setup?</h3>
-                        </div>
-                        <p className="text-gray-400 mb-4">
-                            The free plan has limited features:
-                        </p>
-                        <ul className="text-sm text-gray-400 space-y-2 mb-6">
-                            <li className="flex items-center gap-2">
-                                <X className="w-4 h-4 text-red-400" />
-                                Only 3 projects
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <X className="w-4 h-4 text-red-400" />
-                                10 clients max
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <X className="w-4 h-4 text-red-400" />
-                                No AI features
-                            </li>
-                            <li className="flex items-center gap-2">
-                                <X className="w-4 h-4 text-red-400" />
-                                Watermarked PDFs
-                            </li>
-                        </ul>
-                        <p className="text-sm text-gray-500 mb-6">
-                            You can upgrade anytime from Settings.
-                        </p>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowSkipConfirm(false)}
-                                className="flex-1 py-2.5 bg-brand-primary text-white font-medium rounded-lg hover:bg-brand-primary/90 transition-colors"
-                            >
-                                Add Payment Method
-                            </button>
-                            <button
-                                onClick={confirmSkipBilling}
-                                className="flex-1 py-2.5 border border-dark-border text-gray-400 font-medium rounded-lg hover:bg-dark-bg transition-colors"
-                            >
-                                Continue Free
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

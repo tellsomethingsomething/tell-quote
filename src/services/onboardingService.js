@@ -8,7 +8,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 // Onboarding Steps - Simplified flow
 export const ONBOARDING_STEPS = [
     { id: 'company_setup', label: 'Company Setup', required: true },
-    { id: 'billing', label: 'Choose Plan', required: false },
+    { id: 'billing', label: 'Choose Plan', required: true },
     { id: 'first_action', label: 'Get Started', required: true },
 ];
 
