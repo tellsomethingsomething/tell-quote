@@ -13,6 +13,14 @@ import DeliverablesMockup from '../mockups/DeliverablesMockup';
 
 const features = [
     {
+        id: 'crm',
+        title: 'CRM & Pipeline',
+        subtitle: 'Track every client relationship',
+        description: 'Manage leads, track communications, and visualize your sales pipeline. See lifetime value and project history at a glance.',
+        link: '/features/crm',
+        mockup: DashboardMockup
+    },
+    {
         id: 'quoting',
         title: 'Quote Builder',
         subtitle: 'Create quotes in minutes, not hours',
@@ -35,14 +43,6 @@ const features = [
         description: 'Real-time P&L on every project. Track costs as they happen. No more end-of-project surprises.',
         link: '/features/financials',
         mockup: FinanceMockup
-    },
-    {
-        id: 'crm',
-        title: 'CRM & Pipeline',
-        subtitle: 'Track every client relationship',
-        description: 'Manage leads, track communications, and visualize your sales pipeline. See lifetime value and project history at a glance.',
-        link: '/features/crm',
-        mockup: DashboardMockup
     },
     {
         id: 'crew',
