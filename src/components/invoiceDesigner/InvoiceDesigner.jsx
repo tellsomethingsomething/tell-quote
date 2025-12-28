@@ -62,7 +62,7 @@ const getSampleQuote = (settings) => ({
 });
 
 const COLOR_PRESETS = [
-    { name: 'Professional Navy', primary: '#143642', accent: '#0F8B8D', line: '#143642' },
+    { name: 'Professional Navy', primary: '#143642', accent: '#6E44FF', line: '#143642' },
     { name: 'Modern Blue', primary: '#1E40AF', accent: '#3B82F6', line: '#1E40AF' },
     { name: 'Corporate Gray', primary: '#374151', accent: '#6B7280', line: '#374151' },
     { name: 'Elegant Purple', primary: '#5B21B6', accent: '#8B5CF6', line: '#5B21B6' },
@@ -208,7 +208,7 @@ export default function InvoiceDesigner() {
                                         />
                                         <ColorPicker
                                             label="Accent Color (Labels)"
-                                            value={pdfOptions.accentColor || '#0F8B8D'}
+                                            value={pdfOptions.accentColor || '#6E44FF'}
                                             onChange={(v) => handleColorChange('accentColor', v)}
                                         />
                                         <ColorPicker
@@ -338,8 +338,8 @@ export default function InvoiceDesigner() {
                                 <div
                                     className="text-sm font-bold mt-3 pt-2 border-t"
                                     style={{
-                                        color: pdfOptions.accentColor || '#0F8B8D',
-                                        borderColor: (pdfOptions.accentColor || '#0F8B8D') + '30'
+                                        color: pdfOptions.accentColor || '#6E44FF',
+                                        borderColor: (pdfOptions.accentColor || '#6E44FF') + '30'
                                     }}
                                 >
                                     Total: $1,234.00

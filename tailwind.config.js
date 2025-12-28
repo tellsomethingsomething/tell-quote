@@ -21,15 +21,15 @@ export default {
             secondary: '#A1A1AA'
           }
         },
-        // Existing Brand colors (Preserved)
+        // Existing Brand colors (Updated to purple)
         brand: {
-          primary: '#0F8B8D',  // Primary brand color (teal) - used for buttons, links, selections
+          primary: '#6E44FF',  // Primary brand color (purple) - used for buttons, links, selections
           navy: '#143642',
-          teal: '#0F8B8D',
+          teal: '#6E44FF',     // Kept for backwards compatibility, now purple
           orange: '#FE7F2D',
           // Tints for hover states and backgrounds
-          'teal-light': '#12A3A5',
-          'teal-dark': '#0D7577',
+          'teal-light': '#8B6AFF',
+          'teal-dark': '#5835CC',
           'navy-light': '#1A4A5A',
           'orange-light': '#FF9A52',
         },
@@ -47,16 +47,16 @@ export default {
         },
         // Section accent colors - updated to align with brand
         section: {
-          productionCrew: '#0F8B8D',      // Brand Teal
+          productionCrew: '#6E44FF',      // Brand Purple
           technicalCrew: '#143642',       // Brand Navy
           productionEquipment: '#06B6D4', // Cyan
           creative: '#FE7F2D',            // Brand Orange
           logistics: '#F59E0B',           // Amber
           expenses: '#10B981',            // Green
         },
-        // Primary accent - now uses brand teal
+        // Primary accent - now uses brand purple
         accent: {
-          primary: '#0F8B8D',
+          primary: '#6E44FF',
           secondary: '#143642',
         },
       },

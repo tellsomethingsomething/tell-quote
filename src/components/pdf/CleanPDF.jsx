@@ -23,7 +23,7 @@ export default function CleanPDF({ quote, currency, includeTerms = false }) {
     // Colors from settings - using solid colors
     const colors = {
         primary: pdfOptions?.primaryColor || '#143642',
-        accent: pdfOptions?.accentColor || '#0F8B8D',
+        accent: pdfOptions?.accentColor || '#6E44FF',
         line: pdfOptions?.lineColor || pdfOptions?.primaryColor || '#143642',
         text: pdfOptions?.textColor || '#374151',
         muted: pdfOptions?.mutedColor || '#6B7280',

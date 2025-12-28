@@ -457,7 +457,7 @@ const defaultSettings = {
         showLogo: true,
         // PDF Colors
         primaryColor: '#143642',    // Headers, section titles
-        accentColor: '#0F8B8D',     // Accent elements
+        accentColor: '#6E44FF',     // Accent elements
         lineColor: '#143642',       // All lines and borders
         textColor: '#374151',       // Body text
         mutedColor: '#6B7280',      // Secondary text

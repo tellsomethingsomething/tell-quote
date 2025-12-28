@@ -6,7 +6,7 @@ const colors = {
     slate: '#1E293B',
     slateMedium: '#334155',
     slateLight: '#64748B',
-    teal: '#0F8B8D',
+    teal: '#6E44FF',
     border: '#E2E8F0',
 };
 

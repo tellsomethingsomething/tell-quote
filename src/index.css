@@ -490,7 +490,7 @@ select.input-sm:focus {
 /* Focus-visible styles for keyboard accessibility */
 /* Apply visible focus ring only for keyboard navigation, not mouse clicks */
 :focus-visible {
-  outline: 2px solid #0F8B8D; /* brand-teal */
+  outline: 2px solid #6E44FF; /* brand-teal */
   outline-offset: 2px;
 }
 
@@ -503,7 +503,7 @@ select.input-sm:focus {
 button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible {
-  outline: 2px solid #0F8B8D;
+  outline: 2px solid #6E44FF;
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -514,7 +514,7 @@ select:focus-visible,
 textarea:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px rgba(15, 139, 141, 0.5);
-  border-color: #0F8B8D;
+  border-color: #6E44FF;
 }
 
 /* Skip link focus state - ensure it's always visible when focused */

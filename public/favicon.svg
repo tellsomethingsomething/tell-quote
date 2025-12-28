@@ -1,6 +1,10 @@
-<svg width="536" height="329" viewBox="0 0 536 329" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M360.718 74.4312L0 328.207L109.77 219.857L317.743 0.000273705L360.718 74.4312Z" fill="#DBD2D8"/>
-<path d="M507.229 328.207H0L450.858 230.543L507.229 328.207Z" fill="#DBD2D8"/>
-<path d="M536 164.636L0 328.207L448.333 12.7875L536 164.636Z" fill="#0F8B8D"/>
-<path d="M0 328.207L373.531 290.438L536 164.636L0 328.207Z" fill="#143642"/>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#A881FF"/>
+      <stop offset="100%" style="stop-color:#6E44FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#purpleGradient)"/>
+  <text x="16" y="23" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" fill="white" text-anchor="middle">P</text>
 </svg>

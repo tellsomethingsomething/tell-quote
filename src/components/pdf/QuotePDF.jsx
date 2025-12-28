@@ -18,7 +18,7 @@ const colors = {
     slateLight: '#64748B',     // Darker tertiary text
 
     // Accent - Refined Teal
-    teal: '#0F8B8D',           // Brand teal
+    teal: '#6E44FF',           // Brand teal
     tealLight: '#14B8A6',
     tealPale: '#CCFBF1',
 

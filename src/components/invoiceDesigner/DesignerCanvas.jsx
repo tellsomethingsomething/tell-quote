@@ -292,7 +292,7 @@ function ModulePreview({ module, template }) {
         ),
         invoiceHeader: (
             <div className={`text-${config.alignment || 'right'}`}>
-                <div className="text-lg font-bold" style={{ color: config.titleColor || '#0F8B8D' }}>
+                <div className="text-lg font-bold" style={{ color: config.titleColor || '#6E44FF' }}>
                     {config.title || 'INVOICE'}
                 </div>
                 <div className="h-2 w-20 bg-gray-200 rounded mt-1 ml-auto" />
@@ -311,7 +311,7 @@ function ModulePreview({ module, template }) {
             <div className="space-y-1">
                 <div
                     className="h-4 rounded flex items-center px-2"
-                    style={{ backgroundColor: config.headerBackground || '#0F8B8D' }}
+                    style={{ backgroundColor: config.headerBackground || '#6E44FF' }}
                 >
                     <div className="h-1.5 w-12 bg-white/50 rounded" />
                 </div>
@@ -326,13 +326,13 @@ function ModulePreview({ module, template }) {
                 <div className="h-2 w-24 bg-gray-200 rounded ml-auto" />
                 <div
                     className="h-4 rounded mt-1"
-                    style={{ backgroundColor: config.totalBackground || '#0F8B8D' }}
+                    style={{ backgroundColor: config.totalBackground || '#6E44FF' }}
                 />
             </div>
         ),
         paymentTerms: (
             <div className="space-y-1">
-                <div className="text-[10px]" style={{ color: config.labelColor || '#0F8B8D' }}>
+                <div className="text-[10px]" style={{ color: config.labelColor || '#6E44FF' }}>
                     {config.label || 'Payment Terms'}
                 </div>
                 <div className="h-2 w-full bg-gray-200 rounded" />
@@ -341,7 +341,7 @@ function ModulePreview({ module, template }) {
         ),
         bankDetails: (
             <div className="space-y-1">
-                <div className="text-[10px]" style={{ color: config.labelColor || '#0F8B8D' }}>
+                <div className="text-[10px]" style={{ color: config.labelColor || '#6E44FF' }}>
                     {config.label || 'Bank Details'}
                 </div>
                 <div className="h-2 w-28 bg-gray-200 rounded" />
@@ -350,7 +350,7 @@ function ModulePreview({ module, template }) {
         ),
         termsConditions: (
             <div className="space-y-1">
-                <div className="text-[10px]" style={{ color: config.labelColor || '#0F8B8D' }}>
+                <div className="text-[10px]" style={{ color: config.labelColor || '#6E44FF' }}>
                     {config.label || 'Terms & Conditions'}
                 </div>
                 <div className="h-1.5 w-full bg-gray-200 rounded" />

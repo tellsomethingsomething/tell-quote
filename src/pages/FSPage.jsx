@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 
 const COLORS = {
-    teal: '#0F8B8D',
+    teal: '#6E44FF',
     tealLight: '#14B8A6',
     navy: '#143642',
     orange: '#FE7F2D',
