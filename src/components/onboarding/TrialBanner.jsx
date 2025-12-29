@@ -44,21 +44,23 @@ export default function TrialBanner({ organizationId, onUpgrade }) {
 
     if (loading || !trialStatus) return null;
 
-    const message = getTrialMessage(trialStatus);
-    if (!message || dismissed) return null;
-
-    // Only show for expiring_soon, grace_period, or expired
-    if (trialStatus.status === TRIAL_STATUS.ACTIVE || trialStatus.status === TRIAL_STATUS.CONVERTED) {
+    // Don't show for converted users (they've upgraded)
+    if (trialStatus.status === TRIAL_STATUS.CONVERTED) {
         return null;
     }
 
+    const message = getTrialMessage(trialStatus);
+    if (!message || dismissed) return null;
+
     const bannerStyles = {
+        success: 'bg-teal-500/20 border-teal-500/30 text-teal-200',
         warning: 'bg-yellow-500/20 border-yellow-500/30 text-yellow-200',
         error: 'bg-red-500/20 border-red-500/30 text-red-200',
         info: 'bg-blue-500/20 border-blue-500/30 text-blue-200',
     };
 
     const iconStyles = {
+        success: 'text-teal-400',
         warning: 'text-yellow-400',
         error: 'text-red-400',
         info: 'text-blue-400',

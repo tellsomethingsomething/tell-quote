@@ -77,7 +77,7 @@ export default function SaveAsTemplateModal({ isOpen, onClose }) {
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-dark-border">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-teal to-brand-navy flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-primary to-brand-navy flex items-center justify-center">
                             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                             </svg>
@@ -152,7 +152,7 @@ export default function SaveAsTemplateModal({ isOpen, onClose }) {
                                 type="checkbox"
                                 checked={includeFees}
                                 onChange={(e) => setIncludeFees(e.target.checked)}
-                                className="w-4 h-4 rounded border-gray-600 bg-dark-bg text-brand-teal focus:ring-brand-teal"
+                                className="w-4 h-4 rounded border-gray-600 bg-dark-bg text-brand-primary focus:ring-brand-primary"
                             />
                             <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
                                 Include fee percentages
@@ -163,7 +163,7 @@ export default function SaveAsTemplateModal({ isOpen, onClose }) {
                                 type="checkbox"
                                 checked={includeClientDetails}
                                 onChange={(e) => setIncludeClientDetails(e.target.checked)}
-                                className="w-4 h-4 rounded border-gray-600 bg-dark-bg text-brand-teal focus:ring-brand-teal"
+                                className="w-4 h-4 rounded border-gray-600 bg-dark-bg text-brand-primary focus:ring-brand-primary"
                             />
                             <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
                                 Include project type & description

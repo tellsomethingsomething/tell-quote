@@ -348,7 +348,7 @@ export default function RateCardPage() {
                             <button
                                 onClick={handleSyncFromKit}
                                 disabled={syncing}
-                                className="btn-ghost text-sm flex-shrink-0 hidden sm:flex items-center gap-1 text-teal-400 hover:text-teal-300"
+                                className="btn-ghost text-sm flex-shrink-0 hidden sm:flex items-center gap-1 text-brand-primary hover:text-brand-primary-light"
                                 title={`Sync ${kitItemsWithRates} kit items with rates to rate card`}
                             >
                                 <svg className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">

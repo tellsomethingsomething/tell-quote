@@ -26,7 +26,7 @@ export const ACTION_TYPES = {
     send_email: { id: 'send_email', label: 'Send Email', icon: '📧', color: 'text-blue-400' },
     update_status: { id: 'update_status', label: 'Update Status', icon: '🔄', color: 'text-amber-400' },
     notify_user: { id: 'notify_user', label: 'Notify User', icon: '🔔', color: 'text-purple-400' },
-    log_activity: { id: 'log_activity', label: 'Log Activity', icon: '📝', color: 'text-teal-400' },
+    log_activity: { id: 'log_activity', label: 'Log Activity', icon: '📝', color: 'text-purple-400' },
     assign_to: { id: 'assign_to', label: 'Assign To', icon: '👤', color: 'text-indigo-400' },
     add_tag: { id: 'add_tag', label: 'Add Tag', icon: '🏷️', color: 'text-pink-400' },
 };

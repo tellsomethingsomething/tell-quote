@@ -37,7 +37,7 @@ function SkipLink() {
     return (
         <a
             href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-brand-teal focus:text-white focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-dark-bg transition-all"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-brand-primary focus:text-white focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-dark-bg transition-all"
         >
             Skip to main content
         </a>
@@ -137,7 +137,7 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                         {/* Full Screen Analytics Button - Icon only on mobile */}
                         <button
                             onClick={onGoToFS}
-                            className="min-w-[44px] min-h-[44px] px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-teal-600/20 to-cyan-600/20 border border-teal-500/30 text-teal-400 text-xs font-bold hover:from-teal-600/30 hover:to-cyan-600/30 hover:border-teal-500/50 transition-all flex items-center justify-center gap-1.5"
+                            className="min-w-[44px] min-h-[44px] px-2 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-brand-primary/20 to-purple-600/20 border border-brand-primary/30 text-brand-primary text-xs font-bold hover:from-brand-primary/30 hover:to-purple-600/30 hover:border-brand-primary/50 transition-all flex items-center justify-center gap-1.5"
                             title="Full Screen Analytics"
                             aria-label="Full Screen Analytics"
                         >

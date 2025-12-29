@@ -29,7 +29,7 @@ export default function UpgradePrompt({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <div className="bg-dark-card border border-dark-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-brand-primary/20 to-brand-teal/20 px-6 py-4 border-b border-dark-border">
+                <div className="bg-gradient-to-r from-brand-primary/20 to-brand-primary/20 px-6 py-4 border-b border-dark-border">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <div className="w-10 h-10 bg-brand-primary/20 rounded-lg flex items-center justify-center">

@@ -306,7 +306,7 @@ export default function Sidebar({
                     {/* Full Screen Analytics */}
                     <button
                         onClick={() => { if (isMobile) setMobileOpen(false); onGoToFS(); }}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg ${isDark ? 'text-teal-400 hover:bg-teal-500/10' : 'text-teal-600 hover:bg-teal-50'} transition-colors ${!isOpen && !isMobile ? 'justify-center' : ''}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg ${isDark ? 'text-brand-primary hover:bg-brand-primary/10' : 'text-brand-primary hover:bg-brand-primary/10'} transition-colors ${!isOpen && !isMobile ? 'justify-center' : ''}`}
                         title="Full Screen Analytics"
                     >
                         <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -332,6 +332,24 @@ export default function Sidebar({
                         )}
                         {(isOpen || isMobile) && <span className="text-sm font-medium">{isDark ? 'Light Mode' : 'Dark Mode'}</span>}
                     </button>
+
+                    {/* Admin Dashboard - Only for admins */}
+                    {user?.profile?.role === 'admin' && (
+                        <button
+                            onClick={() => handleNavClick('admin')}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                                activeTab === 'admin'
+                                    ? 'bg-accent-primary/20 text-accent-primary'
+                                    : `${textSecondary} ${hoverText} ${hoverBg}`
+                            } ${!isOpen && !isMobile ? 'justify-center' : ''}`}
+                            title="Admin Dashboard"
+                        >
+                            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            {(isOpen || isMobile) && <span className="text-sm font-medium">Admin</span>}
+                        </button>
+                    )}
 
                     {/* Settings */}
                     <button

@@ -2,20 +2,33 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchLiveRates } from '../utils/currency';
+import { useSettingsStore } from './settingsStore';
 
 // Invoice statuses
 export const INVOICE_STATUSES = {
     draft: { label: 'Draft', color: 'text-gray-400 bg-gray-500/10 border-gray-500/20' },
     sent: { label: 'Sent', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+    partial: { label: 'Partial', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
     paid: { label: 'Paid', color: 'text-green-400 bg-green-500/10 border-green-500/20' },
     overdue: { label: 'Overdue', color: 'text-red-400 bg-red-500/10 border-red-500/20' },
     cancelled: { label: 'Cancelled', color: 'text-gray-500 bg-gray-600/10 border-gray-600/20' },
 };
 
-// Generate invoice number
+// Payment methods
+export const PAYMENT_METHODS = {
+    bank_transfer: { label: 'Bank Transfer', icon: 'building-2' },
+    card: { label: 'Card', icon: 'credit-card' },
+    cash: { label: 'Cash', icon: 'banknote' },
+    check: { label: 'Check', icon: 'file-text' },
+    other: { label: 'Other', icon: 'circle-dot' },
+};
+
+// Generate invoice number with configurable prefix from settings
 function generateInvoiceNumber(existingInvoices) {
+    const settings = useSettingsStore.getState().settings;
+    const invoicePrefix = settings?.quoteDefaults?.invoicePrefix || 'INV';
     const year = new Date().getFullYear();
-    const prefix = `INV-${year}-`;
+    const prefix = `${invoicePrefix}-${year}-`;
 
     const existingNumbers = existingInvoices
         .map(inv => inv.invoiceNumber)
@@ -44,6 +57,9 @@ function fromDbFormat(inv) {
         issueDate: inv.issue_date,
         dueDate: inv.due_date,
         paidDate: inv.paid_date,
+        // Payment tracking
+        paidAmount: parseFloat(inv.paid_amount) || 0,
+        payments: inv.payments || [],
         lineItems: inv.line_items || [],
         notes: inv.notes || '',
         clientName: inv.client_name || '',
@@ -73,6 +89,9 @@ function toDbFormat(inv) {
         issue_date: inv.issueDate || null,
         due_date: inv.dueDate || null,
         paid_date: inv.paidDate || null,
+        // Payment tracking
+        paid_amount: inv.paidAmount || 0,
+        payments: inv.payments || [],
         line_items: inv.lineItems || [],
         notes: inv.notes || '',
         client_name: inv.clientName || '',
@@ -290,6 +309,53 @@ export const useInvoiceStore = create(
             }
 
             return get().updateInvoice(id, updates);
+        },
+
+        // Record a payment against an invoice
+        recordPayment: async (id, paymentData) => {
+            const invoice = get().getInvoiceById(id);
+            if (!invoice) return false;
+
+            const payment = {
+                id: crypto.randomUUID(),
+                amount: parseFloat(paymentData.amount) || 0,
+                date: paymentData.date || new Date().toISOString().split('T')[0],
+                method: paymentData.method || 'bank_transfer', // bank_transfer, card, cash, check, other
+                reference: paymentData.reference || '',
+                notes: paymentData.notes || '',
+                recordedAt: new Date().toISOString(),
+            };
+
+            // Calculate new paid amount
+            const payments = [...(invoice.payments || []), payment];
+            const paidAmount = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+            // Determine new status based on payment
+            let status = invoice.status;
+            let paidDate = invoice.paidDate;
+
+            if (paidAmount >= invoice.total) {
+                status = 'paid';
+                paidDate = payment.date;
+            } else if (paidAmount > 0) {
+                status = 'partial';
+            }
+
+            const updates = {
+                payments,
+                paidAmount,
+                status,
+                paidDate,
+            };
+
+            return get().updateInvoice(id, updates);
+        },
+
+        // Get remaining balance on an invoice
+        getBalance: (id) => {
+            const invoice = get().getInvoiceById(id);
+            if (!invoice) return 0;
+            return (invoice.total || 0) - (invoice.paidAmount || 0);
         },
 
         // Delete invoice

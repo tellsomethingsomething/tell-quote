@@ -159,7 +159,7 @@ export default function PWAStatus() {
                 <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-50 animate-slide-up">
                     <div className="bg-dark-card border border-dark-border text-white px-4 py-3 rounded-lg shadow-lg">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-brand-navy to-brand-teal rounded-lg flex items-center justify-center">
+                            <div className="w-10 h-10 bg-gradient-to-br from-brand-navy to-brand-primary rounded-lg flex items-center justify-center">
                                 <Download className="w-5 h-5" />
                             </div>
                             <div className="flex-1">
@@ -170,7 +170,7 @@ export default function PWAStatus() {
                         <div className="flex gap-2 mt-3">
                             <button
                                 onClick={handleInstall}
-                                className="flex-1 bg-brand-teal text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-brand-teal/90 transition-colors"
+                                className="flex-1 bg-brand-primary text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-brand-primary/90 transition-colors"
                             >
                                 Install
                             </button>

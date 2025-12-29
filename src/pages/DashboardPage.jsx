@@ -994,7 +994,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
                                                 {status.id === 'draft' && (
                                                     <button
                                                         onClick={() => onNewQuote && onNewQuote()}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-teal hover:text-white bg-brand-teal/10 hover:bg-brand-teal/20 rounded-lg transition-colors"
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-primary hover:text-white bg-brand-primary/10 hover:bg-brand-primary/20 rounded-lg transition-colors"
                                                     >
                                                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

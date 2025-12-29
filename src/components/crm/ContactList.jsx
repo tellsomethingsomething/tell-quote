@@ -168,7 +168,7 @@ export default function ContactList({
                             <p className="text-gray-500 text-sm">No contacts match your filters</p>
                             <button
                                 onClick={() => { setSearchQuery(''); setFilter('all'); }}
-                                className="text-brand-teal text-sm mt-2 hover:underline"
+                                className="text-brand-primary text-sm mt-2 hover:underline"
                             >
                                 Clear filters
                             </button>
@@ -179,7 +179,7 @@ export default function ContactList({
                             {showAddButton && (
                                 <button
                                     onClick={() => setShowForm(true)}
-                                    className="text-brand-teal text-sm mt-2 hover:underline"
+                                    className="text-brand-primary text-sm mt-2 hover:underline"
                                 >
                                     Add your first contact
                                 </button>

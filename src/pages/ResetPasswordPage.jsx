@@ -72,7 +72,7 @@ export default function ResetPasswordPage({ onComplete }) {
         return (
             <div className="min-h-screen bg-dark-bg flex items-center justify-center p-4">
                 <div className="w-full max-w-md text-center">
-                    <div className="animate-spin w-8 h-8 border-2 border-brand-teal border-t-transparent rounded-full mx-auto"></div>
+                    <div className="animate-spin w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full mx-auto"></div>
                     <p className="text-gray-400 mt-4">Verifying reset link...</p>
                 </div>
             </div>
@@ -235,7 +235,7 @@ export default function ResetPasswordPage({ onComplete }) {
                         <button
                             type="button"
                             onClick={() => onComplete?.()}
-                            className="text-brand-teal hover:text-brand-teal-light transition-colors w-full text-center text-sm"
+                            className="text-brand-primary hover:text-brand-primary-light transition-colors w-full text-center text-sm"
                         >
                             ← Back to Sign In
                         </button>

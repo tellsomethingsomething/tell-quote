@@ -8,6 +8,7 @@ import InvoiceDesigner from '../components/invoiceDesigner/InvoiceDesigner';
 import TeamManagement from '../components/settings/TeamManagement';
 import PrivacySettings from '../components/settings/PrivacySettings';
 import BillingSettings from '../components/settings/BillingSettings';
+import AIUsageDashboard from '../components/settings/AIUsageDashboard';
 
 const TABS = [
     { id: 'company', label: 'Company' },
@@ -22,7 +23,7 @@ const TABS = [
     { id: 'customize', label: 'Customization' },
     { id: 'pdf', label: 'PDF Options' },
     { id: 'invoice', label: 'Quote Templates' },
-    { id: 'ai', label: 'AI Features' },
+    { id: 'ai', label: 'AI & Tokens' },
     { id: 'activity', label: 'Activity Log' },
     { id: 'privacy', label: 'Privacy & Data' },
 ];
@@ -1453,6 +1454,32 @@ export default function SettingsPage() {
                     <div className="max-w-2xl">
                         <h3 className="text-xl font-bold text-gray-100 mb-6">Quote Defaults</h3>
                         <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label">Quote Number Prefix</label>
+                                    <input
+                                        type="text"
+                                        value={settings.quoteDefaults?.quotePrefix || 'QT'}
+                                        onChange={(e) => saveQuoteDefaults({ quotePrefix: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5) })}
+                                        className="input w-32"
+                                        placeholder="QT"
+                                        maxLength={5}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">e.g., QT-2025-1234</p>
+                                </div>
+                                <div>
+                                    <label className="label">Invoice Number Prefix</label>
+                                    <input
+                                        type="text"
+                                        value={settings.quoteDefaults?.invoicePrefix || 'INV'}
+                                        onChange={(e) => saveQuoteDefaults({ invoicePrefix: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5) })}
+                                        className="input w-32"
+                                        placeholder="INV"
+                                        maxLength={5}
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">e.g., INV-2025-1234</p>
+                                </div>
+                            </div>
                             <div>
                                 <label className="label">Default Validity (Days)</label>
                                 <input
@@ -1907,64 +1934,56 @@ export default function SettingsPage() {
 
                 {/* AI Features Tab */}
                 {activeTab === 'ai' && (
-                    <div className="max-w-2xl">
-                        <h3 className="text-xl font-bold text-gray-100 mb-2">AI Features</h3>
-                        <p className="text-sm text-gray-500 mb-6">
-                            Enable AI-powered features like proposal generation and cover page images.
-                        </p>
+                    <div className="max-w-4xl">
+                        {/* AI Usage Dashboard */}
+                        <AIUsageDashboard />
 
-                        <div className="space-y-6">
-                            <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
-                                <h4 className="text-sm font-semibold text-gray-300 mb-3">Anthropic API Key (Claude)</h4>
-                                <p className="text-xs text-gray-500 mb-3">
-                                    For AI proposal text generation. Get your key from{' '}
-                                    <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" className="text-accent-primary hover:underline">
-                                        console.anthropic.com
-                                    </a>
-                                </p>
-                                <input
-                                    type="password"
-                                    value={settings.aiSettings?.anthropicKey || ''}
-                                    onChange={(e) => saveAiSettings({ anthropicKey: e.target.value })}
-                                    className="input w-full font-mono text-sm"
-                                    placeholder="sk-ant-api..."
-                                />
-                            </div>
-
-                            <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
-                                <h4 className="text-sm font-semibold text-gray-300 mb-3">OpenAI API Key (DALL-E)</h4>
-                                <p className="text-xs text-gray-500 mb-3">
-                                    For AI cover page image generation. Get your key from{' '}
-                                    <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-accent-primary hover:underline">
-                                        platform.openai.com
-                                    </a>
-                                </p>
-                                <input
-                                    type="password"
-                                    value={settings.aiSettings?.openaiKey || ''}
-                                    onChange={(e) => saveAiSettings({ openaiKey: e.target.value })}
-                                    className="input w-full font-mono text-sm"
-                                    placeholder="sk-..."
-                                />
-                            </div>
-
-                            <div className="p-4 bg-accent-primary/10 border border-accent-primary/20 rounded-lg">
-                                <h4 className="text-sm font-semibold text-accent-primary mb-2">AI Features</h4>
-                                <ul className="text-sm text-gray-400 space-y-1">
-                                    <li className="flex items-center gap-2">
-                                        <span className={settings.aiSettings?.anthropicKey ? 'text-green-400' : 'text-gray-600'}>●</span>
-                                        Generate professional proposals (Claude)
-                                    </li>
-                                    <li className="flex items-center gap-2">
-                                        <span className={settings.aiSettings?.openaiKey ? 'text-green-400' : 'text-gray-600'}>●</span>
-                                        AI cover page backgrounds (DALL-E)
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <p className="text-xs text-gray-600">
-                                Your API keys are stored locally in your browser and never sent to our servers.
+                        {/* Legacy API Keys Section (for custom integrations) */}
+                        <div className="mt-8 pt-8 border-t border-dark-border">
+                            <h3 className="text-lg font-semibold text-gray-100 mb-2">Custom API Keys (Optional)</h3>
+                            <p className="text-sm text-gray-500 mb-6">
+                                Use your own API keys for unlimited access without token limits.
                             </p>
+
+                            <div className="space-y-6 max-w-2xl">
+                                <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
+                                    <h4 className="text-sm font-semibold text-gray-300 mb-3">Anthropic API Key (Claude)</h4>
+                                    <p className="text-xs text-gray-500 mb-3">
+                                        For AI proposal text generation. Get your key from{' '}
+                                        <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" className="text-accent-primary hover:underline">
+                                            console.anthropic.com
+                                        </a>
+                                    </p>
+                                    <input
+                                        type="password"
+                                        value={settings.aiSettings?.anthropicKey || ''}
+                                        onChange={(e) => saveAiSettings({ anthropicKey: e.target.value })}
+                                        className="input w-full font-mono text-sm"
+                                        placeholder="sk-ant-api..."
+                                    />
+                                </div>
+
+                                <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
+                                    <h4 className="text-sm font-semibold text-gray-300 mb-3">OpenAI API Key (DALL-E)</h4>
+                                    <p className="text-xs text-gray-500 mb-3">
+                                        For AI cover page image generation. Get your key from{' '}
+                                        <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-accent-primary hover:underline">
+                                            platform.openai.com
+                                        </a>
+                                    </p>
+                                    <input
+                                        type="password"
+                                        value={settings.aiSettings?.openaiKey || ''}
+                                        onChange={(e) => saveAiSettings({ openaiKey: e.target.value })}
+                                        className="input w-full font-mono text-sm"
+                                        placeholder="sk-..."
+                                    />
+                                </div>
+
+                                <p className="text-xs text-gray-600">
+                                    Your API keys are stored securely and encrypted. Using your own keys bypasses token limits.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}

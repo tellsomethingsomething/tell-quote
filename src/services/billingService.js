@@ -103,31 +103,54 @@ const STRIPE_PRICES_TIER5 = {
 
 // Local Currency Prices (Live Mode)
 const STRIPE_PRICES_LOCAL = {
-    MYR: {
-        individual: { monthly: 'price_1SjNIxLE30d1czmdcKoycTK1', annual: 'price_1SjNIyLE30d1czmdrebRMoH4' },
-        team: { monthly: 'price_1SjNIzLE30d1czmdJRROuWyT', annual: 'price_1SjNJ0LE30d1czmdvFRXym7X' },
+    // Tier 1 - Full price currencies (wealthy economies)
+    SGD: { // Singapore - S$32/mo Individual, S$66/mo Team (full price)
+        individual: { monthly: 'price_1SjcEkLE30d1czmdI3Xdrx1c', annual: 'price_1SjcEmLE30d1czmdqhomazme' },
+        team: { monthly: 'price_1SjcEnLE30d1czmdliFd6b1m', annual: 'price_1SjcEoLE30d1czmdTNxRXMni' },
     },
-    SGD: {
-        individual: { monthly: 'price_1SjNJBLE30d1czmdq8v4Wr1h', annual: 'price_1SjNJBLE30d1czmdQM1TijWE' },
-        team: { monthly: 'price_1SjNJCLE30d1czmdrLYsLdyL', annual: 'price_1SjNJDLE30d1czmdMchkOLWs' },
+    AED: { // UAE - AED88/mo Individual, AED180/mo Team (full price)
+        individual: { monthly: 'price_1SjcFBLE30d1czmdRnydemDu', annual: 'price_1SjcFCLE30d1czmdXjMrs869' },
+        team: { monthly: 'price_1SjcFDLE30d1czmd6g2W04sR', annual: 'price_1SjcFELE30d1czmd8K1gzlJf' },
     },
-    THB: {
-        individual: { monthly: 'price_1SjNJTLE30d1czmdEgcglf1j', annual: 'price_1SjNJTLE30d1czmdey99KeIQ' },
-        team: { monthly: 'price_1SjNJVLE30d1czmdhOHatiLI', annual: 'price_1SjNJVLE30d1czmdzPIjf6Kg' },
+    NZD: { // New Zealand - NZ$40/mo Individual, NZ$82/mo Team (full price)
+        individual: { monthly: 'price_1SjcFFLE30d1czmdEMn6lV1T', annual: 'price_1SjcFGLE30d1czmdFAVH1xim' },
+        team: { monthly: 'price_1SjcFHLE30d1czmd8sIAwhck', annual: 'price_1SjcFILE30d1czmdLRQIqXQo' },
     },
-    INR: {
-        individual: { monthly: 'price_1SjNJWLE30d1czmdeNnougdH', annual: 'price_1SjNJXLE30d1czmd5tY7qpoQ' },
-        team: { monthly: 'price_1SjNJYLE30d1czmdwLDQDwPk', annual: 'price_1SjNJZLE30d1czmdE9MZjJru' },
+    HKD: { // Hong Kong - HK$188/mo Individual, HK$384/mo Team (full price)
+        individual: { monthly: 'price_1SjcHBLE30d1czmd7IHGa3Su', annual: 'price_1SjcGlLE30d1czmdf0yezyyE' },
+        team: { monthly: 'price_1SjcHDLE30d1czmdhFu33mCm', annual: 'price_1SjcGpLE30d1czmdjsZzNIuC' },
     },
-    AUD: {
+    ILS: { // Israel - ₪89/mo Individual, ₪182/mo Team (full price)
+        individual: { monthly: 'price_1SjcHELE30d1czmd0a0XcgTo', annual: 'price_1SjcHGLE30d1czmd0Kn2zMvy' },
+        team: { monthly: 'price_1SjcHILE30d1czmdCv3mFzl3', annual: 'price_1SjcHKLE30d1czmdnWU2mGrW' },
+    },
+    TWD: { // Taiwan - NT$760/mo Individual, NT$1550/mo Team (full price)
+        individual: { monthly: 'price_1SjcHaLE30d1czmdvwvWTloY', annual: 'price_1SjcHbLE30d1czmdwibrBW1B' },
+        team: { monthly: 'price_1SjcHdLE30d1czmdrEJjGfwh', annual: 'price_1SjcHfLE30d1czmd5icfN54H' },
+    },
+    AUD: { // Australia - A$37/mo Individual, A$76/mo Team (full price)
         individual: { monthly: 'price_1SjNJtLE30d1czmdNoD6M5kV', annual: 'price_1SjNJuLE30d1czmdUrR8uR8j' },
         team: { monthly: 'price_1SjNJvLE30d1czmdymGDP9F8', annual: 'price_1SjNJvLE30d1czmdnA2E091P' },
     },
-    PHP: {
+    // Tier 3 - Moderate discount currencies
+    MYR: { // Malaysia - RM55/mo Individual (50% off)
+        individual: { monthly: 'price_1SjNIxLE30d1czmdcKoycTK1', annual: 'price_1SjNIyLE30d1czmdrebRMoH4' },
+        team: { monthly: 'price_1SjNIzLE30d1czmdJRROuWyT', annual: 'price_1SjNJ0LE30d1czmdvFRXym7X' },
+    },
+    THB: { // Thailand - ฿420/mo Individual (50% off)
+        individual: { monthly: 'price_1SjNJTLE30d1czmdEgcglf1j', annual: 'price_1SjNJTLE30d1czmdey99KeIQ' },
+        team: { monthly: 'price_1SjNJVLE30d1czmdhOHatiLI', annual: 'price_1SjNJVLE30d1czmdzPIjf6Kg' },
+    },
+    // Tier 4 - Significant discount currencies
+    INR: { // India - ₹650/mo Individual (67% off)
+        individual: { monthly: 'price_1SjNJWLE30d1czmdeNnougdH', annual: 'price_1SjNJXLE30d1czmd5tY7qpoQ' },
+        team: { monthly: 'price_1SjNJYLE30d1czmdwLDQDwPk', annual: 'price_1SjNJZLE30d1czmdE9MZjJru' },
+    },
+    PHP: { // Philippines - ₱450/mo Individual (67% off)
         individual: { monthly: 'price_1SjNJwLE30d1czmdZkPFhsA4', annual: 'price_1SjNJxLE30d1czmd6NADrl3B' },
         team: { monthly: 'price_1SjNJyLE30d1czmdsWjFnldX', annual: 'price_1SjNJyLE30d1czmdqi56eo4e' },
     },
-    IDR: {
+    IDR: { // Indonesia - Rp125k/mo Individual (67% off)
         individual: { monthly: 'price_1SjNK8LE30d1czmdyXLirLGO', annual: 'price_1SjNK9LE30d1czmd9wRWUFK4' },
         team: { monthly: 'price_1SjNKALE30d1czmdT6a49lls', annual: 'price_1SjNKBLE30d1czmdZA0FFcUg' },
     },

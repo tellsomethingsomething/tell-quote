@@ -3,44 +3,51 @@
  * Detects user's country and returns appropriate regional pricing
  */
 
-// Country to pricing tier mapping
-// Tier 1: Full price (90% margin) - US, UK, EU, AU, CA, JP, CH, NO, DK, SE
-// Tier 2: $20/$40 (85% margin) - SG, AE, IL, KR, NZ, HK, QA, KW, BH
-// Tier 3: $12/$25 (75% margin) - MY, TH, MX, BR, PL, CZ, HU, TW, CL, AR
-// Tier 4: $8/$16 (65% margin) - IN, ID, PH, VN, ZA, CO, PE, UA, RO
-// Tier 5: $6/$12 (60% margin) - PK, BD, NG, KE, EG, ET, GH, TZ, UG
+// Country to pricing tier mapping (based on GDP per capita)
+// Tier 1: Full price ($24/$49) - GDP >$35k - US, UK, EU, AU, CA, JP, CH, Nordic, SG, AE, HK, QA, KW, IL, NZ, TW
+// Tier 2: $20/$40 (17% off) - GDP $20-35k - KR, SA, BH, OM, CZ, PL, HU, EE, LT, LV
+// Tier 3: $12/$25 (50% off) - GDP $10-20k - MY, TH, MX, BR, CL, AR, CR, PA, UY, RO, BG, HR
+// Tier 4: $8/$16 (67% off) - GDP $3-10k - IN, ID, PH, VN, ZA, CO, PE, UA
+// Tier 5: $6/$12 (75% off) - GDP <$3k - PK, BD, NG, KE, EG, ET, GH, TZ, UG
 
 export const PRICING_TIERS = {
     tier1: {
+        // GDP per capita >$35k - full price markets
         countries: ['US', 'GB', 'DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'IE', 'FI', 'PT',
-                    'AU', 'CA', 'JP', 'CH', 'NO', 'DK', 'SE', 'LU', 'IS'],
+                    'AU', 'CA', 'JP', 'CH', 'NO', 'DK', 'SE', 'LU', 'IS',
+                    // Added wealthy countries (previously Tier 2/3)
+                    'SG', 'AE', 'IL', 'NZ', 'HK', 'QA', 'KW', 'TW'],
         margin: 90,
         individual: { monthly: 24, annual: 228 },
         team: { monthly: 49, annual: 468 },
         currency: 'USD', // Will be overridden for specific countries
     },
     tier2: {
-        countries: ['SG', 'AE', 'IL', 'KR', 'NZ', 'HK', 'QA', 'KW', 'BH', 'OM', 'SA'],
+        // GDP per capita $20-35k - slight discount
+        countries: ['KR', 'SA', 'BH', 'OM', 'CZ', 'PL', 'HU', 'EE', 'LT', 'LV', 'SK', 'SI', 'GR', 'CY', 'MT'],
         margin: 85,
         individual: { monthly: 20, annual: 200 },
         team: { monthly: 40, annual: 400 },
         currency: 'USD',
     },
     tier3: {
-        countries: ['MY', 'TH', 'MX', 'BR', 'PL', 'CZ', 'HU', 'TW', 'CL', 'AR', 'CR', 'PA', 'UY'],
+        // GDP per capita $10-20k - moderate discount
+        countries: ['MY', 'TH', 'MX', 'BR', 'CL', 'AR', 'CR', 'PA', 'UY', 'RO', 'BG', 'HR', 'RS'],
         margin: 75,
         individual: { monthly: 12, annual: 120 },
         team: { monthly: 25, annual: 250 },
         currency: 'USD',
     },
     tier4: {
-        countries: ['IN', 'ID', 'PH', 'VN', 'ZA', 'CO', 'PE', 'UA', 'RO', 'BG', 'RS', 'HR', 'SK', 'LV', 'LT', 'EE'],
+        // GDP per capita $3-10k - significant discount
+        countries: ['IN', 'ID', 'PH', 'VN', 'ZA', 'CO', 'PE', 'UA'],
         margin: 65,
         individual: { monthly: 8, annual: 80 },
         team: { monthly: 16, annual: 160 },
         currency: 'USD',
     },
     tier5: {
+        // GDP per capita <$3k - maximum discount
         countries: ['PK', 'BD', 'NG', 'KE', 'EG', 'ET', 'GH', 'TZ', 'UG', 'ZW', 'ZM', 'MW', 'NP', 'MM', 'KH', 'LA'],
         margin: 60,
         individual: { monthly: 6, annual: 60 },
@@ -93,35 +100,63 @@ export const COUNTRY_CURRENCIES = {
 };
 
 // Local currency prices (display only, Stripe handles conversion)
+// Tier 1 countries use full price converted to local currency
 export const LOCAL_CURRENCY_PRICES = {
-    MYR: { individual: { monthly: 55, annual: 550 }, team: { monthly: 115, annual: 1150 } },
-    SGD: { individual: { monthly: 27, annual: 270 }, team: { monthly: 54, annual: 540 } },
-    THB: { individual: { monthly: 420, annual: 4200 }, team: { monthly: 880, annual: 8800 } },
-    INR: { individual: { monthly: 650, annual: 6500 }, team: { monthly: 1300, annual: 13000 } },
-    AUD: { individual: { monthly: 36, annual: 342 }, team: { monthly: 74, annual: 702 } },
-    PHP: { individual: { monthly: 450, annual: 4500 }, team: { monthly: 900, annual: 9000 } },
-    IDR: { individual: { monthly: 125000, annual: 1250000 }, team: { monthly: 250000, annual: 2500000 } },
-    // Fallback to USD tier pricing for others
+    // Tier 1 - Full price ($24/$49 equivalent)
+    SGD: { individual: { monthly: 32, annual: 308 }, team: { monthly: 66, annual: 632 } },      // S$32 (~$24 USD)
+    AUD: { individual: { monthly: 37, annual: 355 }, team: { monthly: 76, annual: 728 } },      // A$37 (~$24 USD)
+    NZD: { individual: { monthly: 40, annual: 384 }, team: { monthly: 82, annual: 787 } },      // NZ$40 (~$24 USD)
+    AED: { individual: { monthly: 88, annual: 845 }, team: { monthly: 180, annual: 1728 } },    // AED88 (~$24 USD)
+    ILS: { individual: { monthly: 89, annual: 854 }, team: { monthly: 182, annual: 1747 } },    // ₪89 (~$24 USD)
+    HKD: { individual: { monthly: 188, annual: 1805 }, team: { monthly: 384, annual: 3686 } },  // HK$188 (~$24 USD)
+    TWD: { individual: { monthly: 760, annual: 7296 }, team: { monthly: 1550, annual: 14880 } },// NT$760 (~$24 USD)
+    // Tier 2 - Slight discount ($20/$40 equivalent)
+    KRW: { individual: { monthly: 27000, annual: 259200 }, team: { monthly: 55000, annual: 528000 } }, // ₩27,000 (~$20 USD)
+    SAR: { individual: { monthly: 75, annual: 720 }, team: { monthly: 150, annual: 1440 } },    // SAR75 (~$20 USD)
+    // Tier 3 - Moderate discount ($12/$25 equivalent)
+    MYR: { individual: { monthly: 55, annual: 528 }, team: { monthly: 115, annual: 1104 } },    // RM55 (~$12 USD)
+    THB: { individual: { monthly: 420, annual: 4032 }, team: { monthly: 875, annual: 8400 } },  // ฿420 (~$12 USD)
+    BRL: { individual: { monthly: 60, annual: 576 }, team: { monthly: 125, annual: 1200 } },    // R$60 (~$12 USD)
+    MXN: { individual: { monthly: 210, annual: 2016 }, team: { monthly: 440, annual: 4224 } },  // MX$210 (~$12 USD)
+    // Tier 4 - Significant discount ($8/$16 equivalent)
+    INR: { individual: { monthly: 650, annual: 6240 }, team: { monthly: 1300, annual: 12480 } },// ₹650 (~$8 USD)
+    PHP: { individual: { monthly: 450, annual: 4320 }, team: { monthly: 900, annual: 8640 } },  // ₱450 (~$8 USD)
+    IDR: { individual: { monthly: 125000, annual: 1200000 }, team: { monthly: 250000, annual: 2400000 } }, // Rp125k (~$8 USD)
+    ZAR: { individual: { monthly: 150, annual: 1440 }, team: { monthly: 300, annual: 2880 } },  // R150 (~$8 USD)
+    VND: { individual: { monthly: 200000, annual: 1920000 }, team: { monthly: 400000, annual: 3840000 } }, // ₫200k (~$8 USD)
 };
 
 // Currency configuration for display
 export const CURRENCY_CONFIG = {
+    // Tier 1 currencies
     USD: { symbol: '$', code: 'USD', position: 'before', decimals: 0 },
     GBP: { symbol: '£', code: 'GBP', position: 'before', decimals: 0 },
     EUR: { symbol: '€', code: 'EUR', position: 'before', decimals: 0 },
     AUD: { symbol: 'A$', code: 'AUD', position: 'before', decimals: 0 },
     CAD: { symbol: 'C$', code: 'CAD', position: 'before', decimals: 0 },
     SGD: { symbol: 'S$', code: 'SGD', position: 'before', decimals: 0 },
+    NZD: { symbol: 'NZ$', code: 'NZD', position: 'before', decimals: 0 },
+    CHF: { symbol: 'CHF', code: 'CHF', position: 'before', decimals: 0 },
+    JPY: { symbol: '¥', code: 'JPY', position: 'before', decimals: 0 },
+    AED: { symbol: 'AED', code: 'AED', position: 'before', decimals: 0 },
+    ILS: { symbol: '₪', code: 'ILS', position: 'before', decimals: 0 },
+    HKD: { symbol: 'HK$', code: 'HKD', position: 'before', decimals: 0 },
+    TWD: { symbol: 'NT$', code: 'TWD', position: 'before', decimals: 0 },
+    QAR: { symbol: 'QR', code: 'QAR', position: 'before', decimals: 0 },
+    KWD: { symbol: 'KD', code: 'KWD', position: 'before', decimals: 0 },
+    // Tier 2 currencies
+    KRW: { symbol: '₩', code: 'KRW', position: 'before', decimals: 0 },
+    SAR: { symbol: 'SAR', code: 'SAR', position: 'before', decimals: 0 },
+    // Tier 3 currencies
     MYR: { symbol: 'RM', code: 'MYR', position: 'before', decimals: 0 },
     THB: { symbol: '฿', code: 'THB', position: 'before', decimals: 0 },
+    BRL: { symbol: 'R$', code: 'BRL', position: 'before', decimals: 0 },
+    MXN: { symbol: 'MX$', code: 'MXN', position: 'before', decimals: 0 },
+    // Tier 4 currencies
     INR: { symbol: '₹', code: 'INR', position: 'before', decimals: 0 },
     PHP: { symbol: '₱', code: 'PHP', position: 'before', decimals: 0 },
     IDR: { symbol: 'Rp', code: 'IDR', position: 'before', decimals: 0, separator: '.' },
-    JPY: { symbol: '¥', code: 'JPY', position: 'before', decimals: 0 },
-    KRW: { symbol: '₩', code: 'KRW', position: 'before', decimals: 0 },
     VND: { symbol: '₫', code: 'VND', position: 'after', decimals: 0 },
-    BRL: { symbol: 'R$', code: 'BRL', position: 'before', decimals: 0 },
-    MXN: { symbol: 'MX$', code: 'MXN', position: 'before', decimals: 0 },
     ZAR: { symbol: 'R', code: 'ZAR', position: 'before', decimals: 0 },
 };
 
@@ -135,6 +170,17 @@ let cachedPricingInfo = null;
  */
 export async function detectCountry() {
     if (cachedCountry) return cachedCountry;
+
+    // Check for URL parameter override (for testing)
+    if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const countryParam = urlParams.get('country');
+        if (countryParam && countryParam.length === 2) {
+            cachedCountry = countryParam.toUpperCase();
+            console.log(`[PPP] Country override from URL: ${cachedCountry}`);
+            return cachedCountry;
+        }
+    }
 
     try {
         // Try IP-based geolocation (free, no API key needed)

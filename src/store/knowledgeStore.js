@@ -41,6 +41,8 @@ function fromDbFormat(record) {
         region: record.region,
         dealType: record.deal_type,
         expiresAt: record.expires_at,
+        isPublic: record.is_public || false,
+        organizationId: record.organization_id,
     };
 }
 
@@ -61,6 +63,7 @@ function toDbFormat(fragment) {
         region: fragment.region || null,
         deal_type: fragment.dealType || null,
         expires_at: fragment.expiresAt || null,
+        is_public: fragment.isPublic || false,
     };
 }
 

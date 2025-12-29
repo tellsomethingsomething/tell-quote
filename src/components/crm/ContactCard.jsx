@@ -33,7 +33,7 @@ export default function ContactCard({
                 </div>
 
                 {contact.isPrimary && (
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-brand-teal/20 text-brand-teal">
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-brand-primary/20 text-brand-primary">
                         Primary
                     </span>
                 )}
@@ -54,7 +54,7 @@ export default function ContactCard({
                     <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-base font-medium text-gray-200">{fullName}</h3>
                         {contact.isPrimary && (
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-brand-teal/20 text-brand-teal">
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-brand-primary/20 text-brand-primary">
                                 Primary
                             </span>
                         )}
@@ -84,7 +84,7 @@ export default function ContactCard({
                         {contact.email && (
                             <a
                                 href={`mailto:${contact.email}`}
-                                className="flex items-center gap-1.5 text-gray-400 hover:text-brand-teal transition-colors"
+                                className="flex items-center gap-1.5 text-gray-400 hover:text-brand-primary transition-colors"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -96,7 +96,7 @@ export default function ContactCard({
                         {contact.phone && (
                             <a
                                 href={`tel:${contact.phone}`}
-                                className="flex items-center gap-1.5 text-gray-400 hover:text-brand-teal transition-colors"
+                                className="flex items-center gap-1.5 text-gray-400 hover:text-brand-primary transition-colors"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,7 +108,7 @@ export default function ContactCard({
                         {contact.mobile && contact.mobile !== contact.phone && (
                             <a
                                 href={`tel:${contact.mobile}`}
-                                className="flex items-center gap-1.5 text-gray-400 hover:text-brand-teal transition-colors"
+                                className="flex items-center gap-1.5 text-gray-400 hover:text-brand-primary transition-colors"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

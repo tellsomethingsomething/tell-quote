@@ -96,6 +96,8 @@ const HelpArticlePage = lazy(() => import('./pages/resources/HelpArticlePage'));
 const HelpCategoryPage = lazy(() => import('./pages/resources/HelpCategoryPage'));
 const AboutPage = lazy(() => import('./pages/company/AboutPage'));
 const ContactPage = lazy(() => import('./pages/company/ContactPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings' | 'contacts'
 function App() {
@@ -367,6 +369,10 @@ function App() {
     confirmNavigateAway(() => setView('resources'));
   }, [confirmNavigateAway]);
 
+  const handleGoToAdmin = useCallback(() => {
+    confirmNavigateAway(() => setView('admin'));
+  }, [confirmNavigateAway]);
+
   const handleConvertQuoteToProject = useCallback((projectId) => {
     setSelectedProjectId(projectId);
     setView('project-detail');
@@ -423,6 +429,37 @@ function App() {
   const handleToggleMobilePreview = useCallback(() => {
     setShowMobilePreview(prev => !prev);
   }, []);
+
+  // Handle sidebar navigation (must be defined before early returns for hooks rules)
+  const handleSidebarTabChange = useCallback((tab) => {
+    if (tab === 'dashboard') handleGoToDashboard();
+    else if (tab === 'quotes') handleGoToQuotes();
+    else if (tab === 'clients') handleGoToClients();
+    else if (tab === 'opportunities') handleGoToOpportunities();
+    else if (tab === 'projects') handleGoToProjects();
+    else if (tab === 'tasks') handleGoToTasks();
+    else if (tab === 'task-board') confirmNavigateAway(() => setView('task-board'));
+    else if (tab === 'email') handleGoToEmail();
+    else if (tab === 'calendar') handleGoToCalendar();
+    else if (tab === 'sequences') handleGoToSequences();
+    else if (tab === 'workflows') handleGoToWorkflows();
+    else if (tab === 'sop') handleGoToSOP();
+    else if (tab === 'knowledge') handleGoToKnowledge();
+    else if (tab === 'kit') handleGoToKit();
+    else if (tab === 'kit-bookings') handleGoToKitBookings();
+    else if (tab === 'crew') handleGoToCrew();
+    else if (tab === 'analytics') handleGoToCallSheets();
+    else if (tab === 'invoices') handleGoToInvoices();
+    else if (tab === 'expenses') handleGoToExpenses();
+    else if (tab === 'pl') handleGoToPL();
+    else if (tab === 'purchase-orders') handleGoToPurchaseOrders();
+    else if (tab === 'contracts') handleGoToContracts();
+    else if (tab === 'resources') handleGoToResources();
+    else if (tab === 'rate-card') handleGoToRateCard();
+    else if (tab === 'contacts') handleGoToContacts();
+    else if (tab === 'settings') handleGoToSettings();
+    else if (tab === 'admin') handleGoToAdmin();
+  }, [handleGoToDashboard, handleGoToQuotes, handleGoToClients, handleGoToOpportunities, handleGoToProjects, handleGoToTasks, handleGoToEmail, handleGoToCalendar, handleGoToSequences, handleGoToWorkflows, handleGoToSOP, handleGoToKnowledge, handleGoToKit, handleGoToKitBookings, handleGoToCrew, handleGoToCallSheets, handleGoToInvoices, handleGoToExpenses, handleGoToPL, handleGoToPurchaseOrders, handleGoToContracts, handleGoToResources, handleGoToRateCard, handleGoToContacts, handleGoToSettings, handleGoToAdmin, confirmNavigateAway]);
 
   // Mark as saved when entering editor or quote number changes
   useEffect(() => {
@@ -612,8 +649,32 @@ function App() {
             <Route path="/company/about" element={<AboutPage />} />
             <Route path="/company/contact" element={<ContactPage />} />
 
-            {/* Catch all redirect to Home for marketing site */}
-            <Route path="*" element={<Home />} />
+            {/* Protected routes - redirect to login */}
+            <Route path="/dashboard" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/dashboard/*" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/settings" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/settings/*" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/quotes" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/quotes/*" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/clients" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/clients/*" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/opportunities" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/opportunities/*" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/projects" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/projects/*" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/crew" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/crew/*" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/invoices" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/invoices/*" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/expenses" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/expenses/*" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/contracts" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/contracts/*" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/admin" element={<Navigate to="/auth/login" replace />} />
+            <Route path="/admin/*" element={<Navigate to="/auth/login" replace />} />
+
+            {/* 404 Page for unknown routes */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
           <CookieConsent />
         </Suspense>
@@ -969,6 +1030,14 @@ function App() {
             </main>
           </Suspense>
         );
+      case 'admin':
+        return (
+          <Suspense fallback={<LoadingSpinner text="Loading Admin..." />}>
+            <main id="main-content" tabIndex="-1">
+              <AdminPage />
+            </main>
+          </Suspense>
+        );
       case 'editor':
       default:
         return (
@@ -1016,36 +1085,6 @@ function App() {
             : view === 'call-sheets' ? 'analytics'
               : view;
 
-  // Handle sidebar navigation
-  const handleSidebarTabChange = useCallback((tab) => {
-    if (tab === 'dashboard') handleGoToDashboard();
-    else if (tab === 'quotes') handleGoToQuotes();
-    else if (tab === 'clients') handleGoToClients();
-    else if (tab === 'opportunities') handleGoToOpportunities();
-    else if (tab === 'projects') handleGoToProjects();
-    else if (tab === 'tasks') handleGoToTasks();
-    else if (tab === 'task-board') confirmNavigateAway(() => setView('task-board'));
-    else if (tab === 'email') handleGoToEmail();
-    else if (tab === 'calendar') handleGoToCalendar();
-    else if (tab === 'sequences') handleGoToSequences();
-    else if (tab === 'workflows') handleGoToWorkflows();
-    else if (tab === 'sop') handleGoToSOP();
-    else if (tab === 'knowledge') handleGoToKnowledge();
-    else if (tab === 'kit') handleGoToKit();
-    else if (tab === 'kit-bookings') handleGoToKitBookings();
-    else if (tab === 'crew') handleGoToCrew();
-    else if (tab === 'analytics') handleGoToCallSheets();
-    else if (tab === 'invoices') handleGoToInvoices();
-    else if (tab === 'expenses') handleGoToExpenses();
-    else if (tab === 'pl') handleGoToPL();
-    else if (tab === 'purchase-orders') handleGoToPurchaseOrders();
-    else if (tab === 'contracts') handleGoToContracts();
-    else if (tab === 'resources') handleGoToResources();
-    else if (tab === 'rate-card') handleGoToRateCard();
-    else if (tab === 'contacts') handleGoToContacts();
-    else if (tab === 'settings') handleGoToSettings();
-  }, [handleGoToDashboard, handleGoToQuotes, handleGoToClients, handleGoToOpportunities, handleGoToProjects, handleGoToTasks, handleGoToEmail, handleGoToCalendar, handleGoToSequences, handleGoToWorkflows, handleGoToSOP, handleGoToKnowledge, handleGoToKit, handleGoToKitBookings, handleGoToCrew, handleGoToCallSheets, handleGoToInvoices, handleGoToExpenses, handleGoToPL, handleGoToPurchaseOrders, handleGoToContracts, handleGoToResources, handleGoToRateCard, handleGoToContacts, handleGoToSettings]);
-
   // Editor view has its own header, other views use sidebar
   const isEditorView = view === 'editor';
   const isFullScreenView = view === 'fs';
@@ -1077,7 +1116,7 @@ function App() {
         )}
 
         {/* Main Content */}
-        <div className={`flex-1 flex flex-col min-h-screen overflow-hidden ${!isEditorView && !sidebarCollapsed ? 'lg:ml-0' : ''}`}>
+        <div className={`flex-1 flex flex-col min-h-screen overflow-hidden pt-16 lg:pt-0 ${!isEditorView && !sidebarCollapsed ? 'lg:ml-0' : ''}`}>
           {/* Editor has its own header */}
           {isEditorView && (
             <EditorHeader

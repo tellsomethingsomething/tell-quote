@@ -91,10 +91,10 @@ function CalendarGrid({ currentDate, events, onDateSelect, selectedDate }) {
                         onClick={() => onDateSelect(date)}
                         className={`min-h-[100px] p-2 text-left transition-colors ${
                             isCurrentMonth ? 'bg-dark-card' : 'bg-dark-bg'
-                        } ${isSelected ? 'ring-2 ring-brand-teal ring-inset' : ''} hover:bg-dark-nav`}
+                        } ${isSelected ? 'ring-2 ring-brand-primary ring-inset' : ''} hover:bg-dark-nav`}
                     >
                         <div className={`text-sm font-medium mb-1 ${
-                            isToday ? 'w-6 h-6 rounded-full bg-brand-teal text-white flex items-center justify-center' :
+                            isToday ? 'w-6 h-6 rounded-full bg-brand-primary text-white flex items-center justify-center' :
                             isCurrentMonth ? 'text-gray-300' : 'text-gray-600'
                         }`}>
                             {date.getDate()}
@@ -201,7 +201,7 @@ function EventCard({ event, onEdit, onDelete }) {
                         href={event.metadata.onlineMeetingUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-brand-teal hover:underline"
+                        className="flex items-center gap-2 text-brand-primary hover:underline"
                     >
                         <Video className="w-4 h-4" />
                         Join meeting
@@ -295,7 +295,7 @@ function EventEditor({ event, onClose, onSave }) {
                             value={formData.title}
                             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                             placeholder="Event title"
-                            className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-teal"
+                            className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-primary"
                         />
                     </div>
 
@@ -306,7 +306,7 @@ function EventEditor({ event, onClose, onSave }) {
                                 type="datetime-local"
                                 value={formData.start_time}
                                 onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
-                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-teal"
+                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-primary"
                             />
                         </div>
                         <div>
@@ -315,7 +315,7 @@ function EventEditor({ event, onClose, onSave }) {
                                 type="datetime-local"
                                 value={formData.end_time}
                                 onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
-                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-teal"
+                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-primary"
                             />
                         </div>
                     </div>
@@ -326,7 +326,7 @@ function EventEditor({ event, onClose, onSave }) {
                             id="all_day"
                             checked={formData.all_day}
                             onChange={(e) => setFormData(prev => ({ ...prev, all_day: e.target.checked }))}
-                            className="w-4 h-4 rounded border-dark-border bg-dark-bg text-brand-teal focus:ring-brand-teal"
+                            className="w-4 h-4 rounded border-dark-border bg-dark-bg text-brand-primary focus:ring-brand-primary"
                         />
                         <label htmlFor="all_day" className="text-sm text-gray-300">All day event</label>
                     </div>
@@ -337,7 +337,7 @@ function EventEditor({ event, onClose, onSave }) {
                             <select
                                 value={formData.event_type}
                                 onChange={(e) => setFormData(prev => ({ ...prev, event_type: e.target.value }))}
-                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-teal"
+                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-primary"
                             >
                                 {Object.entries(EVENT_TYPES).map(([key, config]) => (
                                     <option key={key} value={key}>{config.icon} {config.label}</option>
@@ -349,7 +349,7 @@ function EventEditor({ event, onClose, onSave }) {
                             <select
                                 value={formData.status}
                                 onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
-                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-teal"
+                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-primary"
                             >
                                 {Object.entries(EVENT_STATUS).map(([key, config]) => (
                                     <option key={key} value={key}>{config.label}</option>
@@ -365,7 +365,7 @@ function EventEditor({ event, onClose, onSave }) {
                             value={formData.location}
                             onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
                             placeholder="Event location or meeting link"
-                            className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-teal"
+                            className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-primary"
                         />
                     </div>
 
@@ -376,7 +376,7 @@ function EventEditor({ event, onClose, onSave }) {
                             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                             placeholder="Event description"
                             rows={3}
-                            className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-teal resize-none"
+                            className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-primary resize-none"
                         />
                     </div>
 
@@ -386,7 +386,7 @@ function EventEditor({ event, onClose, onSave }) {
                             <select
                                 value={formData.opportunity_id}
                                 onChange={(e) => setFormData(prev => ({ ...prev, opportunity_id: e.target.value }))}
-                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-teal"
+                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-primary"
                             >
                                 <option value="">None</option>
                                 {opportunities.map(opp => (
@@ -399,7 +399,7 @@ function EventEditor({ event, onClose, onSave }) {
                             <select
                                 value={formData.client_id}
                                 onChange={(e) => setFormData(prev => ({ ...prev, client_id: e.target.value }))}
-                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-teal"
+                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-primary"
                             >
                                 <option value="">None</option>
                                 {clients.map(client => (
@@ -420,7 +420,7 @@ function EventEditor({ event, onClose, onSave }) {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="flex items-center gap-2 px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors disabled:opacity-50"
                         >
                             {isSubmitting ? (
                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -656,7 +656,7 @@ export default function CalendarPage() {
 
                 <button
                     onClick={() => { setEditingEvent(null); setShowEditor(true); }}
-                    className="flex items-center gap-2 px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors"
                 >
                     <Plus className="w-4 h-4" />
                     New Event
@@ -702,7 +702,7 @@ export default function CalendarPage() {
                                             onClick={() => setViewMode(mode)}
                                             className={`px-3 py-1.5 text-sm capitalize transition-colors ${
                                                 viewMode === mode
-                                                    ? 'bg-brand-teal text-white'
+                                                    ? 'bg-brand-primary text-white'
                                                     : 'text-gray-400 hover:text-white hover:bg-dark-nav'
                                             }`}
                                         >
@@ -717,7 +717,7 @@ export default function CalendarPage() {
                         <div className="p-4">
                             {isLoading ? (
                                 <div className="flex items-center justify-center py-12">
-                                    <div className="animate-spin w-8 h-8 border-2 border-brand-teal border-t-transparent rounded-full" />
+                                    <div className="animate-spin w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full" />
                                 </div>
                             ) : (
                                 <CalendarGrid
@@ -745,7 +745,7 @@ export default function CalendarPage() {
                             {selectedDate && (
                                 <button
                                     onClick={() => { setEditingEvent(null); setShowEditor(true); }}
-                                    className="p-1.5 text-gray-400 hover:text-brand-teal transition-colors"
+                                    className="p-1.5 text-gray-400 hover:text-brand-primary transition-colors"
                                     title="Add event"
                                 >
                                     <Plus className="w-4 h-4" />

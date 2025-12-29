@@ -21,16 +21,14 @@ export default {
             secondary: '#A1A1AA'
           }
         },
-        // Existing Brand colors (Updated to purple)
+        // Brand colors
         brand: {
-          primary: '#6E44FF',  // Primary brand color (purple) - used for buttons, links, selections
+          primary: '#6E44FF',       // Primary brand color (purple) - buttons, links, selections
+          'primary-light': '#8B6AFF', // Lighter purple for hover states
+          'primary-dark': '#5835CC',  // Darker purple for active states
           navy: '#143642',
-          teal: '#6E44FF',     // Kept for backwards compatibility, now purple
-          orange: '#FE7F2D',
-          // Tints for hover states and backgrounds
-          'teal-light': '#8B6AFF',
-          'teal-dark': '#5835CC',
           'navy-light': '#1A4A5A',
+          orange: '#FE7F2D',
           'orange-light': '#FF9A52',
         },
         // Dark theme base

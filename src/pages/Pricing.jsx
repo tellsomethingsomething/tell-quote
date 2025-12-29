@@ -185,8 +185,10 @@ export default function Pricing() {
                             className={`relative bg-marketing-surface border ${plan.popular ? 'border-marketing-primary shadow-2xl shadow-marketing-primary/10 scale-105 z-10' : 'border-marketing-border'} rounded-2xl p-8 flex flex-col text-left`}
                         >
                             {plan.popular && (
-                                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-marketing-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
-                                    Most Popular
+                                <div className="absolute -top-3 inset-x-0 flex justify-center">
+                                    <span className="bg-marketing-primary text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
+                                        Most Popular
+                                    </span>
                                 </div>
                             )}
                             <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
@@ -201,7 +203,12 @@ export default function Pricing() {
                                         exit={{ opacity: 0, y: -10 }}
                                         className="flex items-baseline gap-1"
                                     >
-                                        <span className="text-4xl font-bold">{formatPriceDisplay(getPrice(plan, billingCycle))}</span>
+                                        <span className="text-4xl font-bold">
+                                            {billingCycle === 'annual' && getPrice(plan, 'annual') > 0
+                                                ? formatPriceDisplay(Math.round(getPrice(plan, 'annual') / 12))
+                                                : formatPriceDisplay(getPrice(plan, billingCycle))
+                                            }
+                                        </span>
                                         {getPrice(plan, billingCycle) > 0 && <span className="text-marketing-text-secondary">/mo</span>}
                                     </motion.div>
                                 </AnimatePresence>
@@ -209,7 +216,7 @@ export default function Pricing() {
                                     {getPrice(plan, billingCycle) === 0
                                         ? 'No credit card required'
                                         : billingCycle === 'annual'
-                                            ? `Billed ${formatPriceDisplay(getPrice(plan, 'annual') * 12)} yearly`
+                                            ? `Billed ${formatPriceDisplay(getPrice(plan, 'annual'))} yearly`
                                             : 'Billed monthly'
                                     }
                                 </div>

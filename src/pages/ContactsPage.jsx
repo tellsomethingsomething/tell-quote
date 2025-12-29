@@ -84,7 +84,7 @@ function ContactDetailPanel({
                             <div className="flex items-center gap-2">
                                 <h2 className="text-lg font-semibold text-white">{fullName}</h2>
                                 {contact.isPrimary && (
-                                    <span className="px-1.5 py-0.5 text-[10px] bg-brand-teal/20 text-brand-teal rounded">Primary</span>
+                                    <span className="px-1.5 py-0.5 text-[10px] bg-brand-primary/20 text-brand-primary rounded">Primary</span>
                                 )}
                             </div>
                             {contact.jobTitle && <p className="text-sm text-gray-400">{contact.jobTitle}</p>}
@@ -110,7 +110,7 @@ function ContactDetailPanel({
                 {/* Contact Info */}
                 <div className="mt-4 grid grid-cols-1 gap-2 text-sm">
                     {contact.email && (
-                        <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-gray-300 hover:text-brand-teal">
+                        <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-gray-300 hover:text-brand-primary">
                             <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
@@ -118,7 +118,7 @@ function ContactDetailPanel({
                         </a>
                     )}
                     {contact.phone && (
-                        <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-gray-300 hover:text-brand-teal">
+                        <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-gray-300 hover:text-brand-primary">
                             <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                             </svg>
@@ -126,7 +126,7 @@ function ContactDetailPanel({
                         </a>
                     )}
                     {contact.mobile && contact.mobile !== contact.phone && (
-                        <a href={`tel:${contact.mobile}`} className="flex items-center gap-2 text-gray-300 hover:text-brand-teal">
+                        <a href={`tel:${contact.mobile}`} className="flex items-center gap-2 text-gray-300 hover:text-brand-primary">
                             <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
@@ -324,7 +324,7 @@ export default function ContactsPage() {
                                 <h1 className="text-2xl font-bold text-white">Contacts</h1>
                                 <p className="text-sm text-gray-400">
                                     {stats.total} contacts
-                                    {stats.primary > 0 && <span className="text-brand-teal ml-2">{stats.primary} primary</span>}
+                                    {stats.primary > 0 && <span className="text-brand-primary ml-2">{stats.primary} primary</span>}
                                 </p>
                             </div>
                         </div>
@@ -364,7 +364,7 @@ export default function ContactsPage() {
                                 onClick={() => setShowPrimaryOnly(!showPrimaryOnly)}
                                 className={`px-3 py-2 rounded-lg text-sm transition-colors ${
                                     showPrimaryOnly
-                                        ? 'bg-brand-teal/20 text-brand-teal border border-brand-teal/30'
+                                        ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/30'
                                         : 'bg-dark-card text-gray-400 border border-dark-border hover:text-gray-200'
                                 }`}
                             >

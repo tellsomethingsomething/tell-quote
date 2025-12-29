@@ -8,7 +8,7 @@ export const TEMPLATE_CATEGORIES = {
     intro: { id: 'intro', label: 'Introduction', icon: '👋', color: 'bg-green-500/10 text-green-400' },
     proposal: { id: 'proposal', label: 'Proposal', icon: '📝', color: 'bg-purple-500/10 text-purple-400' },
     thank_you: { id: 'thank_you', label: 'Thank You', icon: '🙏', color: 'bg-amber-500/10 text-amber-400' },
-    meeting_request: { id: 'meeting_request', label: 'Meeting Request', icon: '📅', color: 'bg-teal-500/10 text-teal-400' },
+    meeting_request: { id: 'meeting_request', label: 'Meeting Request', icon: '📅', color: 'bg-purple-500/10 text-purple-400' },
     check_in: { id: 'check_in', label: 'Check-in', icon: '💬', color: 'bg-indigo-500/10 text-indigo-400' },
     custom: { id: 'custom', label: 'Custom', icon: '✨', color: 'bg-gray-500/10 text-gray-400' },
 };

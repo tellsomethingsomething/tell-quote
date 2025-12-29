@@ -9,7 +9,7 @@ function StatsCard({ stats }) {
     return (
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
             <div className="card text-center p-3">
-                <div className="text-2xl font-bold text-brand-teal">{stats.totalItems}</div>
+                <div className="text-2xl font-bold text-brand-primary">{stats.totalItems}</div>
                 <div className="text-xs text-gray-500">Total Items</div>
             </div>
             <div className="card text-center p-3">
@@ -96,7 +96,7 @@ function KitItemRow({ item, onEdit, onDelete, children, isChild = false }) {
                         {isChild && <span className="text-gray-600 pl-4">└</span>}
                         <CategoryIcon category={item.categoryName} size="sm" />
                         <div>
-                            <span className="font-mono text-sm text-brand-teal">{item.kitId}</span>
+                            <span className="font-mono text-sm text-brand-primary">{item.kitId}</span>
                             {item.childCount > 0 && (
                                 <span className="ml-2 text-xs bg-violet-500/20 text-violet-400 px-1.5 py-0.5 rounded">
                                     {item.childCount} items
@@ -921,7 +921,7 @@ export default function KitListPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-100 flex items-center gap-2">
-                        <svg className="w-6 h-6 text-brand-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-6 h-6 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
                         Kit List

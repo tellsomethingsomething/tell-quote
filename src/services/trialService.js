@@ -201,10 +201,10 @@ export function getTrialMessage(trialStatus) {
     switch (trialStatus.status) {
         case TRIAL_STATUS.ACTIVE:
             return {
-                type: 'info',
-                title: 'Trial Active',
-                message: `${trialStatus.daysRemaining} days remaining in your trial`,
-                showUpgrade: false,
+                type: 'success',
+                title: `${trialStatus.daysRemaining} days left`,
+                message: `You're on a free trial. Upgrade anytime to secure your subscription.`,
+                showUpgrade: true, // Show option to upgrade early
             };
 
         case TRIAL_STATUS.EXPIRING_SOON:

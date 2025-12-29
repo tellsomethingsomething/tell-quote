@@ -66,9 +66,9 @@ export const EVENT_CONFIGS = {
     [EVENT_TYPES.QUOTE_SENT]: {
         label: 'Quote Sent',
         icon: 'send',
-        color: 'text-teal-400',
-        bgColor: 'bg-teal-500/10',
-        borderColor: 'border-teal-500/30',
+        color: 'text-purple-400',
+        bgColor: 'bg-purple-500/10',
+        borderColor: 'border-purple-500/30',
     },
     [EVENT_TYPES.QUOTE_WON]: {
         label: 'Quote Won',

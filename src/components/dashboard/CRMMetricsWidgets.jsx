@@ -422,11 +422,11 @@ export function PipelineHealthWidget({ dashboardCurrency, rates }) {
     };
 
     return (
-        <div className="card bg-gradient-to-br from-teal-900/20 to-teal-950/10 border-teal-800/20 p-4">
+        <div className="card bg-gradient-to-br from-purple-900/20 to-purple-950/10 border-purple-800/20 p-4">
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-teal-500/20 flex items-center justify-center">
-                        <BarChart3 className="w-4 h-4 text-teal-400" />
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                        <BarChart3 className="w-4 h-4 text-purple-400" />
                     </div>
                     <span className="text-sm font-medium text-gray-300">Pipeline Health</span>
                 </div>

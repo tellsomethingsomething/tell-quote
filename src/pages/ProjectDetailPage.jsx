@@ -596,7 +596,7 @@ function DeliverableModal({ deliverable, onClose, onSave }) {
 }
 
 export default function ProjectDetailPage({ projectId, onBack, onEditQuote }) {
-    const { projects, getProject, updateProject, deleteProject } = useProjectStore();
+    const { projects, getProject, updateProject, deleteProject, duplicateProject, archiveProject, restoreProject } = useProjectStore();
     const { clients } = useClientStore();
     const { opportunities, getOpportunity } = useOpportunityStore();
 
@@ -621,6 +621,27 @@ export default function ProjectDetailPage({ projectId, onBack, onEditQuote }) {
             await deleteProject(projectId);
             onBack();
         }
+    };
+
+    // Handle duplicate
+    const handleDuplicate = async () => {
+        const duplicated = await duplicateProject(projectId);
+        if (duplicated) {
+            onBack(); // Go back to list so user can see both projects
+        }
+    };
+
+    // Handle archive
+    const handleArchive = async () => {
+        if (window.confirm('Archive this project? It will be hidden from the main list but can be restored later.')) {
+            await archiveProject(projectId);
+            onBack();
+        }
+    };
+
+    // Handle restore
+    const handleRestore = async () => {
+        await restoreProject(projectId);
     };
 
     if (!project) {
@@ -680,11 +701,54 @@ export default function ProjectDetailPage({ projectId, onBack, onEditQuote }) {
                             onChange={(e) => handleStatusChange(e.target.value)}
                             className="input"
                         >
-                            {Object.entries(PROJECT_STATUSES).map(([key, { label }]) => (
+                            {Object.entries(PROJECT_STATUSES)
+                                .filter(([key, val]) => !val.hidden || key === project.status)
+                                .map(([key, { label }]) => (
                                 <option key={key} value={key}>{label}</option>
                             ))}
                         </select>
 
+                        {/* Restore button for archived projects */}
+                        {project.status === 'archived' && (
+                            <button
+                                onClick={handleRestore}
+                                className="btn-icon text-green-400 hover:text-green-300"
+                                title="Restore project"
+                                aria-label="Restore project"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
+                        )}
+
+                        {/* Duplicate button */}
+                        <button
+                            onClick={handleDuplicate}
+                            className="btn-icon text-gray-400 hover:text-gray-200"
+                            title="Duplicate project"
+                            aria-label="Duplicate project"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                        </button>
+
+                        {/* Archive button (not for already archived projects) */}
+                        {project.status !== 'archived' && (
+                            <button
+                                onClick={handleArchive}
+                                className="btn-icon text-gray-400 hover:text-gray-200"
+                                title="Archive project"
+                                aria-label="Archive project"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                </svg>
+                            </button>
+                        )}
+
+                        {/* Delete button */}
                         <button
                             onClick={handleDelete}
                             className="btn-icon text-red-400 hover:text-red-300"

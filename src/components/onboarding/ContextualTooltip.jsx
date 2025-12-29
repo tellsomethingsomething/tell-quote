@@ -321,7 +321,7 @@ export function FeatureTour({ steps, onComplete, isActive }) {
                                 index === currentStep
                                     ? 'bg-brand-orange'
                                     : index < currentStep
-                                        ? 'bg-brand-teal'
+                                        ? 'bg-brand-primary'
                                         : 'bg-gray-600'
                             }`}
                         />
@@ -366,7 +366,7 @@ export function HighlightPulse({ children, isNew = false, color = 'orange' }) {
 
     const colorClasses = {
         orange: 'bg-brand-orange',
-        teal: 'bg-brand-teal',
+        teal: 'bg-brand-primary',
         green: 'bg-green-500',
     };
 

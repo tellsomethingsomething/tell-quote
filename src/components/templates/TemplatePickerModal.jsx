@@ -74,7 +74,7 @@ export default function TemplatePickerModal({ isOpen, onClose, onSelectTemplate,
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-dark-border">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-teal to-brand-navy flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-primary to-brand-navy flex items-center justify-center">
                             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
@@ -120,7 +120,7 @@ export default function TemplatePickerModal({ isOpen, onClose, onSelectTemplate,
                                 onClick={() => setSelectedCategory(cat.id)}
                                 className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                                     selectedCategory === cat.id
-                                        ? 'bg-brand-teal text-white'
+                                        ? 'bg-brand-primary text-white'
                                         : 'bg-dark-bg text-gray-400 hover:bg-white/5 hover:text-white'
                                 }`}
                             >
@@ -152,7 +152,7 @@ export default function TemplatePickerModal({ isOpen, onClose, onSelectTemplate,
                             {filteredTemplates.map(template => (
                                 <div
                                     key={template.id}
-                                    className="group relative bg-dark-bg border border-dark-border rounded-lg p-4 hover:border-brand-teal/50 transition-all cursor-pointer"
+                                    className="group relative bg-dark-bg border border-dark-border rounded-lg p-4 hover:border-brand-primary/50 transition-all cursor-pointer"
                                     onClick={() => onSelectTemplate(template)}
                                 >
                                     <div className="flex items-start justify-between gap-4">
@@ -162,7 +162,7 @@ export default function TemplatePickerModal({ isOpen, onClose, onSelectTemplate,
                                                     {template.name}
                                                 </h3>
                                                 {template.usageCount > 0 && (
-                                                    <span className="px-1.5 py-0.5 text-[10px] bg-brand-teal/20 text-brand-teal rounded">
+                                                    <span className="px-1.5 py-0.5 text-[10px] bg-brand-primary/20 text-brand-primary rounded">
                                                         Used {template.usageCount}x
                                                     </span>
                                                 )}

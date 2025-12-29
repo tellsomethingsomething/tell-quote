@@ -24,6 +24,8 @@ import {
     MessageSquare,
     Filter,
     Archive,
+    Lock,
+    Zap,
 } from 'lucide-react';
 import {
     useEmailSequenceStore,
@@ -33,6 +35,7 @@ import {
     formatTrigger,
 } from '../store/emailSequenceStore';
 import { useEmailTemplateStore } from '../store/emailTemplateStore';
+import { useFeatureAccess, FEATURES } from '../hooks/useSubscription';
 
 // Sequence Card Component
 function SequenceCard({ sequence, onEdit, onView, onToggle, onDelete, onDuplicate }) {
@@ -268,8 +271,8 @@ function SequenceEditor({ sequence, onClose }) {
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-dark-border">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-brand-teal/20 flex items-center justify-center">
-                            <Mail className="w-5 h-5 text-brand-teal" />
+                        <div className="w-10 h-10 rounded-lg bg-brand-primary/20 flex items-center justify-center">
+                            <Mail className="w-5 h-5 text-brand-primary" />
                         </div>
                         <div>
                             <h2 className="text-lg font-semibold text-white">
@@ -294,7 +297,7 @@ function SequenceEditor({ sequence, onClose }) {
                         onClick={() => setActiveTab('details')}
                         className={`px-6 py-3 text-sm font-medium transition-colors ${
                             activeTab === 'details'
-                                ? 'text-brand-teal border-b-2 border-brand-teal'
+                                ? 'text-brand-primary border-b-2 border-brand-primary'
                                 : 'text-gray-400 hover:text-white'
                         }`}
                     >
@@ -304,7 +307,7 @@ function SequenceEditor({ sequence, onClose }) {
                         onClick={() => setActiveTab('steps')}
                         className={`px-6 py-3 text-sm font-medium transition-colors ${
                             activeTab === 'steps'
-                                ? 'text-brand-teal border-b-2 border-brand-teal'
+                                ? 'text-brand-primary border-b-2 border-brand-primary'
                                 : 'text-gray-400 hover:text-white'
                         }`}
                     >
@@ -314,7 +317,7 @@ function SequenceEditor({ sequence, onClose }) {
                         onClick={() => setActiveTab('settings')}
                         className={`px-6 py-3 text-sm font-medium transition-colors ${
                             activeTab === 'settings'
-                                ? 'text-brand-teal border-b-2 border-brand-teal'
+                                ? 'text-brand-primary border-b-2 border-brand-primary'
                                 : 'text-gray-400 hover:text-white'
                         }`}
                     >
@@ -342,7 +345,7 @@ function SequenceEditor({ sequence, onClose }) {
                                     value={formData.name}
                                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                                     placeholder="e.g., New Lead Follow-up"
-                                    className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-teal"
+                                    className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-primary"
                                 />
                             </div>
 
@@ -355,7 +358,7 @@ function SequenceEditor({ sequence, onClose }) {
                                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                                     placeholder="What is this sequence for?"
                                     rows={3}
-                                    className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-teal resize-none"
+                                    className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-primary resize-none"
                                 />
                             </div>
 
@@ -371,7 +374,7 @@ function SequenceEditor({ sequence, onClose }) {
                                             onClick={() => setFormData(prev => ({ ...prev, category: key }))}
                                             className={`p-3 rounded-lg border text-left transition-colors ${
                                                 formData.category === key
-                                                    ? 'border-brand-teal bg-brand-teal/10'
+                                                    ? 'border-brand-primary bg-brand-primary/10'
                                                     : 'border-dark-border hover:border-gray-600'
                                             }`}
                                         >
@@ -396,7 +399,7 @@ function SequenceEditor({ sequence, onClose }) {
                                     </p>
                                     <button
                                         onClick={handleAddStep}
-                                        className="px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition-colors"
+                                        className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors"
                                     >
                                         Add First Step
                                     </button>
@@ -410,7 +413,7 @@ function SequenceEditor({ sequence, onClose }) {
                                                 className="border border-dark-border rounded-lg overflow-hidden"
                                             >
                                                 <div className="flex items-center gap-3 px-4 py-3 bg-dark-bg">
-                                                    <div className="w-8 h-8 rounded-full bg-brand-teal/20 text-brand-teal flex items-center justify-center font-medium">
+                                                    <div className="w-8 h-8 rounded-full bg-brand-primary/20 text-brand-primary flex items-center justify-center font-medium">
                                                         {index + 1}
                                                     </div>
                                                     <div className="flex-1">
@@ -471,7 +474,7 @@ function SequenceEditor({ sequence, onClose }) {
                                         settings: { ...prev.settings, sendOnWeekends: !prev.settings.sendOnWeekends }
                                     }))}
                                     className={`w-12 h-6 rounded-full transition-colors relative ${
-                                        formData.settings.sendOnWeekends ? 'bg-brand-teal' : 'bg-gray-700'
+                                        formData.settings.sendOnWeekends ? 'bg-brand-primary' : 'bg-gray-700'
                                     }`}
                                 >
                                     <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
@@ -492,7 +495,7 @@ function SequenceEditor({ sequence, onClose }) {
                                         settings: { ...prev.settings, stopOnReply: !prev.settings.stopOnReply }
                                     }))}
                                     className={`w-12 h-6 rounded-full transition-colors relative ${
-                                        formData.settings.stopOnReply ? 'bg-brand-teal' : 'bg-gray-700'
+                                        formData.settings.stopOnReply ? 'bg-brand-primary' : 'bg-gray-700'
                                     }`}
                                 >
                                     <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
@@ -513,7 +516,7 @@ function SequenceEditor({ sequence, onClose }) {
                                         settings: { ...prev.settings, stopOnMeeting: !prev.settings.stopOnMeeting }
                                     }))}
                                     className={`w-12 h-6 rounded-full transition-colors relative ${
-                                        formData.settings.stopOnMeeting ? 'bg-brand-teal' : 'bg-gray-700'
+                                        formData.settings.stopOnMeeting ? 'bg-brand-primary' : 'bg-gray-700'
                                     }`}
                                 >
                                     <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
@@ -533,7 +536,7 @@ function SequenceEditor({ sequence, onClose }) {
                                         ...prev,
                                         settings: { ...prev.settings, sendTime: e.target.value }
                                     }))}
-                                    className="w-48 px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-teal"
+                                    className="w-48 px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-primary"
                                 />
                             </div>
                         </div>
@@ -551,7 +554,7 @@ function SequenceEditor({ sequence, onClose }) {
                     <button
                         onClick={handleSaveSequence}
                         disabled={isSubmitting}
-                        className="flex items-center gap-2 px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors disabled:opacity-50"
                     >
                         {isSubmitting ? (
                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -603,7 +606,7 @@ function StepEditor({ step, templates, onSave, onClose }) {
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                            className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-teal"
+                            className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-primary"
                         />
                     </div>
 
@@ -613,7 +616,7 @@ function StepEditor({ step, templates, onSave, onClose }) {
                             <select
                                 value={formData.trigger_type}
                                 onChange={(e) => setFormData(prev => ({ ...prev, trigger_type: e.target.value }))}
-                                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-teal"
+                                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-primary"
                             >
                                 {Object.entries(STEP_TRIGGERS).map(([key, config]) => (
                                     <option key={key} value={key}>{config.icon} {config.label}</option>
@@ -627,7 +630,7 @@ function StepEditor({ step, templates, onSave, onClose }) {
                                 value={formData.trigger_value}
                                 onChange={(e) => setFormData(prev => ({ ...prev, trigger_value: parseInt(e.target.value) || 0 }))}
                                 min={0}
-                                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-teal"
+                                className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-primary"
                             />
                         </div>
                     </div>
@@ -637,7 +640,7 @@ function StepEditor({ step, templates, onSave, onClose }) {
                         <select
                             value={formData.template_id || ''}
                             onChange={(e) => setFormData(prev => ({ ...prev, template_id: e.target.value || null }))}
-                            className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-teal"
+                            className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:border-brand-primary"
                         >
                             <option value="">Custom email</option>
                             {templates?.map(t => (
@@ -655,7 +658,7 @@ function StepEditor({ step, templates, onSave, onClose }) {
                                     value={formData.subject || ''}
                                     onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
                                     placeholder="Email subject line"
-                                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-teal"
+                                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-primary"
                                 />
                             </div>
 
@@ -666,7 +669,7 @@ function StepEditor({ step, templates, onSave, onClose }) {
                                     onChange={(e) => setFormData(prev => ({ ...prev, body: e.target.value }))}
                                     placeholder="Email body content"
                                     rows={6}
-                                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-teal resize-none"
+                                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-primary resize-none"
                                 />
                             </div>
                         </>
@@ -679,7 +682,7 @@ function StepEditor({ step, templates, onSave, onClose }) {
                     </button>
                     <button
                         onClick={handleSave}
-                        className="px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90"
+                        className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90"
                     >
                         Save Step
                     </button>
@@ -691,6 +694,8 @@ function StepEditor({ step, templates, onSave, onClose }) {
 
 // Main Page
 export default function EmailSequencesPage() {
+    const { allowed: hasEmailSequences, message: upgradeMessage } = useFeatureAccess(FEATURES.EMAIL_SEQUENCES);
+
     const {
         sequences,
         isLoading,
@@ -707,8 +712,53 @@ export default function EmailSequencesPage() {
     const [deleteConfirm, setDeleteConfirm] = useState(null);
 
     useEffect(() => {
-        loadSequences();
-    }, []);
+        if (hasEmailSequences) {
+            loadSequences();
+        }
+    }, [hasEmailSequences]);
+
+    // Show upgrade prompt if feature not available
+    if (!hasEmailSequences) {
+        return (
+            <div className="p-6 max-w-7xl mx-auto">
+                <div className="flex flex-col items-center justify-center py-16 px-8 bg-dark-card border border-dark-border rounded-xl text-center">
+                    <div className="w-16 h-16 bg-gray-700/50 rounded-full flex items-center justify-center mb-6">
+                        <Lock className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h2 className="text-2xl font-semibold text-white mb-3">Email Sequences</h2>
+                    <p className="text-gray-400 max-w-md mb-6">
+                        {upgradeMessage || "Automated email sequences require an Individual or Team plan. Create multi-step campaigns that engage your clients automatically."}
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <a
+                            href="/pricing"
+                            className="flex items-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors font-medium"
+                        >
+                            <Zap className="w-5 h-5" />
+                            Upgrade to Unlock
+                        </a>
+                    </div>
+                    <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+                        <div className="p-4 bg-dark-bg rounded-lg">
+                            <Mail className="w-5 h-5 text-brand-primary mb-2" />
+                            <h4 className="font-medium text-white text-sm">Automated Campaigns</h4>
+                            <p className="text-xs text-gray-500 mt-1">Set up sequences that run automatically based on triggers</p>
+                        </div>
+                        <div className="p-4 bg-dark-bg rounded-lg">
+                            <Users className="w-5 h-5 text-brand-primary mb-2" />
+                            <h4 className="font-medium text-white text-sm">Client Nurturing</h4>
+                            <p className="text-xs text-gray-500 mt-1">Keep clients engaged with personalized follow-ups</p>
+                        </div>
+                        <div className="p-4 bg-dark-bg rounded-lg">
+                            <BarChart3 className="w-5 h-5 text-brand-primary mb-2" />
+                            <h4 className="font-medium text-white text-sm">Performance Analytics</h4>
+                            <p className="text-xs text-gray-500 mt-1">Track opens, clicks, and conversions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const filteredSequences = sequences.filter(seq => {
         const matchesSearch = !searchQuery ||
@@ -769,7 +819,7 @@ export default function EmailSequencesPage() {
 
                 <button
                     onClick={() => { setEditingSequence(null); setShowEditor(true); }}
-                    className="flex items-center gap-2 px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors"
                 >
                     <Plus className="w-4 h-4" />
                     New Sequence
@@ -781,7 +831,7 @@ export default function EmailSequencesPage() {
                 <div className="bg-dark-card border border-dark-border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-gray-400 text-sm">Total Sequences</span>
-                        <Mail className="w-4 h-4 text-brand-teal" />
+                        <Mail className="w-4 h-4 text-brand-primary" />
                     </div>
                     <p className="text-2xl font-semibold text-white">{sequences.length}</p>
                 </div>
@@ -822,7 +872,7 @@ export default function EmailSequencesPage() {
                         placeholder="Search sequences..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-dark-card border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-teal"
+                        className="w-full pl-10 pr-4 py-2 bg-dark-card border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-primary"
                     />
                 </div>
 
@@ -831,7 +881,7 @@ export default function EmailSequencesPage() {
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="px-3 py-2 bg-dark-card border border-dark-border rounded-lg text-gray-300 focus:outline-none focus:border-brand-teal"
+                        className="px-3 py-2 bg-dark-card border border-dark-border rounded-lg text-gray-300 focus:outline-none focus:border-brand-primary"
                     >
                         <option value="all">All Status</option>
                         {Object.entries(SEQUENCE_STATUS).map(([key, config]) => (
@@ -842,7 +892,7 @@ export default function EmailSequencesPage() {
                     <select
                         value={filterCategory}
                         onChange={(e) => setFilterCategory(e.target.value)}
-                        className="px-3 py-2 bg-dark-card border border-dark-border rounded-lg text-gray-300 focus:outline-none focus:border-brand-teal"
+                        className="px-3 py-2 bg-dark-card border border-dark-border rounded-lg text-gray-300 focus:outline-none focus:border-brand-primary"
                     >
                         <option value="all">All Categories</option>
                         {Object.entries(SEQUENCE_CATEGORIES).map(([key, config]) => (
@@ -855,7 +905,7 @@ export default function EmailSequencesPage() {
             {/* Sequences Grid */}
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin w-8 h-8 border-2 border-brand-teal border-t-transparent rounded-full" />
+                    <div className="animate-spin w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full" />
                 </div>
             ) : filteredSequences.length === 0 ? (
                 <div className="text-center py-12 bg-dark-card border border-dark-border rounded-lg">
@@ -871,7 +921,7 @@ export default function EmailSequencesPage() {
                     {sequences.length === 0 && (
                         <button
                             onClick={() => setShowEditor(true)}
-                            className="px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition-colors"
+                            className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors"
                         >
                             Create Sequence
                         </button>

@@ -86,8 +86,16 @@ export function deleteQuoteFromHistory(quoteNumber) {
 }
 
 // Generate new quote number
-export function generateQuoteNumber() {
+// prefix defaults to 'QT' but should be passed from settings.quoteDefaults.quotePrefix
+export function generateQuoteNumber(prefix = 'QT') {
     const year = new Date().getFullYear();
     const random = Math.floor(Math.random() * 9000) + 1000;
-    return `TP-${year}-${random}`;
+    return `${prefix}-${year}-${random}`;
+}
+
+// Generate new invoice number
+export function generateInvoiceNumber(prefix = 'INV') {
+    const year = new Date().getFullYear();
+    const random = Math.floor(Math.random() * 9000) + 1000;
+    return `${prefix}-${year}-${random}`;
 }

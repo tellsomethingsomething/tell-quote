@@ -10,6 +10,69 @@ export const PROJECT_STATUSES = {
     wrapped: { label: 'Wrapped', color: 'green' },
     closed: { label: 'Closed', color: 'purple' },
     cancelled: { label: 'Cancelled', color: 'red' },
+    archived: { label: 'Archived', color: 'gray', hidden: true },
+};
+
+// Project templates for quick creation
+export const PROJECT_TEMPLATES = {
+    commercial: {
+        id: 'commercial',
+        name: 'Commercial Production',
+        icon: '🎬',
+        description: 'Standard commercial video production',
+        defaultSettings: {
+            deliverableTemplates: ['commercial'],
+            tags: ['commercial', 'video'],
+        },
+    },
+    corporate: {
+        id: 'corporate',
+        name: 'Corporate Video',
+        icon: '🏢',
+        description: 'Corporate communications and training videos',
+        defaultSettings: {
+            deliverableTemplates: ['corporate'],
+            tags: ['corporate', 'internal'],
+        },
+    },
+    social_campaign: {
+        id: 'social_campaign',
+        name: 'Social Media Campaign',
+        icon: '📱',
+        description: 'Multi-platform social media content',
+        defaultSettings: {
+            deliverableTemplates: ['social_campaign'],
+            tags: ['social', 'digital'],
+        },
+    },
+    documentary: {
+        id: 'documentary',
+        name: 'Documentary',
+        icon: '🎥',
+        description: 'Long-form documentary production',
+        defaultSettings: {
+            deliverableTemplates: ['documentary'],
+            tags: ['documentary', 'long-form'],
+        },
+    },
+    event: {
+        id: 'event',
+        name: 'Event Coverage',
+        icon: '🎪',
+        description: 'Live event filming and post-production',
+        defaultSettings: {
+            tags: ['event', 'live'],
+        },
+    },
+    photo_shoot: {
+        id: 'photo_shoot',
+        name: 'Photo Shoot',
+        icon: '📸',
+        description: 'Photography production project',
+        defaultSettings: {
+            tags: ['photography', 'stills'],
+        },
+    },
 };
 
 // Convert DB project to local format
@@ -451,6 +514,108 @@ export const useProjectStore = create(
         // Clear error
         clearError: () => {
             set({ error: null });
+        },
+
+        // Duplicate a project
+        duplicateProject: async (projectId, newName = null) => {
+            const source = get().getProject(projectId);
+            if (!source) return null;
+
+            const projectData = {
+                name: newName || `${source.name} (Copy)`,
+                clientId: source.clientId,
+                client: source.client,
+                description: source.description,
+                region: source.region,
+                country: source.country,
+                currency: source.currency,
+                budgetTotal: source.budgetTotal,
+                budgetBreakdown: source.budgetBreakdown,
+                projectManagerId: source.projectManagerId,
+                projectManagerName: source.projectManagerName,
+                settings: source.settings,
+                tags: source.tags,
+                status: 'draft',
+            };
+
+            return get().addProject(projectData);
+        },
+
+        // Archive a project (soft delete)
+        archiveProject: async (projectId) => {
+            return get().updateProject(projectId, {
+                status: 'archived',
+                archivedAt: new Date().toISOString(),
+            });
+        },
+
+        // Restore an archived project
+        restoreProject: async (projectId) => {
+            return get().updateProject(projectId, {
+                status: 'draft',
+                archivedAt: null,
+            });
+        },
+
+        // Get archived projects
+        getArchivedProjects: () => {
+            return get().projects.filter(p => p.status === 'archived');
+        },
+
+        // Get non-archived projects
+        getActiveProjectList: () => {
+            return get().projects.filter(p => p.status !== 'archived');
+        },
+
+        // Create project from template
+        createFromTemplate: async (templateId, projectData = {}) => {
+            const templates = {
+                commercial: {
+                    name: 'New Commercial',
+                    description: 'Commercial video production',
+                    tags: ['commercial', 'video'],
+                },
+                corporate: {
+                    name: 'New Corporate Video',
+                    description: 'Corporate communications video',
+                    tags: ['corporate', 'internal'],
+                },
+                social_campaign: {
+                    name: 'New Social Campaign',
+                    description: 'Multi-platform social media content',
+                    tags: ['social', 'digital'],
+                },
+                documentary: {
+                    name: 'New Documentary',
+                    description: 'Documentary production',
+                    tags: ['documentary', 'long-form'],
+                },
+                event: {
+                    name: 'New Event Coverage',
+                    description: 'Live event filming',
+                    tags: ['event', 'live'],
+                },
+                photo_shoot: {
+                    name: 'New Photo Shoot',
+                    description: 'Photography production',
+                    tags: ['photography', 'stills'],
+                },
+            };
+
+            const template = templates[templateId];
+            if (!template) return null;
+
+            const newProjectData = {
+                ...template,
+                ...projectData,
+                name: projectData.name || template.name,
+                settings: {
+                    templateId,
+                    ...projectData.settings,
+                },
+            };
+
+            return get().addProject(newProjectData);
         },
     }))
 );

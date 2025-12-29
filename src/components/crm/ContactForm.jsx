@@ -227,7 +227,7 @@ export default function ContactForm({
                     name="isPrimary"
                     checked={formData.isPrimary}
                     onChange={handleChange}
-                    className="w-4 h-4 rounded border-dark-border bg-dark-bg text-brand-teal focus:ring-brand-teal focus:ring-offset-dark-bg"
+                    className="w-4 h-4 rounded border-dark-border bg-dark-bg text-brand-primary focus:ring-brand-primary focus:ring-offset-dark-bg"
                 />
                 <label htmlFor="isPrimary" className="text-sm text-gray-300">
                     Primary contact for this client

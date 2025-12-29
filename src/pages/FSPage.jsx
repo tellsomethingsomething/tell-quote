@@ -471,9 +471,9 @@ export default function FSPage({ onExit }) {
                         <p className="text-[10px] text-green-400/70 uppercase tracking-wider mb-1">Total Revenue</p>
                         <p className="text-lg font-bold text-green-400">{formatCurrency(summaryStats.totalRevenue, currency, 0)}</p>
                     </div>
-                    <div className="bg-gradient-to-br from-teal-900/30 to-teal-950/20 border border-teal-800/30 rounded-xl p-4">
-                        <p className="text-[10px] text-teal-400/70 uppercase tracking-wider mb-1">Total Profit</p>
-                        <p className="text-lg font-bold text-teal-400">{formatCurrency(summaryStats.totalProfit, currency, 0)}</p>
+                    <div className="bg-gradient-to-br from-emerald-900/30 to-emerald-950/20 border border-emerald-800/30 rounded-xl p-4">
+                        <p className="text-[10px] text-emerald-400/70 uppercase tracking-wider mb-1">Total Profit</p>
+                        <p className="text-lg font-bold text-emerald-400">{formatCurrency(summaryStats.totalProfit, currency, 0)}</p>
                     </div>
                     <div className="bg-gradient-to-br from-amber-900/30 to-amber-950/20 border border-amber-800/30 rounded-xl p-4">
                         <p className="text-[10px] text-amber-400/70 uppercase tracking-wider mb-1">Pipeline Value</p>
@@ -538,7 +538,7 @@ export default function FSPage({ onExit }) {
                 </div>
 
                 {/* Opportunities KPI Strip */}
-                <div className="bg-gradient-to-r from-cyan-900/20 via-teal-900/20 to-emerald-900/20 border border-cyan-800/30 rounded-xl p-4">
+                <div className="bg-gradient-to-r from-cyan-900/20 via-purple-900/20 to-emerald-900/20 border border-cyan-800/30 rounded-xl p-4">
                     <h3 className="text-xs font-semibold text-cyan-400 uppercase tracking-wider mb-3">Opportunities Pipeline</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
                         <div>
@@ -551,7 +551,7 @@ export default function FSPage({ onExit }) {
                         </div>
                         <div>
                             <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Weighted Value</p>
-                            <p className="text-lg font-bold text-teal-400">{formatCurrency(opportunityStats.weightedValue, currency, 0)}</p>
+                            <p className="text-lg font-bold text-purple-400">{formatCurrency(opportunityStats.weightedValue, currency, 0)}</p>
                         </div>
                         <div>
                             <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Avg Probability</p>

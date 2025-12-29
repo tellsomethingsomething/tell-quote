@@ -46,7 +46,7 @@ const features = [
     {
         title: "Call Sheets",
         description: "Generate professional call sheets in one click. Weather auto-sync, map integration, and automated distribution.",
-        header: <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-teal-500/10 to-teal-600/5 border border-teal-500/10 items-center justify-center group-hover:bg-teal-500/20 transition-colors"><FileSpreadsheet className="w-10 h-10 text-teal-400" /></div>,
+        header: <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/10 items-center justify-center group-hover:bg-purple-500/20 transition-colors"><FileSpreadsheet className="w-10 h-10 text-purple-400" /></div>,
         link: "/features/call-sheets"
     },
     {

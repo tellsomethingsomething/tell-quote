@@ -233,11 +233,14 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
     const handleDuplicateQuote = (quote, e) => {
         if (e) e.stopPropagation();
 
+        // Get quote prefix from settings
+        const quotePrefix = settings?.quoteDefaults?.quotePrefix || 'QT';
+
         // Create duplicated quote with new ID, number, and dates
         const duplicatedQuote = {
             ...quote,
             id: undefined, // Will be generated when saved
-            quoteNumber: generateQuoteNumber(),
+            quoteNumber: generateQuoteNumber(quotePrefix),
             status: 'draft',
             quoteDate: new Date().toISOString().split('T')[0],
             createdAt: new Date().toISOString(),
@@ -425,7 +428,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                         </p>
                         <button
                             onClick={() => onNewQuote()}
-                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-teal hover:bg-brand-teal-light rounded-lg transition-colors"
+                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-light rounded-lg transition-colors"
                         >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -508,7 +511,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                 <div className="flex items-center gap-2 mt-2 pt-2 border-t border-dark-border">
                                     <button
                                         onClick={(e) => handleDuplicateQuote(quote, e)}
-                                        className="flex-1 py-2 text-xs text-gray-400 hover:text-brand-teal hover:bg-brand-teal/10 rounded transition-colors flex items-center justify-center gap-1"
+                                        className="flex-1 py-2 text-xs text-gray-400 hover:text-brand-primary hover:bg-brand-primary/10 rounded transition-colors flex items-center justify-center gap-1"
                                     >
                                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -578,7 +581,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                     </p>
                                     <button
                                         onClick={() => onNewQuote()}
-                                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-teal hover:bg-brand-teal-light rounded-lg transition-colors"
+                                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-light rounded-lg transition-colors"
                                     >
                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -715,7 +718,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                                 </button>
                                                 <button
                                                     onClick={(e) => handleDuplicateQuote(quote, e)}
-                                                    className="p-2 min-w-[36px] min-h-[36px] text-gray-600 hover:text-brand-teal"
+                                                    className="p-2 min-w-[36px] min-h-[36px] text-gray-600 hover:text-brand-primary"
                                                     title="Duplicate"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

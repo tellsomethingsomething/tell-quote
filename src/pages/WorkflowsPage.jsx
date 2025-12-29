@@ -43,9 +43,9 @@ function WorkflowCard({ workflow, onEdit, onToggle, onDelete, onDuplicate }) {
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        workflow.is_active ? 'bg-brand-teal/20' : 'bg-gray-700'
+                        workflow.is_active ? 'bg-brand-primary/20' : 'bg-gray-700'
                     }`}>
-                        <Zap className={`w-5 h-5 ${workflow.is_active ? 'text-brand-teal' : 'text-gray-500'}`} />
+                        <Zap className={`w-5 h-5 ${workflow.is_active ? 'text-brand-primary' : 'text-gray-500'}`} />
                     </div>
                     <div>
                         <h3 className="font-medium text-white">{workflow.name}</h3>
@@ -181,7 +181,7 @@ function WorkflowStats({ workflows, executions }) {
             <div className="bg-dark-card border border-dark-border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                     <span className="text-gray-400 text-sm">Total Workflows</span>
-                    <Zap className="w-4 h-4 text-brand-teal" />
+                    <Zap className="w-4 h-4 text-brand-primary" />
                 </div>
                 <p className="text-2xl font-semibold text-white">{workflows.length}</p>
             </div>
@@ -298,7 +298,7 @@ export default function WorkflowsPage() {
 
                 <button
                     onClick={() => { setEditingWorkflow(null); setShowEditor(true); }}
-                    className="flex items-center gap-2 px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors"
                 >
                     <Plus className="w-4 h-4" />
                     New Workflow
@@ -317,7 +317,7 @@ export default function WorkflowsPage() {
                         placeholder="Search workflows..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-dark-card border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-teal"
+                        className="w-full pl-10 pr-4 py-2 bg-dark-card border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-primary"
                     />
                 </div>
 
@@ -326,7 +326,7 @@ export default function WorkflowsPage() {
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="px-3 py-2 bg-dark-card border border-dark-border rounded-lg text-gray-300 focus:outline-none focus:border-brand-teal"
+                        className="px-3 py-2 bg-dark-card border border-dark-border rounded-lg text-gray-300 focus:outline-none focus:border-brand-primary"
                     >
                         <option value="all">All Status</option>
                         <option value="active">Active</option>
@@ -336,7 +336,7 @@ export default function WorkflowsPage() {
                     <select
                         value={filterTrigger}
                         onChange={(e) => setFilterTrigger(e.target.value)}
-                        className="px-3 py-2 bg-dark-card border border-dark-border rounded-lg text-gray-300 focus:outline-none focus:border-brand-teal"
+                        className="px-3 py-2 bg-dark-card border border-dark-border rounded-lg text-gray-300 focus:outline-none focus:border-brand-primary"
                     >
                         <option value="all">All Triggers</option>
                         {triggerOptions.map(opt => (
@@ -351,7 +351,7 @@ export default function WorkflowsPage() {
             {/* Workflows Grid */}
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin w-8 h-8 border-2 border-brand-teal border-t-transparent rounded-full" />
+                    <div className="animate-spin w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full" />
                 </div>
             ) : filteredWorkflows.length === 0 ? (
                 <div className="text-center py-12 bg-dark-card border border-dark-border rounded-lg">
@@ -367,7 +367,7 @@ export default function WorkflowsPage() {
                     {workflows.length === 0 && (
                         <button
                             onClick={() => setShowEditor(true)}
-                            className="px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition-colors"
+                            className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors"
                         >
                             Create Workflow
                         </button>

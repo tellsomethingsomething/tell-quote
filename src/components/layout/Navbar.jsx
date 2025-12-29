@@ -39,13 +39,8 @@ export default function Navbar() {
             <div className="container mx-auto px-6 md:px-12">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
-                    <Link to="/" className="flex items-center gap-2 group">
-                        <div className="w-8 h-8 bg-gradient-to-br from-marketing-accent to-marketing-primary rounded-[10px] flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:shadow-glow transition-all">
-                            P
-                        </div>
-                        <span className="text-xl font-bold text-marketing-text-primary tracking-tight">
-                            Production<span className="text-marketing-primary">OS</span>
-                        </span>
+                    <Link to="/" className="flex items-center gap-2 group hover:opacity-80 transition-opacity">
+                        <img src="/productionos-logo.svg" alt="ProductionOS" className="h-8" />
                     </Link>
 
                     {/* Desktop Navigation */}

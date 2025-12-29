@@ -202,7 +202,7 @@ export default function ContractsPage() {
                 </div>
                 <div className="card p-3">
                     <p className="text-xs text-gray-500 uppercase">Value</p>
-                    <p className="text-lg font-semibold text-teal-400">{formatCurrency(stats.totalValue, 'USD', 0)}</p>
+                    <p className="text-lg font-semibold text-emerald-400">{formatCurrency(stats.totalValue, 'USD', 0)}</p>
                 </div>
             </div>
 

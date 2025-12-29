@@ -34,11 +34,11 @@
   }
 
   .input {
-    @apply w-full bg-dark-card border border-dark-border rounded-input px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-teal/50 focus:border-brand-teal transition-all duration-200 min-h-[44px];
+    @apply w-full bg-dark-card border border-dark-border rounded-input px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200 min-h-[44px];
   }
 
   .input-sm {
-    @apply bg-dark-card border border-dark-border rounded-input px-2 py-1.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-teal/50 focus:border-brand-teal transition-all duration-200 min-h-[40px];
+    @apply bg-dark-card border border-dark-border rounded-input px-2 py-1.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all duration-200 min-h-[40px];
   }
 
   /* Base button - 44px min height for touch targets */
@@ -56,7 +56,7 @@
   }
 
   .btn-primary {
-    @apply btn bg-brand-teal hover:bg-brand-teal-light text-white shadow-sm shadow-brand-teal/25 hover:shadow-md hover:shadow-brand-teal/35 active:scale-95;
+    @apply btn bg-brand-primary hover:bg-brand-primary-light text-white shadow-sm shadow-brand-primary/25 hover:shadow-md hover:shadow-brand-primary/35 active:scale-95;
   }
 
   .btn-secondary {
@@ -161,6 +161,17 @@
     user-select: none;
     -webkit-touch-callout: none;
   }
+}
+
+/* Keyboard focus outline for accessibility */
+*:focus-visible {
+  outline: 2px solid #6E44FF;
+  outline-offset: 2px;
+}
+
+/* Remove focus outline for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* Number input spinner styling */
@@ -490,7 +501,7 @@ select.input-sm:focus {
 /* Focus-visible styles for keyboard accessibility */
 /* Apply visible focus ring only for keyboard navigation, not mouse clicks */
 :focus-visible {
-  outline: 2px solid #6E44FF; /* brand-teal */
+  outline: 2px solid #6E44FF; /* brand-primary */
   outline-offset: 2px;
 }
 
@@ -529,7 +540,7 @@ textarea:focus-visible {
   }
 
   .input:focus {
-    @apply border-2 border-brand-teal;
+    @apply border-2 border-brand-primary;
   }
 
   :focus-visible {

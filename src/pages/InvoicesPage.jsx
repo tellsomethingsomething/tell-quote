@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useInvoiceStore, INVOICE_STATUSES } from '../store/invoiceStore';
+import { useInvoiceStore, INVOICE_STATUSES, PAYMENT_METHODS } from '../store/invoiceStore';
 import { useClientStore } from '../store/clientStore';
 import { formatCurrency } from '../utils/currency';
 
@@ -156,8 +156,8 @@ function CreateInvoiceModal({ isOpen, onClose, onCreateFromQuote, quotes, client
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-dark-card border border-dark-border rounded-xl w-full max-w-md p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-dark-card border border-dark-border rounded-xl w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
                 <h2 className="text-xl font-semibold text-gray-200 mb-4">Create Invoice</h2>
 
                 <div className="space-y-4">
@@ -211,11 +211,146 @@ function CreateInvoiceModal({ isOpen, onClose, onCreateFromQuote, quotes, client
     );
 }
 
+// Record payment modal
+function RecordPaymentModal({ invoice, isOpen, onClose, onRecordPayment }) {
+    const [amount, setAmount] = useState('');
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [method, setMethod] = useState('bank_transfer');
+    const [reference, setReference] = useState('');
+    const [notes, setNotes] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const balance = (invoice?.total || 0) - (invoice?.paidAmount || 0);
+
+    const handleSubmit = async () => {
+        if (!amount || parseFloat(amount) <= 0) return;
+
+        setLoading(true);
+        await onRecordPayment(invoice.id, {
+            amount: parseFloat(amount),
+            date,
+            method,
+            reference,
+            notes,
+        });
+        setLoading(false);
+        onClose();
+
+        // Reset form
+        setAmount('');
+        setReference('');
+        setNotes('');
+    };
+
+    if (!isOpen || !invoice) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-dark-card border border-dark-border rounded-xl w-full max-w-md p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+                <h2 className="text-xl font-semibold text-gray-200 mb-4">Record Payment</h2>
+
+                <div className="bg-dark-bg rounded-lg p-3 border border-dark-border mb-4">
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Invoice Total:</span>
+                        <span className="text-gray-200 font-medium">{formatCurrency(invoice.total, invoice.currency)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Paid:</span>
+                        <span className="text-green-400">{formatCurrency(invoice.paidAmount || 0, invoice.currency)}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-dark-border mt-2">
+                        <span className="text-gray-300 font-medium">Balance Due:</span>
+                        <span className="text-amber-400 font-semibold">{formatCurrency(balance, invoice.currency)}</span>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-2">Payment Amount *</label>
+                        <input
+                            type="number"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-gray-200"
+                            placeholder={`Max: ${formatCurrency(balance, invoice.currency)}`}
+                            step="0.01"
+                            max={balance}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-2">Date</label>
+                            <input
+                                type="date"
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                                className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-gray-200"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm text-gray-400 mb-2">Method</label>
+                            <select
+                                value={method}
+                                onChange={(e) => setMethod(e.target.value)}
+                                className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-gray-200"
+                            >
+                                {Object.entries(PAYMENT_METHODS).map(([key, val]) => (
+                                    <option key={key} value={key}>{val.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-2">Reference #</label>
+                        <input
+                            type="text"
+                            value={reference}
+                            onChange={(e) => setReference(e.target.value)}
+                            className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-gray-200"
+                            placeholder="e.g., Check #, Transaction ID"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm text-gray-400 mb-2">Notes</label>
+                        <textarea
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-gray-200 resize-none"
+                            rows={2}
+                            placeholder="Optional notes"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 px-4 py-2 bg-dark-bg border border-dark-border text-gray-300 rounded-lg hover:bg-dark-border transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={!amount || parseFloat(amount) <= 0 || loading}
+                        className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {loading ? 'Saving...' : 'Record Payment'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // Invoice detail modal
-function InvoiceDetailModal({ invoice, onClose, onUpdateStatus, clients }) {
+function InvoiceDetailModal({ invoice, onClose, onUpdateStatus, onRecordPayment, clients }) {
     if (!invoice) return null;
 
     const client = clients.find(c => c.id === invoice.clientId);
+    const balance = (invoice.total || 0) - (invoice.paidAmount || 0);
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -296,7 +431,7 @@ function InvoiceDetailModal({ invoice, onClose, onUpdateStatus, clients }) {
 
                     {/* Totals */}
                     <div className="flex justify-end">
-                        <div className="w-64 space-y-2">
+                        <div className="w-72 space-y-2">
                             <div className="flex justify-between text-gray-400">
                                 <span>Subtotal</span>
                                 <span>{formatCurrency(invoice.subtotal, invoice.currency)}</span>
@@ -311,8 +446,53 @@ function InvoiceDetailModal({ invoice, onClose, onUpdateStatus, clients }) {
                                 <span>Total</span>
                                 <span>{formatCurrency(invoice.total, invoice.currency)}</span>
                             </div>
+                            {(invoice.paidAmount > 0 || invoice.status === 'partial') && (
+                                <>
+                                    <div className="flex justify-between text-green-400">
+                                        <span>Paid</span>
+                                        <span>-{formatCurrency(invoice.paidAmount || 0, invoice.currency)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-amber-400 font-semibold pt-2 border-t border-dark-border">
+                                        <span>Balance Due</span>
+                                        <span>{formatCurrency(balance, invoice.currency)}</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
+
+                    {/* Payment History */}
+                    {invoice.payments && invoice.payments.length > 0 && (
+                        <div>
+                            <div className="text-sm font-medium text-gray-300 mb-3">Payment History</div>
+                            <div className="bg-dark-bg rounded-lg border border-dark-border overflow-hidden">
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-dark-card/50">
+                                            <th className="text-left px-4 py-2 text-gray-400 font-medium">Date</th>
+                                            <th className="text-left px-4 py-2 text-gray-400 font-medium">Method</th>
+                                            <th className="text-left px-4 py-2 text-gray-400 font-medium">Reference</th>
+                                            <th className="text-right px-4 py-2 text-gray-400 font-medium">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {invoice.payments.map((payment, idx) => (
+                                            <tr key={payment.id || idx} className="border-t border-dark-border">
+                                                <td className="px-4 py-2 text-gray-200">{formatDate(payment.date)}</td>
+                                                <td className="px-4 py-2 text-gray-400">
+                                                    {PAYMENT_METHODS[payment.method]?.label || payment.method}
+                                                </td>
+                                                <td className="px-4 py-2 text-gray-400">{payment.reference || '-'}</td>
+                                                <td className="px-4 py-2 text-right text-green-400">
+                                                    {formatCurrency(payment.amount, invoice.currency)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Notes */}
                     {invoice.notes && (
@@ -338,15 +518,26 @@ function InvoiceDetailModal({ invoice, onClose, onUpdateStatus, clients }) {
                             Mark as Sent
                         </button>
                     )}
+                    {['sent', 'partial', 'overdue'].includes(invoice.status) && balance > 0 && (
+                        <button
+                            onClick={() => onRecordPayment(invoice)}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Record Payment
+                        </button>
+                    )}
                     {(invoice.status === 'sent' || invoice.status === 'overdue') && (
                         <button
                             onClick={() => onUpdateStatus(invoice.id, 'paid')}
-                            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
+                            className="px-4 py-2 bg-dark-bg border border-green-500/50 text-green-400 rounded-lg hover:bg-green-500/10 transition-colors flex items-center gap-2"
                         >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Mark as Paid
+                            Mark Fully Paid
                         </button>
                     )}
                     <button
@@ -363,7 +554,7 @@ function InvoiceDetailModal({ invoice, onClose, onUpdateStatus, clients }) {
 
 // Main InvoicesPage component
 export default function InvoicesPage() {
-    const { invoices, loading, getStats, updateStatus, deleteInvoice, createFromQuote, initialize } = useInvoiceStore();
+    const { invoices, loading, getStats, updateStatus, deleteInvoice, createFromQuote, recordPayment, initialize } = useInvoiceStore();
     const { clients, savedQuotes } = useClientStore();
     const quotes = savedQuotes || [];
 
@@ -371,6 +562,8 @@ export default function InvoicesPage() {
     const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [paymentInvoice, setPaymentInvoice] = useState(null);
 
     // Initialize on mount
     useEffect(() => {
@@ -423,6 +616,11 @@ export default function InvoicesPage() {
         if (window.confirm('Are you sure you want to delete this invoice?')) {
             await deleteInvoice(id);
         }
+    };
+
+    const handleRecordPayment = (invoice) => {
+        setPaymentInvoice(invoice);
+        setShowPaymentModal(true);
     };
 
     return (
@@ -490,7 +688,7 @@ export default function InvoicesPage() {
                         className="w-full pl-10 pr-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent-primary"
                     />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     {['all', 'draft', 'sent', 'paid', 'overdue'].map(status => (
                         <button
                             key={status}
@@ -525,7 +723,8 @@ export default function InvoicesPage() {
                         </button>
                     </div>
                 ) : (
-                    <table className="w-full">
+                    <div className="overflow-x-auto">
+                    <table className="w-full min-w-[700px]">
                         <thead>
                             <tr className="bg-dark-bg/50 border-b border-dark-border">
                                 <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium uppercase">Invoice #</th>
@@ -550,6 +749,7 @@ export default function InvoicesPage() {
                             ))}
                         </tbody>
                     </table>
+                    </div>
                 )}
             </div>
 
@@ -569,7 +769,19 @@ export default function InvoicesPage() {
                 onUpdateStatus={(id, status) => {
                     updateStatus(id, status);
                 }}
+                onRecordPayment={handleRecordPayment}
                 clients={clients}
+            />
+
+            {/* Record payment modal */}
+            <RecordPaymentModal
+                invoice={paymentInvoice}
+                isOpen={showPaymentModal}
+                onClose={() => {
+                    setShowPaymentModal(false);
+                    setPaymentInvoice(null);
+                }}
+                onRecordPayment={recordPayment}
             />
         </div>
     );

@@ -405,8 +405,10 @@ export default function BillingSettings() {
                                 }`}
                             >
                                 {plan.popular && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-brand-primary text-white text-xs font-medium rounded-full">
-                                        Most Popular
+                                    <div className="absolute -top-3 inset-x-0 flex justify-center">
+                                        <span className="px-3 py-0.5 bg-brand-primary text-white text-xs font-medium rounded-full">
+                                            Most Popular
+                                        </span>
                                     </div>
                                 )}
 

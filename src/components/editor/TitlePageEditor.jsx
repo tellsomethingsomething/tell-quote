@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { generateCoverImage, generateFallbackCover } from '../../utils/imageGenerator';
+import { useFeatureAccess, FEATURES } from '../../hooks/useSubscription';
+import { Zap, Lock } from 'lucide-react';
 
 export default function TitlePageEditor() {
     const { quote, setProposal } = useQuoteStore();
     const { settings } = useSettingsStore();
+    const { allowed: hasAIFeatures, message: aiUpgradeMessage } = useFeatureAccess(FEATURES.AI_FEATURES);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState('');
 
@@ -17,6 +20,7 @@ export default function TitlePageEditor() {
 
     const hasOpenAIKey = !!settings.aiSettings?.openaiKey;
     const hasAnthropicKey = !!settings.aiSettings?.anthropicKey;
+    const canUseAI = hasAIFeatures && hasOpenAIKey;
 
     // Save prompt inputs when they change
     const savePromptInputs = (updates) => {
@@ -184,22 +188,38 @@ export default function TitlePageEditor() {
                         />
                     </div>
 
-                    {/* API Status */}
-                    {!hasOpenAIKey && (
-                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-400">
-                            <span className="font-medium">OpenAI API Key Required</span>
-                            <p className="text-amber-400/70 mt-1">Add your key in Settings for AI-generated images.</p>
+                    {/* AI Feature Status */}
+                    {!hasAIFeatures && (
+                        <div className="bg-gray-700/50 border border-gray-600 rounded-lg p-4 flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gray-600/50 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Lock className="w-5 h-5 text-gray-400" />
+                            </div>
+                            <div className="flex-1">
+                                <span className="font-medium text-white text-sm">AI Cover Images - Upgrade Required</span>
+                                <p className="text-gray-400 text-xs mt-0.5">{aiUpgradeMessage || "Upgrade to Individual or Team plan for AI-generated covers."}</p>
+                            </div>
+                            <a href="/pricing" className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary text-white text-xs rounded-lg hover:bg-brand-primary/90 transition-colors">
+                                <Zap className="w-3.5 h-3.5" />
+                                Upgrade
+                            </a>
                         </div>
                     )}
 
-                    {hasOpenAIKey && !hasAnthropicKey && (
+                    {hasAIFeatures && !hasOpenAIKey && (
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-400">
+                            <span className="font-medium">OpenAI API Key Required</span>
+                            <p className="text-amber-400/70 mt-1">Add your key in Settings → AI for AI-generated images.</p>
+                        </div>
+                    )}
+
+                    {hasAIFeatures && hasOpenAIKey && !hasAnthropicKey && (
                         <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-400">
                             <span className="font-medium">Anthropic Key Recommended</span>
                             <p className="text-amber-400/70 mt-1">Add for smarter prompt generation via Claude Sonnet.</p>
                         </div>
                     )}
 
-                    {hasOpenAIKey && hasAnthropicKey && (
+                    {canUseAI && hasAnthropicKey && (
                         <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-xs text-green-400">
                             <span className="font-medium">AI Generation Ready</span>
                             <p className="text-green-400/70 mt-1">Claude Sonnet will optimize the DALL-E prompt.</p>
@@ -229,7 +249,7 @@ export default function TitlePageEditor() {
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                     </svg>
-                                    {proposal.coverImage ? 'Regenerate' : 'Generate'} Cover
+                                    {proposal.coverImage ? 'Regenerate' : 'Generate'} {canUseAI ? 'with AI' : 'Gradient'}
                                 </>
                             )}
                         </button>

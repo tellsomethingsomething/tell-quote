@@ -189,8 +189,12 @@ function createEmptySections() {
 
 // Create empty quote
 function createEmptyQuote() {
+    // Get quote prefix from settings
+    const settings = useSettingsStore.getState().settings;
+    const quotePrefix = settings?.quoteDefaults?.quotePrefix || 'QT';
+
     return {
-        quoteNumber: generateQuoteNumber(),
+        quoteNumber: generateQuoteNumber(quotePrefix),
         currency: 'USD',
         region: 'SEA',
         quoteDate: new Date().toISOString().split('T')[0], // Date format: YYYY-MM-DD

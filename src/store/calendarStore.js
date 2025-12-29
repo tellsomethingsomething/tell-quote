@@ -36,7 +36,7 @@ export const EVENT_TYPES = {
     presentation: { label: 'Presentation', icon: '📊', color: 'text-purple-400' },
     deadline: { label: 'Deadline', icon: '⏰', color: 'text-red-400' },
     reminder: { label: 'Reminder', icon: '🔔', color: 'text-amber-400' },
-    shoot: { label: 'Shoot', icon: '🎬', color: 'text-brand-teal' },
+    shoot: { label: 'Shoot', icon: '🎬', color: 'text-brand-primary' },
     travel: { label: 'Travel', icon: '✈️', color: 'text-indigo-400' },
 };
 

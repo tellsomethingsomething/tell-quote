@@ -90,9 +90,9 @@ function generateInvitationEmailHtml(data: {
                 &copy; 2025 ProductionOS. All rights reserved.
               </p>
               <p style="color: #a1a1aa; font-size: 12px; margin: 8px 0 0 0;">
-                <a href="https://tell.center/legal/privacy" style="color: #71717a; text-decoration: underline;">Privacy Policy</a>
+                <a href="https://productionos.io/legal/privacy" style="color: #71717a; text-decoration: underline;">Privacy Policy</a>
                 &nbsp;|&nbsp;
-                <a href="https://tell.center/legal/terms" style="color: #71717a; text-decoration: underline;">Terms of Service</a>
+                <a href="https://productionos.io/legal/terms" style="color: #71717a; text-decoration: underline;">Terms of Service</a>
               </p>
             </td>
           </tr>
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const APP_URL = Deno.env.get('APP_URL') || 'https://tell.center'
+    const APP_URL = Deno.env.get('APP_URL') || 'https://productionos.io'
 
     if (!RESEND_API_KEY) {
       console.error('RESEND_API_KEY not configured')

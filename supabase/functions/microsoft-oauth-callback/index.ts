@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
 
     // Handle OAuth errors
     if (error) {
-      const redirectUrl = new URL(state || Deno.env.get('APP_URL') || 'https://tell.center')
+      const redirectUrl = new URL(state || Deno.env.get('APP_URL') || 'https://productionos.io')
       redirectUrl.searchParams.set('error', error)
       redirectUrl.searchParams.set('error_description', errorDescription || '')
       return Response.redirect(redirectUrl.toString(), 302)
@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     const MICROSOFT_CLIENT_SECRET = Deno.env.get('MICROSOFT_CLIENT_SECRET')
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const APP_URL = state || Deno.env.get('APP_URL') || 'https://tell.center'
+    const APP_URL = state || Deno.env.get('APP_URL') || 'https://productionos.io'
 
     if (!MICROSOFT_CLIENT_ID || !MICROSOFT_CLIENT_SECRET) {
       throw new Error('Microsoft OAuth credentials not configured')
@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
     console.error('Microsoft OAuth error:', error)
 
     // Redirect back with error
-    const errorRedirectUrl = new URL(Deno.env.get('APP_URL') || 'https://tell.center')
+    const errorRedirectUrl = new URL(Deno.env.get('APP_URL') || 'https://productionos.io')
     errorRedirectUrl.searchParams.set('error', 'microsoft_oauth_failed')
     errorRedirectUrl.searchParams.set('error_description', error.message)
 

@@ -134,7 +134,8 @@ The invoice designer (`/src/components/invoiceDesigner/`) allows customizing PDF
 
 ## Deployment
 
-- **Vercel**: Uses base path `/`
+- **Production URL**: https://productionos.io
+- **Vercel**: Uses base path `/`, deploy with `vercel --prod`
 - **GitHub Pages**: Uses base path `/tell-quote/` (set via `GITHUB_ACTIONS` env var in vite.config.js)
 
 Build is optimized with manual chunk splitting for caching (react-vendor, zustand-vendor, pdf-vendor, charts-vendor, supabase-vendor).
@@ -213,6 +214,16 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 | 5K | `price_1Sj1XxLE30d1czmdEEBt5q8O` ($5) | `price_1Sj1XyLE30d1czmdkFf9mcs2` (£4) | `price_1Sj1XzLE30d1czmdbvVUUb1M` (€5) |
 | 25K | `price_1Sj1XzLE30d1czmdAvrfublS` ($20) | `price_1Sj1Y0LE30d1czmdoZhyNiq2` (£16) | `price_1Sj1Y1LE30d1czmdHuHTtYZM` (€18) |
 | 100K | `price_1Sj1Y1LE30d1czmd79RiK6eB` ($60) | `price_1Sj1Y2LE30d1czmdMwBDZQ0w` (£48) | `price_1Sj1Y3LE30d1czmdqngP2zV7` (€55) |
+
+### Local Currency Prices (Tier 1 - Full Price)
+| Currency | Individual Monthly | Individual Annual | Team Monthly | Team Annual |
+|----------|-------------------|-------------------|--------------|-------------|
+| SGD | `price_1SjcEkLE30d1czmdI3Xdrx1c` (S$32) | `price_1SjcEmLE30d1czmdqhomazme` (S$308) | `price_1SjcEnLE30d1czmdliFd6b1m` (S$66) | `price_1SjcEoLE30d1czmdTNxRXMni` (S$632) |
+| AED | `price_1SjcFBLE30d1czmdRnydemDu` (AED88) | `price_1SjcFCLE30d1czmdXjMrs869` (AED845) | `price_1SjcFDLE30d1czmd6g2W04sR` (AED180) | `price_1SjcFELE30d1czmd8K1gzlJf` (AED1728) |
+| NZD | `price_1SjcFFLE30d1czmdEMn6lV1T` (NZ$40) | `price_1SjcFGLE30d1czmdFAVH1xim` (NZ$384) | `price_1SjcFHLE30d1czmd8sIAwhck` (NZ$82) | `price_1SjcFILE30d1czmdLRQIqXQo` (NZ$787) |
+| HKD | `price_1SjcHBLE30d1czmd7IHGa3Su` (HK$188) | `price_1SjcGlLE30d1czmdf0yezyyE` (HK$1805) | `price_1SjcHDLE30d1czmdhFu33mCm` (HK$384) | `price_1SjcGpLE30d1czmdjsZzNIuC` (HK$3686) |
+| ILS | `price_1SjcHELE30d1czmd0a0XcgTo` (₪89) | `price_1SjcHGLE30d1czmd0Kn2zMvy` (₪854) | `price_1SjcHILE30d1czmdCv3mFzl3` (₪182) | `price_1SjcHKLE30d1czmdnWU2mGrW` (₪1747) |
+| TWD | `price_1SjcHaLE30d1czmdvwvWTloY` (NT$760) | `price_1SjcHbLE30d1czmdwibrBW1B` (NT$7296) | `price_1SjcHdLE30d1czmdrEJjGfwh` (NT$1550) | `price_1SjcHfLE30d1czmd5icfN54H` (NT$14880) |
 
 ## Stripe Test Mode Products & Prices
 

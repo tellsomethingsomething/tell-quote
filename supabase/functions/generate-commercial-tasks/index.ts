@@ -151,6 +151,18 @@ serve(async (req) => {
             // Don't fail the request if consumption fails - log and continue
         }
 
+        // Log the usage for analytics
+        await supabaseAdmin.rpc('log_ai_usage', {
+            p_organization_id: organizationId,
+            p_user_id: user.id,
+            p_feature: 'commercial_tasks',
+            p_tokens_used: tokensUsed,
+            p_prompt_tokens: data.usage?.input_tokens || 0,
+            p_completion_tokens: data.usage?.output_tokens || 0,
+            p_model: 'claude-sonnet-4-20250514',
+            p_metadata: {}
+        })
+
         // Get remaining tokens
         const { data: remainingTokens } = await supabaseAdmin
             .rpc('get_available_ai_tokens', { org_id: organizationId })

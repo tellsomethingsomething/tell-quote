@@ -62,7 +62,7 @@ function TriggerSelector({ value, onChange }) {
                                         type="button"
                                         onClick={() => { onChange(trigger.key); setIsOpen(false); }}
                                         className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-dark-card transition-colors ${
-                                            value === trigger.key ? 'bg-brand-teal/10 text-brand-teal' : 'text-gray-300'
+                                            value === trigger.key ? 'bg-brand-primary/10 text-brand-primary' : 'text-gray-300'
                                         }`}
                                     >
                                         <span className="text-lg">{trigger.icon}</span>
@@ -90,7 +90,7 @@ function ConditionRow({ condition, index, onChange, onRemove }) {
             <select
                 value={condition.field || ''}
                 onChange={(e) => handleChange('field', e.target.value)}
-                className="flex-1 px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal"
+                className="flex-1 px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary"
             >
                 <option value="">Select field...</option>
                 {Object.entries(CONDITION_FIELDS).map(([key, config]) => (
@@ -101,7 +101,7 @@ function ConditionRow({ condition, index, onChange, onRemove }) {
             <select
                 value={condition.operator || ''}
                 onChange={(e) => handleChange('operator', e.target.value)}
-                className="w-32 px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal"
+                className="w-32 px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary"
             >
                 <option value="">Operator</option>
                 {Object.entries(OPERATORS).map(([key, config]) => (
@@ -114,7 +114,7 @@ function ConditionRow({ condition, index, onChange, onRemove }) {
                 value={condition.value || ''}
                 onChange={(e) => handleChange('value', e.target.value)}
                 placeholder="Value"
-                className="w-32 px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal"
+                className="w-32 px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary"
             />
 
             <button
@@ -153,20 +153,20 @@ function ActionRow({ action, index, onChange, onRemove, onMoveUp, onMoveDown, is
                             value={action.config?.title || ''}
                             onChange={(e) => handleConfigChange('title', e.target.value)}
                             placeholder="Task title"
-                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal"
+                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary"
                         />
                         <textarea
                             value={action.config?.description || ''}
                             onChange={(e) => handleConfigChange('description', e.target.value)}
                             placeholder="Task description"
                             rows={2}
-                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal resize-none"
+                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary resize-none"
                         />
                         <div className="flex gap-3">
                             <select
                                 value={action.config?.priority || 'medium'}
                                 onChange={(e) => handleConfigChange('priority', e.target.value)}
-                                className="flex-1 px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal"
+                                className="flex-1 px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary"
                             >
                                 <option value="low">Low Priority</option>
                                 <option value="medium">Medium Priority</option>
@@ -177,7 +177,7 @@ function ActionRow({ action, index, onChange, onRemove, onMoveUp, onMoveDown, is
                                 value={action.config?.dueDays || 7}
                                 onChange={(e) => handleConfigChange('dueDays', parseInt(e.target.value))}
                                 min={1}
-                                className="w-24 px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal"
+                                className="w-24 px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary"
                             />
                             <span className="text-gray-500 text-sm self-center">days</span>
                         </div>
@@ -190,7 +190,7 @@ function ActionRow({ action, index, onChange, onRemove, onMoveUp, onMoveDown, is
                         <select
                             value={action.config?.templateId || ''}
                             onChange={(e) => handleConfigChange('templateId', e.target.value)}
-                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal"
+                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary"
                         >
                             <option value="">Select email template...</option>
                             <option value="followup">Follow-up Email</option>
@@ -209,7 +209,7 @@ function ActionRow({ action, index, onChange, onRemove, onMoveUp, onMoveDown, is
                         <select
                             value={action.config?.newStatus || ''}
                             onChange={(e) => handleConfigChange('newStatus', e.target.value)}
-                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal"
+                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary"
                         >
                             <option value="">Select new status...</option>
                             <option value="active">Active</option>
@@ -230,14 +230,14 @@ function ActionRow({ action, index, onChange, onRemove, onMoveUp, onMoveDown, is
                             value={action.config?.title || ''}
                             onChange={(e) => handleConfigChange('title', e.target.value)}
                             placeholder="Notification title"
-                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal"
+                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary"
                         />
                         <textarea
                             value={action.config?.message || ''}
                             onChange={(e) => handleConfigChange('message', e.target.value)}
                             placeholder="Notification message"
                             rows={2}
-                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal resize-none"
+                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary resize-none"
                         />
                     </div>
                 );
@@ -248,7 +248,7 @@ function ActionRow({ action, index, onChange, onRemove, onMoveUp, onMoveDown, is
                         <select
                             value={action.config?.activityType || 'note'}
                             onChange={(e) => handleConfigChange('activityType', e.target.value)}
-                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal"
+                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary"
                         >
                             <option value="note">Note</option>
                             <option value="call">Call</option>
@@ -260,7 +260,7 @@ function ActionRow({ action, index, onChange, onRemove, onMoveUp, onMoveDown, is
                             onChange={(e) => handleConfigChange('notes', e.target.value)}
                             placeholder="Activity notes"
                             rows={2}
-                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal resize-none"
+                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary resize-none"
                         />
                     </div>
                 );
@@ -273,7 +273,7 @@ function ActionRow({ action, index, onChange, onRemove, onMoveUp, onMoveDown, is
                             value={action.config?.tag || ''}
                             onChange={(e) => handleConfigChange('tag', e.target.value)}
                             placeholder="Tag name"
-                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal"
+                            className="w-full px-3 py-2 bg-dark-card border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary"
                         />
                     </div>
                 );
@@ -293,7 +293,7 @@ function ActionRow({ action, index, onChange, onRemove, onMoveUp, onMoveDown, is
                     <select
                         value={action.type || ''}
                         onChange={(e) => handleChange('type', e.target.value)}
-                        className="flex-1 px-3 py-1.5 bg-dark-bg border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-teal"
+                        className="flex-1 px-3 py-1.5 bg-dark-bg border border-dark-border rounded text-gray-300 text-sm focus:outline-none focus:border-brand-primary"
                     >
                         <option value="">Select action...</option>
                         {Object.entries(ACTION_TYPES).map(([key, config]) => (
@@ -465,8 +465,8 @@ export default function WorkflowEditor({ workflow, onClose }) {
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-dark-border">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-brand-teal/20 flex items-center justify-center">
-                            <Zap className="w-5 h-5 text-brand-teal" />
+                        <div className="w-10 h-10 rounded-lg bg-brand-primary/20 flex items-center justify-center">
+                            <Zap className="w-5 h-5 text-brand-primary" />
                         </div>
                         <div>
                             <h2 className="text-lg font-semibold text-white">
@@ -505,7 +505,7 @@ export default function WorkflowEditor({ workflow, onClose }) {
                                 value={formData.name}
                                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                                 placeholder="e.g., Follow up on sent quotes"
-                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-teal"
+                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-primary"
                             />
                         </div>
 
@@ -518,7 +518,7 @@ export default function WorkflowEditor({ workflow, onClose }) {
                                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                                 placeholder="What does this workflow do?"
                                 rows={2}
-                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-teal resize-none"
+                                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-brand-primary resize-none"
                             />
                         </div>
                     </div>
@@ -553,7 +553,7 @@ export default function WorkflowEditor({ workflow, onClose }) {
                             <button
                                 type="button"
                                 onClick={addCondition}
-                                className="text-sm text-brand-teal hover:text-brand-teal/80 flex items-center gap-1"
+                                className="text-sm text-brand-primary hover:text-brand-primary/80 flex items-center gap-1"
                             >
                                 <Plus className="w-4 h-4" />
                                 Add Condition
@@ -593,7 +593,7 @@ export default function WorkflowEditor({ workflow, onClose }) {
                             <button
                                 type="button"
                                 onClick={addAction}
-                                className="text-sm text-brand-teal hover:text-brand-teal/80 flex items-center gap-1"
+                                className="text-sm text-brand-primary hover:text-brand-primary/80 flex items-center gap-1"
                             >
                                 <Plus className="w-4 h-4" />
                                 Add Action
@@ -627,7 +627,7 @@ export default function WorkflowEditor({ workflow, onClose }) {
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, is_active: !prev.is_active }))}
                             className={`w-12 h-6 rounded-full transition-colors relative ${
-                                formData.is_active ? 'bg-brand-teal' : 'bg-gray-700'
+                                formData.is_active ? 'bg-brand-primary' : 'bg-gray-700'
                             }`}
                         >
                             <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
@@ -648,7 +648,7 @@ export default function WorkflowEditor({ workflow, onClose }) {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="flex items-center gap-2 px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-brand-teal/90 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors disabled:opacity-50"
                         >
                             {isSubmitting ? (
                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -36,7 +36,7 @@ export const DOCUMENT_TAGS = [
     { id: 'proposal', label: 'Proposal', color: 'bg-purple-500/20 text-purple-300' },
     { id: 'invoice', label: 'Invoice', color: 'bg-green-500/20 text-green-300' },
     { id: 'quote', label: 'Quote', color: 'bg-amber-500/20 text-amber-300' },
-    { id: 'brief', label: 'Brief', color: 'bg-teal-500/20 text-teal-300' },
+    { id: 'brief', label: 'Brief', color: 'bg-purple-500/20 text-purple-300' },
     { id: 'asset', label: 'Asset', color: 'bg-pink-500/20 text-pink-300' },
     { id: 'reference', label: 'Reference', color: 'bg-indigo-500/20 text-indigo-300' },
     { id: 'signed', label: 'Signed', color: 'bg-emerald-500/20 text-emerald-300' },

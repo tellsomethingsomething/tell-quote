@@ -68,7 +68,7 @@ export default function PaymentMethodForm({ onSuccess, onError, buttonText = 'Sa
             <button
                 type="submit"
                 disabled={!stripe || isProcessing}
-                className="w-full py-3 bg-brand-teal text-white font-semibold rounded-lg hover:bg-brand-teal/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 bg-brand-primary text-white font-semibold rounded-lg hover:bg-brand-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
                 {isProcessing ? (
                     <>
@@ -218,7 +218,7 @@ export function CardSetupForm({ onSuccess, onError, onRetry }) {
             <button
                 type="submit"
                 disabled={!stripe || isProcessing}
-                className="w-full py-3 bg-brand-teal text-white font-semibold rounded-lg hover:bg-brand-teal/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 bg-brand-primary text-white font-semibold rounded-lg hover:bg-brand-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
                 {isProcessing ? (
                     <>

@@ -86,6 +86,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
     // Form data - simplified
     const [formData, setFormData] = useState({
         // Company Setup
+        userName: '',
         companyName: '',
         companyType: '',
         teamSize: '',
@@ -226,6 +227,10 @@ export default function OnboardingWizard({ userId, onComplete }) {
 
         switch (step.id) {
             case 'company_setup':
+                if (!formData.userName.trim()) {
+                    setError('Please enter your name');
+                    return false;
+                }
                 if (!formData.companyName.trim()) {
                     setError('Please enter your company name');
                     return false;
@@ -269,7 +274,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
 
             // Create organization after company_setup step to enable billing step
             if (step.id === 'company_setup' && !organizationId && formData.companyName) {
-                const org = await createOrganization(formData.companyName, userId);
+                const org = await createOrganization(formData.companyName, userId, formData.userName);
                 if (org?.id) {
                     setOrganizationId(org.id);
                     // Store org ID in onboarding progress
@@ -355,7 +360,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
                     .single();
                 org = data;
             } else {
-                org = await createOrganization(formData.companyName, userId);
+                org = await createOrganization(formData.companyName, userId, formData.userName);
             }
 
             if (!org) {
@@ -367,6 +372,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
                 company: {
                     name: formData.companyName,
                     country: formData.country,
+                    teamSize: formData.teamSize,
                 },
                 quoteDefaults: {
                     currency: formData.currency,
@@ -377,6 +383,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
                     .slice(0, 5),
                 personalization: {
                     companyType: formData.companyType,
+                    teamSize: formData.teamSize,
                 },
             };
 
@@ -552,6 +559,21 @@ export default function OnboardingWizard({ userId, onComplete }) {
 function CompanySetupStep({ formData, updateField, handleCountryChange }) {
     return (
         <div className="space-y-6">
+            {/* Your Name */}
+            <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Your Name *
+                </label>
+                <input
+                    type="text"
+                    value={formData.userName}
+                    onChange={(e) => updateField('userName', e.target.value)}
+                    placeholder="Enter your full name"
+                    className="input w-full text-lg"
+                    autoFocus
+                />
+            </div>
+
             {/* Company Name */}
             <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -563,7 +585,6 @@ function CompanySetupStep({ formData, updateField, handleCountryChange }) {
                     onChange={(e) => updateField('companyName', e.target.value)}
                     placeholder="Enter your company name"
                     className="input w-full text-lg"
-                    autoFocus
                 />
             </div>
 
@@ -854,9 +875,11 @@ function BillingStep({ formData, updateField, onBillingComplete, organizationId,
                         } ${paymentSaved ? 'opacity-60 cursor-not-allowed' : ''}`}
                     >
                         {plan.recommended && (
-                            <span className="absolute -top-3 left-4 px-2 py-1 bg-brand-primary text-white text-xs font-medium rounded">
-                                Recommended
-                            </span>
+                            <div className="absolute -top-3 inset-x-0 flex justify-center">
+                                <span className="px-3 py-1 bg-brand-primary text-white text-xs font-medium rounded-full">
+                                    Recommended
+                                </span>
+                            </div>
                         )}
                         <div className="mb-3">
                             <div className="flex items-baseline gap-2">

@@ -8,7 +8,7 @@ export const CONTRACT_STATUSES = {
     pending_review: { label: 'Pending Review', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
     sent: { label: 'Sent', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
     signed: { label: 'Signed', color: 'text-green-400 bg-green-500/10 border-green-500/20' },
-    active: { label: 'Active', color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
+    active: { label: 'Active', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
     completed: { label: 'Completed', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
     cancelled: { label: 'Cancelled', color: 'text-gray-500 bg-gray-600/10 border-gray-600/20' },
     expired: { label: 'Expired', color: 'text-red-400 bg-red-500/10 border-red-500/20' },

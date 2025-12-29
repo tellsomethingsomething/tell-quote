@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useCrewStore, CREW_DEPARTMENTS, AVAILABILITY_STATUS } from '../store/crewStore';
+import { useCrewBookingStore } from '../store/crewBookingStore';
 import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
+import CrewBookingCalendar from '../components/crew/CrewBookingCalendar';
 
 // Crew Card Component
 function CrewCard({ member, onSelect, onToggleFavorite }) {
@@ -337,17 +339,24 @@ function NewCrewModal({ isOpen, onClose }) {
 
 export default function CrewPage({ onSelectCrew }) {
     const { crew, loading, toggleFavorite, getStats } = useCrewStore();
+    const { initialize: initBookings, getStats: getBookingStats } = useCrewBookingStore();
     const [search, setSearch] = useState('');
     const [departmentFilter, setDepartmentFilter] = useState('');
     const [availabilityFilter, setAvailabilityFilter] = useState('');
-    const [viewMode, setViewMode] = useState('grid');
+    const [viewMode, setViewMode] = useState('grid'); // 'grid', 'list', 'calendar'
     const [showModal, setShowModal] = useState(false);
     const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+
+    // Initialize booking store for calendar view
+    useEffect(() => {
+        initBookings();
+    }, [initBookings]);
 
     // Feature gating for crew creation
     const { checkAndProceed, PromptComponent } = useFeatureGuard(FEATURES.ADD_CREW);
 
     const stats = getStats();
+    const bookingStats = getBookingStats();
 
     // Filter crew
     const filteredCrew = useMemo(() => {
@@ -400,7 +409,7 @@ export default function CrewPage({ onSelectCrew }) {
             <PromptComponent />
 
             {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
                 <div className="bg-dark-card border border-dark-border rounded-xl p-4">
                     <p className="text-2xl font-bold text-white">{stats.total}</p>
                     <p className="text-sm text-gray-400">Total Crew</p>
@@ -417,9 +426,14 @@ export default function CrewPage({ onSelectCrew }) {
                     <p className="text-2xl font-bold text-blue-400">{Object.keys(stats.byDepartment).length}</p>
                     <p className="text-sm text-gray-400">Departments</p>
                 </div>
+                <div className="bg-dark-card border border-dark-border rounded-xl p-4">
+                    <p className="text-2xl font-bold text-purple-400">{bookingStats.active}</p>
+                    <p className="text-sm text-gray-400">Active Bookings</p>
+                </div>
             </div>
 
-            {/* Filters */}
+            {/* Filters - hide in calendar mode since calendar has its own */}
+            {viewMode !== 'calendar' && (
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
                 {/* Search */}
                 <div className="flex-1 relative">
@@ -479,6 +493,7 @@ export default function CrewPage({ onSelectCrew }) {
                     <button
                         onClick={() => setViewMode('grid')}
                         className={`p-2 ${viewMode === 'grid' ? 'bg-accent-primary/20 text-accent-primary' : 'text-gray-400 hover:text-white'}`}
+                        title="Grid View"
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -487,23 +502,34 @@ export default function CrewPage({ onSelectCrew }) {
                     <button
                         onClick={() => setViewMode('list')}
                         className={`p-2 ${viewMode === 'list' ? 'bg-accent-primary/20 text-accent-primary' : 'text-gray-400 hover:text-white'}`}
+                        title="List View"
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                         </svg>
                     </button>
+                    <button
+                        onClick={() => setViewMode('calendar')}
+                        className={`p-2 ${viewMode === 'calendar' ? 'bg-accent-primary/20 text-accent-primary' : 'text-gray-400 hover:text-white'}`}
+                        title="Booking Calendar"
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </button>
                 </div>
             </div>
+            )}
 
             {/* Loading */}
-            {loading && (
+            {loading && viewMode !== 'calendar' && (
                 <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary"></div>
                 </div>
             )}
 
             {/* Empty State */}
-            {!loading && filteredCrew.length === 0 && (
+            {!loading && filteredCrew.length === 0 && viewMode !== 'calendar' && (
                 <div className="text-center py-12">
                     <svg className="w-16 h-16 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -616,6 +642,11 @@ export default function CrewPage({ onSelectCrew }) {
                         </tbody>
                     </table>
                 </div>
+            )}
+
+            {/* Calendar View */}
+            {viewMode === 'calendar' && (
+                <CrewBookingCalendar />
             )}
 
             {/* New Crew Modal */}

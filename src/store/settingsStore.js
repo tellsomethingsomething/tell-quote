@@ -438,6 +438,8 @@ const defaultSettings = {
     },
     quoteDefaults: {
         validityDays: 30,
+        quotePrefix: 'QT', // Prefix for quote numbers (e.g., QT-2025-1234)
+        invoicePrefix: 'INV', // Prefix for invoice numbers
         paymentTerms: '50% deposit on confirmation, balance on completion',
         termsAndConditions: `• This quote is valid for 30 days from the date of issue.
 • 50% deposit required upon confirmation.

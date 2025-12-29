@@ -35,7 +35,7 @@ export const SEQUENCE_CATEGORIES = {
     sales: { label: 'Sales Outreach', icon: '💰', color: 'text-green-400' },
     followup: { label: 'Follow-up', icon: '📋', color: 'text-blue-400' },
     onboarding: { label: 'Onboarding', icon: '🎯', color: 'text-purple-400' },
-    nurture: { label: 'Nurture', icon: '🌱', color: 'text-teal-400' },
+    nurture: { label: 'Nurture', icon: '🌱', color: 'text-purple-400' },
     reengagement: { label: 'Re-engagement', icon: '🔄', color: 'text-amber-400' },
     event: { label: 'Event', icon: '📅', color: 'text-pink-400' },
 };

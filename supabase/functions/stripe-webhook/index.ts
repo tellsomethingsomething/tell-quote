@@ -11,6 +11,64 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+// Log webhook event to database for tracking and idempotency
+async function logWebhookEvent(
+    supabase: any,
+    eventId: string,
+    eventType: string,
+    status: 'pending' | 'processing' | 'completed' | 'failed' | 'skipped',
+    payload?: any,
+    organizationId?: string,
+    errorMessage?: string
+) {
+    try {
+        const { error } = await supabase.from('webhook_events').upsert({
+            stripe_event_id: eventId,
+            event_type: eventType,
+            status,
+            payload: status === 'pending' ? payload : undefined, // Only store payload on initial insert
+            organization_id: organizationId,
+            error_message: errorMessage,
+            processed_at: status === 'completed' || status === 'failed' ? new Date().toISOString() : null,
+        }, {
+            onConflict: 'stripe_event_id',
+        });
+
+        if (error) {
+            console.error('Failed to log webhook event:', error);
+        }
+    } catch (err) {
+        console.error('Error logging webhook event:', err);
+    }
+}
+
+// Check if event has already been processed (idempotency)
+async function isEventProcessed(supabase: any, eventId: string): Promise<boolean> {
+    try {
+        const { data, error } = await supabase
+            .from('webhook_events')
+            .select('status')
+            .eq('stripe_event_id', eventId)
+            .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 = not found
+            console.error('Error checking event status:', error);
+            return false;
+        }
+
+        // Skip if already completed
+        if (data?.status === 'completed') {
+            console.log(`Event ${eventId} already processed, skipping`);
+            return true;
+        }
+
+        return false;
+    } catch (err) {
+        console.error('Error checking event processed:', err);
+        return false;
+    }
+}
+
 serve(async (req: Request) => {
     const signature = req.headers.get('stripe-signature');
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
@@ -66,7 +124,23 @@ serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Idempotency check - skip if already processed
+    const alreadyProcessed = await isEventProcessed(supabase, event.id);
+    if (alreadyProcessed) {
+        await logWebhookEvent(supabase, event.id, event.type, 'skipped');
+        return new Response(JSON.stringify({ received: true, skipped: true }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+        });
+    }
+
+    // Log event as pending (store payload for potential replay)
+    await logWebhookEvent(supabase, event.id, event.type, 'pending', event.data.object);
+
     try {
+        // Update status to processing
+        await logWebhookEvent(supabase, event.id, event.type, 'processing');
+
         switch (event.type) {
             case 'checkout.session.completed': {
                 const session = event.data.object as Stripe.Checkout.Session;
@@ -116,12 +190,28 @@ serve(async (req: Request) => {
                 console.log(`Unhandled event type: ${event.type}`);
         }
 
+        // Log successful processing
+        await logWebhookEvent(supabase, event.id, event.type, 'completed');
+
         return new Response(JSON.stringify({ received: true }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
         });
     } catch (err) {
         console.error('Error processing webhook:', err);
+
+        // Log failed processing with error message
+        await logWebhookEvent(supabase, event.id, event.type, 'failed', undefined, undefined, err.message);
+
+        // Increment retry count via RPC or raw SQL
+        try {
+            await supabase.rpc('increment_webhook_retry_count', {
+                p_stripe_event_id: event.id
+            });
+        } catch (updateErr) {
+            console.error('Error incrementing retry count:', updateErr);
+        }
+
         return new Response(`Webhook handler error: ${err.message}`, { status: 500 });
     }
 });
