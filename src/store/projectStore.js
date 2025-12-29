@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Project status options
 export const PROJECT_STATUSES = {
@@ -170,7 +171,7 @@ export const useProjectStore = create(
                 get().subscribeToRealtime();
 
             } catch (e) {
-                console.error('Failed to load projects:', e);
+                logger.error('Failed to load projects:', e);
                 set({ loading: false, error: e.message });
             }
         },
@@ -300,7 +301,7 @@ export const useProjectStore = create(
                 return project;
 
             } catch (e) {
-                console.error('Failed to add project:', e);
+                logger.error('Failed to add project:', e);
                 set({ error: e.message });
                 return null;
             }
@@ -374,7 +375,7 @@ export const useProjectStore = create(
                 }
 
             } catch (e) {
-                console.error('Failed to update project:', e);
+                logger.error('Failed to update project:', e);
                 set({ error: e.message });
             }
         },
@@ -400,7 +401,7 @@ export const useProjectStore = create(
                 }));
 
             } catch (e) {
-                console.error('Failed to delete project:', e);
+                logger.error('Failed to delete project:', e);
                 set({ error: e.message });
             }
         },
@@ -466,7 +467,7 @@ export const useProjectStore = create(
                         .update({ project_id: project.id })
                         .eq('id', quote.id);
                 } catch (e) {
-                    console.error('Failed to link quote to project:', e);
+                    logger.error('Failed to link quote to project:', e);
                 }
             }
 
@@ -478,7 +479,7 @@ export const useProjectStore = create(
                         .update({ converted_to_project_id: project.id })
                         .eq('id', opportunity.id);
                 } catch (e) {
-                    console.error('Failed to link opportunity to project:', e);
+                    logger.error('Failed to link opportunity to project:', e);
                 }
             }
 

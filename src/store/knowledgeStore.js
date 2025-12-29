@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Knowledge fragment types
 export const FRAGMENT_TYPES = {
@@ -112,7 +113,7 @@ export const useKnowledgeStore = create(
                     .order('created_at', { ascending: false });
 
                 if (fragmentsError) {
-                    console.warn('Knowledge fragments table may not exist yet:', fragmentsError.message);
+                    logger.warn('Knowledge fragments table may not exist yet:', fragmentsError.message);
                 }
 
                 // Load agent learnings
@@ -122,7 +123,7 @@ export const useKnowledgeStore = create(
                     .order('created_at', { ascending: false });
 
                 if (learningsError) {
-                    console.warn('Agent learnings table may not exist yet:', learningsError.message);
+                    logger.warn('Agent learnings table may not exist yet:', learningsError.message);
                 }
 
                 // Load active agent prompts
@@ -132,7 +133,7 @@ export const useKnowledgeStore = create(
                     .eq('active', true);
 
                 if (promptsError) {
-                    console.warn('Agent prompts table may not exist yet:', promptsError.message);
+                    logger.warn('Agent prompts table may not exist yet:', promptsError.message);
                 }
 
                 const fragments = (fragmentsData || []).map(fromDbFormat);
@@ -158,7 +159,7 @@ export const useKnowledgeStore = create(
                 });
 
             } catch (e) {
-                console.error('Failed to load knowledge:', e);
+                logger.error('Failed to load knowledge:', e);
                 set({ loading: false, error: e.message });
             }
         },
@@ -202,7 +203,7 @@ export const useKnowledgeStore = create(
                 return fragment;
 
             } catch (e) {
-                console.error('Failed to add knowledge fragment:', e);
+                logger.error('Failed to add knowledge fragment:', e);
                 set({ error: e.message });
                 return null;
             }
@@ -245,7 +246,7 @@ export const useKnowledgeStore = create(
                 }));
 
             } catch (e) {
-                console.error('Failed to update knowledge fragment:', e);
+                logger.error('Failed to update knowledge fragment:', e);
                 set({ error: e.message });
             }
         },
@@ -273,7 +274,7 @@ export const useKnowledgeStore = create(
                 }));
 
             } catch (e) {
-                console.error('Failed to delete knowledge fragment:', e);
+                logger.error('Failed to delete knowledge fragment:', e);
                 set({ error: e.message });
             }
         },
@@ -318,7 +319,7 @@ export const useKnowledgeStore = create(
                 return learning;
 
             } catch (e) {
-                console.error('Failed to add learning:', e);
+                logger.error('Failed to add learning:', e);
                 set({ error: e.message });
                 return null;
             }
@@ -344,7 +345,7 @@ export const useKnowledgeStore = create(
                 }));
 
             } catch (e) {
-                console.error('Failed to verify learning:', e);
+                logger.error('Failed to verify learning:', e);
                 set({ error: e.message });
             }
         },

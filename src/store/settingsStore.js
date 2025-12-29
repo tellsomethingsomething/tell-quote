@@ -11,6 +11,7 @@ import {
     validateApiKeyFormat,
     logSecurityEvent
 } from '../utils/encryption';
+import logger from '../utils/logger';
 
 const SETTINGS_KEY = 'tell_settings';
 const SENSITIVE_FIELDS = ['anthropicKey', 'openaiKey'];
@@ -540,7 +541,7 @@ async function loadSettingsLocal() {
         }
         return defaultSettings;
     } catch (e) {
-        console.error('Failed to load settings:', e);
+        logger.error('Failed to load settings:', e);
         return defaultSettings;
     }
 }
@@ -643,7 +644,7 @@ async function saveSettingsLocal(settings) {
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(toSave));
         logSecurityEvent('settings_saved', { encrypted: true });
     } catch (e) {
-        console.error('Failed to save settings locally:', e);
+        logger.error('Failed to save settings locally:', e);
     }
 }
 
@@ -685,7 +686,7 @@ async function saveSettingsToDb(settings, setSync) {
         }
         return { success: true };
     } catch (e) {
-        console.error('Failed to save settings to DB:', e);
+        logger.error('Failed to save settings to DB:', e);
         if (setSync) setSync({ syncStatus: 'error', syncError: e.message });
         return { success: false, error: e.message };
     }
@@ -779,7 +780,7 @@ export const useSettingsStore = create(
                     set({ settings: localSettings, loading: false, syncStatus: 'success', syncError: null });
                 }
             } catch (e) {
-                console.error('Failed to load settings from DB:', e);
+                logger.error('Failed to load settings from DB:', e);
                 const localSettings = await loadSettingsLocal();
                 set({ settings: localSettings, loading: false, syncStatus: 'error', syncError: e.message });
             }

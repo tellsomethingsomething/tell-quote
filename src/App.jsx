@@ -37,6 +37,7 @@ import { useContractStore } from './store/contractStore';
 import { useEmailStore } from './store/emailStore';
 import { useOrganizationStore } from './store/organizationStore';
 import { useUnsavedChanges } from './hooks/useUnsavedChanges';
+import logger from './utils/logger';
 import OnboardingWizard from './components/onboarding/OnboardingWizard';
 import SubscriptionExpiredPage from './pages/SubscriptionExpiredPage';
 import { checkSubscriptionAccess, ACCESS_LEVELS } from './services/subscriptionGuard';
@@ -523,7 +524,7 @@ function App() {
           }));
         })
         .catch((err) => {
-          console.error('Failed to check subscription:', err);
+          logger.error('Failed to check subscription:', err);
           // Fail open - allow access on error
           setSubscriptionAccess({ access: ACCESS_LEVELS.FULL });
           setCheckingSubscription(false);
@@ -560,7 +561,7 @@ function App() {
           initializeClients(),
           initializeOpportunities(),
           initializeActivities(),
-        ]).catch(err => console.error('Primary stores init failed:', err));
+        ]).catch(err => logger.error('Primary stores init failed:', err));
       }, 100);
 
       // Secondary data - load after UI is interactive
@@ -570,7 +571,7 @@ function App() {
           initializeRateCard(),
           initializeTemplates(),
           initializeProjects(),
-        ]).catch(err => console.error('Secondary stores init failed:', err));
+        ]).catch(err => logger.error('Secondary stores init failed:', err));
       }, 500);
 
       // Tertiary data - load when user might need it
@@ -580,7 +581,7 @@ function App() {
           initializeCrew(),
           initializeInvoices(),
           initializeExpenses(),
-        ]).catch(err => console.error('Tertiary stores init failed:', err));
+        ]).catch(err => logger.error('Tertiary stores init failed:', err));
       }, 1500);
 
       // Low priority - load last
@@ -595,7 +596,7 @@ function App() {
           initializePurchaseOrders(),
           initializeContracts(),
           initializeEmails(),
-        ]).catch(err => console.error('Low priority stores init failed:', err));
+        ]).catch(err => logger.error('Low priority stores init failed:', err));
       }, 3000);
 
       return () => {

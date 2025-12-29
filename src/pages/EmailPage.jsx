@@ -9,6 +9,7 @@ import { useEmailStore, formatEmailDate, parseEmailAddress, THREAD_STATUS, EMAIL
 import { useClientStore } from '../store/clientStore';
 import { useContactStore } from '../store/contactStore';
 import { sanitizeEmailHtml } from '../utils/sanitize';
+import logger from '../utils/logger';
 
 // Folder configuration
 const FOLDERS = [
@@ -54,7 +55,7 @@ export default function EmailPage() {
         }
         if (urlParams.get('error') === 'microsoft_oauth_failed') {
             const errorDesc = urlParams.get('error_description') || 'Failed to connect Microsoft account';
-            console.error('Microsoft OAuth error:', errorDesc);
+            logger.error('Microsoft OAuth error:', errorDesc);
             // Clear the URL params
             window.history.replaceState({}, '', window.location.pathname);
         }

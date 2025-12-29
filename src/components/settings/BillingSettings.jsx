@@ -17,6 +17,7 @@ import {
     cancelSubscription,
     reactivateSubscription,
 } from '../../services/billingService';
+import logger from '../../utils/logger';
 
 // Cancellation reasons
 const CANCELLATION_REASONS = [
@@ -65,7 +66,7 @@ export default function BillingSettings() {
             setLimits(limitsData);
             setInvoices(invoiceData);
         } catch (err) {
-            console.error('Error loading billing data:', err);
+            logger.error('Error loading billing data:', err);
             setError(err.message);
         } finally {
             setLoading(false);

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // ============ TALENT TYPES ============
 export const TALENT_TYPES = {
@@ -93,7 +94,7 @@ export const useResourceStore = create(
                 if (error) throw error;
                 set({ talents: data || [], loading: false });
             } catch (error) {
-                console.error('Error loading talents:', error);
+                logger.error('Error loading talents:', error);
                 set({ error: error.message, loading: false });
             }
         },
@@ -134,7 +135,7 @@ export const useResourceStore = create(
                 set(state => ({ talents: [...state.talents, data] }));
                 return data;
             } catch (error) {
-                console.error('Error creating talent:', error);
+                logger.error('Error creating talent:', error);
                 throw error;
             }
         },
@@ -154,7 +155,7 @@ export const useResourceStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error updating talent:', error);
+                logger.error('Error updating talent:', error);
                 throw error;
             }
         },
@@ -171,7 +172,7 @@ export const useResourceStore = create(
                     talents: state.talents.filter(t => t.id !== talentId),
                 }));
             } catch (error) {
-                console.error('Error deleting talent:', error);
+                logger.error('Error deleting talent:', error);
                 throw error;
             }
         },
@@ -189,7 +190,7 @@ export const useResourceStore = create(
                 if (error) throw error;
                 set({ locations: data || [], loading: false });
             } catch (error) {
-                console.error('Error loading locations:', error);
+                logger.error('Error loading locations:', error);
                 set({ error: error.message, loading: false });
             }
         },
@@ -232,7 +233,7 @@ export const useResourceStore = create(
                 set(state => ({ locations: [...state.locations, data] }));
                 return data;
             } catch (error) {
-                console.error('Error creating location:', error);
+                logger.error('Error creating location:', error);
                 throw error;
             }
         },
@@ -252,7 +253,7 @@ export const useResourceStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error updating location:', error);
+                logger.error('Error updating location:', error);
                 throw error;
             }
         },
@@ -269,7 +270,7 @@ export const useResourceStore = create(
                     locations: state.locations.filter(l => l.id !== locationId),
                 }));
             } catch (error) {
-                console.error('Error deleting location:', error);
+                logger.error('Error deleting location:', error);
                 throw error;
             }
         },
@@ -287,7 +288,7 @@ export const useResourceStore = create(
                 if (error) throw error;
                 set({ vendors: data || [], loading: false });
             } catch (error) {
-                console.error('Error loading vendors:', error);
+                logger.error('Error loading vendors:', error);
                 set({ error: error.message, loading: false });
             }
         },
@@ -328,7 +329,7 @@ export const useResourceStore = create(
                 set(state => ({ vendors: [...state.vendors, data] }));
                 return data;
             } catch (error) {
-                console.error('Error creating vendor:', error);
+                logger.error('Error creating vendor:', error);
                 throw error;
             }
         },
@@ -348,7 +349,7 @@ export const useResourceStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error updating vendor:', error);
+                logger.error('Error updating vendor:', error);
                 throw error;
             }
         },
@@ -365,7 +366,7 @@ export const useResourceStore = create(
                     vendors: state.vendors.filter(v => v.id !== vendorId),
                 }));
             } catch (error) {
-                console.error('Error deleting vendor:', error);
+                logger.error('Error deleting vendor:', error);
                 throw error;
             }
         },

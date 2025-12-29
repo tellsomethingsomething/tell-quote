@@ -8,6 +8,8 @@
  * - This is a defense-in-depth measure, not a complete solution
  */
 
+import logger from './logger';
+
 // Generate a device-specific key based on browser fingerprint
 function getDeviceKey() {
     // Use browser/device characteristics as entropy
@@ -34,7 +36,7 @@ async function deriveKey(passphrase) {
             const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
             return Array.from(new Uint8Array(hashBuffer));
         } catch (e) {
-            console.warn('SubtleCrypto unavailable, using fallback');
+            logger.warn('SubtleCrypto unavailable, using fallback');
         }
     }
 
@@ -80,7 +82,7 @@ export async function encryptData(data) {
         // Convert to base64
         return btoa(String.fromCharCode(...encrypted));
     } catch (e) {
-        console.error('Encryption failed:', e);
+        logger.error('Encryption failed:', e);
         return data; // Fallback to unencrypted
     }
 }
@@ -112,7 +114,7 @@ export async function decryptData(encryptedData) {
         const decoder = new TextDecoder();
         return decoder.decode(decrypted);
     } catch (e) {
-        console.error('Decryption failed:', e);
+        logger.error('Decryption failed:', e);
         return encryptedData; // Fallback to returning as-is
     }
 }
@@ -219,7 +221,7 @@ export function validateApiKeyFormat(key, prefix = '') {
  * Security warning for exposed keys
  */
 export function showSecurityWarning(message) {
-    console.warn(
+    logger.warn(
         '%c⚠️ SECURITY WARNING ⚠️',
         'color: #ff6b6b; font-size: 16px; font-weight: bold;',
         '\n' + message
@@ -231,7 +233,7 @@ export function showSecurityWarning(message) {
  */
 export function logSecurityEvent(event, details = {}) {
     const timestamp = new Date().toISOString();
-    console.info('[SECURITY]', timestamp, event, details);
+    logger.debug('[SECURITY]', timestamp, event, details);
 
     // In production, you would send this to a logging service
     // Example: sendToLoggingService({ timestamp, event, details });

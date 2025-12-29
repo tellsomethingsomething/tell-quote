@@ -4,6 +4,7 @@
  */
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Onboarding Steps - Simplified flow
 export const ONBOARDING_STEPS = [
@@ -181,7 +182,7 @@ export async function getOnboardingProgress(userId) {
             .single();
 
         if (createError) {
-            console.error('Error creating onboarding progress:', createError);
+            logger.error('Error creating onboarding progress:', createError);
             return null;
         }
 
@@ -189,7 +190,7 @@ export async function getOnboardingProgress(userId) {
     }
 
     if (error) {
-        console.error('Error fetching onboarding progress:', error);
+        logger.error('Error fetching onboarding progress:', error);
         return null;
     }
 
@@ -214,7 +215,7 @@ export async function updateOnboardingProgress(userId, updates) {
         .single();
 
     if (error) {
-        console.error('Error updating onboarding progress:', error);
+        logger.error('Error updating onboarding progress:', error);
         throw error;
     }
 
@@ -358,7 +359,7 @@ export async function getOnboardingChecklist(userId, organizationId) {
             .single();
 
         if (createError) {
-            console.error('Error creating checklist:', createError);
+            logger.error('Error creating checklist:', createError);
             return null;
         }
 
@@ -383,7 +384,7 @@ export async function updateChecklistItem(userId, organizationId, item, value) {
         .single();
 
     if (error) {
-        console.error('Error updating checklist:', error);
+        logger.error('Error updating checklist:', error);
         return null;
     }
 

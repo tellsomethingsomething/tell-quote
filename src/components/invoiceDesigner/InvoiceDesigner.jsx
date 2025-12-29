@@ -1,6 +1,7 @@
 import { useState, createElement, useCallback } from 'react';
 import { useSettingsStore } from '../../store/settingsStore';
 import { usePDFWatermark } from '../../hooks/useSubscription';
+import logger from '../../utils/logger';
 
 // Sample quote data for preview
 const getSampleQuote = (settings) => ({
@@ -106,7 +107,7 @@ export default function InvoiceDesigner() {
             window.open(url, '_blank');
             setTimeout(() => URL.revokeObjectURL(url), 5000);
         } catch (e) {
-            console.error('Failed to generate preview:', e);
+            logger.error('Failed to generate preview:', e);
             alert('Failed to generate preview. Check console for details.');
         } finally {
             setGeneratingPreview(false);

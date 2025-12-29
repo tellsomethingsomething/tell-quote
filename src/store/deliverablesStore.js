@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Deliverable types
 export const DELIVERABLE_TYPES = {
@@ -73,7 +74,7 @@ export const useDeliverablesStore = create(
                 if (error) throw error;
                 set({ deliverables: data || [], loading: false });
             } catch (error) {
-                console.error('Error loading deliverables:', error);
+                logger.error('Error loading deliverables:', error);
                 set({ error: error.message, loading: false });
             }
         },
@@ -89,7 +90,7 @@ export const useDeliverablesStore = create(
                 if (error) throw error;
                 return data || [];
             } catch (error) {
-                console.error('Error loading project deliverables:', error);
+                logger.error('Error loading project deliverables:', error);
                 return [];
             }
         },
@@ -134,7 +135,7 @@ export const useDeliverablesStore = create(
                 set(state => ({ deliverables: [...state.deliverables, data] }));
                 return data;
             } catch (error) {
-                console.error('Error creating deliverable:', error);
+                logger.error('Error creating deliverable:', error);
                 throw error;
             }
         },
@@ -154,7 +155,7 @@ export const useDeliverablesStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error updating deliverable:', error);
+                logger.error('Error updating deliverable:', error);
                 throw error;
             }
         },
@@ -171,7 +172,7 @@ export const useDeliverablesStore = create(
                     deliverables: state.deliverables.filter(d => d.id !== deliverableId),
                 }));
             } catch (error) {
-                console.error('Error deleting deliverable:', error);
+                logger.error('Error deleting deliverable:', error);
                 throw error;
             }
         },
@@ -213,7 +214,7 @@ export const useDeliverablesStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error adding version:', error);
+                logger.error('Error adding version:', error);
                 throw error;
             }
         },
@@ -240,7 +241,7 @@ export const useDeliverablesStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error marking as delivered:', error);
+                logger.error('Error marking as delivered:', error);
                 throw error;
             }
         },

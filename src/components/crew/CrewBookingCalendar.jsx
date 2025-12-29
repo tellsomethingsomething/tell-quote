@@ -19,6 +19,7 @@ import {
 import { useCrewBookingStore, CREW_BOOKING_STATUSES } from '../../store/crewBookingStore';
 import { useCrewStore, CREW_DEPARTMENTS } from '../../store/crewStore';
 import { useProjectStore } from '../../store/projectStore';
+import logger from '../../utils/logger';
 
 // Status colors for calendar bars
 const STATUS_COLORS = {
@@ -110,7 +111,7 @@ function NewBookingModal({ isOpen, onClose, selectedDate, crewMembers, projects 
             });
             onClose(true);
         } catch (err) {
-            console.error('Failed to create booking:', err);
+            logger.error('Failed to create booking:', err);
         } finally {
             setSaving(false);
         }

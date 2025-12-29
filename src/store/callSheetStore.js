@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useCrewBookingStore } from './crewBookingStore';
+import logger from '../utils/logger';
 
 // Call sheet status options
 export const CALL_SHEET_STATUS = {
@@ -577,7 +578,7 @@ export const useCallSheetStore = create(
                 }
 
             } catch (e) {
-                console.error('Failed to load call sheets:', e);
+                logger.error('Failed to load call sheets:', e);
                 set({ loading: false, error: e.message });
             }
         },
@@ -735,7 +736,7 @@ export const useCallSheetStore = create(
 
                 return { callSheet, crew, cast, departmentCalls, accommodation, roomAssignments, flights, transfers, vehicles, technical, vendors, emergencyContacts, catering, weather };
             } catch (e) {
-                console.error('Failed to load call sheet:', e);
+                logger.error('Failed to load call sheet:', e);
                 return null;
             }
         },
@@ -803,7 +804,7 @@ export const useCallSheetStore = create(
                 const crewBookingStore = useCrewBookingStore.getState();
                 await crewBookingStore.deleteByCallSheet(id);
             } catch (bookingError) {
-                console.warn('Failed to delete crew bookings for call sheet:', bookingError);
+                logger.warn('Failed to delete crew bookings for call sheet:', bookingError);
             }
 
             const { error } = await supabase
@@ -856,7 +857,7 @@ export const useCallSheetStore = create(
 
                 return data;
             } catch (e) {
-                console.error('Failed to duplicate call sheet:', e);
+                logger.error('Failed to duplicate call sheet:', e);
                 throw e;
             }
         },
@@ -918,7 +919,7 @@ export const useCallSheetStore = create(
                 }
             } catch (bookingError) {
                 // Don't fail the crew addition if booking creation fails
-                console.warn('Failed to create crew booking:', bookingError);
+                logger.warn('Failed to create crew booking:', bookingError);
             }
 
             return newCrew;
@@ -998,7 +999,7 @@ export const useCallSheetStore = create(
                         await crewBookingStore.deleteBooking(matchingBooking.id);
                     }
                 } catch (bookingError) {
-                    console.warn('Failed to delete crew booking:', bookingError);
+                    logger.warn('Failed to delete crew booking:', bookingError);
                 }
             }
         },

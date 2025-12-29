@@ -5,6 +5,7 @@ import { Sparkles, Zap, Rocket, Loader2 } from 'lucide-react';
 import { tokenPacks, tokenEstimates, formatPrice } from '../../data/pricing';
 import { useAuthStore } from '../../store/authStore';
 import { createTokenPackCheckoutSession } from '../../services/billingService';
+import logger from '../../utils/logger';
 
 const packIcons = [Sparkles, Zap, Rocket];
 const packNames = ['Starter', 'Popular', 'Power User'];
@@ -33,7 +34,7 @@ export default function TokenPacks({ currency = 'USD', showBuyButtons = true }) 
                 throw new Error('No checkout URL returned');
             }
         } catch (err) {
-            console.error('Token purchase error:', err);
+            logger.error('Token purchase error:', err);
             setError('Unable to start checkout. Please try again.');
             setLoadingPack(null);
         }

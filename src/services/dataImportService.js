@@ -4,6 +4,7 @@
  */
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Expected column mappings for each data type
 export const IMPORT_SCHEMAS = {
@@ -244,7 +245,7 @@ export async function importClients(clients, organizationId, userId) {
         .select();
 
     if (error) {
-        console.error('Error importing clients:', error);
+        logger.error('Error importing clients:', error);
         return { success: false, error: error.message, imported: 0 };
     }
 
@@ -279,7 +280,7 @@ export async function importCrew(crew, organizationId, userId) {
         .select();
 
     if (error) {
-        console.error('Error importing crew:', error);
+        logger.error('Error importing crew:', error);
         return { success: false, error: error.message, imported: 0 };
     }
 
@@ -314,7 +315,7 @@ export async function importEquipment(equipment, organizationId, userId) {
         .select();
 
     if (error) {
-        console.error('Error importing equipment:', error);
+        logger.error('Error importing equipment:', error);
         return { success: false, error: error.message, imported: 0 };
     }
 

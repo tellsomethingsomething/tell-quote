@@ -3,6 +3,8 @@
  * Detects user's country and returns appropriate regional pricing
  */
 
+import logger from '../utils/logger';
+
 // Country to pricing tier mapping (based on GDP per capita)
 // Tier 1: Full price ($24/$49) - GDP >$35k - US, UK, EU, AU, CA, JP, CH, Nordic, SG, AE, HK, QA, KW, IL, NZ, TW
 // Tier 2: $20/$40 (17% off) - GDP $20-35k - KR, SA, BH, OM, CZ, PL, HU, EE, LT, LV
@@ -177,7 +179,7 @@ export async function detectCountry() {
         const countryParam = urlParams.get('country');
         if (countryParam && countryParam.length === 2) {
             cachedCountry = countryParam.toUpperCase();
-            console.log(`[PPP] Country override from URL: ${cachedCountry}`);
+            logger.debug(`[PPP] Country override from URL: ${cachedCountry}`);
             return cachedCountry;
         }
     }
@@ -197,7 +199,7 @@ export async function detectCountry() {
             }
         }
     } catch (error) {
-        console.warn('IP geolocation failed, falling back to timezone detection:', error);
+        logger.warn('IP geolocation failed, falling back to timezone detection:', error);
     }
 
     // Fallback: Timezone-based detection
@@ -259,7 +261,7 @@ function detectCountryFromTimezone() {
         if (region === 'Africa') return 'ZA';
 
     } catch (error) {
-        console.warn('Timezone detection failed:', error);
+        logger.warn('Timezone detection failed:', error);
     }
 
     // Default to US

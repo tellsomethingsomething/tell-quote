@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 const DEAL_CONTEXT_KEY = 'tell_deal_context';
 const TASK_PATTERNS_KEY = 'tell_task_patterns';
@@ -65,7 +66,7 @@ function saveDealContextLocal(contexts) {
     try {
         localStorage.setItem(DEAL_CONTEXT_KEY, JSON.stringify(contexts));
     } catch (e) {
-        console.error('Failed to save deal context locally:', e);
+        logger.error('Failed to save deal context locally:', e);
     }
 }
 
@@ -82,7 +83,7 @@ function saveTaskPatternsLocal(patterns) {
     try {
         localStorage.setItem(TASK_PATTERNS_KEY, JSON.stringify(patterns));
     } catch (e) {
-        console.error('Failed to save task patterns:', e);
+        logger.error('Failed to save task patterns:', e);
     }
 }
 
@@ -359,9 +360,9 @@ export const useDealContextStore = create(
                         updated_at: new Date().toISOString(),
                     }, { onConflict: 'opportunity_id' });
 
-                if (error) console.error('Failed to sync deal context:', error);
+                if (error) logger.error('Failed to sync deal context:', error);
             } catch (e) {
-                console.error('Error syncing deal context:', e);
+                logger.error('Error syncing deal context:', e);
             }
         },
 
@@ -389,7 +390,7 @@ export const useDealContextStore = create(
                         .eq('id', existing.id);
                 }
             } catch (e) {
-                console.error('Error syncing task patterns:', e);
+                logger.error('Error syncing task patterns:', e);
             }
         },
 
@@ -440,7 +441,7 @@ export const useDealContextStore = create(
                         saveTaskPatternsLocal(taskPatterns);
                     }
                 } catch (e) {
-                    console.error('Error loading from Supabase:', e);
+                    logger.error('Error loading from Supabase:', e);
                 }
             }
 

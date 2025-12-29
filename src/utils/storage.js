@@ -1,3 +1,5 @@
+import logger from './logger';
+
 const QUOTE_STORAGE_KEY = 'tell_quote_current';
 const QUOTES_LIST_KEY = 'tell_quotes_list';
 const MAX_STORAGE_SIZE = 4.5 * 1024 * 1024; // 4.5MB (leave buffer for 5MB limit)
@@ -30,7 +32,7 @@ function isValidQuote(quote) {
 function checkStorageQuota(data) {
     const size = new Blob([JSON.stringify(data)]).size;
     if (size > MAX_STORAGE_SIZE) {
-        console.warn(`Storage quota warning: ${(size / 1024 / 1024).toFixed(2)}MB exceeds limit`);
+        logger.warn(`Storage quota warning: ${(size / 1024 / 1024).toFixed(2)}MB exceeds limit`);
         return false;
     }
     return true;
@@ -40,20 +42,20 @@ function checkStorageQuota(data) {
 export function saveQuote(quote) {
     try {
         if (!isValidQuote(quote)) {
-            console.error('Invalid quote structure, cannot save');
+            logger.error('Invalid quote structure, cannot save');
             return false;
         }
         if (!checkStorageQuota(quote)) {
-            console.error('Quote too large for localStorage');
+            logger.error('Quote too large for localStorage');
             return false;
         }
         localStorage.setItem(QUOTE_STORAGE_KEY, JSON.stringify(quote));
         return true;
     } catch (e) {
-        console.error('Failed to save quote:', e);
+        logger.error('Failed to save quote:', e);
         // Handle QuotaExceededError
         if (e.name === 'QuotaExceededError') {
-            console.error('localStorage quota exceeded');
+            logger.error('localStorage quota exceeded');
         }
         return false;
     }
@@ -69,13 +71,13 @@ export function loadQuote() {
 
         // Validate loaded quote structure
         if (!isValidQuote(quote)) {
-            console.warn('Loaded quote has invalid structure, returning null');
+            logger.warn('Loaded quote has invalid structure, returning null');
             return null;
         }
 
         return quote;
     } catch (e) {
-        console.error('Failed to load quote:', e);
+        logger.error('Failed to load quote:', e);
         return null;
     }
 }
@@ -86,7 +88,7 @@ export function clearQuote() {
         localStorage.removeItem(QUOTE_STORAGE_KEY);
         return true;
     } catch (e) {
-        console.error('Failed to clear quote:', e);
+        logger.error('Failed to clear quote:', e);
         return false;
     }
 }
@@ -113,7 +115,7 @@ export function saveQuoteToHistory(quote) {
         localStorage.setItem(QUOTES_LIST_KEY, JSON.stringify(trimmedList));
         return true;
     } catch (e) {
-        console.error('Failed to save quote to history:', e);
+        logger.error('Failed to save quote to history:', e);
         return false;
     }
 }
@@ -124,7 +126,7 @@ export function loadQuotesList() {
         const saved = localStorage.getItem(QUOTES_LIST_KEY);
         return saved ? JSON.parse(saved) : [];
     } catch (e) {
-        console.error('Failed to load quotes list:', e);
+        logger.error('Failed to load quotes list:', e);
         return [];
     }
 }
@@ -137,7 +139,7 @@ export function deleteQuoteFromHistory(quoteNumber) {
         localStorage.setItem(QUOTES_LIST_KEY, JSON.stringify(filtered));
         return true;
     } catch (e) {
-        console.error('Failed to delete quote from history:', e);
+        logger.error('Failed to delete quote from history:', e);
         return false;
     }
 }

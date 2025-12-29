@@ -11,6 +11,7 @@ import { useClientStore } from './clientStore';
 import { useSettingsStore } from './settingsStore';
 import { useAuthStore } from './authStore';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Auto-save interval (30 seconds)
 let autoSaveInterval = null;
@@ -73,7 +74,7 @@ async function syncQuoteToSupabase(quote) {
                 .eq('id', quote.id);
 
             if (updateError) {
-                console.error('Quote update failed:', updateError);
+                logger.error('Quote update failed:', updateError);
                 return { synced: false, error: updateError.message };
             }
             saveSucceeded = true;
@@ -86,7 +87,7 @@ async function syncQuoteToSupabase(quote) {
                 .limit(1);
 
             if (lookupError) {
-                console.error('Quote lookup failed:', lookupError);
+                logger.error('Quote lookup failed:', lookupError);
                 return { synced: false, error: lookupError.message };
             }
 
@@ -100,7 +101,7 @@ async function syncQuoteToSupabase(quote) {
                     .eq('id', existing.id);
 
                 if (updateError) {
-                    console.error('Quote update failed:', updateError);
+                    logger.error('Quote update failed:', updateError);
                     return { synced: false, error: updateError.message };
                 }
                 savedId = existing.id;
@@ -114,7 +115,7 @@ async function syncQuoteToSupabase(quote) {
                     .single();
 
                 if (error) {
-                    console.error('Quote insert failed:', error);
+                    logger.error('Quote insert failed:', error);
                     return { synced: false, error: error.message };
                 }
 
@@ -138,13 +139,13 @@ async function syncQuoteToSupabase(quote) {
                 saveToLibrary({ ...quote, id: savedId });
             }
 
-            console.log('Quote auto-saved to Supabase');
+            logger.debug('Quote auto-saved to Supabase');
             return { synced: true, id: savedId };
         }
 
         return { synced: false, reason: 'save did not complete' };
     } catch (e) {
-        console.error('Auto-save failed:', e);
+        logger.error('Auto-save failed:', e);
         return { synced: false, error: e.message };
     }
 }
@@ -161,7 +162,7 @@ function startAutoSave() {
     // Clean up on page unload to prevent memory leaks
     window.addEventListener('beforeunload', stopAutoSave);
 
-    console.log('Auto-save started (every 30s)');
+    logger.debug('Auto-save started (every 30s)');
 }
 
 // Stop auto-save interval

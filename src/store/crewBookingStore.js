@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Booking statuses
 export const CREW_BOOKING_STATUSES = {
@@ -141,7 +142,7 @@ export const useCrewBookingStore = create(
 
                 set({ realtimeSubscription: subscription });
             } catch (error) {
-                console.error('Failed to initialize crew bookings:', error);
+                logger.error('Failed to initialize crew bookings:', error);
                 set({ error: error.message, loading: false });
             }
         },
@@ -149,7 +150,7 @@ export const useCrewBookingStore = create(
         // Create new crew booking
         createBooking: async (bookingData) => {
             if (!isSupabaseConfigured()) {
-                console.error('Supabase not configured');
+                logger.error('Supabase not configured');
                 return null;
             }
 
@@ -177,7 +178,7 @@ export const useCrewBookingStore = create(
                 set({ bookings: [created, ...state.bookings] });
                 return created;
             } catch (error) {
-                console.error('Failed to create crew booking:', error);
+                logger.error('Failed to create crew booking:', error);
                 return null;
             }
         },
@@ -260,7 +261,7 @@ export const useCrewBookingStore = create(
                 });
                 return true;
             } catch (error) {
-                console.error('Failed to update crew booking:', error);
+                logger.error('Failed to update crew booking:', error);
                 return false;
             }
         },
@@ -299,7 +300,7 @@ export const useCrewBookingStore = create(
                 set({ bookings: get().bookings.filter(b => b.id !== id) });
                 return true;
             } catch (error) {
-                console.error('Failed to delete crew booking:', error);
+                logger.error('Failed to delete crew booking:', error);
                 return false;
             }
         },
@@ -321,7 +322,7 @@ export const useCrewBookingStore = create(
                 });
                 return true;
             } catch (error) {
-                console.error('Failed to delete crew bookings by call sheet:', error);
+                logger.error('Failed to delete crew bookings by call sheet:', error);
                 return false;
             }
         },

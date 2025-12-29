@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Board backgrounds/themes
 export const BOARD_BACKGROUNDS = {
@@ -79,7 +80,7 @@ export const useTaskBoardStore = create(
                 if (error) throw error;
                 set({ boards: data || [], loading: false });
             } catch (error) {
-                console.error('Error loading boards:', error);
+                logger.error('Error loading boards:', error);
                 set({ error: error.message, loading: false });
             }
         },
@@ -129,7 +130,7 @@ export const useTaskBoardStore = create(
                 set(state => ({ boards: [board, ...state.boards] }));
                 return board;
             } catch (error) {
-                console.error('Error creating board:', error);
+                logger.error('Error creating board:', error);
                 throw error;
             }
         },
@@ -154,7 +155,7 @@ export const useTaskBoardStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error updating board:', error);
+                logger.error('Error updating board:', error);
                 throw error;
             }
         },
@@ -173,7 +174,7 @@ export const useTaskBoardStore = create(
                     currentBoard: state.currentBoard?.id === boardId ? null : state.currentBoard,
                 }));
             } catch (error) {
-                console.error('Error deleting board:', error);
+                logger.error('Error deleting board:', error);
                 throw error;
             }
         },
@@ -233,7 +234,7 @@ export const useTaskBoardStore = create(
                     loading: false,
                 });
             } catch (error) {
-                console.error('Error loading board:', error);
+                logger.error('Error loading board:', error);
                 set({ error: error.message, loading: false });
             }
         },
@@ -260,7 +261,7 @@ export const useTaskBoardStore = create(
                 set(state => ({ lists: [...state.lists, data] }));
                 return data;
             } catch (error) {
-                console.error('Error creating list:', error);
+                logger.error('Error creating list:', error);
                 throw error;
             }
         },
@@ -281,7 +282,7 @@ export const useTaskBoardStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error updating list:', error);
+                logger.error('Error updating list:', error);
                 throw error;
             }
         },
@@ -300,7 +301,7 @@ export const useTaskBoardStore = create(
                     cards: state.cards.filter(c => c.list_id !== listId),
                 }));
             } catch (error) {
-                console.error('Error deleting list:', error);
+                logger.error('Error deleting list:', error);
                 throw error;
             }
         },
@@ -345,7 +346,7 @@ export const useTaskBoardStore = create(
 
                 await Promise.all(updates);
             } catch (error) {
-                console.error('Error moving list:', error);
+                logger.error('Error moving list:', error);
                 // Revert on error
                 set({ lists });
             }
@@ -390,7 +391,7 @@ export const useTaskBoardStore = create(
                 set(state => ({ cards: [...state.cards, cardWithRelations] }));
                 return cardWithRelations;
             } catch (error) {
-                console.error('Error creating card:', error);
+                logger.error('Error creating card:', error);
                 throw error;
             }
         },
@@ -415,7 +416,7 @@ export const useTaskBoardStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error updating card:', error);
+                logger.error('Error updating card:', error);
                 throw error;
             }
         },
@@ -435,7 +436,7 @@ export const useTaskBoardStore = create(
                     cardDetailOpen: state.selectedCard?.id === cardId ? false : state.cardDetailOpen,
                 }));
             } catch (error) {
-                console.error('Error deleting card:', error);
+                logger.error('Error deleting card:', error);
                 throw error;
             }
         },
@@ -511,7 +512,7 @@ export const useTaskBoardStore = create(
                     }
                 }
             } catch (error) {
-                console.error('Error moving card:', error);
+                logger.error('Error moving card:', error);
                 set({ cards });
             }
         },
@@ -555,7 +556,7 @@ export const useTaskBoardStore = create(
                 set(state => ({ cards: [...state.cards, newCard] }));
                 return newCard;
             } catch (error) {
-                console.error('Error duplicating card:', error);
+                logger.error('Error duplicating card:', error);
                 throw error;
             }
         },
@@ -578,7 +579,7 @@ export const useTaskBoardStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error updating label:', error);
+                logger.error('Error updating label:', error);
                 throw error;
             }
         },
@@ -607,7 +608,7 @@ export const useTaskBoardStore = create(
                     } : state.selectedCard,
                 }));
             } catch (error) {
-                console.error('Error adding label to card:', error);
+                logger.error('Error adding label to card:', error);
                 throw error;
             }
         },
@@ -636,7 +637,7 @@ export const useTaskBoardStore = create(
                     } : state.selectedCard,
                 }));
             } catch (error) {
-                console.error('Error removing label from card:', error);
+                logger.error('Error removing label from card:', error);
                 throw error;
             }
         },
@@ -670,7 +671,7 @@ export const useTaskBoardStore = create(
                 }));
                 return checklist;
             } catch (error) {
-                console.error('Error adding checklist:', error);
+                logger.error('Error adding checklist:', error);
                 throw error;
             }
         },
@@ -695,7 +696,7 @@ export const useTaskBoardStore = create(
                     } : null,
                 }));
             } catch (error) {
-                console.error('Error deleting checklist:', error);
+                logger.error('Error deleting checklist:', error);
                 throw error;
             }
         },
@@ -733,7 +734,7 @@ export const useTaskBoardStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error adding checklist item:', error);
+                logger.error('Error adding checklist item:', error);
                 throw error;
             }
         },
@@ -767,7 +768,7 @@ export const useTaskBoardStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error updating checklist item:', error);
+                logger.error('Error updating checklist item:', error);
                 throw error;
             }
         },
@@ -798,7 +799,7 @@ export const useTaskBoardStore = create(
                     } : null,
                 }));
             } catch (error) {
-                console.error('Error deleting checklist item:', error);
+                logger.error('Error deleting checklist item:', error);
                 throw error;
             }
         },
@@ -830,7 +831,7 @@ export const useTaskBoardStore = create(
                 }));
                 return data;
             } catch (error) {
-                console.error('Error adding comment:', error);
+                logger.error('Error adding comment:', error);
                 throw error;
             }
         },
@@ -855,7 +856,7 @@ export const useTaskBoardStore = create(
                     } : null,
                 }));
             } catch (error) {
-                console.error('Error deleting comment:', error);
+                logger.error('Error deleting comment:', error);
                 throw error;
             }
         },
@@ -895,7 +896,7 @@ export const useTaskBoardStore = create(
                     } : state.selectedCard,
                 }));
             } catch (error) {
-                console.error('Error adding assignee:', error);
+                logger.error('Error adding assignee:', error);
                 throw error;
             }
         },
@@ -924,7 +925,7 @@ export const useTaskBoardStore = create(
                     } : state.selectedCard,
                 }));
             } catch (error) {
-                console.error('Error removing assignee:', error);
+                logger.error('Error removing assignee:', error);
                 throw error;
             }
         },

@@ -11,6 +11,7 @@ import {
     ACCESS_LEVELS,
 } from '../services/subscriptionGuard';
 import { getTrialStatus, getTrialMessage } from '../services/trialService';
+import logger from '../utils/logger';
 
 // Context for subscription state
 const SubscriptionContext = createContext(null);
@@ -63,7 +64,7 @@ export function SubscriptionProvider({ children }) {
                 error: null,
             });
         } catch (error) {
-            console.error('Error loading subscription:', error);
+            logger.error('Error loading subscription:', error);
             setState(prev => ({
                 ...prev,
                 loading: false,

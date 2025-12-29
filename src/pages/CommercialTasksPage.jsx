@@ -4,6 +4,7 @@ import { useOpportunityStore } from '../store/opportunityStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { List, LayoutGrid } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Lazy load TaskBoardPage for Board view
 const TaskBoardPage = lazy(() => import('./TaskBoardPage'));
@@ -285,7 +286,7 @@ Return ONLY JSON:
                 throw new Error('Could not parse tasks from AI response');
             }
         } catch (err) {
-            console.error('Failed to generate tasks:', err);
+            logger.error('Failed to generate tasks:', err);
             setError(err.message);
         } finally {
             setLoading(false);

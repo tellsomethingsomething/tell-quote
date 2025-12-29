@@ -8,6 +8,7 @@ import { Lock, AlertTriangle, Zap } from 'lucide-react';
 import { useFeatureAccess, FEATURES } from '../../hooks/useSubscription';
 import UpgradePrompt from './UpgradePrompt';
 import { createCheckoutSession } from '../../services/billingService';
+import logger from '../../utils/logger';
 
 /**
  * FeatureGate - Wraps content and gates it based on subscription
@@ -42,7 +43,7 @@ export default function FeatureGate({
                 const { url } = await createCheckoutSession(recommendedPlan, 'monthly');
                 if (url) window.location.href = url;
             } catch (err) {
-                console.error('Checkout error:', err);
+                logger.error('Checkout error:', err);
             }
         }
     };
@@ -209,7 +210,7 @@ export function useFeatureGuard(feature) {
             const { url } = await createCheckoutSession(recommendedPlan, 'monthly');
             if (url) window.location.href = url;
         } catch (err) {
-            console.error('Checkout error:', err);
+            logger.error('Checkout error:', err);
         }
     };
 

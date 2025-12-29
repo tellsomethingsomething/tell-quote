@@ -1,4 +1,5 @@
 import { createElement } from 'react';
+import logger from './logger';
 
 export async function exportQuoteToPDF(quote, currency, { showWatermark = false } = {}) {
     try {
@@ -34,7 +35,7 @@ export async function exportQuoteToPDF(quote, currency, { showWatermark = false 
 
         return true;
     } catch (error) {
-        console.error('Failed to export PDF:', error);
+        logger.error('Failed to export PDF:', error);
         throw error;
     }
 }

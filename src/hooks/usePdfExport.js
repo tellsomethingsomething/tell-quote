@@ -1,4 +1,5 @@
 import { useState, useCallback, createElement } from 'react';
+import logger from '../utils/logger';
 
 /**
  * Custom hook for PDF export functionality with dynamic imports
@@ -37,7 +38,7 @@ export function usePdfExport(onSuccess, onError, options = {}) {
 
       if (onSuccess) onSuccess('Preview opened');
     } catch (error) {
-      console.error('PDF preview error:', error);
+      logger.error('PDF preview error:', error);
       if (onError) onError(error);
     } finally {
       setIsPreviewing(false);
@@ -68,7 +69,7 @@ export function usePdfExport(onSuccess, onError, options = {}) {
 
       if (onSuccess) onSuccess('PDF downloaded successfully');
     } catch (error) {
-      console.error('PDF export error:', error);
+      logger.error('PDF export error:', error);
       if (onError) onError(error);
     } finally {
       setIsGenerating(false);

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { generatePrefixedId } from '../utils/generateId';
+import logger from '../utils/logger';
 
 const TEMPLATES_KEY = 'tell_quote_templates';
 const SYNC_QUEUE_KEY = 'tell_quote_templates_sync_queue';
@@ -20,7 +21,7 @@ function saveSyncQueue(queue) {
     try {
         localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
     } catch (e) {
-        console.error('Failed to save sync queue:', e);
+        logger.error('Failed to save sync queue:', e);
     }
 }
 
@@ -38,7 +39,7 @@ function saveTemplatesLocal(templates) {
     try {
         localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
     } catch (e) {
-        console.error('Failed to save templates locally:', e);
+        logger.error('Failed to save templates locally:', e);
     }
 }
 
@@ -101,7 +102,7 @@ export const useQuoteTemplateStore = create(
                         if (error) throw error;
                     }
                 } catch (error) {
-                    console.error(`Failed to process sync queue item:`, error);
+                    logger.error(`Failed to process sync queue item:`, error);
                     newQueue.push(item);
                 }
             }
@@ -160,7 +161,7 @@ export const useQuoteTemplateStore = create(
                     get().processSyncQueue();
                 }
             } catch (error) {
-                console.error('Failed to load templates:', error);
+                logger.error('Failed to load templates:', error);
                 set({ loading: false, syncStatus: 'error', syncError: error.message });
             }
         },
@@ -228,7 +229,7 @@ export const useQuoteTemplateStore = create(
                     set({ templates: syncedTemplates, syncStatus: 'success', syncError: null });
                     saveTemplatesLocal(syncedTemplates);
                 } catch (error) {
-                    console.error('Failed to sync template:', error);
+                    logger.error('Failed to sync template:', error);
                     addToSyncQueue('create', newTemplate.id, dbData);
                     set({ syncStatus: 'error', syncError: error.message });
                 }
@@ -280,7 +281,7 @@ export const useQuoteTemplateStore = create(
                     set({ templates: syncedTemplates, syncStatus: 'success', syncError: null });
                     saveTemplatesLocal(syncedTemplates);
                 } catch (error) {
-                    console.error('Failed to update template:', error);
+                    logger.error('Failed to update template:', error);
                     addToSyncQueue('update', id, dbUpdates);
                     set({ syncStatus: 'error', syncError: error.message });
                 }
@@ -305,7 +306,7 @@ export const useQuoteTemplateStore = create(
                     if (error) throw error;
                     set({ syncStatus: 'success', syncError: null });
                 } catch (error) {
-                    console.error('Failed to delete template:', error);
+                    logger.error('Failed to delete template:', error);
                     addToSyncQueue('delete', id, null);
                     set({ syncStatus: 'error', syncError: error.message });
                 }
@@ -333,7 +334,7 @@ export const useQuoteTemplateStore = create(
                         .update({ usage_count: newCount })
                         .eq('id', id);
                 } catch (error) {
-                    console.error('Failed to update usage count:', error);
+                    logger.error('Failed to update usage count:', error);
                 }
             }
         },

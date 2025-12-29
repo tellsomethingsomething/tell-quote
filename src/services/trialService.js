@@ -4,6 +4,7 @@
  */
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Trial configuration
 export const TRIAL_CONFIG = {
@@ -44,7 +45,7 @@ export async function getTrialStatus(organizationId) {
         .single();
 
     if (error) {
-        console.error('Error fetching trial status:', error);
+        logger.error('Error fetching trial status:', error);
         return null;
     }
 
@@ -152,7 +153,7 @@ export async function startTrial(organizationId, stripeCustomerId = null) {
         .single();
 
     if (error) {
-        console.error('Error starting trial:', error);
+        logger.error('Error starting trial:', error);
         return null;
     }
 
@@ -185,7 +186,7 @@ export async function extendTrial(organizationId, additionalDays) {
         .single();
 
     if (error) {
-        console.error('Error extending trial:', error);
+        logger.error('Error extending trial:', error);
         return null;
     }
 

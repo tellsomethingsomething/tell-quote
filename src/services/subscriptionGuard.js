@@ -3,6 +3,7 @@
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { PLANS } from './billingService';
+import logger from '../utils/logger';
 
 // Feature keys that can be gated
 export const FEATURES = {
@@ -71,7 +72,7 @@ export async function checkSubscriptionAccess(organizationId) {
             .single();
 
         if (orgError || !org) {
-            console.error('Failed to fetch organization:', orgError);
+            logger.error('Failed to fetch organization:', orgError);
             return {
                 access: ACCESS_LEVELS.ONBOARDING,
                 subscription: null,
@@ -227,7 +228,7 @@ export async function checkSubscriptionAccess(organizationId) {
         };
 
     } catch (error) {
-        console.error('Subscription check error:', error);
+        logger.error('Subscription check error:', error);
         // On error, allow access but log it (fail open for better UX)
         return {
             access: ACCESS_LEVELS.FULL,
@@ -329,7 +330,7 @@ export async function getUsage(organizationId) {
             teamMembers: membersRes.count || 1,
         };
     } catch (error) {
-        console.error('Error fetching usage:', error);
+        logger.error('Error fetching usage:', error);
         return { projects: 0, crew: 0, equipment: 0, clients: 0, teamMembers: 1 };
     }
 }

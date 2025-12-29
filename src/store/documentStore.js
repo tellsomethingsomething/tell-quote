@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // File type configurations
 export const FILE_TYPES = {
@@ -101,10 +102,10 @@ export const useDocumentStore = create(
                 const { data, error } = await supabase.storage.getBucket(STORAGE_BUCKET);
                 if (error && error.message.includes('not found')) {
                     // Bucket doesn't exist - it should be created via Supabase dashboard or migrations
-                    console.warn('Documents bucket does not exist. Please create it in Supabase dashboard.');
+                    logger.warn('Documents bucket does not exist. Please create it in Supabase dashboard.');
                 }
             } catch (error) {
-                console.error('Failed to check bucket:', error);
+                logger.error('Failed to check bucket:', error);
             }
         },
 
@@ -146,7 +147,7 @@ export const useDocumentStore = create(
                 set({ documents: data || [], isLoading: false });
                 return data || [];
             } catch (error) {
-                console.error('Failed to load documents:', error);
+                logger.error('Failed to load documents:', error);
                 set({ isLoading: false, error: error.message });
                 return [];
             }
@@ -174,7 +175,7 @@ export const useDocumentStore = create(
                 set({ documents: data || [], isLoading: false, entityFilter: { type: entityType, id: entityId } });
                 return data || [];
             } catch (error) {
-                console.error('Failed to load documents for entity:', error);
+                logger.error('Failed to load documents for entity:', error);
                 set({ isLoading: false, error: error.message });
                 return [];
             }
@@ -239,7 +240,7 @@ export const useDocumentStore = create(
 
                 return { success: true, document: docData };
             } catch (error) {
-                console.error('Failed to upload document:', error);
+                logger.error('Failed to upload document:', error);
                 set({ isUploading: false, uploadProgress: 0, error: error.message });
                 return { success: false, error: error.message };
             }
@@ -269,7 +270,7 @@ export const useDocumentStore = create(
 
                 return { success: true, url: data.signedUrl };
             } catch (error) {
-                console.error('Failed to get download URL:', error);
+                logger.error('Failed to get download URL:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -304,7 +305,7 @@ export const useDocumentStore = create(
 
                 return { success: true, document: data };
             } catch (error) {
-                console.error('Failed to update document:', error);
+                logger.error('Failed to update document:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -329,7 +330,7 @@ export const useDocumentStore = create(
 
                 return { success: true, document: data };
             } catch (error) {
-                console.error('Failed to link document:', error);
+                logger.error('Failed to link document:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -354,7 +355,7 @@ export const useDocumentStore = create(
 
                 return { success: true, document: data };
             } catch (error) {
-                console.error('Failed to unlink document:', error);
+                logger.error('Failed to unlink document:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -370,7 +371,7 @@ export const useDocumentStore = create(
                     .from(STORAGE_BUCKET)
                     .remove([doc.storage_path]);
 
-                if (storageError) console.warn('Failed to delete from storage:', storageError);
+                if (storageError) logger.warn('Failed to delete from storage:', storageError);
 
                 // Delete record
                 const { error: dbError } = await supabase
@@ -386,7 +387,7 @@ export const useDocumentStore = create(
 
                 return { success: true };
             } catch (error) {
-                console.error('Failed to delete document:', error);
+                logger.error('Failed to delete document:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -450,7 +451,7 @@ export const useDocumentStore = create(
 
                 return data || [];
             } catch (error) {
-                console.error('Failed to get version history:', error);
+                logger.error('Failed to get version history:', error);
                 return [];
             }
         },

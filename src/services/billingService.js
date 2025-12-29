@@ -5,6 +5,7 @@
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useOrganizationStore } from '../store/organizationStore';
+import logger from '../utils/logger';
 
 // Use test mode in development
 const isTestMode = import.meta.env.DEV || import.meta.env.VITE_STRIPE_TEST_MODE === 'true';
@@ -604,7 +605,7 @@ export async function getSubscriptionStatus(organizationId) {
         .single();
 
     if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching subscription:', error);
+        logger.error('Error fetching subscription:', error);
     }
 
     return data;
@@ -752,7 +753,7 @@ export async function getInvoiceHistory(organizationId) {
         .limit(24);
 
     if (error) {
-        console.error('Error fetching invoices:', error);
+        logger.error('Error fetching invoices:', error);
         return [];
     }
 

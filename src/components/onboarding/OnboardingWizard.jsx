@@ -21,6 +21,7 @@ import {
 import { createSetupIntent } from '../../services/billingService';
 import StripeProvider from '../billing/StripeProvider';
 import { CardSetupForm } from '../billing/PaymentMethodForm';
+import logger from '../../utils/logger';
 
 // Step icons mapping
 const STEP_ICONS = {
@@ -142,7 +143,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
                 }));
             }
         } catch (err) {
-            console.error('Error loading progress:', err);
+            logger.error('Error loading progress:', err);
         } finally {
             setIsLoading(false);
         }
@@ -405,7 +406,7 @@ export default function OnboardingWizard({ userId, onComplete }) {
             // 5. Call completion handler
             onComplete?.(org, formData.firstAction);
         } catch (err) {
-            console.error('Onboarding error:', err);
+            logger.error('Onboarding error:', err);
             setError(err.message || 'Failed to complete setup. Please try again.');
             setIsSaving(false);
         }
@@ -804,15 +805,15 @@ function BillingStep({ formData, updateField, onBillingComplete, organizationId,
         setSetupError(null);
         try {
             const result = await createSetupIntent(organizationId, userEmail);
-            console.log('SetupIntent result:', result);
+            logger.debug('SetupIntent result:', result);
             if (result && typeof result.clientSecret === 'string' && result.clientSecret) {
                 setClientSecret(result.clientSecret);
             } else {
-                console.error('Invalid SetupIntent result:', result);
+                logger.error('Invalid SetupIntent result:', result);
                 setSetupError('Unable to initialize payment form');
             }
         } catch (err) {
-            console.error('SetupIntent error:', err);
+            logger.error('SetupIntent error:', err);
             setSetupError(err?.message || 'Unable to initialize payment form. Please try again.');
         } finally {
             setIsLoadingSecret(false);
@@ -828,7 +829,7 @@ function BillingStep({ formData, updateField, onBillingComplete, organizationId,
 
     const handlePaymentError = (error) => {
         // Error is already shown in CardSetupForm, no need to duplicate
-        console.error('Payment error:', error);
+        logger.error('Payment error:', error);
     };
 
     const handleRetry = () => {

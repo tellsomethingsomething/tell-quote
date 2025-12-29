@@ -1,4 +1,5 @@
 import { isCookieAllowed } from '../components/common/CookieConsent';
+import logger from '../utils/logger';
 
 const PLAUSIBLE_DOMAIN = import.meta.env.VITE_PLAUSIBLE_DOMAIN;
 
@@ -10,7 +11,7 @@ export function trackEvent(eventName, props = {}) {
     }
 
     if (!PLAUSIBLE_DOMAIN) {
-        console.log(`[Analytics] ${eventName}`, props);
+        logger.debug(`[Analytics] ${eventName}`, props);
         return;
     }
 
@@ -81,7 +82,7 @@ export function trackConversion(eventType, value = null) {
 // Initialize analytics (add Plausible script if not already present)
 export function initAnalytics() {
     if (!PLAUSIBLE_DOMAIN) {
-        console.log('Plausible domain not configured - analytics disabled');
+        logger.debug('Plausible domain not configured - analytics disabled');
         return;
     }
 

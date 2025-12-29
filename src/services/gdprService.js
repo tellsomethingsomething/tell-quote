@@ -5,6 +5,7 @@
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useOrganizationStore } from '../store/organizationStore';
+import logger from '../utils/logger';
 
 /**
  * Request a data export
@@ -133,7 +134,7 @@ async function generateExportData(userId, organizationId) {
             exportData.settings = settings;
         }
     } catch (e) {
-        console.error('Error generating export:', e);
+        logger.error('Error generating export:', e);
     }
 
     return exportData;

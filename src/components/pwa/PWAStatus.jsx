@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { Wifi, WifiOff, RefreshCw, X, Download } from 'lucide-react';
+import logger from '../../utils/logger';
 
 export default function PWAStatus() {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -14,10 +15,10 @@ export default function PWAStatus() {
         updateServiceWorker,
     } = useRegisterSW({
         onRegistered(r) {
-            console.log('SW Registered:', r);
+            logger.debug('SW Registered:', r);
         },
         onRegisterError(error) {
-            console.log('SW registration error', error);
+            logger.debug('SW registration error', error);
         },
     });
 
@@ -73,7 +74,7 @@ export default function PWAStatus() {
         const { outcome } = await deferredPrompt.userChoice;
 
         if (outcome === 'accepted') {
-            console.log('User accepted install prompt');
+            logger.debug('User accepted install prompt');
         }
 
         setDeferredPrompt(null);

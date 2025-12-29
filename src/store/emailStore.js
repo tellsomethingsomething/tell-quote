@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Gmail API scopes needed for email access
 const GOOGLE_SCOPES = [
@@ -160,7 +161,7 @@ export const useEmailStore = create(
                     .select('*')
                     .order('created_at', { ascending: false });
 
-                if (googleError) console.error('Failed to load Google connections:', googleError);
+                if (googleError) logger.error('Failed to load Google connections:', googleError);
 
                 // Load Microsoft connections
                 const { data: microsoftData, error: microsoftError } = await supabase
@@ -168,7 +169,7 @@ export const useEmailStore = create(
                     .select('*')
                     .order('created_at', { ascending: false });
 
-                if (microsoftError) console.error('Failed to load Microsoft connections:', microsoftError);
+                if (microsoftError) logger.error('Failed to load Microsoft connections:', microsoftError);
 
                 // Normalize connections with provider info
                 const googleConnections = (googleData || []).map(c => ({
@@ -202,7 +203,7 @@ export const useEmailStore = create(
                     activeProvider: activeConn?.provider || null,
                 });
             } catch (error) {
-                console.error('Failed to load connections:', error);
+                logger.error('Failed to load connections:', error);
                 set({ connectionError: error.message });
             }
         },
@@ -257,7 +258,7 @@ export const useEmailStore = create(
                 // Redirect to Google login (doesn't log out current session)
                 window.location.href = authUrl.toString();
             } catch (error) {
-                console.error('Failed to initiate Google connection:', error);
+                logger.error('Failed to initiate Google connection:', error);
                 set({ isConnecting: false, connectionError: error.message });
             }
         },
@@ -294,7 +295,7 @@ export const useEmailStore = create(
 
                 return { success: true, connection: data.connection };
             } catch (error) {
-                console.error('Google OAuth callback failed:', error);
+                logger.error('Google OAuth callback failed:', error);
                 set({ isConnecting: false, connectionError: error.message });
                 return { success: false, error: error.message };
             }
@@ -313,7 +314,7 @@ export const useEmailStore = create(
                 await get().loadConnections();
                 return { success: true };
             } catch (error) {
-                console.error('Failed to disconnect Google:', error);
+                logger.error('Failed to disconnect Google:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -355,7 +356,7 @@ export const useEmailStore = create(
                 // Redirect to Microsoft login
                 window.location.href = authUrl.toString();
             } catch (error) {
-                console.error('Failed to initiate Microsoft connection:', error);
+                logger.error('Failed to initiate Microsoft connection:', error);
                 set({ isConnecting: false, connectionError: error.message });
             }
         },
@@ -373,7 +374,7 @@ export const useEmailStore = create(
                 await get().loadConnections();
                 return { success: true };
             } catch (error) {
-                console.error('Failed to disconnect Microsoft:', error);
+                logger.error('Failed to disconnect Microsoft:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -461,7 +462,7 @@ export const useEmailStore = create(
                     isLoading: false,
                 });
             } catch (error) {
-                console.error('Failed to load threads:', error);
+                logger.error('Failed to load threads:', error);
                 set({ isLoading: false, error: error.message });
             }
         },
@@ -492,7 +493,7 @@ export const useEmailStore = create(
                     await get().markThreadAsRead(threadId);
                 }
             } catch (error) {
-                console.error('Failed to load messages:', error);
+                logger.error('Failed to load messages:', error);
                 set({ isLoading: false, error: error.message });
             }
         },
@@ -530,7 +531,7 @@ export const useEmailStore = create(
                     });
                 }
             } catch (error) {
-                console.error('Failed to mark as read:', error);
+                logger.error('Failed to mark as read:', error);
             }
         },
 
@@ -558,7 +559,7 @@ export const useEmailStore = create(
                     });
                 }
             } catch (error) {
-                console.error('Failed to star thread:', error);
+                logger.error('Failed to star thread:', error);
             }
         },
 
@@ -582,7 +583,7 @@ export const useEmailStore = create(
                     });
                 }
             } catch (error) {
-                console.error('Failed to archive thread:', error);
+                logger.error('Failed to archive thread:', error);
             }
         },
 
@@ -606,7 +607,7 @@ export const useEmailStore = create(
                     });
                 }
             } catch (error) {
-                console.error('Failed to trash thread:', error);
+                logger.error('Failed to trash thread:', error);
             }
         },
 
@@ -644,7 +645,7 @@ export const useEmailStore = create(
 
                 await get().loadConnections();
             } catch (error) {
-                console.error('Sync failed:', error);
+                logger.error('Sync failed:', error);
                 set({ syncProgress: { status: 'failed', error: error.message } });
             } finally {
                 set({ isSyncing: false });
@@ -731,7 +732,7 @@ export const useEmailStore = create(
 
                 return { success: true, messageId: data.messageId };
             } catch (error) {
-                console.error('Failed to send email:', error);
+                logger.error('Failed to send email:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -761,7 +762,7 @@ export const useEmailStore = create(
                 await get().loadThreads();
                 return { success: true };
             } catch (error) {
-                console.error('Failed to link thread:', error);
+                logger.error('Failed to link thread:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -785,7 +786,7 @@ export const useEmailStore = create(
                 await get().loadThreads();
                 return { success: true };
             } catch (error) {
-                console.error('Failed to unlink thread:', error);
+                logger.error('Failed to unlink thread:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -802,7 +803,7 @@ export const useEmailStore = create(
 
                 return data.map(link => link.email_threads).filter(Boolean);
             } catch (error) {
-                console.error('Failed to get entity threads:', error);
+                logger.error('Failed to get entity threads:', error);
                 return [];
             }
         },
@@ -851,7 +852,7 @@ export const useEmailStore = create(
 
                 return data;
             } catch (error) {
-                console.error('Failed to get tracking stats:', error);
+                logger.error('Failed to get tracking stats:', error);
                 return null;
             }
         },
@@ -869,7 +870,7 @@ export const useEmailStore = create(
 
                 return data || [];
             } catch (error) {
-                console.error('Failed to get tracking events:', error);
+                logger.error('Failed to get tracking events:', error);
                 return [];
             }
         },
@@ -896,7 +897,7 @@ export const useEmailStore = create(
                     messages: data || [],
                 };
             } catch (error) {
-                console.error('Failed to get thread tracking stats:', error);
+                logger.error('Failed to get thread tracking stats:', error);
                 return { totalOpens: 0, totalClicks: 0, trackedMessages: 0, messages: [] };
             }
         },

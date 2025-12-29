@@ -9,6 +9,7 @@ import { plans, pricingFaqs, comparisonTable, currencyConfig } from '../data/pri
 import { useAuthStore } from '../store/authStore';
 import { createCheckoutSession, getRegionalStripePriceId } from '../services/billingService';
 import { getPricingForUser, formatLocalPrice, PRICING_TIERS } from '../services/pppService';
+import logger from '../utils/logger';
 
 export default function Pricing() {
     const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' | 'annual'
@@ -29,7 +30,7 @@ export default function Pricing() {
                 setPricingInfo(info);
                 setCurrency(info.currency);
             } catch (err) {
-                console.error('Failed to load regional pricing:', err);
+                logger.error('Failed to load regional pricing:', err);
                 // Fall back to USD
                 setCurrency('USD');
             } finally {
@@ -102,7 +103,7 @@ export default function Pricing() {
                     throw new Error('No checkout URL returned');
                 }
             } catch (err) {
-                console.error('Checkout error:', err);
+                logger.error('Checkout error:', err);
                 setError('Unable to start checkout. Please try again.');
                 setLoadingPlan(null);
             }

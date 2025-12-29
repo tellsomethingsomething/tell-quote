@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useContactStore, CONTACT_ROLES } from '../../store/contactStore';
 import ContactCard from './ContactCard';
 import ContactForm from './ContactForm';
+import logger from '../../utils/logger';
 
 export default function ContactList({
     clientId,
@@ -55,7 +56,7 @@ export default function ContactList({
             setShowForm(false);
             setEditingContact(null);
         } catch (error) {
-            console.error('Failed to save contact:', error);
+            logger.error('Failed to save contact:', error);
         } finally {
             setIsLoading(false);
         }

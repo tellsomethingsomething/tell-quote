@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured, uploadKitImage, deleteKitImage } from '../lib/supabase';
 import { useRateCardStore, ITEM_TYPES } from './rateCardStore';
+import logger from '../utils/logger';
 
 // Map kit categories to rate card sections
 const KIT_CATEGORY_TO_RATE_SECTION = {
@@ -311,7 +312,7 @@ export const useKitStore = create(
                 }
 
             } catch (e) {
-                console.error('Failed to load kit items:', e);
+                logger.error('Failed to load kit items:', e);
                 set({ loading: false, error: e.message });
             }
         },
@@ -355,7 +356,7 @@ export const useKitStore = create(
 
                 return newItem;
             } catch (e) {
-                console.error('Failed to add kit item:', e);
+                logger.error('Failed to add kit item:', e);
                 set({ error: e.message });
                 return null;
             }
@@ -401,7 +402,7 @@ export const useKitStore = create(
                     }
                 }
             } catch (e) {
-                console.error('Failed to update kit item:', e);
+                logger.error('Failed to update kit item:', e);
                 set({ error: e.message });
             }
         },
@@ -426,7 +427,7 @@ export const useKitStore = create(
                     error: null,
                 }));
             } catch (e) {
-                console.error('Failed to delete kit item:', e);
+                logger.error('Failed to delete kit item:', e);
                 set({ error: e.message });
             }
         },
@@ -454,7 +455,7 @@ export const useKitStore = create(
                     }
                     syncedCount++;
                 } catch (e) {
-                    console.error(`Failed to sync kit item ${item.kitId}:`, e);
+                    logger.error(`Failed to sync kit item ${item.kitId}:`, e);
                     errorCount++;
                 }
             }
@@ -634,7 +635,7 @@ export const useKitStore = create(
 
                 return result;
             } catch (e) {
-                console.error('Failed to upload kit image:', e);
+                logger.error('Failed to upload kit image:', e);
                 set({ error: e.message });
                 return null;
             }
@@ -661,7 +662,7 @@ export const useKitStore = create(
                     imagePath: null,
                 });
             } catch (e) {
-                console.error('Failed to remove kit image:', e);
+                logger.error('Failed to remove kit image:', e);
                 set({ error: e.message });
             }
         },

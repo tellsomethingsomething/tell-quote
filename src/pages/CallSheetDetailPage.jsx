@@ -5,6 +5,7 @@ import { useCrewStore } from '../store/crewStore';
 import { useProjectStore } from '../store/projectStore';
 import { useSettingsStore } from '../store/settingsStore';
 import CallSheetPDF from '../components/pdf/CallSheetPDF';
+import logger from '../utils/logger';
 
 // Available modular sections that users can enable/disable
 const AVAILABLE_SECTIONS = [
@@ -718,7 +719,7 @@ function AddCrewModal({ isOpen, onClose, allCrew, existingCrew, onAdd, callSheet
             }
             onClose();
         } catch (e) {
-            console.error('Failed to add crew:', e);
+            logger.error('Failed to add crew:', e);
         } finally {
             setSaving(false);
         }
@@ -731,7 +732,7 @@ function AddCrewModal({ isOpen, onClose, allCrew, existingCrew, onAdd, callSheet
             await onAdd(callSheetId, manualForm);
             onClose();
         } catch (e) {
-            console.error('Failed to add crew:', e);
+            logger.error('Failed to add crew:', e);
         } finally {
             setSaving(false);
         }
@@ -1834,7 +1835,7 @@ export default function CallSheetDetailPage({ callSheetId, onBack }) {
             await updateCallSheet(id, changes);
             setPendingChanges({});
         } catch (e) {
-            console.error('Failed to save:', e);
+            logger.error('Failed to save:', e);
         } finally {
             setSaving(false);
         }
@@ -1887,7 +1888,7 @@ export default function CallSheetDetailPage({ callSheetId, onBack }) {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
         } catch (err) {
-            console.error('Failed to generate PDF:', err);
+            logger.error('Failed to generate PDF:', err);
             alert('Failed to generate PDF. Please try again.');
         } finally {
             setGeneratingPdf(false);

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import logger from '../utils/logger';
 
 // Environment variables must be prefixed with VITE_ to be exposed to client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -63,7 +64,7 @@ export async function getCurrentUser() {
         if (error) throw error;
         return user;
     } catch (error) {
-        console.error('Error getting current user:', error);
+        logger.error('Error getting current user:', error);
         return null;
     }
 }
@@ -79,7 +80,7 @@ export async function getCurrentSession() {
         if (error) throw error;
         return session;
     } catch (error) {
-        console.error('Error getting current session:', error);
+        logger.error('Error getting current session:', error);
         return null;
     }
 }
@@ -98,7 +99,7 @@ export async function setupRLSContext() {
         // Supabase automatically sets auth.uid() in RLS policies
         // No additional setup needed as the JWT contains user info
     } catch (error) {
-        console.error('Error setting up RLS context:', error);
+        logger.error('Error setting up RLS context:', error);
     }
 }
 
@@ -112,7 +113,7 @@ export async function signOut() {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
     } catch (error) {
-        console.error('Error signing out:', error);
+        logger.error('Error signing out:', error);
         throw error;
     }
 }
@@ -154,7 +155,7 @@ export async function createUserAccount(email, password, metadata = {}) {
         if (error) throw error;
         return data;
     } catch (error) {
-        console.error('Error creating user account:', error);
+        logger.error('Error creating user account:', error);
         throw error;
     }
 }
@@ -175,7 +176,7 @@ export async function updateUserProfile(updates) {
         if (error) throw error;
         return data;
     } catch (error) {
-        console.error('Error updating user profile:', error);
+        logger.error('Error updating user profile:', error);
         throw error;
     }
 }
@@ -195,7 +196,7 @@ export async function resetPassword(email) {
 
         if (error) throw error;
     } catch (error) {
-        console.error('Error resetting password:', error);
+        logger.error('Error resetting password:', error);
         throw error;
     }
 }
@@ -258,7 +259,7 @@ export async function uploadKitImage(file, kitId) {
             path: data.path,
         };
     } catch (error) {
-        console.error('Error uploading kit image:', error);
+        logger.error('Error uploading kit image:', error);
         throw error;
     }
 }
@@ -277,7 +278,7 @@ export async function deleteKitImage(path) {
 
         if (error) throw error;
     } catch (error) {
-        console.error('Error deleting kit image:', error);
+        logger.error('Error deleting kit image:', error);
         throw error;
     }
 }
@@ -298,7 +299,7 @@ export async function getKitImageUrl(path, expiresIn = 3600) {
         if (error) throw error;
         return data.signedUrl;
     } catch (error) {
-        console.error('Error getting signed URL:', error);
+        logger.error('Error getting signed URL:', error);
         return null;
     }
 }

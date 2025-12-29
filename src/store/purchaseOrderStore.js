@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchLiveRates } from '../utils/currency';
+import logger from '../utils/logger';
 
 // PO statuses
 export const PO_STATUSES = {
@@ -166,7 +167,7 @@ export const usePurchaseOrderStore = create(
 
                 set({ realtimeSubscription: subscription });
             } catch (error) {
-                console.error('Failed to initialize purchase orders:', error);
+                logger.error('Failed to initialize purchase orders:', error);
                 set({ error: error.message, loading: false });
             }
         },
@@ -174,7 +175,7 @@ export const usePurchaseOrderStore = create(
         // Create new PO
         createPurchaseOrder: async (poData) => {
             if (!isSupabaseConfigured()) {
-                console.error('Supabase not configured');
+                logger.error('Supabase not configured');
                 return null;
             }
 
@@ -214,7 +215,7 @@ export const usePurchaseOrderStore = create(
                 set({ purchaseOrders: [created, ...state.purchaseOrders] });
                 return created;
             } catch (error) {
-                console.error('Failed to create purchase order:', error);
+                logger.error('Failed to create purchase order:', error);
                 return null;
             }
         },
@@ -238,7 +239,7 @@ export const usePurchaseOrderStore = create(
                 });
                 return true;
             } catch (error) {
-                console.error('Failed to update purchase order:', error);
+                logger.error('Failed to update purchase order:', error);
                 return false;
             }
         },
@@ -270,7 +271,7 @@ export const usePurchaseOrderStore = create(
                 set({ purchaseOrders: get().purchaseOrders.filter(po => po.id !== id) });
                 return true;
             } catch (error) {
-                console.error('Failed to delete purchase order:', error);
+                logger.error('Failed to delete purchase order:', error);
                 return false;
             }
         },

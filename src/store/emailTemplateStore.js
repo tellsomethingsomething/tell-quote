@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Template categories
 export const TEMPLATE_CATEGORIES = {
@@ -101,7 +102,7 @@ export const useEmailTemplateStore = create(
 
                 set({ templates: data || [], isLoading: false });
             } catch (error) {
-                console.error('Failed to load templates:', error);
+                logger.error('Failed to load templates:', error);
                 set({ isLoading: false, error: error.message });
             }
         },
@@ -118,7 +119,7 @@ export const useEmailTemplateStore = create(
 
                 return data;
             } catch (error) {
-                console.error('Failed to get template:', error);
+                logger.error('Failed to get template:', error);
                 return null;
             }
         },
@@ -169,7 +170,7 @@ export const useEmailTemplateStore = create(
 
                 return { success: true, template: data };
             } catch (error) {
-                console.error('Failed to create template:', error);
+                logger.error('Failed to create template:', error);
                 set({ isSaving: false, error: error.message });
                 return { success: false, error: error.message };
             }
@@ -216,7 +217,7 @@ export const useEmailTemplateStore = create(
 
                 return { success: true, template: data };
             } catch (error) {
-                console.error('Failed to update template:', error);
+                logger.error('Failed to update template:', error);
                 set({ isSaving: false, error: error.message });
                 return { success: false, error: error.message };
             }
@@ -238,7 +239,7 @@ export const useEmailTemplateStore = create(
 
                 return { success: true };
             } catch (error) {
-                console.error('Failed to delete template:', error);
+                logger.error('Failed to delete template:', error);
                 return { success: false, error: error.message };
             }
         },

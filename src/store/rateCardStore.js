@@ -3,6 +3,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { SEED_ITEMS } from '../data/rateCardSeed';
 import { generateId, generateShortId } from '../utils/generateId';
+import logger from '../utils/logger';
 
 const RATE_CARD_KEY = 'tell_rate_card';
 const RATE_CARD_SECTIONS_KEY = 'tell_rate_card_sections';
@@ -22,7 +23,7 @@ function saveSyncQueue(queue) {
     try {
         localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
     } catch (e) {
-        console.error('Failed to save sync queue:', e);
+        logger.error('Failed to save sync queue:', e);
     }
 }
 
@@ -130,7 +131,7 @@ function saveRateCardLocal(items) {
     try {
         localStorage.setItem(RATE_CARD_KEY, JSON.stringify(items));
     } catch (e) {
-        console.error('Failed to save rate card locally:', e);
+        logger.error('Failed to save rate card locally:', e);
     }
 }
 
@@ -138,7 +139,7 @@ function saveSectionsLocal(sections) {
     try {
         localStorage.setItem(RATE_CARD_SECTIONS_KEY, JSON.stringify(sections));
     } catch (e) {
-        console.error('Failed to save sections locally:', e);
+        logger.error('Failed to save sections locally:', e);
     }
 }
 
@@ -177,7 +178,7 @@ export const useRateCardStore = create(
                         await supabase.from('rate_cards').delete().eq('id', item.id);
                     }
                 } catch (e) {
-                    console.error('Sync queue item failed:', e);
+                    logger.error('Sync queue item failed:', e);
                     newQueue.push({ ...item, retries: (item.retries || 0) + 1, lastError: e.message });
                 }
             }
@@ -264,7 +265,7 @@ export const useRateCardStore = create(
                 // Process any pending sync queue
                 await get().processSyncQueue();
             } catch (e) {
-                console.error('Failed to load rate card from DB:', e);
+                logger.error('Failed to load rate card from DB:', e);
                 set({ loading: false, syncStatus: 'error', syncError: e.message });
             }
         },
@@ -292,7 +293,7 @@ export const useRateCardStore = create(
                         sort_order: get().sections.length,
                     });
                 } catch (e) {
-                    console.error('Failed to save section to DB:', e);
+                    logger.error('Failed to save section to DB:', e);
                 }
             }
 
@@ -333,7 +334,7 @@ export const useRateCardStore = create(
                 try {
                     await supabase.from('rate_card_sections').delete().eq('id', sectionId);
                 } catch (e) {
-                    console.error('Failed to delete section from DB:', e);
+                    logger.error('Failed to delete section from DB:', e);
                 }
             }
         },
@@ -352,7 +353,7 @@ export const useRateCardStore = create(
                 try {
                     await supabase.from('rate_card_sections').update({ name: newName }).eq('id', sectionId);
                 } catch (e) {
-                    console.error('Failed to rename section in DB:', e);
+                    logger.error('Failed to rename section in DB:', e);
                 }
             }
         },
@@ -420,7 +421,7 @@ export const useRateCardStore = create(
                     if (error) throw error;
                     newItem.id = data.id;
                 } catch (e) {
-                    console.error('Failed to save item to DB:', e);
+                    logger.error('Failed to save item to DB:', e);
                 }
             }
 
@@ -458,7 +459,7 @@ export const useRateCardStore = create(
                         await supabase.from('rate_cards').update(dbUpdates).eq('id', itemId);
                     }
                 } catch (e) {
-                    console.error('Failed to update item in DB:', e);
+                    logger.error('Failed to update item in DB:', e);
                 }
             }
         },
@@ -499,7 +500,7 @@ export const useRateCardStore = create(
                         .update({ currency_pricing: updatedItem.pricing })
                         .eq('id', itemId);
                 } catch (e) {
-                    console.error('Failed to update pricing in DB:', e);
+                    logger.error('Failed to update pricing in DB:', e);
                 }
             }
 
@@ -514,7 +515,7 @@ export const useRateCardStore = create(
                         kitStore.updateItem(updatedItem.kitItemId, { dayRate });
                     }
                 } catch (e) {
-                    console.error('Failed to sync to kit item:', e);
+                    logger.error('Failed to sync to kit item:', e);
                 }
             }
         },
@@ -531,7 +532,7 @@ export const useRateCardStore = create(
                 try {
                     await supabase.from('rate_cards').delete().eq('id', itemId);
                 } catch (e) {
-                    console.error('Failed to delete item from DB:', e);
+                    logger.error('Failed to delete item from DB:', e);
                 }
             }
         },
@@ -601,7 +602,7 @@ export const useRateCardStore = create(
                         });
                     }
                 } catch (e) {
-                    console.error('Failed to seed rate card to DB:', e);
+                    logger.error('Failed to seed rate card to DB:', e);
                 }
             }
 
@@ -637,7 +638,7 @@ export const useRateCardStore = create(
                         });
                     }
                 } catch (e) {
-                    console.error('Failed to reset sections in DB:', e);
+                    logger.error('Failed to reset sections in DB:', e);
                 }
             }
 
@@ -784,7 +785,7 @@ export const useRateCardStore = create(
 
                 return { success: true, count: newItems.length + updatedItems.length };
             } catch (e) {
-                console.error('Failed to import CSV:', e);
+                logger.error('Failed to import CSV:', e);
                 return { success: false, error: e.message };
             }
         },

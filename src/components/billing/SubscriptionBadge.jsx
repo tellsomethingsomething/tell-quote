@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, AlertTriangle, CreditCard, Zap } from 'lucide-react';
 import { useOrganizationStore } from '../../store/organizationStore';
 import { checkSubscriptionAccess, ACCESS_LEVELS } from '../../services/subscriptionGuard';
+import logger from '../../utils/logger';
 
 export default function SubscriptionBadge({ onUpgrade }) {
     const { organization } = useOrganizationStore();
@@ -23,7 +24,7 @@ export default function SubscriptionBadge({ onUpgrade }) {
             const result = await checkSubscriptionAccess(organization.id);
             setStatus(result);
         } catch (err) {
-            console.error('Failed to check subscription:', err);
+            logger.error('Failed to check subscription:', err);
         } finally {
             setLoading(false);
         }

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Booking status options
 export const BOOKING_STATUS = {
@@ -174,7 +175,7 @@ export const useKitBookingStore = create(
                 get().subscribeToRealtime();
 
             } catch (e) {
-                console.error('Failed to load kit bookings:', e);
+                logger.error('Failed to load kit bookings:', e);
                 set({ loading: false, error: e.message });
             }
         },
@@ -332,7 +333,7 @@ export const useKitBookingStore = create(
                     conflicts: result.conflicting_bookings || [],
                 };
             } catch (e) {
-                console.error('Failed to check availability:', e);
+                logger.error('Failed to check availability:', e);
                 // Fallback: check locally
                 const { bookings } = get();
                 const conflicts = bookings.filter(b =>

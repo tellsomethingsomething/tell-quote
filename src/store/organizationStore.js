@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { generateShortId } from '../utils/generateId';
+import logger from '../utils/logger';
 
 // Organization roles
 export const ORG_ROLES = {
@@ -121,7 +122,7 @@ export const useOrganizationStore = create(
 
                 return currentOrg;
             } catch (error) {
-                console.error('Failed to initialize organization:', error);
+                logger.error('Failed to initialize organization:', error);
                 set({ error: error.message, loading: false });
                 return null;
             }
@@ -135,7 +136,7 @@ export const useOrganizationStore = create(
             const org = organizations.find(o => o.id === organizationId);
 
             if (!org) {
-                console.error('Organization not found');
+                logger.error('Organization not found');
                 return false;
             }
 
@@ -235,7 +236,7 @@ export const useOrganizationStore = create(
                     });
 
                 if (settingsError) {
-                    console.error('Failed to create org settings:', settingsError);
+                    logger.error('Failed to create org settings:', settingsError);
                 }
 
                 const orgWithRole = { ...org, userRole: 'owner' };
@@ -249,7 +250,7 @@ export const useOrganizationStore = create(
 
                 return org;
             } catch (error) {
-                console.error('Failed to create organization:', error);
+                logger.error('Failed to create organization:', error);
                 set({ error: error.message });
                 return null;
             }
@@ -280,7 +281,7 @@ export const useOrganizationStore = create(
 
                 return true;
             } catch (error) {
-                console.error('Failed to update organization:', error);
+                logger.error('Failed to update organization:', error);
                 return false;
             }
         },
@@ -328,7 +329,7 @@ export const useOrganizationStore = create(
 
                 set({ members, membersLoading: false });
             } catch (error) {
-                console.error('Failed to load members:', error);
+                logger.error('Failed to load members:', error);
                 set({ membersLoading: false });
             }
         },
@@ -357,7 +358,7 @@ export const useOrganizationStore = create(
 
                 return true;
             } catch (error) {
-                console.error('Failed to update member role:', error);
+                logger.error('Failed to update member role:', error);
                 return false;
             }
         },
@@ -394,7 +395,7 @@ export const useOrganizationStore = create(
 
                 return true;
             } catch (error) {
-                console.error('Failed to remove member:', error);
+                logger.error('Failed to remove member:', error);
                 return false;
             }
         },
@@ -424,7 +425,7 @@ export const useOrganizationStore = create(
 
                 set({ invitations: data || [], invitationsLoading: false });
             } catch (error) {
-                console.error('Failed to load invitations:', error);
+                logger.error('Failed to load invitations:', error);
                 set({ invitationsLoading: false });
             }
         },
@@ -495,13 +496,13 @@ export const useOrganizationStore = create(
                         },
                     });
                 } catch (emailError) {
-                    console.warn('Failed to send invitation email:', emailError);
+                    logger.warn('Failed to send invitation email:', emailError);
                     // Don't fail the invitation creation if email fails
                 }
 
                 return data;
             } catch (error) {
-                console.error('Failed to create invitation:', error);
+                logger.error('Failed to create invitation:', error);
                 set({ error: error.message });
                 return null;
             }
@@ -558,12 +559,12 @@ export const useOrganizationStore = create(
                         },
                     });
                 } catch (emailError) {
-                    console.warn('Failed to resend invitation email:', emailError);
+                    logger.warn('Failed to resend invitation email:', emailError);
                 }
 
                 return data;
             } catch (error) {
-                console.error('Failed to resend invitation:', error);
+                logger.error('Failed to resend invitation:', error);
                 return false;
             }
         },
@@ -590,7 +591,7 @@ export const useOrganizationStore = create(
 
                 return true;
             } catch (error) {
-                console.error('Failed to cancel invitation:', error);
+                logger.error('Failed to cancel invitation:', error);
                 return false;
             }
         },
@@ -653,7 +654,7 @@ export const useOrganizationStore = create(
                     organization: invitation.organization,
                 };
             } catch (error) {
-                console.error('Failed to accept invitation:', error);
+                logger.error('Failed to accept invitation:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -679,7 +680,7 @@ export const useOrganizationStore = create(
 
                 set({ subscription: data || null });
             } catch (error) {
-                console.error('Failed to load subscription:', error);
+                logger.error('Failed to load subscription:', error);
             }
         },
 

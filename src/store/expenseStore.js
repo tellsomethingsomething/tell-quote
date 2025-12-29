@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Expense categories
 export const EXPENSE_CATEGORIES = [
@@ -114,7 +115,7 @@ export const useExpenseStore = create(
 
                 set({ realtimeSubscription: subscription });
             } catch (error) {
-                console.error('Failed to initialize expenses:', error);
+                logger.error('Failed to initialize expenses:', error);
                 set({ error: error.message, loading: false });
             }
         },
@@ -122,7 +123,7 @@ export const useExpenseStore = create(
         // Create new expense
         createExpense: async (expenseData) => {
             if (!isSupabaseConfigured()) {
-                console.error('Supabase not configured');
+                logger.error('Supabase not configured');
                 return null;
             }
 
@@ -144,7 +145,7 @@ export const useExpenseStore = create(
                 set({ expenses: [created, ...get().expenses] });
                 return created;
             } catch (error) {
-                console.error('Failed to create expense:', error);
+                logger.error('Failed to create expense:', error);
                 return null;
             }
         },
@@ -168,7 +169,7 @@ export const useExpenseStore = create(
                 });
                 return true;
             } catch (error) {
-                console.error('Failed to update expense:', error);
+                logger.error('Failed to update expense:', error);
                 return false;
             }
         },
@@ -188,7 +189,7 @@ export const useExpenseStore = create(
                 set({ expenses: get().expenses.filter(exp => exp.id !== id) });
                 return true;
             } catch (error) {
-                console.error('Failed to delete expense:', error);
+                logger.error('Failed to delete expense:', error);
                 return false;
             }
         },

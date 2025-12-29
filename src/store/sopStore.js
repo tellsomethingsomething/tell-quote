@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Fixed category structure
 export const SOP_CATEGORIES = {
@@ -292,7 +293,7 @@ const saveCollapsedState = (state) => {
     try {
         localStorage.setItem('sop_collapsed_state', JSON.stringify(state));
     } catch (e) {
-        console.error('Failed to save collapsed state:', e);
+        logger.error('Failed to save collapsed state:', e);
     }
 };
 
@@ -349,7 +350,7 @@ export const useSopStore = create(
                     });
                 }
             } catch (err) {
-                console.error('Failed to load SOPs:', err);
+                logger.error('Failed to load SOPs:', err);
                 // Fall back to defaults if Supabase fails
                 set({ sops: DEFAULT_SOPS, isLoading: false });
             }
@@ -376,7 +377,7 @@ export const useSopStore = create(
                     .insert(toDbFormat(newSop));
                 if (error) throw error;
             } catch (err) {
-                console.error('Failed to sync SOP:', err);
+                logger.error('Failed to sync SOP:', err);
             }
 
             return newSop;
@@ -403,7 +404,7 @@ export const useSopStore = create(
                     if (error) throw error;
                 }
             } catch (err) {
-                console.error('Failed to update SOP:', err);
+                logger.error('Failed to update SOP:', err);
             }
         },
 
@@ -417,7 +418,7 @@ export const useSopStore = create(
                 const { error } = await supabase.from('sops').delete().eq('id', id);
                 if (error) throw error;
             } catch (err) {
-                console.error('Failed to delete SOP:', err);
+                logger.error('Failed to delete SOP:', err);
             }
         },
 

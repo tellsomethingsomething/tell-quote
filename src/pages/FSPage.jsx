@@ -9,6 +9,7 @@ import {
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
     ComposedChart
 } from 'recharts';
+import logger from '../utils/logger';
 
 const COLORS = {
     teal: '#8B5CF6',
@@ -43,7 +44,7 @@ export default function FSPage({ onExit }) {
                     setIsFullscreen(true);
                 }
             } catch (err) {
-                console.log('Fullscreen not available');
+                logger.debug('Fullscreen not available');
             }
         };
         enterFullscreen();
@@ -70,7 +71,7 @@ export default function FSPage({ onExit }) {
                 await containerRef.current.requestFullscreen();
             }
         } catch (err) {
-            console.log('Fullscreen toggle failed');
+            logger.debug('Fullscreen toggle failed');
         }
     };
 

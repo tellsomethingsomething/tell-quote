@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useActivityStore, ACTIVITY_TYPES, CALL_OUTCOMES, MEETING_TYPES, TASK_PRIORITIES } from '../../store/activityStore';
 import { useContactStore } from '../../store/contactStore';
+import logger from '../../utils/logger';
 
 export default function LogActivityModal({
     isOpen,
@@ -108,7 +109,7 @@ export default function LogActivityModal({
             }
             onClose();
         } catch (error) {
-            console.error('Failed to log activity:', error);
+            logger.error('Failed to log activity:', error);
         } finally {
             setSaving(false);
         }

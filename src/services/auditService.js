@@ -5,6 +5,7 @@
 
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useOrganizationStore } from '../store/organizationStore';
+import logger from '../utils/logger';
 
 // Action types
 export const AUDIT_ACTIONS = {
@@ -74,7 +75,7 @@ export async function logAuditEvent({
     metadata = null,
 }) {
     if (!isSupabaseConfigured()) {
-        console.log('[Audit]', action, entityType, entityId, entityName);
+        logger.debug('[Audit]', action, entityType, entityId, entityName);
         return;
     }
 
@@ -102,10 +103,10 @@ export async function logAuditEvent({
             .insert(auditLog);
 
         if (error) {
-            console.error('Failed to log audit event:', error);
+            logger.error('Failed to log audit event:', error);
         }
     } catch (e) {
-        console.error('Audit logging error:', e);
+        logger.error('Audit logging error:', e);
     }
 }
 
@@ -262,7 +263,7 @@ export async function fetchAuditLogs({
 
         return { data: data || [], count: count || 0 };
     } catch (e) {
-        console.error('Failed to fetch audit logs:', e);
+        logger.error('Failed to fetch audit logs:', e);
         return { data: [], count: 0 };
     }
 }

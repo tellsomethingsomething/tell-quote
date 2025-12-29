@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuthStore } from './authStore';
+import logger from '../utils/logger';
 
 // Low token warning threshold
 const LOW_TOKEN_THRESHOLD = 1000;
@@ -96,7 +97,7 @@ export const useAIUsageStore = create(
                     lastUpdated: new Date().toISOString(),
                 });
             } catch (error) {
-                console.error('Failed to initialize AI usage:', error);
+                logger.error('Failed to initialize AI usage:', error);
                 set({ error: error.message, loading: false });
             }
         },
@@ -137,7 +138,7 @@ export const useAIUsageStore = create(
                     lastUpdated: new Date().toISOString(),
                 });
             } catch (error) {
-                console.error('Failed to refresh balance:', error);
+                logger.error('Failed to refresh balance:', error);
             }
         },
 

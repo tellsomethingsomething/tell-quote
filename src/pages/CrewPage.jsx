@@ -3,6 +3,7 @@ import { useCrewStore, CREW_DEPARTMENTS, AVAILABILITY_STATUS } from '../store/cr
 import { useCrewBookingStore } from '../store/crewBookingStore';
 import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
 import CrewBookingCalendar from '../components/crew/CrewBookingCalendar';
+import logger from '../utils/logger';
 
 // Crew Card Component
 function CrewCard({ member, onSelect, onToggleFavorite }) {
@@ -172,7 +173,7 @@ function NewCrewModal({ isOpen, onClose }) {
                 country: '',
             });
         } catch (err) {
-            console.error('Failed to add crew:', err);
+            logger.error('Failed to add crew:', err);
             alert('Failed to add crew member');
         } finally {
             setSaving(false);

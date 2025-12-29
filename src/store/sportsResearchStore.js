@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Sports we track
 export const SPORTS = {
@@ -173,7 +174,7 @@ export const useSportsResearchStore = create(
                     await get().seedKeyEvents();
                 }
             } catch (e) {
-                console.error('Failed to load sports events:', e);
+                logger.error('Failed to load sports events:', e);
                 set({ loading: false, error: e.message });
             }
         },
@@ -198,7 +199,7 @@ export const useSportsResearchStore = create(
                     lastResearchDate: new Date().toISOString(),
                 });
             } catch (e) {
-                console.error('Failed to seed events:', e);
+                logger.error('Failed to seed events:', e);
                 set({ loading: false, error: e.message });
             }
         },
@@ -223,7 +224,7 @@ export const useSportsResearchStore = create(
 
                 return newEvent;
             } catch (e) {
-                console.error('Failed to add event:', e);
+                logger.error('Failed to add event:', e);
                 return null;
             }
         },
@@ -246,7 +247,7 @@ export const useSportsResearchStore = create(
                     ),
                 }));
             } catch (e) {
-                console.error('Failed to update event:', e);
+                logger.error('Failed to update event:', e);
             }
         },
 
@@ -268,7 +269,7 @@ export const useSportsResearchStore = create(
                     ),
                 }));
             } catch (e) {
-                console.error('Failed to update event status:', e);
+                logger.error('Failed to update event status:', e);
             }
         },
 
@@ -296,7 +297,7 @@ export const useSportsResearchStore = create(
                     ),
                 }));
             } catch (e) {
-                console.error('Failed to convert event:', e);
+                logger.error('Failed to convert event:', e);
             }
         },
 

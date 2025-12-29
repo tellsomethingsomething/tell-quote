@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useQuoteTemplateStore } from '../../store/quoteTemplateStore';
+import logger from '../../utils/logger';
 
 const CATEGORIES = [
     { id: 'broadcast', label: 'Broadcast' },
@@ -51,7 +52,7 @@ export default function SaveAsTemplateModal({ isOpen, onClose }) {
             await createTemplate(templateData);
             onClose(true); // Pass true to indicate success
         } catch (error) {
-            console.error('Failed to save template:', error);
+            logger.error('Failed to save template:', error);
         } finally {
             setSaving(false);
         }

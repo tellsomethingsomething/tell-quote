@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 const ACTIVITY_STORAGE_KEY = 'tell_activities';
 
@@ -18,7 +19,7 @@ function saveActivitiesLocal(activities) {
     try {
         localStorage.setItem(ACTIVITY_STORAGE_KEY, JSON.stringify(activities));
     } catch (e) {
-        console.error('Failed to save activities locally:', e);
+        logger.error('Failed to save activities locally:', e);
     }
 }
 
@@ -143,7 +144,7 @@ export const useActivityStore = create(
                 saveActivitiesLocal(activities);
                 set({ activities, loading: false, initialized: true, error: null });
             } catch (e) {
-                console.error('Failed to load activities:', e);
+                logger.error('Failed to load activities:', e);
                 set({ loading: false, error: e.message, initialized: true });
             }
         },
@@ -237,7 +238,7 @@ export const useActivityStore = create(
 
                 return newActivity;
             } catch (e) {
-                console.error('Failed to add activity:', e);
+                logger.error('Failed to add activity:', e);
                 set({ error: e.message });
                 return null;
             }
@@ -324,7 +325,7 @@ export const useActivityStore = create(
 
                 return true;
             } catch (e) {
-                console.error('Failed to update activity:', e);
+                logger.error('Failed to update activity:', e);
                 set({ error: e.message });
                 return false;
             }
@@ -369,7 +370,7 @@ export const useActivityStore = create(
 
                 return true;
             } catch (e) {
-                console.error('Failed to delete activity:', e);
+                logger.error('Failed to delete activity:', e);
                 set({ error: e.message });
                 return false;
             }

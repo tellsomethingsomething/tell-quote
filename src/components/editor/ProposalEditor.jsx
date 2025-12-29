@@ -5,6 +5,7 @@ import { generateAIProposal, generateFallbackProposal, gatherQuoteContext } from
 import { SECTION_ORDER, SECTIONS } from '../../data/sections';
 import { useFeatureAccess, FEATURES } from '../../hooks/useSubscription';
 import { Zap, Lock } from 'lucide-react';
+import logger from '../../utils/logger';
 
 export default function ProposalEditor() {
     const { quote, setProposal } = useQuoteStore();
@@ -79,7 +80,7 @@ export default function ProposalEditor() {
 
             setProposal({ proposalText, isGenerated: true });
         } catch (err) {
-            console.error('Proposal generation failed:', err);
+            logger.error('Proposal generation failed:', err);
             // Use fallback
             const quoteContext = gatherQuoteContext(quote, quote.currency, settings);
             const result = generateFallbackProposal(quoteContext);

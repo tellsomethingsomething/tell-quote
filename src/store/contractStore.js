@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Contract statuses
 export const CONTRACT_STATUSES = {
@@ -179,7 +180,7 @@ export const useContractStore = create(
 
                 set({ realtimeSubscription: subscription });
             } catch (error) {
-                console.error('Failed to initialize contracts:', error);
+                logger.error('Failed to initialize contracts:', error);
                 set({ error: error.message, loading: false });
             }
         },
@@ -187,7 +188,7 @@ export const useContractStore = create(
         // Create new contract
         createContract: async (contractData) => {
             if (!isSupabaseConfigured()) {
-                console.error('Supabase not configured');
+                logger.error('Supabase not configured');
                 return null;
             }
 
@@ -213,7 +214,7 @@ export const useContractStore = create(
                 set({ contracts: [created, ...state.contracts] });
                 return created;
             } catch (error) {
-                console.error('Failed to create contract:', error);
+                logger.error('Failed to create contract:', error);
                 return null;
             }
         },
@@ -237,7 +238,7 @@ export const useContractStore = create(
                 });
                 return true;
             } catch (error) {
-                console.error('Failed to update contract:', error);
+                logger.error('Failed to update contract:', error);
                 return false;
             }
         },
@@ -269,7 +270,7 @@ export const useContractStore = create(
                 set({ contracts: get().contracts.filter(c => c.id !== id) });
                 return true;
             } catch (error) {
-                console.error('Failed to delete contract:', error);
+                logger.error('Failed to delete contract:', error);
                 return false;
             }
         },

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Department options
 export const CREW_DEPARTMENTS = {
@@ -172,7 +173,7 @@ export const useCrewStore = create(
                 get().subscribeToRealtime();
 
             } catch (e) {
-                console.error('Failed to load crew:', e);
+                logger.error('Failed to load crew:', e);
                 set({ loading: false, error: e.message });
             }
         },

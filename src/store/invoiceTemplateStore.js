@@ -3,6 +3,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import { DEFAULT_TEMPLATE, MODULE_TYPES, PRESET_TEMPLATES } from '../data/invoiceModules';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { generateId } from '../utils/generateId';
+import logger from '../utils/logger';
 
 const STORAGE_KEY = 'tell_invoice_templates';
 const TEMPLATES_VERSION = 4; // Increment this when adding new preset templates
@@ -43,7 +44,7 @@ function loadTemplates() {
             return parsed;
         }
     } catch (e) {
-        console.error('Failed to load invoice templates:', e);
+        logger.error('Failed to load invoice templates:', e);
     }
     return { templates: generatePresetTemplates(), activeTemplateId: 'default', version: TEMPLATES_VERSION };
 }
@@ -53,7 +54,7 @@ function saveTemplates(data) {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...data, version: TEMPLATES_VERSION }));
     } catch (e) {
-        console.error('Failed to save invoice templates:', e);
+        logger.error('Failed to save invoice templates:', e);
     }
 }
 
@@ -74,9 +75,9 @@ async function syncTemplateToSupabase(template) {
                 updated_at: new Date().toISOString(),
             }, { onConflict: 'template_id' });
 
-        if (error) console.error('Failed to sync template:', error);
+        if (error) logger.error('Failed to sync template:', error);
     } catch (e) {
-        console.error('Error syncing template to Supabase:', e);
+        logger.error('Error syncing template to Supabase:', e);
     }
 }
 
@@ -90,7 +91,7 @@ async function deleteTemplateFromSupabase(templateId) {
             .delete()
             .eq('template_id', templateId);
     } catch (e) {
-        console.error('Error deleting template from Supabase:', e);
+        logger.error('Error deleting template from Supabase:', e);
     }
 }
 
@@ -115,7 +116,7 @@ async function saveActiveTemplatePreference(templateId) {
                 .eq('id', existing.id);
         }
     } catch (e) {
-        console.error('Error saving active template preference:', e);
+        logger.error('Error saving active template preference:', e);
     }
 }
 
@@ -560,7 +561,7 @@ export const useInvoiceTemplateStore = create(
                         saveTemplates({ templates: mergedTemplates, activeTemplateId });
                     }
                 } catch (e) {
-                    console.error('Error loading invoice templates from Supabase:', e);
+                    logger.error('Error loading invoice templates from Supabase:', e);
                 }
             },
         };

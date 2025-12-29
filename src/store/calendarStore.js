@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // API configurations
 const GRAPH_API_BASE = 'https://graph.microsoft.com/v1.0';
@@ -109,7 +110,7 @@ export const useCalendarStore = create(
 
                 set({ events: data || [], isLoading: false });
             } catch (error) {
-                console.error('Failed to load events:', error);
+                logger.error('Failed to load events:', error);
                 set({ isLoading: false, error: error.message });
             }
         },
@@ -152,7 +153,7 @@ export const useCalendarStore = create(
 
                 return { success: true, event: data };
             } catch (error) {
-                console.error('Failed to create event:', error);
+                logger.error('Failed to create event:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -182,7 +183,7 @@ export const useCalendarStore = create(
 
                 return { success: true, event: data };
             } catch (error) {
-                console.error('Failed to update event:', error);
+                logger.error('Failed to update event:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -209,7 +210,7 @@ export const useCalendarStore = create(
 
                 return { success: true };
             } catch (error) {
-                console.error('Failed to delete event:', error);
+                logger.error('Failed to delete event:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -249,7 +250,7 @@ export const useCalendarStore = create(
                     }
                 }
             } catch (error) {
-                console.error('Failed to check Microsoft connection:', error);
+                logger.error('Failed to check Microsoft connection:', error);
             }
         },
 
@@ -303,7 +304,7 @@ export const useCalendarStore = create(
 
                 return { success: true };
             } catch (error) {
-                console.error('Microsoft OAuth callback failed:', error);
+                logger.error('Microsoft OAuth callback failed:', error);
                 set({ error: error.message, syncStatus: 'error' });
                 return { success: false, error: error.message };
             }
@@ -333,7 +334,7 @@ export const useCalendarStore = create(
                 const tokens = await response.json();
                 await get().storeMicrosoftTokens(tokens);
             } catch (error) {
-                console.error('Failed to refresh Microsoft token:', error);
+                logger.error('Failed to refresh Microsoft token:', error);
                 set({ syncStatus: 'error', error: 'Session expired. Please reconnect.' });
             }
         },
@@ -487,7 +488,7 @@ export const useCalendarStore = create(
 
                 return { success: true };
             } catch (error) {
-                console.error('Failed to sync from Microsoft:', error);
+                logger.error('Failed to sync from Microsoft:', error);
                 set({ isSyncing: false, syncStatus: 'error', error: error.message });
                 return { success: false, error: error.message };
             }
@@ -549,7 +550,7 @@ export const useCalendarStore = create(
                     .eq('id', event.id);
 
             } catch (error) {
-                console.error('Failed to sync event to Microsoft:', error);
+                logger.error('Failed to sync event to Microsoft:', error);
             }
         },
 
@@ -585,7 +586,7 @@ export const useCalendarStore = create(
                     body: JSON.stringify(msEvent),
                 });
             } catch (error) {
-                console.error('Failed to update Microsoft event:', error);
+                logger.error('Failed to update Microsoft event:', error);
             }
         },
 
@@ -601,7 +602,7 @@ export const useCalendarStore = create(
                     },
                 });
             } catch (error) {
-                console.error('Failed to delete Microsoft event:', error);
+                logger.error('Failed to delete Microsoft event:', error);
             }
         },
 
@@ -637,7 +638,7 @@ export const useCalendarStore = create(
                     }
                 }
             } catch (error) {
-                console.error('Failed to check Google connection:', error);
+                logger.error('Failed to check Google connection:', error);
             }
         },
 
@@ -684,7 +685,7 @@ export const useCalendarStore = create(
 
                 return { success: true };
             } catch (error) {
-                console.error('Google OAuth callback failed:', error);
+                logger.error('Google OAuth callback failed:', error);
                 set({ error: error.message, googleSyncStatus: 'error' });
                 return { success: false, error: error.message };
             }
@@ -714,7 +715,7 @@ export const useCalendarStore = create(
                 const tokens = await response.json();
                 await get().storeGoogleTokens(tokens);
             } catch (error) {
-                console.error('Failed to refresh Google token:', error);
+                logger.error('Failed to refresh Google token:', error);
                 set({ googleSyncStatus: 'error', error: 'Session expired. Please reconnect.' });
             }
         },
@@ -853,7 +854,7 @@ export const useCalendarStore = create(
 
                 return { success: true };
             } catch (error) {
-                console.error('Failed to sync from Google:', error);
+                logger.error('Failed to sync from Google:', error);
                 set({ isSyncing: false, googleSyncStatus: 'error', error: error.message });
                 return { success: false, error: error.message };
             }
@@ -907,7 +908,7 @@ export const useCalendarStore = create(
                     .eq('id', event.id);
 
             } catch (error) {
-                console.error('Failed to sync event to Google:', error);
+                logger.error('Failed to sync event to Google:', error);
             }
         },
 
@@ -940,7 +941,7 @@ export const useCalendarStore = create(
                     }
                 );
             } catch (error) {
-                console.error('Failed to update Google event:', error);
+                logger.error('Failed to update Google event:', error);
             }
         },
 
@@ -959,7 +960,7 @@ export const useCalendarStore = create(
                     }
                 );
             } catch (error) {
-                console.error('Failed to delete Google event:', error);
+                logger.error('Failed to delete Google event:', error);
             }
         },
 

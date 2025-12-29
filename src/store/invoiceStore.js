@@ -3,6 +3,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { fetchLiveRates } from '../utils/currency';
 import { useSettingsStore } from './settingsStore';
+import logger from '../utils/logger';
 
 // Invoice statuses
 export const INVOICE_STATUSES = {
@@ -160,7 +161,7 @@ export const useInvoiceStore = create(
 
                 set({ realtimeSubscription: subscription });
             } catch (error) {
-                console.error('Failed to initialize invoices:', error);
+                logger.error('Failed to initialize invoices:', error);
                 set({ error: error.message, loading: false });
             }
         },
@@ -168,7 +169,7 @@ export const useInvoiceStore = create(
         // Create new invoice
         createInvoice: async (invoiceData) => {
             if (!isSupabaseConfigured()) {
-                console.error('Supabase not configured');
+                logger.error('Supabase not configured');
                 return null;
             }
 
@@ -208,7 +209,7 @@ export const useInvoiceStore = create(
                 set({ invoices: [created, ...state.invoices] });
                 return created;
             } catch (error) {
-                console.error('Failed to create invoice:', error);
+                logger.error('Failed to create invoice:', error);
                 return null;
             }
         },
@@ -294,7 +295,7 @@ export const useInvoiceStore = create(
                 });
                 return true;
             } catch (error) {
-                console.error('Failed to update invoice:', error);
+                logger.error('Failed to update invoice:', error);
                 return false;
             }
         },
@@ -373,7 +374,7 @@ export const useInvoiceStore = create(
                 set({ invoices: get().invoices.filter(inv => inv.id !== id) });
                 return true;
             } catch (error) {
-                console.error('Failed to delete invoice:', error);
+                logger.error('Failed to delete invoice:', error);
                 return false;
             }
         },

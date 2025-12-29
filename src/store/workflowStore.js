@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Workflow trigger types
 export const TRIGGER_TYPES = {
@@ -99,7 +100,7 @@ export const useWorkflowStore = create(
 
                 set({ workflows: data || [], isLoading: false });
             } catch (error) {
-                console.error('Failed to load workflows:', error);
+                logger.error('Failed to load workflows:', error);
                 set({ isLoading: false, error: error.message });
             }
         },
@@ -137,7 +138,7 @@ export const useWorkflowStore = create(
 
                 return { success: true, workflow: data };
             } catch (error) {
-                console.error('Failed to create workflow:', error);
+                logger.error('Failed to create workflow:', error);
                 set({ isSaving: false, error: error.message });
                 return { success: false, error: error.message };
             }
@@ -164,7 +165,7 @@ export const useWorkflowStore = create(
 
                 return { success: true, workflow: data };
             } catch (error) {
-                console.error('Failed to update workflow:', error);
+                logger.error('Failed to update workflow:', error);
                 set({ isSaving: false, error: error.message });
                 return { success: false, error: error.message };
             }
@@ -186,7 +187,7 @@ export const useWorkflowStore = create(
 
                 return { success: true };
             } catch (error) {
-                console.error('Failed to delete workflow:', error);
+                logger.error('Failed to delete workflow:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -238,7 +239,7 @@ export const useWorkflowStore = create(
 
                 return results;
             } catch (error) {
-                console.error('Failed to evaluate trigger:', error);
+                logger.error('Failed to evaluate trigger:', error);
                 return [];
             }
         },
@@ -278,7 +279,7 @@ export const useWorkflowStore = create(
 
                 return true;
             } catch (error) {
-                console.error('Error checking execution eligibility:', error);
+                logger.error('Error checking execution eligibility:', error);
                 return false;
             }
         },
@@ -333,7 +334,7 @@ export const useWorkflowStore = create(
 
                 return { success, actions: actionResults };
             } catch (error) {
-                console.error('Failed to execute workflow:', error);
+                logger.error('Failed to execute workflow:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -358,7 +359,7 @@ export const useWorkflowStore = create(
                 set({ executions: data || [] });
                 return data || [];
             } catch (error) {
-                console.error('Failed to load executions:', error);
+                logger.error('Failed to load executions:', error);
                 return [];
             }
         },
@@ -489,7 +490,7 @@ async function createTask(entity, config, context) {
 async function sendEmail(entity, config, context) {
     // This would integrate with the email system
     // For now, just log that an email should be sent
-    console.log('Send email action:', config);
+    logger.debug('Send email action:', config);
     return { queued: true };
 }
 
@@ -511,7 +512,7 @@ async function updateEntityStatus(entity, config, context) {
 
 async function notifyUser(entity, config, context) {
     // This would integrate with a notification system
-    console.log('Notify user action:', config);
+    logger.debug('Notify user action:', config);
     return { notified: true };
 }
 

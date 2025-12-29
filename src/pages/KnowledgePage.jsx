@@ -5,6 +5,7 @@ import { useSportsResearchStore, SPORTS, SPORTS_CONFIG, TARGET_REGIONS, RESEARCH
 import { useOpportunityStore, REGIONS } from '../store/opportunityStore';
 import { useSettingsStore } from '../store/settingsStore';
 import ResearcherTimeline from '../components/timeline/ResearcherTimeline';
+import logger from '../utils/logger';
 
 // Tag input component
 function TagInput({ tags, onChange, placeholder = "Add tags..." }) {
@@ -903,7 +904,7 @@ export default function KnowledgePage() {
     const handleRejectLearning = async (learningId) => {
         // For now, just delete - could also archive
         // Would need to add deleteLearning to store
-        console.log('Reject learning:', learningId);
+        logger.debug('Reject learning:', learningId);
     };
 
     if (loading) {

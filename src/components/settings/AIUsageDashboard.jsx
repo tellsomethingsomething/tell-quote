@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAIUsageStore } from '../../store/aiUsageStore';
 import { createTokenPackCheckoutSession } from '../../services/billingService';
 import { formatDistanceToNow } from 'date-fns';
+import logger from '../../utils/logger';
 
 // Token pack options
 const TOKEN_PACKS = [
@@ -38,7 +39,7 @@ export default function AIUsageDashboard() {
         try {
             await createTokenPackCheckoutSession(tokenAmount);
         } catch (error) {
-            console.error('Failed to create checkout:', error);
+            logger.error('Failed to create checkout:', error);
             alert('Failed to start checkout. Please try again.');
         } finally {
             setPurchaseLoading(null);

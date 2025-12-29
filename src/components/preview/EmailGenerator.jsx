@@ -4,6 +4,7 @@ import { useSettingsStore } from '../../store/settingsStore';
 import { calculateGrandTotalWithFees } from '../../utils/calculations';
 import { formatCurrency } from '../../utils/currency';
 import { useFeatureAccess, FEATURES } from '../../hooks/useSubscription';
+import logger from '../../utils/logger';
 
 export default function EmailGenerator() {
     const { quote } = useQuoteStore();
@@ -153,7 +154,7 @@ Keep it under 120 words. No bullet points.`;
                 setGeneratedEmail(parsed);
             }
         } catch (error) {
-            console.error('Email generation failed:', error);
+            logger.error('Email generation failed:', error);
             if (error.code === 'INSUFFICIENT_TOKENS') {
                 setTokenError('Insufficient AI tokens. Purchase more tokens in Settings.');
             }

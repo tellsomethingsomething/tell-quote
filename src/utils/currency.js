@@ -1,4 +1,5 @@
 import { FALLBACK_RATES, CURRENCIES } from '../data/currencies';
+import logger from './logger';
 
 const CACHE_KEY = 'exchange_rates_cache';
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
@@ -14,7 +15,7 @@ function getCachedRates() {
             }
         }
     } catch (e) {
-        console.warn('Failed to read cached rates:', e);
+        logger.warn('Failed to read cached rates:', e);
     }
     return null;
 }
@@ -27,7 +28,7 @@ function cacheRates(rates) {
             timestamp: Date.now(),
         }));
     } catch (e) {
-        console.warn('Failed to cache rates:', e);
+        logger.warn('Failed to cache rates:', e);
     }
 }
 
@@ -54,7 +55,7 @@ export async function fetchLiveRates() {
         cacheRates(rates);
         return { rates, timestamp: Date.now() };
     } catch (e) {
-        console.warn('Failed to fetch live rates, using fallback:', e);
+        logger.warn('Failed to fetch live rates, using fallback:', e);
         return { rates: FALLBACK_RATES, timestamp: null };
     }
 }

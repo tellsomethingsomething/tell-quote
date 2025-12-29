@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Event types for the timeline
 export const EVENT_TYPES = {
@@ -280,7 +281,7 @@ export const useTimelineStore = create(
 
                 set({ events, loading: false, error: null });
             } catch (e) {
-                console.error('Failed to load timeline events:', e);
+                logger.error('Failed to load timeline events:', e);
                 set({ loading: false, error: e.message });
             }
         },
@@ -329,7 +330,7 @@ export const useTimelineStore = create(
 
                 return newEvent;
             } catch (e) {
-                console.error('Failed to add research finding:', e);
+                logger.error('Failed to add research finding:', e);
                 set({ error: e.message });
                 return null;
             }
@@ -529,7 +530,7 @@ export const useTimelineStore = create(
                         .update({ related_opportunity_id: opportunityId })
                         .eq('id', memoryId);
                 } catch (e) {
-                    console.error('Failed to update memory with opportunity ID:', e);
+                    logger.error('Failed to update memory with opportunity ID:', e);
                 }
             }
 

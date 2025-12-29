@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Sequence status
 export const SEQUENCE_STATUS = {
@@ -84,7 +85,7 @@ export const useEmailSequenceStore = create(
 
                 set({ sequences: data || [], isLoading: false });
             } catch (error) {
-                console.error('Failed to load sequences:', error);
+                logger.error('Failed to load sequences:', error);
                 set({ isLoading: false, error: error.message });
             }
         },
@@ -109,7 +110,7 @@ export const useEmailSequenceStore = create(
                 set({ selectedSequence: data });
                 return { success: true, sequence: data };
             } catch (error) {
-                console.error('Failed to get sequence:', error);
+                logger.error('Failed to get sequence:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -145,7 +146,7 @@ export const useEmailSequenceStore = create(
                 set({ sequences: [data, ...get().sequences], isSaving: false });
                 return { success: true, sequence: data };
             } catch (error) {
-                console.error('Failed to create sequence:', error);
+                logger.error('Failed to create sequence:', error);
                 set({ isSaving: false, error: error.message });
                 return { success: false, error: error.message };
             }
@@ -177,7 +178,7 @@ export const useEmailSequenceStore = create(
 
                 return { success: true, sequence: data };
             } catch (error) {
-                console.error('Failed to update sequence:', error);
+                logger.error('Failed to update sequence:', error);
                 set({ isSaving: false, error: error.message });
                 return { success: false, error: error.message };
             }
@@ -199,7 +200,7 @@ export const useEmailSequenceStore = create(
 
                 return { success: true };
             } catch (error) {
-                console.error('Failed to delete sequence:', error);
+                logger.error('Failed to delete sequence:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -255,7 +256,7 @@ export const useEmailSequenceStore = create(
 
                 return { success: true, step: data };
             } catch (error) {
-                console.error('Failed to add step:', error);
+                logger.error('Failed to add step:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -285,7 +286,7 @@ export const useEmailSequenceStore = create(
 
                 return { success: true, step: data };
             } catch (error) {
-                console.error('Failed to update step:', error);
+                logger.error('Failed to update step:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -311,7 +312,7 @@ export const useEmailSequenceStore = create(
 
                 return { success: true };
             } catch (error) {
-                console.error('Failed to delete step:', error);
+                logger.error('Failed to delete step:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -331,7 +332,7 @@ export const useEmailSequenceStore = create(
 
                 return { success: true };
             } catch (error) {
-                console.error('Failed to reorder steps:', error);
+                logger.error('Failed to reorder steps:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -356,7 +357,7 @@ export const useEmailSequenceStore = create(
                 set({ enrollments: data || [] });
                 return { success: true, enrollments: data };
             } catch (error) {
-                console.error('Failed to load enrollments:', error);
+                logger.error('Failed to load enrollments:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -401,7 +402,7 @@ export const useEmailSequenceStore = create(
                 set({ enrollments: [data, ...get().enrollments] });
                 return { success: true, enrollment: data };
             } catch (error) {
-                console.error('Failed to enroll contact:', error);
+                logger.error('Failed to enroll contact:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -429,7 +430,7 @@ export const useEmailSequenceStore = create(
 
                 return { success: true };
             } catch (error) {
-                console.error('Failed to unenroll contact:', error);
+                logger.error('Failed to unenroll contact:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -464,7 +465,7 @@ export const useEmailSequenceStore = create(
                     failed: results.filter(r => !r.success).length,
                 };
             } catch (error) {
-                console.error('Failed to enroll opportunity contacts:', error);
+                logger.error('Failed to enroll opportunity contacts:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -500,7 +501,7 @@ export const useEmailSequenceStore = create(
 
                 return { success: true, processed: dueEnrollments?.length || 0 };
             } catch (error) {
-                console.error('Failed to process enrollments:', error);
+                logger.error('Failed to process enrollments:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -563,7 +564,7 @@ export const useEmailSequenceStore = create(
                     }
                 }
             } catch (error) {
-                console.error('Failed to process enrollment:', error);
+                logger.error('Failed to process enrollment:', error);
             }
         },
 
@@ -572,7 +573,7 @@ export const useEmailSequenceStore = create(
             // For now, return a mock success
             try {
                 // In real implementation, use emailStore.sendEmail()
-                console.log(`Would send email to ${enrollment.contact_email}:`, step.subject);
+                logger.debug(`Would send email to ${enrollment.contact_email}:`, step.subject);
 
                 return {
                     success: true,
@@ -617,7 +618,7 @@ export const useEmailSequenceStore = create(
                     replyRate: totalSent > 0 ? Math.round((replied / totalSent) * 100) : 0,
                 };
             } catch (error) {
-                console.error('Failed to get sequence stats:', error);
+                logger.error('Failed to get sequence stats:', error);
                 return null;
             }
         },

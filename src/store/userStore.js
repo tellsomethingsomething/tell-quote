@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // All available tabs/permissions
 export const ALL_TABS = [
@@ -35,7 +36,7 @@ export const useUserStore = create((set, get) => ({
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('Failed to fetch users:', error);
+                logger.error('Failed to fetch users:', error);
                 set({ error: error.message, isLoading: false });
                 return;
             }
@@ -54,7 +55,7 @@ export const useUserStore = create((set, get) => ({
 
             set({ users, isLoading: false });
         } catch (e) {
-            console.error('Failed to fetch users:', e);
+            logger.error('Failed to fetch users:', e);
             set({ error: e.message, isLoading: false });
         }
     },
@@ -86,7 +87,7 @@ export const useUserStore = create((set, get) => ({
                 .eq('id', userId);
 
             if (error) {
-                console.error('Failed to approve user:', error);
+                logger.error('Failed to approve user:', error);
                 set({ error: error.message, isLoading: false });
                 return false;
             }
@@ -95,7 +96,7 @@ export const useUserStore = create((set, get) => ({
             await get().fetchUsers();
             return true;
         } catch (e) {
-            console.error('Failed to approve user:', e);
+            logger.error('Failed to approve user:', e);
             set({ error: e.message, isLoading: false });
             return false;
         }
@@ -116,7 +117,7 @@ export const useUserStore = create((set, get) => ({
                 .eq('id', userId);
 
             if (error) {
-                console.error('Failed to suspend user:', error);
+                logger.error('Failed to suspend user:', error);
                 set({ error: error.message, isLoading: false });
                 return false;
             }
@@ -124,7 +125,7 @@ export const useUserStore = create((set, get) => ({
             await get().fetchUsers();
             return true;
         } catch (e) {
-            console.error('Failed to suspend user:', e);
+            logger.error('Failed to suspend user:', e);
             set({ error: e.message, isLoading: false });
             return false;
         }
@@ -145,7 +146,7 @@ export const useUserStore = create((set, get) => ({
                 .eq('id', userId);
 
             if (error) {
-                console.error('Failed to reactivate user:', error);
+                logger.error('Failed to reactivate user:', error);
                 set({ error: error.message, isLoading: false });
                 return false;
             }
@@ -153,7 +154,7 @@ export const useUserStore = create((set, get) => ({
             await get().fetchUsers();
             return true;
         } catch (e) {
-            console.error('Failed to reactivate user:', e);
+            logger.error('Failed to reactivate user:', e);
             set({ error: e.message, isLoading: false });
             return false;
         }
@@ -174,7 +175,7 @@ export const useUserStore = create((set, get) => ({
                 .eq('id', userId);
 
             if (error) {
-                console.error('Failed to update permissions:', error);
+                logger.error('Failed to update permissions:', error);
                 set({ error: error.message, isLoading: false });
                 return false;
             }
@@ -182,7 +183,7 @@ export const useUserStore = create((set, get) => ({
             await get().fetchUsers();
             return true;
         } catch (e) {
-            console.error('Failed to update permissions:', e);
+            logger.error('Failed to update permissions:', e);
             set({ error: e.message, isLoading: false });
             return false;
         }
@@ -210,7 +211,7 @@ export const useUserStore = create((set, get) => ({
                 .eq('id', userId);
 
             if (error) {
-                console.error('Failed to update role:', error);
+                logger.error('Failed to update role:', error);
                 set({ error: error.message, isLoading: false });
                 return false;
             }
@@ -218,7 +219,7 @@ export const useUserStore = create((set, get) => ({
             await get().fetchUsers();
             return true;
         } catch (e) {
-            console.error('Failed to update role:', e);
+            logger.error('Failed to update role:', e);
             set({ error: e.message, isLoading: false });
             return false;
         }
@@ -239,7 +240,7 @@ export const useUserStore = create((set, get) => ({
                 .eq('id', userId);
 
             if (error) {
-                console.error('Failed to delete user:', error);
+                logger.error('Failed to delete user:', error);
                 set({ error: error.message, isLoading: false });
                 return false;
             }
@@ -247,7 +248,7 @@ export const useUserStore = create((set, get) => ({
             await get().fetchUsers();
             return true;
         } catch (e) {
-            console.error('Failed to delete user:', e);
+            logger.error('Failed to delete user:', e);
             set({ error: e.message, isLoading: false });
             return false;
         }

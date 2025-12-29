@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 const CONTACTS_KEY = 'tell_crm_contacts';
 
@@ -25,7 +26,7 @@ function loadLocal(key, defaultValue = []) {
         const saved = localStorage.getItem(key);
         return saved ? JSON.parse(saved) : defaultValue;
     } catch (e) {
-        console.error(`Failed to load ${key}:`, e);
+        logger.error(`Failed to load ${key}:`, e);
         return defaultValue;
     }
 }
@@ -35,7 +36,7 @@ function saveLocal(key, data) {
     try {
         localStorage.setItem(key, JSON.stringify(data));
     } catch (e) {
-        console.error(`Failed to save ${key}:`, e);
+        logger.error(`Failed to save ${key}:`, e);
     }
 }
 
@@ -117,7 +118,7 @@ export const useContactStore = create(
                 saveLocal(CONTACTS_KEY, contacts);
                 set({ contacts, loading: false, initialized: true, error: null });
             } catch (e) {
-                console.error('Failed to initialize contacts:', e);
+                logger.error('Failed to initialize contacts:', e);
                 set({ loading: false, error: e.message, initialized: true });
             }
         },
@@ -222,7 +223,7 @@ export const useContactStore = create(
 
                 return newContact;
             } catch (e) {
-                console.error('Failed to add contact:', e);
+                logger.error('Failed to add contact:', e);
                 set({ error: e.message });
                 return null;
             }
@@ -289,7 +290,7 @@ export const useContactStore = create(
 
                 return true;
             } catch (e) {
-                console.error('Failed to update contact:', e);
+                logger.error('Failed to update contact:', e);
                 set({ error: e.message });
                 return false;
             }
@@ -318,7 +319,7 @@ export const useContactStore = create(
 
                 return true;
             } catch (e) {
-                console.error('Failed to delete contact:', e);
+                logger.error('Failed to delete contact:', e);
                 set({ error: e.message });
                 return false;
             }
@@ -341,7 +342,7 @@ export const useContactStore = create(
                 if (error && error.code !== '23505') throw error;
                 return true;
             } catch (e) {
-                console.error('Failed to link contact to opportunity:', e);
+                logger.error('Failed to link contact to opportunity:', e);
                 return false;
             }
         },
@@ -360,7 +361,7 @@ export const useContactStore = create(
                 if (error) throw error;
                 return true;
             } catch (e) {
-                console.error('Failed to unlink contact from opportunity:', e);
+                logger.error('Failed to unlink contact from opportunity:', e);
                 return false;
             }
         },
@@ -387,7 +388,7 @@ export const useContactStore = create(
                     isOpportunityPrimary: item.is_primary,
                 }));
             } catch (e) {
-                console.error('Failed to get opportunity contacts:', e);
+                logger.error('Failed to get opportunity contacts:', e);
                 return [];
             }
         },

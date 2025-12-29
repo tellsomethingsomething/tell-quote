@@ -3,6 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
 import { formatCurrency } from '../utils/currency';
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import logger from '../utils/logger';
 
 // Plan pricing for MRR calculations (USD)
 const PLAN_PRICING = {
@@ -284,7 +285,7 @@ function WebhookMonitor() {
             if (error) throw error;
             setEvents(data || []);
         } catch (error) {
-            console.error('Failed to load webhook events:', error);
+            logger.error('Failed to load webhook events:', error);
         } finally {
             setLoading(false);
         }
@@ -320,7 +321,7 @@ function WebhookMonitor() {
                 alert('Retry failed: ' + await response.text());
             }
         } catch (error) {
-            console.error('Retry failed:', error);
+            logger.error('Retry failed:', error);
             alert('Retry failed: ' + error.message);
         } finally {
             setRetrying(null);
@@ -612,7 +613,7 @@ export default function AdminPage() {
             });
 
         } catch (error) {
-            console.error('Failed to load admin data:', error);
+            logger.error('Failed to load admin data:', error);
         } finally {
             setLoading(false);
         }

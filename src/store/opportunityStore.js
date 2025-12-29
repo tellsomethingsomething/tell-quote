@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Regions and countries
 export const REGIONS = {
@@ -105,7 +106,7 @@ export const useOpportunityStore = create(
                 get().subscribeToRealtime();
 
             } catch (e) {
-                console.error('Failed to load opportunities:', e);
+                logger.error('Failed to load opportunities:', e);
                 set({ loading: false, error: e.message });
             }
         },
@@ -213,7 +214,7 @@ export const useOpportunityStore = create(
                 return opportunity;
 
             } catch (e) {
-                console.error('Failed to add opportunity:', e);
+                logger.error('Failed to add opportunity:', e);
                 set({ error: e.message });
                 return null;
             }
@@ -273,7 +274,7 @@ export const useOpportunityStore = create(
                 }
 
             } catch (e) {
-                console.error('Failed to update opportunity:', e);
+                logger.error('Failed to update opportunity:', e);
                 set({ error: e.message });
             }
         },
@@ -300,7 +301,7 @@ export const useOpportunityStore = create(
                 }));
 
             } catch (e) {
-                console.error('Failed to delete opportunity:', e);
+                logger.error('Failed to delete opportunity:', e);
                 set({ error: e.message });
             }
         },

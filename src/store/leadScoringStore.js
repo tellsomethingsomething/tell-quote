@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Score thresholds for categorization
 export const SCORE_THRESHOLDS = {
@@ -85,7 +86,7 @@ export const useLeadScoringStore = create(
 
                 set({ scoringRules: data || [], isLoading: false });
             } catch (error) {
-                console.error('Failed to load scoring rules:', error);
+                logger.error('Failed to load scoring rules:', error);
                 // Fall back to default rules if database fails
                 set({ scoringRules: DEFAULT_SCORING_RULES, isLoading: false, error: error.message });
             }
@@ -148,7 +149,7 @@ export const useLeadScoringStore = create(
 
                 return { score, breakdown };
             } catch (error) {
-                console.error('Failed to calculate score:', error);
+                logger.error('Failed to calculate score:', error);
                 return { score: 0, breakdown: {} };
             }
         },
@@ -171,7 +172,7 @@ export const useLeadScoringStore = create(
 
                 return results;
             } catch (error) {
-                console.error('Failed to recalculate all scores:', error);
+                logger.error('Failed to recalculate all scores:', error);
                 return [];
             }
         },
@@ -204,7 +205,7 @@ export const useLeadScoringStore = create(
                 set({ scoringRules: [...get().scoringRules, data] });
                 return { success: true, rule: data };
             } catch (error) {
-                console.error('Failed to create rule:', error);
+                logger.error('Failed to create rule:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -225,7 +226,7 @@ export const useLeadScoringStore = create(
                 });
                 return { success: true, rule: data };
             } catch (error) {
-                console.error('Failed to update rule:', error);
+                logger.error('Failed to update rule:', error);
                 return { success: false, error: error.message };
             }
         },
@@ -244,7 +245,7 @@ export const useLeadScoringStore = create(
                 });
                 return { success: true };
             } catch (error) {
-                console.error('Failed to delete rule:', error);
+                logger.error('Failed to delete rule:', error);
                 return { success: false, error: error.message };
             }
         },

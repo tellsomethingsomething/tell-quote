@@ -1,11 +1,12 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 /**
  * Fetch all user profiles (for admin user management)
  */
 export async function fetchAllUsers() {
     if (!isSupabaseConfigured()) {
-        console.warn('Supabase not configured, cannot fetch users');
+        logger.warn('Supabase not configured, cannot fetch users');
         return [];
     }
 
@@ -15,7 +16,7 @@ export async function fetchAllUsers() {
         .order('created_at', { ascending: true });
 
     if (error) {
-        console.error('Failed to fetch users:', error);
+        logger.error('Failed to fetch users:', error);
         throw error;
     }
 
@@ -45,7 +46,7 @@ export async function createUser({ email, password, name, role, tabPermissions }
     });
 
     if (error) {
-        console.error('Failed to create user:', error);
+        logger.error('Failed to create user:', error);
         throw new Error(error.message || 'Failed to create user');
     }
 
@@ -79,7 +80,7 @@ export async function updateUserProfile(profileId, updates) {
         .single();
 
     if (error) {
-        console.error('Failed to update user:', error);
+        logger.error('Failed to update user:', error);
         throw error;
     }
 
@@ -126,7 +127,7 @@ export async function deleteUser(authUserId) {
     });
 
     if (error) {
-        console.error('Failed to delete user:', error);
+        logger.error('Failed to delete user:', error);
         throw new Error(error.message || 'Failed to delete user');
     }
 
@@ -150,7 +151,7 @@ export async function changePassword(newPassword) {
     });
 
     if (error) {
-        console.error('Failed to change password:', error);
+        logger.error('Failed to change password:', error);
         throw error;
     }
 
@@ -170,7 +171,7 @@ export async function sendPasswordReset(email) {
     });
 
     if (error) {
-        console.error('Failed to send password reset:', error);
+        logger.error('Failed to send password reset:', error);
         throw error;
     }
 

@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useKitBookingStore, BOOKING_STATUS, BOOKING_STATUS_CONFIG } from '../store/kitBookingStore';
 import { useKitStore } from '../store/kitStore';
 import { useProjectStore } from '../store/projectStore';
+import logger from '../utils/logger';
 
 // Simple Calendar Component
 function BookingCalendar({ bookings, onDateClick, selectedDate }) {
@@ -288,7 +289,7 @@ function NewBookingModal({ isOpen, onClose, initialDate, kitItems, projects }) {
             await createBooking(form);
             onClose(true);
         } catch (err) {
-            console.error('Failed to create booking:', err);
+            logger.error('Failed to create booking:', err);
             alert('Failed to create booking');
         } finally {
             setSaving(false);
@@ -492,14 +493,14 @@ export default function KitBookingPage() {
         try {
             await updateBooking(bookingId, { status: newStatus });
         } catch (err) {
-            console.error('Failed to update status:', err);
+            logger.error('Failed to update status:', err);
             alert('Failed to update booking status');
         }
     };
 
     const handleEditBooking = (booking) => {
         // For now, just log - could open an edit modal
-        console.log('Edit booking:', booking);
+        logger.debug('Edit booking:', booking);
     };
 
     return (

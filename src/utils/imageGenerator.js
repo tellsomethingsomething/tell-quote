@@ -1,4 +1,5 @@
 // AI-powered cover image generator using DALL-E + Claude for smart prompts
+import logger from './logger';
 
 /**
  * Uses Claude Sonnet to generate an optimal DALL-E prompt based on project context
@@ -64,7 +65,7 @@ Output ONLY the DALL-E prompt, nothing else. Keep it under 200 words.`
         const data = await response.json();
         return data.content[0]?.text || createFallbackPrompt(project);
     } catch (error) {
-        console.error('Smart prompt generation failed:', error);
+        logger.error('Smart prompt generation failed:', error);
         return createFallbackPrompt(project);
     }
 }
@@ -128,7 +129,7 @@ export async function generateCoverImage(project, client, openaiKey, anthropicKe
             prompt: prompt
         };
     } catch (error) {
-        console.error('Cover image generation failed:', error);
+        logger.error('Cover image generation failed:', error);
         return {
             success: false,
             error: error.message

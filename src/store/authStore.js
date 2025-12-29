@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured, shouldUseSupabaseAuth } from '../lib/su
 import { logSecurityEvent } from '../utils/encryption';
 import { trackConversion, Events, trackEvent } from '../services/analyticsService';
 import { setUserContext } from '../services/errorTrackingService';
+import logger from '../utils/logger';
 
 const AUTH_KEY = 'tell_auth_session';
 const RATE_LIMIT_KEY = 'tell_auth_attempts';
@@ -33,7 +34,7 @@ function loadAuthSession() {
 
         return session;
     } catch (e) {
-        console.error('Failed to load auth session:', e);
+        logger.error('Failed to load auth session:', e);
         return null;
     }
 }
@@ -53,7 +54,7 @@ function saveAuthSession(session) {
             localStorage.removeItem(AUTH_KEY);
         }
     } catch (e) {
-        console.error('Failed to save auth session:', e);
+        logger.error('Failed to save auth session:', e);
     }
 }
 
@@ -75,7 +76,7 @@ function saveRateLimitData(data) {
     try {
         localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(data));
     } catch (e) {
-        console.error('Failed to save rate limit data:', e);
+        logger.error('Failed to save rate limit data:', e);
     }
 }
 
@@ -146,7 +147,7 @@ async function fetchUserProfile(authUserId) {
             .single();
 
         if (error) {
-            console.error('Failed to fetch user profile:', error);
+            logger.error('Failed to fetch user profile:', error);
             return null;
         }
 
@@ -160,7 +161,7 @@ async function fetchUserProfile(authUserId) {
             tabPermissions: data.tab_permissions || [],
         };
     } catch (e) {
-        console.error('Failed to fetch user profile:', e);
+        logger.error('Failed to fetch user profile:', e);
         return null;
     }
 }
@@ -228,7 +229,7 @@ export const useAuthStore = create((set, get) => ({
                                 sync_enabled: true,
                             }, { onConflict: 'user_id,google_email' });
                         } catch (e) {
-                            console.error('Failed to save Google connection:', e);
+                            logger.error('Failed to save Google connection:', e);
                         }
                     }
 
@@ -309,7 +310,7 @@ export const useAuthStore = create((set, get) => ({
                 }
             });
         } catch (e) {
-            console.error('Failed to initialize Supabase auth:', e);
+            logger.error('Failed to initialize Supabase auth:', e);
         }
     },
 
@@ -353,7 +354,7 @@ export const useAuthStore = create((set, get) => ({
                     });
 
                 if (profileError) {
-                    console.error('Failed to create user profile:', profileError);
+                    logger.error('Failed to create user profile:', profileError);
                 }
 
                 set({ isLoading: false });
@@ -372,7 +373,7 @@ export const useAuthStore = create((set, get) => ({
 
             return false;
         } catch (e) {
-            console.error('Signup error:', e);
+            logger.error('Signup error:', e);
             set({
                 error: 'An error occurred during signup',
                 isLoading: false
@@ -457,7 +458,7 @@ export const useAuthStore = create((set, get) => ({
 
             return false;
         } catch (e) {
-            console.error('Supabase login error:', e);
+            logger.error('Supabase login error:', e);
             recordLoginAttempt(false);
             set({
                 error: 'An error occurred during login',
@@ -515,7 +516,7 @@ export const useAuthStore = create((set, get) => ({
                 isLoading: false,
             });
 
-            console.warn('⚠️ Using deprecated password-based auth. Please migrate to Supabase Auth.');
+            logger.warn('⚠️ Using deprecated password-based auth. Please migrate to Supabase Auth.');
             logSecurityEvent('fallback_login_success');
 
             return true;
@@ -579,7 +580,7 @@ export const useAuthStore = create((set, get) => ({
             // the onAuthStateChange listener will handle the session
             return true;
         } catch (e) {
-            console.error('Google login error:', e);
+            logger.error('Google login error:', e);
             set({
                 error: 'An error occurred during Google login',
                 isLoading: false
@@ -612,7 +613,7 @@ export const useAuthStore = create((set, get) => ({
             set({ isLoading: false });
             return { success: true };
         } catch (e) {
-            console.error('Password reset error:', e);
+            logger.error('Password reset error:', e);
             set({ isLoading: false });
             return { success: false, error: 'An error occurred. Please try again.' };
         }
@@ -642,7 +643,7 @@ export const useAuthStore = create((set, get) => ({
             set({ isLoading: false });
             return { success: true };
         } catch (e) {
-            console.error('Password update error:', e);
+            logger.error('Password update error:', e);
             set({ isLoading: false });
             return { success: false, error: 'An error occurred. Please try again.' };
         }
@@ -656,7 +657,7 @@ export const useAuthStore = create((set, get) => ({
             try {
                 await supabase.auth.signOut();
             } catch (e) {
-                console.error('Supabase logout error:', e);
+                logger.error('Supabase logout error:', e);
             }
         }
 
@@ -803,7 +804,7 @@ export const useAuthStore = create((set, get) => ({
                 .limit(1);
 
             if (error) {
-                console.error('Failed to check organization membership:', error);
+                logger.error('Failed to check organization membership:', error);
                 return false;
             }
 
@@ -811,7 +812,7 @@ export const useAuthStore = create((set, get) => ({
             set({ needsOnboarding });
             return needsOnboarding;
         } catch (e) {
-            console.error('Error checking onboarding status:', e);
+            logger.error('Error checking onboarding status:', e);
             return false;
         }
     },
@@ -885,7 +886,7 @@ export const useAuthStore = create((set, get) => ({
                 profile: result.profile
             };
         } catch (e) {
-            console.error('Onboarding error:', e);
+            logger.error('Onboarding error:', e);
             set({
                 error: 'An error occurred during onboarding',
                 isLoading: false

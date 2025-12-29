@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCrewStore, CREW_DEPARTMENTS, AVAILABILITY_STATUS } from '../store/crewStore';
+import logger from '../utils/logger';
 
 // Tab Button Component
 function TabButton({ active, onClick, children }) {
@@ -185,7 +186,7 @@ export default function CrewDetailPage({ crewId, onBack }) {
             await updateCrew(crewId, form);
             setHasChanges(false);
         } catch (err) {
-            console.error('Failed to save:', err);
+            logger.error('Failed to save:', err);
             alert('Failed to save changes');
         } finally {
             setSaving(false);
@@ -197,7 +198,7 @@ export default function CrewDetailPage({ crewId, onBack }) {
             await deleteCrew(crewId);
             onBack();
         } catch (err) {
-            console.error('Failed to delete:', err);
+            logger.error('Failed to delete:', err);
             alert('Failed to delete crew member');
         }
     };

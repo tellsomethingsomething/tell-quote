@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useCallSheetStore, CALL_SHEET_STATUS, CALL_SHEET_STATUS_CONFIG, DEPARTMENTS } from '../store/callSheetStore';
 import { useProjectStore } from '../store/projectStore';
 import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
+import logger from '../utils/logger';
 
 // Calendar Component
 function ShootCalendar({ callSheets, onDateClick, selectedDate, onSheetClick }) {
@@ -306,7 +307,7 @@ function QuickCreateModal({ isOpen, onClose, projects, onCreate }) {
             const newSheet = await onCreate(form);
             onClose(newSheet?.id);
         } catch (err) {
-            console.error('Failed to create call sheet:', err);
+            logger.error('Failed to create call sheet:', err);
             alert('Failed to create call sheet');
         } finally {
             setSaving(false);
@@ -470,7 +471,7 @@ function DuplicateModal({ isOpen, onClose, sheet, onDuplicate }) {
             await onDuplicate(sheet.id, newDate, newDayNumber);
             onClose();
         } catch (err) {
-            console.error('Failed to duplicate:', err);
+            logger.error('Failed to duplicate:', err);
             alert('Failed to duplicate call sheet');
         } finally {
             setSaving(false);

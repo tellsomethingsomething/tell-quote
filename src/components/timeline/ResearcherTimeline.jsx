@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useTimelineStore, EVENT_TYPES, EVENT_CONFIGS } from '../../store/timelineStore';
 import { useOpportunityStore } from '../../store/opportunityStore';
+import logger from '../../utils/logger';
 
 // Icon component for timeline events
 function EventIcon({ type }) {
@@ -476,7 +477,7 @@ export default function ResearcherTimeline({ onNavigateToOpportunity }) {
                 }
             }
         } catch (e) {
-            console.error('Failed to convert to opportunity:', e);
+            logger.error('Failed to convert to opportunity:', e);
         }
     };
 

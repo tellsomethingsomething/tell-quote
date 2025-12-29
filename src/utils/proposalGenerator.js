@@ -2,6 +2,7 @@
 import { calculateGrandTotalWithFees, calculateSectionTotal } from './calculations';
 import { formatCurrency } from './currency';
 import { SECTIONS, SECTION_ORDER } from '../data/sections';
+import logger from './logger';
 
 /**
  * Gathers quote data into a structured format for AI processing
@@ -171,7 +172,7 @@ export async function generateAIProposal(quote, currency, settings, _apiKey, pro
             tokensRemaining: result.tokensRemaining,
         };
     } catch (error) {
-        console.error('AI Proposal generation failed:', error);
+        logger.error('AI Proposal generation failed:', error);
 
         // Handle insufficient tokens error
         if (error.code === 'INSUFFICIENT_TOKENS') {

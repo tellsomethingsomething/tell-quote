@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import logger from '../utils/logger';
 
 // Task types for commercial activities
 export const TASK_TYPES = {
@@ -96,7 +97,7 @@ export const useCommercialTasksStore = create(
 
                 set({ tasks: (data || []).map(fromDbFormat), loading: false });
             } catch (e) {
-                console.error('Failed to load commercial tasks:', e);
+                logger.error('Failed to load commercial tasks:', e);
                 set({ loading: false, error: e.message });
             }
         },
@@ -136,7 +137,7 @@ export const useCommercialTasksStore = create(
 
                 return task;
             } catch (e) {
-                console.error('Failed to add task:', e);
+                logger.error('Failed to add task:', e);
                 return null;
             }
         },
@@ -173,7 +174,7 @@ export const useCommercialTasksStore = create(
                     ),
                 }));
             } catch (e) {
-                console.error('Failed to update task:', e);
+                logger.error('Failed to update task:', e);
             }
         },
 
@@ -193,7 +194,7 @@ export const useCommercialTasksStore = create(
                     tasks: state.tasks.filter(t => t.id !== taskId),
                 }));
             } catch (e) {
-                console.error('Failed to delete task:', e);
+                logger.error('Failed to delete task:', e);
             }
         },
 
