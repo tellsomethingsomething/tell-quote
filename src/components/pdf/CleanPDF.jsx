@@ -23,9 +23,9 @@ export default function CleanPDF({ quote, currency, includeTerms = false, showWa
 
     // Colors from settings - using solid colors
     const colors = {
-        primary: pdfOptions?.primaryColor || '#143642',
-        accent: pdfOptions?.accentColor || '#6E44FF',
-        line: pdfOptions?.lineColor || pdfOptions?.primaryColor || '#143642',
+        primary: pdfOptions?.primaryColor || '#1e1b4b',
+        accent: pdfOptions?.accentColor || '#8B5CF6',
+        line: pdfOptions?.lineColor || pdfOptions?.primaryColor || '#1e1b4b',
         text: pdfOptions?.textColor || '#374151',
         muted: pdfOptions?.mutedColor || '#6B7280',
         background: pdfOptions?.backgroundColor || '#FFFFFF',

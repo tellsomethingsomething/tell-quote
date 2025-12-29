@@ -21,7 +21,7 @@ const stripePromise = loadStripe(
 const appearance = {
     theme: 'night',
     variables: {
-        colorPrimary: '#6E44FF',
+        colorPrimary: '#8B5CF6',
         colorBackground: '#1a1a2e',
         colorText: '#ffffff',
         colorDanger: '#ef4444',
@@ -35,8 +35,8 @@ const appearance = {
             border: '1px solid #374151',
         },
         '.Input:focus': {
-            border: '1px solid #6E44FF',
-            boxShadow: '0 0 0 1px #6E44FF',
+            border: '1px solid #8B5CF6',
+            boxShadow: '0 0 0 1px #8B5CF6',
         },
         '.Label': {
             color: '#9ca3af',

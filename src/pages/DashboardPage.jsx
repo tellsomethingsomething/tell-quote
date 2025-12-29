@@ -18,7 +18,7 @@ import TrialBanner from '../components/onboarding/TrialBanner';
 // Status colors aligned with brand palette for visual harmony
 const STATUSES = [
     { id: 'draft', label: 'Drafts', color: '#9CA3AF', bgColor: 'bg-gray-400/10' },
-    { id: 'sent', label: 'Sent', color: '#6E44FF', bgColor: 'bg-[#6E44FF]/10' },
+    { id: 'sent', label: 'Sent', color: '#8B5CF6', bgColor: 'bg-[#8B5CF6]/10' },
     { id: 'won', label: 'Won', color: '#22c55e', bgColor: 'bg-green-500/10' },
     { id: 'dead', label: 'Dead', color: '#F87171', bgColor: 'bg-red-400/10' },
 ];
@@ -619,10 +619,10 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
                     </div>
 
                     {/* Pipeline (Draft + Sent) */}
-                    <div className="card bg-gradient-to-br from-[#6E44FF]/10 to-[#143642]/10 border-[#6E44FF]/20 p-3">
+                    <div className="card bg-gradient-to-br from-[#8B5CF6]/10 to-[#1e1b4b]/10 border-[#8B5CF6]/20 p-3">
                         <div className="flex items-center gap-2 mb-2">
-                            <div className="w-2 h-2 rounded-full bg-[#6E44FF]"></div>
-                            <span className="text-[10px] font-medium text-[#6E44FF]/90 uppercase tracking-wide">Pipeline</span>
+                            <div className="w-2 h-2 rounded-full bg-[#8B5CF6]"></div>
+                            <span className="text-[10px] font-medium text-[#8B5CF6]/90 uppercase tracking-wide">Pipeline</span>
                         </div>
                         <div className="space-y-1">
                             <div className="flex justify-between items-baseline">
@@ -955,7 +955,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
                         return (
                             <div
                                 key={status.id}
-                                className={`space-y-2 rounded-xl transition-colors ${dragOverColumn === status.id ? 'bg-white/5 ring-2 ring-[#6E44FF]/30' : ''}`}
+                                className={`space-y-2 rounded-xl transition-colors ${dragOverColumn === status.id ? 'bg-white/5 ring-2 ring-[#8B5CF6]/30' : ''}`}
                                 onDragOver={(e) => handleDragOver(e, status.id)}
                                 onDrop={(e) => handleDrop(e, status.id)}
                                 onDragLeave={handleDragLeave}

@@ -398,7 +398,7 @@ function InvoiceHeaderModule({ config, context, autoAlign }) {
         <View style={{ alignItems: isRightAligned ? 'flex-end' : 'flex-start' }}>
             <Text style={{
                 fontSize: config.titleSize || 24,
-                color: config.titleColor || '#6E44FF',
+                color: config.titleColor || '#8B5CF6',
                 fontFamily: 'Helvetica-Bold',
                 letterSpacing: 2,
                 marginBottom: 8,
@@ -480,11 +480,11 @@ function ProjectInfoModule({ config, context, autoAlign }) {
             borderRadius: config.borderRadius || 4,
             borderLeftWidth: textAlign === 'left' ? 3 : 0,
             borderRightWidth: textAlign === 'right' ? 3 : 0,
-            borderLeftColor: context.templateStyles?.primaryColor || '#6E44FF',
-            borderRightColor: context.templateStyles?.primaryColor || '#6E44FF',
+            borderLeftColor: context.templateStyles?.primaryColor || '#8B5CF6',
+            borderRightColor: context.templateStyles?.primaryColor || '#8B5CF6',
             alignItems: isRightAligned ? 'flex-end' : 'flex-start',
         }}>
-            <Text style={{ fontSize: 7, color: context.templateStyles?.primaryColor || '#6E44FF', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, textAlign }}>
+            <Text style={{ fontSize: 7, color: context.templateStyles?.primaryColor || '#8B5CF6', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4, textAlign }}>
                 Project
             </Text>
             {config.showTitle && project.title && (
@@ -532,7 +532,7 @@ function LineItemsModule({ config, context }) {
                                 alignItems: 'center',
                                 paddingVertical: 8,
                                 paddingHorizontal: 10,
-                                backgroundColor: config.headerBackground || '#6E44FF'
+                                backgroundColor: config.headerBackground || '#8B5CF6'
                             }}>
                                 <Text style={{ fontSize: config.fontSize || 9, color: config.headerTextColor || '#FFFFFF', fontFamily: 'Helvetica-Bold' }}>
                                     {sectionName}
@@ -567,7 +567,7 @@ function LineItemsModule({ config, context }) {
                                     {/* Subsection Header */}
                                     {config.showSubsections && !(isFlatSection && subsectionName === 'Services') && (
                                         <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4, paddingHorizontal: 10, backgroundColor: '#F1F5F9' }}>
-                                            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: context.templateStyles?.primaryColor || '#6E44FF', marginRight: 6 }} />
+                                            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: context.templateStyles?.primaryColor || '#8B5CF6', marginRight: 6 }} />
                                             <Text style={{ fontSize: 8, color: '#64748B', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                                                 {displaySubsectionName}
                                             </Text>
@@ -688,7 +688,7 @@ function TotalsModule({ config, context, autoAlign }) {
                     alignItems: 'center',
                     paddingVertical: 10,
                     paddingHorizontal: 12,
-                    backgroundColor: config.totalBackground || '#6E44FF',
+                    backgroundColor: config.totalBackground || '#8B5CF6',
                     borderRadius: 4,
                     marginTop: 8,
                 }}>
@@ -715,7 +715,7 @@ function BankDetailsModule({ config, context, autoAlign }) {
         <View>
             <Text style={{
                 fontSize: 8,
-                color: config.labelColor || '#6E44FF',
+                color: config.labelColor || '#8B5CF6',
                 textTransform: 'uppercase',
                 letterSpacing: 1,
                 marginBottom: 8,
@@ -796,7 +796,7 @@ function PaymentTermsModule({ config, context, autoAlign }) {
         <View>
             <Text style={{
                 fontSize: 8,
-                color: config.labelColor || '#6E44FF',
+                color: config.labelColor || '#8B5CF6',
                 textTransform: 'uppercase',
                 letterSpacing: 1,
                 marginBottom: 8,
@@ -827,7 +827,7 @@ function TermsConditionsModule({ config, context, autoAlign }) {
         <View>
             <Text style={{
                 fontSize: 8,
-                color: config.labelColor || '#6E44FF',
+                color: config.labelColor || '#8B5CF6',
                 textTransform: 'uppercase',
                 letterSpacing: 1,
                 marginBottom: 8,

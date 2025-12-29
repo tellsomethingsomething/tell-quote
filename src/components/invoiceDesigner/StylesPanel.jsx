@@ -255,7 +255,7 @@ export default function StylesPanel({ template }) {
 }
 
 function ColorPicker({ label, value, onChange }) {
-    const presets = ['#6E44FF', '#143642', '#3B82F6', '#374151', '#6B7280', '#FFFFFF', '#000000'];
+    const presets = ['#8B5CF6', '#1e1b4b', '#3B82F6', '#374151', '#6B7280', '#FFFFFF', '#000000'];
 
     return (
         <div>

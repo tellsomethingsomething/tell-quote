@@ -61,7 +61,7 @@ const getSampleQuote = (settings) => ({
 });
 
 const COLOR_PRESETS = [
-    { name: 'Professional Navy', primary: '#143642', accent: '#6E44FF', line: '#143642' },
+    { name: 'Professional Navy', primary: '#1e1b4b', accent: '#8B5CF6', line: '#1e1b4b' },
     { name: 'Modern Blue', primary: '#1E40AF', accent: '#3B82F6', line: '#1E40AF' },
     { name: 'Corporate Gray', primary: '#374151', accent: '#6B7280', line: '#374151' },
     { name: 'Elegant Purple', primary: '#5B21B6', accent: '#8B5CF6', line: '#5B21B6' },
@@ -210,17 +210,17 @@ export default function InvoiceDesigner() {
                                     <div className="space-y-4">
                                         <ColorPicker
                                             label="Primary Color (Headers, titles)"
-                                            value={pdfOptions.primaryColor || '#143642'}
+                                            value={pdfOptions.primaryColor || '#1e1b4b'}
                                             onChange={(v) => handleColorChange('primaryColor', v)}
                                         />
                                         <ColorPicker
                                             label="Accent Color (Labels)"
-                                            value={pdfOptions.accentColor || '#6E44FF'}
+                                            value={pdfOptions.accentColor || '#8B5CF6'}
                                             onChange={(v) => handleColorChange('accentColor', v)}
                                         />
                                         <ColorPicker
                                             label="Line Color (All lines & borders)"
-                                            value={pdfOptions.lineColor || '#143642'}
+                                            value={pdfOptions.lineColor || '#1e1b4b'}
                                             onChange={(v) => handleColorChange('lineColor', v)}
                                         />
                                         <ColorPicker
@@ -319,14 +319,14 @@ export default function InvoiceDesigner() {
                         >
                             <div
                                 className="p-3"
-                                style={{ backgroundColor: pdfOptions.primaryColor || '#143642' }}
+                                style={{ backgroundColor: pdfOptions.primaryColor || '#1e1b4b' }}
                             >
                                 <div className="text-white text-xs font-bold">QUOTE</div>
                             </div>
                             <div className="p-3 space-y-2">
                                 <div
                                     className="text-sm font-bold"
-                                    style={{ color: pdfOptions.primaryColor || '#143642' }}
+                                    style={{ color: pdfOptions.primaryColor || '#1e1b4b' }}
                                 >
                                     Project Title
                                 </div>
@@ -345,8 +345,8 @@ export default function InvoiceDesigner() {
                                 <div
                                     className="text-sm font-bold mt-3 pt-2 border-t"
                                     style={{
-                                        color: pdfOptions.accentColor || '#6E44FF',
-                                        borderColor: (pdfOptions.accentColor || '#6E44FF') + '30'
+                                        color: pdfOptions.accentColor || '#8B5CF6',
+                                        borderColor: (pdfOptions.accentColor || '#8B5CF6') + '30'
                                     }}
                                 >
                                     Total: $1,234.00

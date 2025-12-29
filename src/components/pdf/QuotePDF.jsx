@@ -18,8 +18,8 @@ const colors = {
     slateMedium: '#334155',    // Darker secondary text
     slateLight: '#64748B',     // Darker tertiary text
 
-    // Accent - Refined Teal
-    teal: '#6E44FF',           // Brand teal
+    // Accent - Brand Purple
+    teal: '#8B5CF6',           // Brand purple
     tealLight: '#14B8A6',
     tealPale: '#CCFBF1',
 

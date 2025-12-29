@@ -16,7 +16,7 @@ const colors = {
     light: '#94A3B8',
 
     // Accent
-    teal: '#6E44FF',
+    teal: '#8B5CF6',
     orange: '#FE7F2D',
     green: '#10B981',
     red: '#EF4444',

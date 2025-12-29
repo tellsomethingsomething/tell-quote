@@ -459,9 +459,9 @@ const defaultSettings = {
         showBankDetails: false,
         showLogo: true,
         // PDF Colors
-        primaryColor: '#143642',    // Headers, section titles
-        accentColor: '#6E44FF',     // Accent elements
-        lineColor: '#143642',       // All lines and borders
+        primaryColor: '#1e1b4b',    // Headers, section titles
+        accentColor: '#8B5CF6',     // Accent elements
+        lineColor: '#1e1b4b',       // All lines and borders
         textColor: '#374151',       // Body text
         mutedColor: '#6B7280',      // Secondary text
         backgroundColor: '#FFFFFF', // Page background

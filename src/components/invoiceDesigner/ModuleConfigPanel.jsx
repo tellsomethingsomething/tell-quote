@@ -192,7 +192,7 @@ function ConfigField({ fieldKey, schema, value, onChange }) {
                         />
                         {/* Preset colors */}
                         <div className="flex gap-1">
-                            {['#6E44FF', '#143642', '#3B82F6', '#374151', '#FFFFFF'].map(color => (
+                            {['#8B5CF6', '#1e1b4b', '#3B82F6', '#374151', '#FFFFFF'].map(color => (
                                 <button
                                     key={color}
                                     type="button"

@@ -165,7 +165,7 @@
 
 /* Keyboard focus outline for accessibility */
 *:focus-visible {
-  outline: 2px solid #6E44FF;
+  outline: 2px solid #8B5CF6;
   outline-offset: 2px;
 }
 
@@ -501,7 +501,7 @@ select.input-sm:focus {
 /* Focus-visible styles for keyboard accessibility */
 /* Apply visible focus ring only for keyboard navigation, not mouse clicks */
 :focus-visible {
-  outline: 2px solid #6E44FF; /* brand-primary */
+  outline: 2px solid #8B5CF6; /* brand-primary */
   outline-offset: 2px;
 }
 
@@ -514,7 +514,7 @@ select.input-sm:focus {
 button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible {
-  outline: 2px solid #6E44FF;
+  outline: 2px solid #8B5CF6;
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -525,7 +525,7 @@ select:focus-visible,
 textarea:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px rgba(15, 139, 141, 0.5);
-  border-color: #6E44FF;
+  border-color: #8B5CF6;
 }
 
 /* Skip link focus state - ensure it's always visible when focused */
