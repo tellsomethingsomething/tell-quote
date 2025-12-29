@@ -3,6 +3,8 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useActivityStore } from './activityStore';
 import { trackConversion, Events } from '../services/analyticsService';
+import { generateId } from '../utils/generateId';
+import logger from '../utils/logger';
 
 const CLIENTS_STORAGE_KEY = 'tell_clients';
 const SAVED_QUOTES_KEY = 'tell_saved_quotes';
@@ -31,7 +33,7 @@ function saveClientsLocal(clients) {
     try {
         localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
     } catch (e) {
-        console.error('Failed to save clients locally:', e);
+        logger.error('Failed to save clients locally', e);
     }
 }
 
@@ -39,7 +41,7 @@ function saveSavedQuotesLocal(quotes) {
     try {
         localStorage.setItem(SAVED_QUOTES_KEY, JSON.stringify(quotes));
     } catch (e) {
-        console.error('Failed to save quotes locally:', e);
+        logger.error('Failed to save quotes locally', e);
     }
 }
 
@@ -57,13 +59,11 @@ function saveSyncQueue(queue) {
     try {
         localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
     } catch (e) {
-        console.error('Failed to save sync queue:', e);
+        logger.error('Failed to save sync queue', e);
     }
 }
 
-function generateId() {
-    return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-}
+// Using secure generateId from utils/generateId.js
 
 // Migrate legacy contact fields to contacts[] array
 function migrateLegacyContacts(clients) {
@@ -100,7 +100,7 @@ function migrateLegacyContacts(clients) {
     });
 
     if (migratedCount > 0) {
-        console.log(`[ClientStore] Migrated ${migratedCount} client(s) from legacy contact format`);
+        logger.info(`Migrated ${migratedCount} client(s) from legacy contact format`);
     }
 
     return { clients: migratedClients, migratedCount };
@@ -176,7 +176,7 @@ export const useClientStore = create(
                             // Remove migration flag after successful sync
                             delete client._contactsMigrated;
                         } catch (e) {
-                            console.error('Failed to sync migrated contacts for client:', client.id, e);
+                            logger.error('Failed to sync migrated contacts for client', e, { clientId: client.id });
                         }
                     }
                 }
@@ -252,7 +252,7 @@ export const useClientStore = create(
                             migratedClients.push({ ...client, id: data.id, _synced: true });
                         }
                     } catch (e) {
-                        console.error('Failed to sync local client:', e);
+                        logger.error('Failed to sync local client', e);
                     }
                 }
 
@@ -282,7 +282,7 @@ export const useClientStore = create(
                             dbQuotes.push({ ...quote, id: data.id, _synced: true });
                         }
                     } catch (e) {
-                        console.error('Failed to sync local quote:', e);
+                        logger.error('Failed to sync local quote', e);
                     }
                 }
 
@@ -300,7 +300,7 @@ export const useClientStore = create(
                 await get().processSyncQueue();
 
             } catch (e) {
-                console.error('Failed to load from DB:', e);
+                logger.error('Failed to load from DB', e);
                 set({ loading: false, syncStatus: 'error', syncError: e.message });
             }
         },
@@ -333,7 +333,7 @@ export const useClientStore = create(
                         }
                     }
                 } catch (e) {
-                    console.error('Sync queue item failed:', e);
+                    logger.error('Sync queue item failed', e);
                     newQueue.push({ ...item, retries: (item.retries || 0) + 1, lastError: e.message });
                 }
             }
@@ -408,7 +408,7 @@ export const useClientStore = create(
                     }
                     synced++;
                 } catch (e) {
-                    console.error('Failed to sync client:', e);
+                    logger.error('Failed to sync client', e);
                     errors++;
                 }
             }
@@ -452,7 +452,7 @@ export const useClientStore = create(
                     }
                     synced++;
                 } catch (e) {
-                    console.error('Failed to sync quote:', e);
+                    logger.error('Failed to sync quote', e);
                     errors++;
                 }
             }
@@ -556,7 +556,7 @@ export const useClientStore = create(
                     });
                     newClient.id = data.id;
                 } catch (e) {
-                    console.error('Failed to save client to DB:', e);
+                    logger.error('Failed to save client to DB', e);
                     get().addToSyncQueue('clients', 'insert', newClient.id, {
                         company: newClient.company,
                         contact: newClient.contact,
@@ -624,7 +624,7 @@ export const useClientStore = create(
                         return { clients, syncStatus: 'success', syncError: null };
                     });
                 } catch (e) {
-                    console.error('Failed to update client in DB:', e);
+                    logger.error('Failed to update client in DB', e);
                     get().addToSyncQueue('clients', 'update', clientId, updates);
                     set({ syncStatus: 'error', syncError: `Failed to sync update: ${e.message}` });
                 }
@@ -648,7 +648,7 @@ export const useClientStore = create(
                     if (error) throw error;
                     set({ syncStatus: 'success', syncError: null });
                 } catch (e) {
-                    console.error('Failed to delete client from DB:', e);
+                    logger.error('Failed to delete client from DB', e);
                     get().addToSyncQueue('clients', 'delete', clientId, null);
                     set({ syncStatus: 'error', syncError: `Failed to sync delete: ${e.message}` });
                 }
@@ -906,7 +906,7 @@ export const useClientStore = create(
                     });
                     savedQuote.id = serverId;
                 } catch (e) {
-                    console.error('Failed to save quote to DB:', e);
+                    logger.error('Failed to save quote to DB', e);
                     get().addToSyncQueue('quotes', 'insert', savedQuote.id, {
                         quote_number: savedQuote.quoteNumber,
                         quote_date: savedQuote.quoteDate,
@@ -955,7 +955,7 @@ export const useClientStore = create(
                     if (error) throw error;
                     set({ syncStatus: 'success', syncError: null });
                 } catch (e) {
-                    console.error('Failed to delete quote from DB:', e);
+                    logger.error('Failed to delete quote from DB', e);
                     get().addToSyncQueue('quotes', 'delete', quoteId, null);
                     set({ syncStatus: 'error', syncError: `Failed to sync delete: ${e.message}` });
                 }
@@ -1047,7 +1047,7 @@ export const useClientStore = create(
                 try {
                     const quote = get().savedQuotes.find(q => q.id === quoteId);
                     if (!quote?.quoteNumber) {
-                        console.warn('Cannot sync status update - quote not found or missing quoteNumber');
+                        logger.warn('Cannot sync status update - quote not found or missing quoteNumber');
                         return;
                     }
 
@@ -1069,7 +1069,7 @@ export const useClientStore = create(
 
                     // Log if no rows were updated (for debugging)
                     if (count === 0) {
-                        console.warn(`Status update: No rows matched quote_number ${quote.quoteNumber}`);
+                        logger.warn(`Status update: No rows matched quote_number ${quote.quoteNumber}`);
                     }
 
                     // Mark as synced
@@ -1081,7 +1081,7 @@ export const useClientStore = create(
                         return { savedQuotes, syncStatus: 'success', syncError: null };
                     });
                 } catch (e) {
-                    console.error('Failed to update quote status in DB:', e);
+                    logger.error('Failed to update quote status in DB', e);
                     set({ syncStatus: 'error', syncError: `Failed to sync status: ${e.message}` });
                 }
             }
@@ -1127,7 +1127,7 @@ export const useClientStore = create(
                         });
                     }
                 } catch (e) {
-                    console.error('Failed to update quote in DB:', e);
+                    logger.error('Failed to update quote in DB', e);
                     set({ syncStatus: 'error', syncError: `Failed to sync update: ${e.message}` });
                 }
             }
@@ -1179,7 +1179,7 @@ export const useClientStore = create(
 
                 return { success: true, clientCount: clients.length, quoteCount: savedQuotes.length };
             } catch (e) {
-                console.error('Failed to import data:', e);
+                logger.error('Failed to import data', e);
                 return { success: false, error: e.message };
             }
         },

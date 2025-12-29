@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { DEFAULT_TEMPLATE, MODULE_TYPES, PRESET_TEMPLATES } from '../data/invoiceModules';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { generateId } from '../utils/generateId';
 
 const STORAGE_KEY = 'tell_invoice_templates';
 const TEMPLATES_VERSION = 4; // Increment this when adding new preset templates
@@ -118,10 +119,7 @@ async function saveActiveTemplatePreference(templateId) {
     }
 }
 
-// Generate unique ID
-function generateId() {
-    return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-}
+// Using secure generateId from utils/generateId.js
 
 export const useInvoiceTemplateStore = create(
     subscribeWithSelector((set, get) => {

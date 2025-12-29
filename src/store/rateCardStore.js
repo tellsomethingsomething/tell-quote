@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { SEED_ITEMS } from '../data/rateCardSeed';
+import { generateId, generateShortId } from '../utils/generateId';
 
 const RATE_CARD_KEY = 'tell_rate_card';
 const RATE_CARD_SECTIONS_KEY = 'tell_rate_card_sections';
@@ -141,10 +142,6 @@ function saveSectionsLocal(sections) {
     }
 }
 
-function generateId() {
-    return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-}
-
 export const useRateCardStore = create(
     subscribeWithSelector((set, get) => ({
         items: loadRateCardLocal(),
@@ -276,7 +273,7 @@ export const useRateCardStore = create(
 
         addSection: async (name) => {
             const newSection = {
-                id: name.toLowerCase().replace(/\s+/g, '_') + '_' + Math.random().toString(36).substring(2, 7),
+                id: name.toLowerCase().replace(/\s+/g, '_') + '_' + generateShortId(5),
                 name
             };
 

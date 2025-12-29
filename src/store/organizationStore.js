@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { generateShortId } from '../utils/generateId';
 
 // Organization roles
 export const ORG_ROLES = {
@@ -27,14 +28,9 @@ function generateSlug(name) {
         .substring(0, 50);
 }
 
-// Generate invitation token
+// Generate invitation token using cryptographically secure random values
 function generateInviteToken() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let token = '';
-    for (let i = 0; i < 32; i++) {
-        token += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return token;
+    return generateShortId(32);
 }
 
 export const useOrganizationStore = create(

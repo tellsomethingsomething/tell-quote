@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { SECTIONS, SECTION_ORDER } from '../data/sections';
+import { generateId } from '../utils/generateId';
 import { FALLBACK_RATES } from '../data/currencies';
 import { REGIONS } from '../data/currencies';
 import { saveQuote, loadQuote, generateQuoteNumber } from '../utils/storage';
@@ -648,7 +649,7 @@ export const useQuoteStore = create(
                 const subsections = { ...sectionData.subsections };
 
                 const newItem = {
-                    id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+                    id: generateId(),
                     name: item.name || '',
                     quantity: item.quantity || 1,
                     days: item.days || 1,

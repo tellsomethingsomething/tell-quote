@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { generatePrefixedId } from '../utils/generateId';
 
 const TEMPLATES_KEY = 'tell_quote_templates';
 const SYNC_QUEUE_KEY = 'tell_quote_templates_sync_queue';
@@ -41,8 +42,8 @@ function saveTemplatesLocal(templates) {
     }
 }
 
-function generateId() {
-    return `tmpl_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+function generateTemplateId() {
+    return generatePrefixedId('tmpl');
 }
 
 export const useQuoteTemplateStore = create(
@@ -178,7 +179,7 @@ export const useQuoteTemplateStore = create(
         createTemplate: async (templateData) => {
             const { templates, addToSyncQueue } = get();
             const newTemplate = {
-                id: generateId(),
+                id: generateTemplateId(),
                 name: templateData.name,
                 description: templateData.description || '',
                 category: templateData.category || 'general',

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { generateId, generateShortId } from '../utils/generateId';
 import {
     encryptData,
     decryptData,
@@ -954,7 +955,7 @@ export const useSettingsStore = create(
         addUser: async (user) => {
             const state = get();
             const newUser = {
-                id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+                id: generateId(),
                 name: user.name || '',
                 email: user.email || '',
                 role: user.role || 'user',
@@ -1002,7 +1003,7 @@ export const useSettingsStore = create(
         // Project Types
         addProjectType: async (label) => {
             const state = get();
-            const id = label.toLowerCase().replace(/\s+/g, '_') + '_' + Math.random().toString(36).substring(2, 7);
+            const id = label.toLowerCase().replace(/\s+/g, '_') + '_' + generateShortId(5);
             const updated = {
                 ...state.settings,
                 projectTypes: [...state.settings.projectTypes, { id, label }],
@@ -1158,7 +1159,7 @@ export const useSettingsStore = create(
         addActivityLog: async (entry) => {
             const state = get();
             const newEntry = {
-                id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+                id: generateId(),
                 timestamp: new Date().toISOString(),
                 ...entry,
             };
