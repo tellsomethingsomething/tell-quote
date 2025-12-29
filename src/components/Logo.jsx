@@ -1,0 +1,84 @@
+/**
+ * ProductionOS Logo Component
+ * Renders the logo inline to avoid SVG caching issues
+ * Icon: Purple-blue gradient with white P
+ * Text: "Production" in white, "OS" in purple gradient
+ */
+
+export default function Logo({ className = 'h-8', showText = true, variant = 'dark' }) {
+    // Variant controls text color for "Production" part
+    // 'dark' = white text (for dark backgrounds)
+    // 'light' = dark text (for light backgrounds)
+    const productionColor = variant === 'light' ? '#1a1a2e' : 'white';
+
+    return (
+        <svg
+            viewBox={showText ? "0 0 240 40" : "0 0 40 40"}
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={className}
+        >
+            <defs>
+                {/* Icon gradient - blue to purple/pink */}
+                <linearGradient id="iconGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#6366F1"/>
+                    <stop offset="50%" stopColor="#8B5CF6"/>
+                    <stop offset="100%" stopColor="#D946EF"/>
+                </linearGradient>
+                {/* Text gradient for "OS" - purple to pink */}
+                <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#8B5CF6"/>
+                    <stop offset="100%" stopColor="#D946EF"/>
+                </linearGradient>
+            </defs>
+
+            {/* P Icon Box with gradient - more rounded corners */}
+            <rect x="0" y="0" width="40" height="40" rx="10" fill="url(#iconGradient)"/>
+
+            {/* P Letter in box (white) - bolder, centered */}
+            <text
+                x="20"
+                y="29"
+                fill="white"
+                fontSize="26"
+                fontFamily="system-ui, -apple-system, sans-serif"
+                fontWeight="600"
+                textAnchor="middle"
+            >
+                P
+            </text>
+
+            {showText && (
+                <>
+                    {/* "Production" text in white/dark */}
+                    <text
+                        x="52"
+                        y="28"
+                        fill={productionColor}
+                        fontSize="24"
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                        fontWeight="500"
+                    >
+                        Production
+                    </text>
+                    {/* "OS" text in gradient */}
+                    <text
+                        x="175"
+                        y="28"
+                        fill="url(#textGradient)"
+                        fontSize="24"
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                        fontWeight="500"
+                    >
+                        OS
+                    </text>
+                </>
+            )}
+        </svg>
+    );
+}
+
+// Icon only version
+export function LogoIcon({ className = 'h-8' }) {
+    return <Logo className={className} showText={false} />;
+}
