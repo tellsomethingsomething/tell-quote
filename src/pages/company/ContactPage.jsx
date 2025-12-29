@@ -9,15 +9,15 @@ const contactMethods = [
         icon: Mail,
         title: "Email Support",
         description: "Get help from our support team",
-        contact: "support@productionos.com",
-        link: "mailto:support@productionos.com"
+        contact: "support@productionos.io",
+        link: "mailto:support@productionos.io"
     },
     {
         icon: MessageSquare,
         title: "Sales Inquiries",
         description: "Learn about enterprise solutions",
-        contact: "sales@productionos.com",
-        link: "mailto:sales@productionos.com"
+        contact: "sales@productionos.io",
+        link: "mailto:sales@productionos.io"
     },
     {
         icon: Clock,

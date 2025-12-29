@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
 
                 // Send the email
                 const html = generateEmailHtml(body, enrollment.contact_name, unsubscribeUrl)
-                const fromEmail = `${org?.name || 'ProductionOS'} <noreply@productionos.com>`
+                const fromEmail = `${org?.name || 'ProductionOS'} <noreply@productionos.io>`
 
                 const sendResult = await sendViaResend(
                     RESEND_API_KEY,

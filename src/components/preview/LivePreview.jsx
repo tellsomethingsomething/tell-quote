@@ -1,6 +1,7 @@
 import { useState, createElement, useCallback } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useSettingsStore } from '../../store/settingsStore';
+import { usePDFWatermark } from '../../hooks/useSubscription';
 import { formatCurrency, convertFromUSD } from '../../utils/currency';
 import { CURRENCIES } from '../../data/currencies';
 import { calculateGrandTotal, calculateGrandTotalWithFees } from '../../utils/calculations';
@@ -8,6 +9,7 @@ import { calculateGrandTotal, calculateGrandTotalWithFees } from '../../utils/ca
 export default function LivePreview() {
     const { quote, rates } = useQuoteStore();
     const { settings } = useSettingsStore();
+    const { shouldWatermark } = usePDFWatermark();
     const [includeTerms, setIncludeTerms] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const client = quote.client || {};
@@ -36,7 +38,7 @@ export default function LivePreview() {
             ]);
 
             const blob = await pdf(
-                createElement(CleanPDF, { quote, currency: quote.currency, includeTerms })
+                createElement(CleanPDF, { quote, currency: quote.currency, includeTerms, showWatermark: shouldWatermark })
             ).toBlob();
 
             const filename = `${client.company || 'Client'} - ${quote.project.title || 'Project'} - ${quote.quoteDate} - Quote.pdf`;
@@ -50,7 +52,7 @@ export default function LivePreview() {
         } finally {
             setIsGenerating(false);
         }
-    }, [quote, includeTerms, client.company]);
+    }, [quote, includeTerms, client.company, shouldWatermark]);
 
     return (
         <div className="bg-white text-black p-4 text-[10px] font-sans shadow-lg min-h-[800px] relative group">

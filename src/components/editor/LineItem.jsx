@@ -222,7 +222,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                 </div>
 
                 {/* Quantity */}
-                <div className="w-14 sm:w-16">
+                <div className="w-16 sm:w-18 md:w-20">
                     <label htmlFor={`quantity-${item.id}`} className="sr-only">
                         Quantity
                     </label>
@@ -233,7 +233,8 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                         onChange={(e) => handleChange('quantity', e.target.value === '' ? '' : parseFloat(e.target.value))}
                         onBlur={(e) => { if (e.target.value === '' || isNaN(item.quantity)) handleChange('quantity', 1); }}
                         onFocus={(e) => e.target.select()}
-                        min="1"
+                        min="0.01"
+                        step="0.5"
                         className="input-sm w-full text-left text-sm"
                         title="Qty"
                         aria-label="Quantity"
@@ -243,7 +244,7 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                 </div>
 
                 {/* Days */}
-                <div className="w-14 sm:w-16">
+                <div className="w-16 sm:w-18 md:w-20">
                     <label htmlFor={`days-${item.id}`} className="sr-only">
                         Days
                     </label>
@@ -264,8 +265,8 @@ export default function LineItem({ item, sectionId, subsectionName }) {
                     />
                 </div>
 
-                {/* Cost (internal) */}
-                <div className="w-24 hidden lg:block relative">
+                {/* Cost (internal) - visible on tablet and larger */}
+                <div className="w-24 hidden md:block relative">
                     <label htmlFor={`cost-${item.id}`} className="sr-only">
                         Cost per unit
                     </label>

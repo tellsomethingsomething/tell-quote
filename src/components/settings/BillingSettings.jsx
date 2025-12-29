@@ -241,7 +241,7 @@ export default function BillingSettings() {
 
                         <div className="text-right">
                             <div className="text-2xl font-bold text-white">
-                                {formatPrice(currentPlan.priceMonthly)}
+                                {formatPrice(currentPlan.pricing?.USD?.monthly || 0)}
                                 <span className="text-sm text-gray-500 font-normal">/mo</span>
                             </div>
                             {!isFreePlan && (
@@ -393,7 +393,9 @@ export default function BillingSettings() {
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {Object.values(PLANS).map((plan) => {
                         const isCurrentPlan = currentPlan.id === plan.id;
-                        const price = billingCycle === 'yearly' ? plan.priceYearly / 12 : plan.priceMonthly;
+                        const monthlyPrice = plan.pricing?.USD?.monthly || 0;
+                        const annualPrice = plan.pricing?.USD?.annual || 0;
+                        const price = billingCycle === 'yearly' ? annualPrice / 12 : monthlyPrice;
 
                         return (
                             <div
@@ -422,7 +424,7 @@ export default function BillingSettings() {
                                     <span className="text-gray-500">/mo</span>
                                     {billingCycle === 'yearly' && (
                                         <p className="text-xs text-gray-500 mt-1">
-                                            Billed {formatPrice(plan.priceYearly)} yearly
+                                            Billed {formatPrice(annualPrice)} yearly
                                         </p>
                                     )}
                                 </div>
@@ -544,7 +546,7 @@ export default function BillingSettings() {
                     All prices are in USD. Payments are processed securely by Stripe.
                 </p>
                 <p>
-                    Need a custom plan? <a href="mailto:sales@productionos.com" className="text-brand-primary hover:underline">Contact our sales team</a>
+                    Need a custom plan? <a href="mailto:sales@productionos.io" className="text-brand-primary hover:underline">Contact our sales team</a>
                 </p>
             </div>
 

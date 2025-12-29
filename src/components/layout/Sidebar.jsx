@@ -1,6 +1,132 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useSettingsStore } from '../../store/settingsStore';
+import { useSubscription } from '../../hooks/useSubscription';
+import { PLANS } from '../../services/billingService';
+import Logo, { LogoIcon } from '../Logo';
+
+// Usage Limits Component - Shows resource usage vs plan limits
+function UsageLimits({ collapsed, isMobile, isOpen, onNavigate }) {
+    const { usage, limits, planId, isFreePlan, isTrial, loading } = useSubscription();
+
+    if (loading || !usage || !limits) return null;
+
+    // Only show for free/individual plans with limits
+    const showLimits = isFreePlan || planId === 'individual';
+    if (!showLimits) return null;
+
+    const plan = PLANS[planId] || PLANS.free;
+
+    // Calculate usage items
+    const usageItems = [
+        {
+            label: 'Projects',
+            current: usage.projects || 0,
+            max: limits.projects,
+            icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
+        },
+        {
+            label: 'Crew',
+            current: usage.crew || 0,
+            max: limits.crewContacts,
+            icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
+        },
+        {
+            label: 'Equipment',
+            current: usage.equipment || 0,
+            max: limits.equipmentItems,
+            icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+        },
+    ].filter(item => item.max !== -1); // Only show items with limits
+
+    if (usageItems.length === 0) return null;
+
+    const getUsageColor = (current, max) => {
+        const percent = (current / max) * 100;
+        if (percent >= 100) return 'text-red-400 bg-red-500';
+        if (percent >= 80) return 'text-amber-400 bg-amber-500';
+        return 'text-green-400 bg-green-500';
+    };
+
+    const getBarColor = (current, max) => {
+        const percent = (current / max) * 100;
+        if (percent >= 100) return 'bg-red-500';
+        if (percent >= 80) return 'bg-amber-500';
+        return 'bg-green-500';
+    };
+
+    // Collapsed view - just show icons with colored dots
+    if (!isOpen && !isMobile) {
+        const hasWarning = usageItems.some(item => (item.current / item.max) >= 0.8);
+        return (
+            <div className="px-2 py-2 border-t border-dark-border">
+                <div
+                    className={`w-full flex items-center justify-center p-2 rounded-lg cursor-pointer transition-colors ${hasWarning ? 'bg-amber-500/10 hover:bg-amber-500/20' : 'hover:bg-white/5'}`}
+                    onClick={() => onNavigate('settings')}
+                    title="View usage limits"
+                >
+                    <div className={`w-2 h-2 rounded-full ${hasWarning ? 'bg-amber-500' : 'bg-green-500'}`} />
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="px-3 py-3 border-t border-dark-border">
+            <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {isTrial ? 'Trial Usage' : `${plan.name} Plan`}
+                </span>
+                <button
+                    onClick={() => onNavigate('settings')}
+                    className="text-xs text-brand-primary hover:text-brand-primary/80 font-medium"
+                >
+                    {isFreePlan ? 'Upgrade' : 'Manage'}
+                </button>
+            </div>
+            <div className="space-y-2">
+                {usageItems.map(item => {
+                    const percent = Math.min(100, (item.current / item.max) * 100);
+                    const colorClass = getUsageColor(item.current, item.max);
+                    const barColor = getBarColor(item.current, item.max);
+
+                    return (
+                        <div key={item.label} className="group">
+                            <div className="flex items-center justify-between text-xs mb-1">
+                                <span className="text-gray-400 flex items-center gap-1.5">
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                                    </svg>
+                                    {item.label}
+                                </span>
+                                <span className={colorClass.split(' ')[0]}>
+                                    {item.current}/{item.max}
+                                </span>
+                            </div>
+                            <div className="h-1 bg-dark-border rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all ${barColor}`}
+                                    style={{ width: `${percent}%` }}
+                                />
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+            {isFreePlan && (
+                <button
+                    onClick={() => onNavigate('settings')}
+                    className="w-full mt-3 py-1.5 px-3 bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary text-xs font-medium rounded-lg transition-colors flex items-center justify-center gap-1"
+                >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    Upgrade for More
+                </button>
+            )}
+        </div>
+    );
+}
 
 // Grouped navigation structure
 const NAV_CATEGORIES = [
@@ -178,7 +304,7 @@ export default function Sidebar({
                             onClick={() => handleNavClick('dashboard')}
                             className="flex items-center hover:opacity-80 transition-opacity"
                         >
-                            <img src="/productionos-logo.svg" alt="ProductionOS" className="h-8" style={{ color: isDark ? '#fff' : '#143642' }} />
+                            <Logo className="h-8" />
                         </button>
                     )}
                     {isMobile ? (
@@ -300,6 +426,14 @@ export default function Sidebar({
                         })}
                     </div>
                 </nav>
+
+                {/* Usage Limits */}
+                <UsageLimits
+                    collapsed={collapsed}
+                    isMobile={isMobile}
+                    isOpen={isOpen}
+                    onNavigate={handleNavClick}
+                />
 
                 {/* Bottom Section */}
                 <div className={`border-t ${borderColor} p-2 space-y-1`}>

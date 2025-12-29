@@ -13,6 +13,7 @@ import {
     Smartphone,
     ChevronRight
 } from 'lucide-react';
+import Logo from '../components/Logo';
 
 export default function LandingPage({ onLogin }) {
     const [scrolled, setScrolled] = useState(false);
@@ -71,7 +72,7 @@ export default function LandingPage({ onLogin }) {
             <nav className={`fixed top-0 w-full z-50 transition-all duration-500 border-b border-white/[0.05] ${scrolled ? 'bg-[#050507]/80 backdrop-blur-xl py-4' : 'bg-transparent py-6'}`}>
                 <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
                     <div className="flex items-center gap-3 group cursor-pointer">
-                        <img src="/productionos-logo.svg" alt="ProductionOS" className="h-8 group-hover:opacity-80 transition-opacity" />
+                        <Logo className="h-8 group-hover:opacity-80 transition-opacity" />
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
@@ -416,7 +417,7 @@ export default function LandingPage({ onLogin }) {
 
                     <footer className="mt-32 border-t border-white/10 pt-12 flex flex-col md:flex-row justify-between items-center gap-8 text-white/40 text-sm">
                         <div className="flex items-center gap-2">
-                            <img src="/productionos-logo.svg" alt="ProductionOS" className="h-6 opacity-60" />
+                            <Logo className="h-6 opacity-60" />
                         </div>
                         <div className="flex gap-8">
                             <a href="#" className="hover:text-white transition-colors">Privacy</a>

@@ -218,10 +218,10 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
                     {/* Column Headers */}
                     <div className="flex flex-wrap items-center gap-2 px-2 py-0.5 text-[10px] text-gray-500 border-b border-dark-border">
                         <div className="flex-1 min-w-[180px]">Item</div>
-                        <div className="w-16 text-left">Qty</div>
-                        <div className="w-16 text-left">Days</div>
-                        <div className="w-24 text-left hidden lg:block">Cost</div>
-                        <div className="w-24 text-left">Charge</div>
+                        <div className="w-16 sm:w-18 md:w-20 text-left">Qty</div>
+                        <div className="w-16 sm:w-18 md:w-20 text-left">Days</div>
+                        <div className="w-24 text-left hidden md:block">Cost</div>
+                        <div className="w-20 sm:w-24 text-left">Charge</div>
                         <div className="w-24 text-right">Total</div>
                         <div className="w-14 text-right hidden lg:block">Margin</div>
                         <div className="w-6"></div>

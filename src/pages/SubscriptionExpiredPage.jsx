@@ -275,7 +275,7 @@ export default function SubscriptionExpiredPage({
 
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                         <a
-                            href="mailto:support@productionos.com"
+                            href="mailto:support@productionos.io"
                             className="hover:text-white flex items-center gap-1"
                         >
                             <Mail className="w-4 h-4" />

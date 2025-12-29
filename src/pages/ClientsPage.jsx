@@ -6,6 +6,7 @@ import { useActivityStore } from '../store/activityStore';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { validateForm, sanitizeString } from '../utils/validation';
+import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
 
 export default function ClientsPage({ onSelectClient }) {
     const { clients, savedQuotes, getClientQuotes, getClientHealth, addClient, deleteClient } = useClientStore();
@@ -30,6 +31,9 @@ export default function ClientsPage({ onSelectClient }) {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [selectedMonth, setSelectedMonth] = useState('all');
     const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
+
+    // Feature gating for client creation
+    const { checkAndProceed, PromptComponent } = useFeatureGuard(FEATURES.ADD_CLIENT);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -378,7 +382,7 @@ export default function ClientsPage({ onSelectClient }) {
                     </div>
                     {/* Add Client Button - visible on mobile in header */}
                     <button
-                        onClick={() => setIsAddClientModalOpen(true)}
+                        onClick={() => checkAndProceed(() => setIsAddClientModalOpen(true))}
                         className="sm:hidden btn-primary text-sm flex items-center gap-2"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -489,7 +493,7 @@ export default function ClientsPage({ onSelectClient }) {
 
                         {/* Add Client Button - Desktop only */}
                         <button
-                            onClick={() => setIsAddClientModalOpen(true)}
+                            onClick={() => checkAndProceed(() => setIsAddClientModalOpen(true))}
                             className="hidden sm:flex btn-primary text-sm items-center gap-2 flex-shrink-0"
                         >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1068,6 +1072,9 @@ export default function ClientsPage({ onSelectClient }) {
                     </div>
                 )
             }
+
+            {/* Feature gate upgrade prompt */}
+            <PromptComponent />
         </div >
     );
 }

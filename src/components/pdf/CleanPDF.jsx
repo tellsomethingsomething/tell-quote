@@ -4,6 +4,7 @@ import { formatCurrency } from '../../utils/currency';
 import { useSettingsStore } from '../../store/settingsStore';
 import { SECTIONS, SECTION_ORDER } from '../../data/sections';
 import TermsPage from './TermsPage';
+import PDFWatermark from './PDFWatermark';
 
 // Helper to convert hex to rgba
 function hexToRgba(hex, alpha = 1) {
@@ -14,7 +15,7 @@ function hexToRgba(hex, alpha = 1) {
 }
 
 // Clean, professional PDF layout with specified structure
-export default function CleanPDF({ quote, currency, includeTerms = false }) {
+export default function CleanPDF({ quote, currency, includeTerms = false, showWatermark = false }) {
     const settings = useSettingsStore.getState().settings;
     const { company, bankDetails, quoteDefaults, taxInfo, pdfOptions } = settings;
     const { client, project, sections, fees } = quote;
@@ -371,6 +372,9 @@ export default function CleanPDF({ quote, currency, includeTerms = false }) {
     return (
         <Document>
             <Page size="A4" style={styles.page}>
+                {/* Watermark for free plan */}
+                <PDFWatermark show={showWatermark} />
+
                 {/* ROW 1: Header Banner with Job Details */}
                 <View style={styles.headerBanner}>
                     <Text style={styles.quotationTitle}>QUOTATION</Text>

@@ -4,9 +4,11 @@ import { useState, useCallback, createElement } from 'react';
  * Custom hook for PDF export functionality with dynamic imports
  * @param {Function} onSuccess - Callback on successful export
  * @param {Function} onError - Callback on error
+ * @param {Object} options - Options including showWatermark for free plan users
  * @returns {Object} - { exportPdf, previewPdf, isGenerating, isPreviewing }
  */
-export function usePdfExport(onSuccess, onError) {
+export function usePdfExport(onSuccess, onError, options = {}) {
+  const { showWatermark = false } = options;
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
 
@@ -26,7 +28,7 @@ export function usePdfExport(onSuccess, onError) {
       const { pdf, CleanPDF } = await loadPdfDependencies();
       // Use createElement to render the component properly
       const blob = await pdf(
-        createElement(CleanPDF, { quote, currency })
+        createElement(CleanPDF, { quote, currency, showWatermark })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -40,7 +42,7 @@ export function usePdfExport(onSuccess, onError) {
     } finally {
       setIsPreviewing(false);
     }
-  }, [loadPdfDependencies, onSuccess, onError]);
+  }, [loadPdfDependencies, onSuccess, onError, showWatermark]);
 
   // Generate and download PDF
   const exportPdf = useCallback(async (quote, currency) => {
@@ -49,7 +51,7 @@ export function usePdfExport(onSuccess, onError) {
       const { pdf, CleanPDF } = await loadPdfDependencies();
       // Use createElement to render the component properly
       const blob = await pdf(
-        createElement(CleanPDF, { quote, currency })
+        createElement(CleanPDF, { quote, currency, showWatermark })
       ).toBlob();
 
       const clientName = quote.client?.company || 'Client';
@@ -71,7 +73,7 @@ export function usePdfExport(onSuccess, onError) {
     } finally {
       setIsGenerating(false);
     }
-  }, [loadPdfDependencies, onSuccess, onError]);
+  }, [loadPdfDependencies, onSuccess, onError, showWatermark]);
 
   return {
     exportPdf,

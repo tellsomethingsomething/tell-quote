@@ -4,6 +4,7 @@ import { calculateSectionTotal, calculateGrandTotalWithFees } from '../../utils/
 import { formatCurrency } from '../../utils/currency';
 import { useSettingsStore } from '../../store/settingsStore';
 import TermsPage from './TermsPage';
+import PDFWatermark from './PDFWatermark';
 
 // Clean Light Color Palette - Darker Text
 const colors = {
@@ -428,7 +429,7 @@ const styles = StyleSheet.create({
     },
 });
 
-export default function QuotePDF({ quote, currency, includeTerms = false }) {
+export default function QuotePDF({ quote, currency, includeTerms = false, showWatermark = false }) {
     const { client, project, sections, fees } = quote;
     const totals = calculateGrandTotalWithFees(sections, fees || {});
     const settings = useSettingsStore.getState().settings;
@@ -483,6 +484,9 @@ export default function QuotePDF({ quote, currency, includeTerms = false }) {
     return (
         <Document>
             <Page size="A4" style={styles.page}>
+                {/* Watermark for free plan */}
+                <PDFWatermark show={showWatermark} />
+
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.companySection}>

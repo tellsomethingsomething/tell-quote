@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { validatePassword, getPasswordStrength } from '../utils/validation';
+import Logo from '../components/Logo';
 
 export default function LoginPage({ initialMode = 'login' }) {
     const [searchParams] = useSearchParams();
@@ -135,7 +136,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                 {/* Logo & Title */}
                 <div className="text-center mb-8">
                     <div className="flex items-center justify-center gap-2 mb-4">
-                        <img src="/productionos-logo.svg" alt="ProductionOS" className="h-10" />
+                        <Logo className="h-10" />
                     </div>
                     <p className="text-gray-500 text-sm">
                         {mode === 'login' ? 'Sign in to your account' : mode === 'signup' ? 'Create your account' : 'Reset Password'}

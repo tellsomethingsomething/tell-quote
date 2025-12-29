@@ -1,5 +1,6 @@
 import { useState, createElement, useCallback } from 'react';
 import { useSettingsStore } from '../../store/settingsStore';
+import { usePDFWatermark } from '../../hooks/useSubscription';
 
 // Sample quote data for preview
 const getSampleQuote = (settings) => ({
@@ -72,6 +73,7 @@ export default function InvoiceDesigner() {
     const pdfOptions = settings.pdfOptions || {};
     const [generatingPreview, setGeneratingPreview] = useState(false);
     const [activeSection, setActiveSection] = useState('colors');
+    const { shouldWatermark } = usePDFWatermark();
 
     const handleColorChange = (key, value) => {
         setPdfOptions({ [key]: value });
@@ -97,7 +99,7 @@ export default function InvoiceDesigner() {
 
             const sampleQuote = getSampleQuote(settings);
             const blob = await pdf(
-                createElement(CleanPDF, { quote: sampleQuote, currency: 'USD' })
+                createElement(CleanPDF, { quote: sampleQuote, currency: 'USD', showWatermark: shouldWatermark })
             ).toBlob();
 
             const url = URL.createObjectURL(blob);
@@ -109,7 +111,7 @@ export default function InvoiceDesigner() {
         } finally {
             setGeneratingPreview(false);
         }
-    }, [settings]);
+    }, [settings, shouldWatermark]);
 
     return (
         <div className="flex flex-col h-full bg-dark-bg">

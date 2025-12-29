@@ -5,6 +5,7 @@ import Sidebar from './components/layout/Sidebar';
 import EditorHeader from './components/layout/EditorHeader';
 import EditorPanel from './components/layout/EditorPanel';
 import LoginPage from './pages/LoginPage';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Lazy load PreviewPanel to avoid loading 1.5MB PDF library on initial page load
 const PreviewPanel = lazy(() => import('./components/layout/PreviewPanel'));
@@ -796,6 +797,7 @@ function App() {
                 onNewQuote={handleNewQuote}
                 onGoToOpportunities={handleGoToOpportunities}
                 onGoToKnowledge={handleGoToKnowledge}
+                onGoToSettings={handleGoToSettings}
               />
             </main>
           </Suspense>
@@ -1067,9 +1069,11 @@ function App() {
 
             {/* Preview Panel - Hidden on mobile when editor is shown */}
             <div className={`${showMobilePreview ? 'flex' : 'hidden lg:flex'} w-full lg:w-[320px] lg:min-w-[320px]`}>
-              <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><LoadingSpinner text="Loading preview..." /></div>}>
-                <PreviewPanel />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><LoadingSpinner text="Loading preview..." /></div>}>
+                  <PreviewPanel />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           </main>
         );
@@ -1100,9 +1104,10 @@ function App() {
   }
 
   return (
-    <SubscriptionProvider>
-      <div className={`min-h-screen flex ${settings.theme === 'light' ? 'bg-light-bg' : 'bg-dark-bg'}`}>
-        <PWAStatus />
+    <ErrorBoundary>
+      <SubscriptionProvider>
+        <div className={`min-h-screen flex ${settings.theme === 'light' ? 'bg-light-bg' : 'bg-dark-bg'}`}>
+          <PWAStatus />
 
         {/* Sidebar - shown on all views except editor and full screen */}
         {!isEditorView && (
@@ -1137,8 +1142,9 @@ function App() {
           onSelectTemplate={handleSelectTemplate}
           onStartBlank={handleStartBlank}
         />
-      </div>
-    </SubscriptionProvider>
+        </div>
+      </SubscriptionProvider>
+    </ErrorBoundary>
   );
 }
 

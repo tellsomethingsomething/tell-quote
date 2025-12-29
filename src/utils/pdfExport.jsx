@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 
-export async function exportQuoteToPDF(quote, currency) {
+export async function exportQuoteToPDF(quote, currency, { showWatermark = false } = {}) {
     try {
         // Lazy load PDF dependencies to avoid 1.5MB bundle on initial load
         const [{ pdf }, { default: CleanPDF }] = await Promise.all([
@@ -9,7 +9,7 @@ export async function exportQuoteToPDF(quote, currency) {
         ]);
 
         // Generate PDF blob
-        const blob = await pdf(createElement(CleanPDF, { quote, currency })).toBlob();
+        const blob = await pdf(createElement(CleanPDF, { quote, currency, showWatermark })).toBlob();
 
         // Create download link
         const url = URL.createObjectURL(blob);

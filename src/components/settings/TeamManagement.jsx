@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import {
     Users, UserPlus, Mail, Crown, Shield, Eye, Trash2, MoreVertical,
-    Copy, Check, Clock, Send, X, AlertCircle, Loader2
+    Copy, Check, Clock, Send, X, AlertCircle, Loader2, Zap
 } from 'lucide-react';
 import { useOrganizationStore, ORG_ROLES } from '../../store/organizationStore';
+import { useSubscription } from '../../hooks/useSubscription';
+import UpgradePrompt from '../billing/UpgradePrompt';
 
 // Tab permissions available
 const TAB_PERMISSIONS = [
@@ -48,7 +50,9 @@ export default function TeamManagement() {
     const [inviteSuccess, setInviteSuccess] = useState(null);
     const [copiedToken, setCopiedToken] = useState(null);
     const [memberMenu, setMemberMenu] = useState(null);
+    const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
+    const { planId } = useSubscription();
     const limits = getSubscriptionLimits();
     const canAddUser = hasFeatureAccess('add_user');
 
@@ -135,13 +139,17 @@ export default function TeamManagement() {
 
             {/* Upgrade Notice */}
             {!canAddUser && (
-                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center justify-between">
                     <p className="text-amber-400 text-sm">
-                        You've reached the member limit for your plan.
-                        <button className="ml-2 underline hover:no-underline">
-                            Upgrade to add more members
-                        </button>
+                        You've reached the team member limit for your plan.
                     </p>
+                    <button
+                        onClick={() => setShowUpgradePrompt(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white text-sm font-medium rounded-lg hover:bg-brand-primary/90 transition-colors"
+                    >
+                        <Zap className="w-4 h-4" />
+                        Upgrade Plan
+                    </button>
                 </div>
             )}
 
@@ -311,6 +319,19 @@ export default function TeamManagement() {
                     </div>
                 </div>
             )}
+
+            {/* Upgrade Prompt Modal */}
+            <UpgradePrompt
+                isOpen={showUpgradePrompt}
+                onClose={() => setShowUpgradePrompt(false)}
+                feature="team_members"
+                currentPlan={planId || 'free'}
+                message="Upgrade to the Team plan to add more team members and unlock collaboration features."
+                onUpgrade={(selectedPlan) => {
+                    // Navigate to billing/settings for upgrade
+                    window.location.href = '/settings?tab=billing&upgrade=' + selectedPlan;
+                }}
+            />
 
             {/* Invite Modal */}
             {showInviteModal && (

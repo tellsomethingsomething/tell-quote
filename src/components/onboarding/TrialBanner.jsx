@@ -1,17 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Clock, X, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { AlertTriangle, Clock, X, Sparkles, Timer } from 'lucide-react';
 import { getTrialStatus, getTrialMessage, TRIAL_STATUS } from '../../services/trialService';
+
+// Format countdown time
+function formatCountdown(hoursRemaining) {
+    if (hoursRemaining <= 0) return { text: 'Expired', urgent: true };
+
+    const days = Math.floor(hoursRemaining / 24);
+    const hours = Math.floor(hoursRemaining % 24);
+    const minutes = Math.floor((hoursRemaining % 1) * 60);
+
+    if (days > 0) {
+        return {
+            text: `${days}d ${hours}h`,
+            urgent: days < 1,
+            days,
+            hours
+        };
+    }
+    if (hours > 0) {
+        return {
+            text: `${hours}h ${minutes}m`,
+            urgent: hours < 6,
+            hours,
+            minutes
+        };
+    }
+    return {
+        text: `${minutes}m`,
+        urgent: true,
+        minutes
+    };
+}
 
 export default function TrialBanner({ organizationId, onUpgrade }) {
     const [trialStatus, setTrialStatus] = useState(null);
     const [dismissed, setDismissed] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [countdown, setCountdown] = useState(null);
 
-    useEffect(() => {
-        loadTrialStatus();
-    }, [organizationId]);
-
-    const loadTrialStatus = async () => {
+    const loadTrialStatus = useCallback(async () => {
         if (!organizationId) {
             setLoading(false);
             return;
@@ -19,8 +47,36 @@ export default function TrialBanner({ organizationId, onUpgrade }) {
 
         const status = await getTrialStatus(organizationId);
         setTrialStatus(status);
+        if (status?.hoursRemaining) {
+            setCountdown(formatCountdown(status.hoursRemaining));
+        }
         setLoading(false);
-    };
+    }, [organizationId]);
+
+    useEffect(() => {
+        loadTrialStatus();
+    }, [loadTrialStatus]);
+
+    // Live countdown timer - update every minute when < 24 hours
+    useEffect(() => {
+        if (!trialStatus?.trialEndsAt || trialStatus.status === TRIAL_STATUS.CONVERTED) return;
+
+        const updateCountdown = () => {
+            const now = new Date();
+            const endsAt = new Date(trialStatus.trialEndsAt);
+            const hoursRemaining = (endsAt - now) / (1000 * 60 * 60);
+            setCountdown(formatCountdown(hoursRemaining));
+        };
+
+        // Update immediately
+        updateCountdown();
+
+        // Update every minute if < 24 hours, every hour otherwise
+        const interval = trialStatus.hoursRemaining < 24 ? 60000 : 3600000;
+        const timer = setInterval(updateCountdown, interval);
+
+        return () => clearInterval(timer);
+    }, [trialStatus]);
 
     const handleDismiss = () => {
         setDismissed(true);
@@ -52,16 +108,20 @@ export default function TrialBanner({ organizationId, onUpgrade }) {
     const message = getTrialMessage(trialStatus);
     if (!message || dismissed) return null;
 
+    // Determine urgency level
+    const isUrgent = countdown?.urgent || trialStatus.status === TRIAL_STATUS.EXPIRING_SOON;
+    const isCritical = trialStatus.hoursRemaining <= 6 || trialStatus.status === TRIAL_STATUS.EXPIRED;
+
     const bannerStyles = {
         success: 'bg-teal-500/20 border-teal-500/30 text-teal-200',
-        warning: 'bg-yellow-500/20 border-yellow-500/30 text-yellow-200',
+        warning: 'bg-amber-500/20 border-amber-500/30 text-amber-200',
         error: 'bg-red-500/20 border-red-500/30 text-red-200',
         info: 'bg-blue-500/20 border-blue-500/30 text-blue-200',
     };
 
     const iconStyles = {
         success: 'text-teal-400',
-        warning: 'text-yellow-400',
+        warning: 'text-amber-400',
         error: 'text-red-400',
         info: 'text-blue-400',
     };
@@ -70,9 +130,25 @@ export default function TrialBanner({ organizationId, onUpgrade }) {
     const iconStyle = iconStyles[message.type] || iconStyles.info;
 
     return (
-        <div className={`${style} border rounded-lg p-4 mb-4`}>
+        <div className={`${style} border rounded-lg p-4 mb-4 ${isCritical ? 'animate-pulse' : ''}`}>
             <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1">
+                    {/* Countdown Timer Badge */}
+                    {countdown && trialStatus.status !== TRIAL_STATUS.EXPIRED && (
+                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
+                            isCritical
+                                ? 'bg-red-500/30 text-red-300'
+                                : isUrgent
+                                    ? 'bg-amber-500/30 text-amber-300'
+                                    : 'bg-white/10 text-white'
+                        }`}>
+                            <Timer className={`w-4 h-4 ${isCritical ? 'animate-pulse' : ''}`} />
+                            <span className="font-mono font-bold text-lg tabular-nums">
+                                {countdown.text}
+                            </span>
+                        </div>
+                    )}
+
                     {message.type === 'error' ? (
                         <AlertTriangle className={`w-5 h-5 ${iconStyle} flex-shrink-0`} />
                     ) : (
@@ -88,7 +164,13 @@ export default function TrialBanner({ organizationId, onUpgrade }) {
                     {message.showUpgrade && (
                         <button
                             onClick={handleUpgrade}
-                            className="flex items-center gap-2 px-4 py-2 bg-brand-orange text-white rounded-lg hover:bg-brand-orange/90 transition-colors font-medium text-sm"
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                                isCritical
+                                    ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse'
+                                    : isUrgent
+                                        ? 'bg-amber-500 text-white hover:bg-amber-600'
+                                        : 'bg-brand-orange text-white hover:bg-brand-orange/90'
+                            }`}
                         >
                             <Sparkles className="w-4 h-4" />
                             Upgrade Now

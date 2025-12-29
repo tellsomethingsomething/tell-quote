@@ -62,30 +62,48 @@ async function syncQuoteToSupabase(quote) {
         };
 
         let savedId = quote.id;
+        let saveSucceeded = false;
 
         // If we have an ID, update directly
         if (quote.id) {
-            await supabase
+            const { error: updateError } = await supabase
                 .from('quotes')
                 .update(dbQuote)
                 .eq('id', quote.id);
+
+            if (updateError) {
+                console.error('Quote update failed:', updateError);
+                return { synced: false, error: updateError.message };
+            }
+            saveSucceeded = true;
         } else {
             // Check if quote exists by quote_number (use limit instead of single to avoid errors)
-            const { data: existingList } = await supabase
+            const { data: existingList, error: lookupError } = await supabase
                 .from('quotes')
                 .select('id')
                 .eq('quote_number', quote.quoteNumber)
                 .limit(1);
 
+            if (lookupError) {
+                console.error('Quote lookup failed:', lookupError);
+                return { synced: false, error: lookupError.message };
+            }
+
             const existing = existingList?.[0];
 
             if (existing) {
                 // Update existing
-                await supabase
+                const { error: updateError } = await supabase
                     .from('quotes')
                     .update(dbQuote)
                     .eq('id', existing.id);
+
+                if (updateError) {
+                    console.error('Quote update failed:', updateError);
+                    return { synced: false, error: updateError.message };
+                }
                 savedId = existing.id;
+                saveSucceeded = true;
             } else {
                 // Insert new
                 const { data, error } = await supabase
@@ -94,24 +112,36 @@ async function syncQuoteToSupabase(quote) {
                     .select()
                     .single();
 
-                if (!error && data) {
+                if (error) {
+                    console.error('Quote insert failed:', error);
+                    return { synced: false, error: error.message };
+                }
+
+                if (data) {
                     savedId = data.id;
+                    saveSucceeded = true;
                 }
             }
         }
 
-        lastSavedQuote = quoteStr;
+        // CRITICAL: Only update lastSavedQuote AFTER confirming save succeeded
+        // This ensures failed saves will be retried on the next auto-save cycle
+        if (saveSucceeded) {
+            lastSavedQuote = quoteStr;
 
-        // Update local state with ID if it was new
-        if (savedId && !quote.id) {
-            useQuoteStore.getState().setQuoteId(savedId);
-            // Also update clientStore
-            const { saveQuote: saveToLibrary } = useClientStore.getState();
-            saveToLibrary({ ...quote, id: savedId });
+            // Update local state with ID if it was new
+            if (savedId && !quote.id) {
+                useQuoteStore.getState().setQuoteId(savedId);
+                // Also update clientStore
+                const { saveQuote: saveToLibrary } = useClientStore.getState();
+                saveToLibrary({ ...quote, id: savedId });
+            }
+
+            console.log('Quote auto-saved to Supabase');
+            return { synced: true, id: savedId };
         }
 
-        console.log('Quote auto-saved to Supabase');
-        return { synced: true, id: savedId };
+        return { synced: false, reason: 'save did not complete' };
     } catch (e) {
         console.error('Auto-save failed:', e);
         return { synced: false, error: e.message };

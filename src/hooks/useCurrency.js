@@ -21,7 +21,9 @@ export function useCurrency() {
     // Format a price with currency symbol
     const formatPrice = (amount, options = {}) => {
         const { decimals = 0, showCode = false } = options;
-        const converted = Math.round(amount * rate);
+        // Use proper decimal rounding instead of Math.round() to preserve precision
+        const multiplier = Math.pow(10, decimals);
+        const converted = Math.round(amount * rate * multiplier) / multiplier;
         const formatted = converted.toLocaleString(undefined, {
             minimumFractionDigits: decimals,
             maximumFractionDigits: decimals,

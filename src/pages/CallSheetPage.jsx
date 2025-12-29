@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useCallSheetStore, CALL_SHEET_STATUS, CALL_SHEET_STATUS_CONFIG, DEPARTMENTS } from '../store/callSheetStore';
 import { useProjectStore } from '../store/projectStore';
+import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
 
 // Calendar Component
 function ShootCalendar({ callSheets, onDateClick, selectedDate, onSheetClick }) {
@@ -557,6 +558,9 @@ export default function CallSheetPage({ onSelectCallSheet }) {
     const [statusFilter, setStatusFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Feature gating for call sheet creation
+    const { checkAndProceed, PromptComponent } = useFeatureGuard(FEATURES.CALL_SHEETS);
+
     const stats = getStats();
     const todaySheets = getToday();
 
@@ -626,7 +630,7 @@ export default function CallSheetPage({ onSelectCallSheet }) {
                     <p className="text-gray-400 text-sm">Manage shoot schedules and crew calls</p>
                 </div>
                 <button
-                    onClick={() => setShowCreateModal(true)}
+                    onClick={() => checkAndProceed(() => setShowCreateModal(true))}
                     className="px-4 py-2 bg-accent-primary text-white rounded-lg font-medium hover:bg-accent-primary/90 transition-colors flex items-center gap-2"
                 >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -772,9 +776,7 @@ export default function CallSheetPage({ onSelectCallSheet }) {
                                 })}
                             </h3>
                             <button
-                                onClick={() => {
-                                    setShowCreateModal(true);
-                                }}
+                                onClick={() => checkAndProceed(() => setShowCreateModal(true))}
                                 className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                                 title="Add call sheet for this date"
                             >
@@ -802,7 +804,7 @@ export default function CallSheetPage({ onSelectCallSheet }) {
                                     </svg>
                                     <p className="mb-2">No shoots scheduled</p>
                                     <button
-                                        onClick={() => setShowCreateModal(true)}
+                                        onClick={() => checkAndProceed(() => setShowCreateModal(true))}
                                         className="text-accent-primary hover:text-accent-primary/80 text-sm"
                                     >
                                         Create call sheet
@@ -835,7 +837,7 @@ export default function CallSheetPage({ onSelectCallSheet }) {
                             <h3 className="text-lg font-medium text-white mb-2">No call sheets found</h3>
                             <p className="mb-4">Create your first call sheet to get started</p>
                             <button
-                                onClick={() => setShowCreateModal(true)}
+                                onClick={() => checkAndProceed(() => setShowCreateModal(true))}
                                 className="px-4 py-2 bg-accent-primary text-white rounded-lg font-medium hover:bg-accent-primary/90 transition-colors"
                             >
                                 New Call Sheet
@@ -865,6 +867,9 @@ export default function CallSheetPage({ onSelectCallSheet }) {
                 sheet={duplicateSheet}
                 onDuplicate={handleDuplicate}
             />
+
+            {/* Feature gate upgrade prompt */}
+            <PromptComponent />
         </div>
     );
 }

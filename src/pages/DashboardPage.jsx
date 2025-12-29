@@ -55,7 +55,7 @@ function isFollowUpOverdue(nextFollowUpDate) {
     return new Date(nextFollowUpDate) < new Date();
 }
 
-export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportunities, onGoToKnowledge, onNavigate }) {
+export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportunities, onGoToKnowledge, onGoToSettings }) {
     const { savedQuotes, clients, updateQuoteStatus } = useClientStore();
     const { rates, ratesUpdated, refreshRates, ratesLoading } = useQuoteStore();
     const { settings, setDashboardPreferences } = useSettingsStore();
@@ -515,7 +515,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
                 {/* Trial Banner */}
                 <TrialBanner
                     organizationId={organizationId}
-                    onUpgrade={() => onNavigate?.({ view: 'settings', tab: 'billing' })}
+                    onUpgrade={onGoToSettings}
                 />
 
                 {/* Onboarding Checklist Widget */}
@@ -523,7 +523,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
                     <OnboardingChecklist
                         userId={user?.userId}
                         organizationId={organizationId}
-                        onNavigate={onNavigate}
+                        onNavigate={onGoToSettings}
                     />
                 </div>
 

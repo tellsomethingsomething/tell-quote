@@ -149,6 +149,22 @@ export default function Pricing() {
                     </motion.div>
                 )}
 
+                {/* Currency Selector */}
+                <div className="flex items-center justify-center gap-2 mb-6">
+                    <span className="text-sm text-marketing-text-secondary">Currency:</span>
+                    <select
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value)}
+                        className="bg-marketing-surface border border-marketing-border rounded-lg px-3 py-1.5 text-sm text-marketing-text-primary focus:outline-none focus:ring-2 focus:ring-marketing-primary/50 cursor-pointer"
+                    >
+                        {Object.entries(currencyConfig).map(([code, config]) => (
+                            <option key={code} value={code}>
+                                {config.symbol} {code}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
                 {/* Toggle */}
                 <div className="flex items-center justify-center gap-4 mb-16">
                     <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-marketing-text-primary' : 'text-marketing-text-secondary'}`}>Monthly</span>

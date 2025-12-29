@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'ProductionOS <noreply@productionos.com>',
+        from: 'ProductionOS <noreply@productionos.io>',
         to: [email],
         subject: `You've been invited to join ${organizationName} on ProductionOS`,
         html: emailHtml,

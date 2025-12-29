@@ -2,6 +2,7 @@ import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/render
 import { SECTIONS, SECTION_ORDER } from '../../data/sections';
 import { calculateSectionTotal, calculateGrandTotalWithFees } from '../../utils/calculations';
 import { formatCurrency } from '../../utils/currency';
+import PDFWatermark from './PDFWatermark';
 
 // Professional color palette
 const colors = {
@@ -379,6 +380,7 @@ export default function ProposalPDF({
     includeCover = true,
     includeProposal = true,
     includeQuote = true,
+    showWatermark = false,
 }) {
     const { client, project, sections, fees } = quote;
     const totals = calculateGrandTotalWithFees(sections, fees || {});
@@ -429,6 +431,7 @@ export default function ProposalPDF({
             {/* Page 1: Cover Page */}
             {includeCover && (
                 <Page size="A4" style={styles.coverPage}>
+                    <PDFWatermark show={showWatermark} />
                     {coverImage && (
                         <Image src={coverImage} style={styles.coverBackground} />
                     )}
@@ -468,6 +471,7 @@ export default function ProposalPDF({
             {/* Page 2: Proposal Page */}
             {includeProposal && proposalParagraphs.length > 0 && (
                 <Page size="A4" style={styles.proposalPage}>
+                    <PDFWatermark show={showWatermark} />
                     <View style={styles.accentBar} />
                     <View style={styles.proposalContent}>
                         <View style={styles.proposalHeader}>
@@ -515,6 +519,7 @@ export default function ProposalPDF({
             {/* Page 3+: Detailed Quote */}
             {includeQuote && (
                 <Page size="A4" style={styles.quotePage}>
+                    <PDFWatermark show={showWatermark} />
                     <View style={styles.accentBar} />
                     <View style={styles.quoteContent}>
                         <View style={styles.header}>

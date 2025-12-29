@@ -4,9 +4,10 @@ import { calculateSectionTotal, calculateGrandTotalWithFees } from '../../utils/
 import { formatCurrency } from '../../utils/currency';
 import { useSettingsStore } from '../../store/settingsStore';
 import { WIDTH_OPTIONS } from '../../data/invoiceModules';
+import PDFWatermark from './PDFWatermark';
 
 // Dynamic InvoicePDF that renders based on template layout
-export default function InvoicePDF({ quote, currency, template }) {
+export default function InvoicePDF({ quote, currency, template, showWatermark = false }) {
     const settings = useSettingsStore.getState().settings;
     const { company, bankDetails, quoteDefaults, taxInfo } = settings;
     const { client, project, sections, fees } = quote;
@@ -170,6 +171,9 @@ export default function InvoicePDF({ quote, currency, template }) {
                     paddingRight: pageSettings.margins?.right || 40,
                 }]}
             >
+                {/* Watermark for free plan */}
+                <PDFWatermark show={showWatermark} />
+
                 {renderLayout()}
 
                 {/* Footer */}

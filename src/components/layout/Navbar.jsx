@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, Check } from 'lucide-react';
+import Logo from '../Logo';
 // motion/AnimatePresence removed - using CSS transitions for mobile menu
 
 export default function Navbar() {
@@ -40,7 +41,7 @@ export default function Navbar() {
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-2 group hover:opacity-80 transition-opacity">
-                        <img src="/productionos-logo.svg" alt="ProductionOS" className="h-8" />
+                        <Logo className="h-8" />
                     </Link>
 
                     {/* Desktop Navigation */}

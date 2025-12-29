@@ -72,7 +72,10 @@ export function convertCurrency(amount, fromCurrency, toCurrency, rates = {}) {
     const result = usdAmount * toRate;
 
     // Ensure we never return NaN
-    return isNaN(result) ? 0 : result;
+    // Round to 2 decimal places to avoid floating point precision issues
+    // e.g., 99.99999999997 becomes 100.00
+    if (isNaN(result)) return 0;
+    return Math.round(result * 100) / 100;
 }
 
 // Convert from USD to target currency

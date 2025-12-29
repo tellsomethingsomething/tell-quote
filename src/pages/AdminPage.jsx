@@ -258,6 +258,182 @@ function PlanDistribution({ data }) {
     );
 }
 
+// Webhook Events Monitor
+function WebhookMonitor() {
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [retrying, setRetrying] = useState(null);
+    const [filter, setFilter] = useState('all'); // all, failed, completed
+
+    const loadEvents = async () => {
+        setLoading(true);
+        try {
+            let query = supabase
+                .from('webhook_events')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            if (filter === 'failed') {
+                query = query.eq('status', 'failed');
+            } else if (filter === 'completed') {
+                query = query.eq('status', 'completed');
+            }
+
+            const { data, error } = await query;
+            if (error) throw error;
+            setEvents(data || []);
+        } catch (error) {
+            console.error('Failed to load webhook events:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadEvents();
+    }, [filter]);
+
+    const retryEvent = async (event) => {
+        setRetrying(event.id);
+        try {
+            // Call the webhook endpoint with the stored payload
+            const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-webhook`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: event.stripe_event_id,
+                        type: event.event_type,
+                        data: { object: event.payload },
+                    }),
+                }
+            );
+
+            if (response.ok) {
+                // Reload events
+                await loadEvents();
+            } else {
+                alert('Retry failed: ' + await response.text());
+            }
+        } catch (error) {
+            console.error('Retry failed:', error);
+            alert('Retry failed: ' + error.message);
+        } finally {
+            setRetrying(null);
+        }
+    };
+
+    const getStatusBadge = (status) => {
+        switch (status) {
+            case 'completed':
+                return 'bg-green-500/10 text-green-400';
+            case 'failed':
+                return 'bg-red-500/10 text-red-400';
+            case 'processing':
+                return 'bg-blue-500/10 text-blue-400';
+            case 'skipped':
+                return 'bg-gray-500/10 text-gray-400';
+            default:
+                return 'bg-amber-500/10 text-amber-400';
+        }
+    };
+
+    const failedCount = events.filter(e => e.status === 'failed').length;
+
+    return (
+        <div className="bg-dark-card border border-dark-border rounded-lg overflow-hidden">
+            <div className="px-5 py-4 border-b border-dark-border flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <h3 className="font-medium text-white">Webhook Events</h3>
+                    {failedCount > 0 && (
+                        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-500/10 text-red-400">
+                            {failedCount} failed
+                        </span>
+                    )}
+                </div>
+                <div className="flex items-center gap-2">
+                    <select
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="text-xs bg-dark-bg border border-dark-border rounded px-2 py-1 text-gray-300"
+                    >
+                        <option value="all">All Events</option>
+                        <option value="failed">Failed Only</option>
+                        <option value="completed">Completed Only</option>
+                    </select>
+                    <button
+                        onClick={loadEvents}
+                        disabled={loading}
+                        className="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+                    >
+                        <svg className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            <div className="divide-y divide-dark-border max-h-[400px] overflow-y-auto">
+                {loading ? (
+                    <div className="p-8 text-center text-gray-500">Loading...</div>
+                ) : events.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500">No webhook events</div>
+                ) : (
+                    events.map((event) => (
+                        <div key={event.id} className="px-5 py-3 hover:bg-dark-bg/50">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className={`px-2 py-0.5 text-xs font-medium rounded ${getStatusBadge(event.status)}`}>
+                                            {event.status}
+                                        </span>
+                                        <span className="text-sm font-medium text-gray-200 truncate">
+                                            {event.event_type}
+                                        </span>
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                        {event.stripe_event_id}
+                                    </div>
+                                    {event.error_message && (
+                                        <div className="text-xs text-red-400 mt-1 truncate" title={event.error_message}>
+                                            {event.error_message}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <div className="text-right">
+                                        <div className="text-xs text-gray-400">
+                                            {format(new Date(event.created_at), 'MMM d, HH:mm')}
+                                        </div>
+                                        {event.retry_count > 0 && (
+                                            <div className="text-xs text-gray-500">
+                                                {event.retry_count} retries
+                                            </div>
+                                        )}
+                                    </div>
+                                    {event.status === 'failed' && event.payload && (
+                                        <button
+                                            onClick={() => retryEvent(event)}
+                                            disabled={retrying === event.id}
+                                            className="px-2 py-1 text-xs bg-amber-500/10 text-amber-400 rounded hover:bg-amber-500/20 disabled:opacity-50"
+                                        >
+                                            {retrying === event.id ? 'Retrying...' : 'Retry'}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+}
+
 // Trial Conversion Funnel
 function ConversionFunnel({ data }) {
     return (
@@ -555,8 +731,11 @@ export default function AdminPage() {
                         </div>
                     </div>
 
-                    {/* Subscriptions Table */}
-                    <SubscriptionTable subscriptions={subscriptions} />
+                    {/* Webhook Monitor & Subscriptions */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <WebhookMonitor />
+                        <SubscriptionTable subscriptions={subscriptions} />
+                    </div>
                 </div>
             </div>
         </AdminGuard>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
+import Logo from '../components/Logo';
 
 export default function OnboardingPage() {
     const {
@@ -43,7 +44,7 @@ export default function OnboardingPage() {
                 {/* Logo & Title */}
                 <div className="text-center mb-8">
                     <div className="flex items-center justify-center gap-2 mb-4">
-                        <img src="/productionos-logo.svg" alt="ProductionOS" className="h-10" />
+                        <Logo className="h-10" />
                     </div>
                     <h1 className="text-xl font-semibold text-white mb-2">
                         Welcome to ProductionOS!

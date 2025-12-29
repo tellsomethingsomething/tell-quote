@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
+import Logo from '../components/Logo';
 
 export default function ResetPasswordPage({ onComplete }) {
     const { updatePassword, isLoading } = useAuthStore();
@@ -85,11 +86,7 @@ export default function ResetPasswordPage({ onComplete }) {
             <div className="min-h-screen bg-dark-bg flex items-center justify-center p-4">
                 <div className="w-full max-w-md">
                     <div className="text-center mb-8">
-                        <img
-                            src="/productionos-logo.svg"
-                            alt="ProductionOS Logo"
-                            className="h-10 mx-auto mb-4"
-                        />
+                        <Logo className="h-10 mx-auto mb-4" />
                         <h1 className="text-xl font-bold text-white mb-2">ProductionOS</h1>
                     </div>
 
@@ -122,11 +119,7 @@ export default function ResetPasswordPage({ onComplete }) {
             <div className="min-h-screen bg-dark-bg flex items-center justify-center p-4">
                 <div className="w-full max-w-md">
                     <div className="text-center mb-8">
-                        <img
-                            src="/productionos-logo.svg"
-                            alt="ProductionOS Logo"
-                            className="h-10 mx-auto mb-4"
-                        />
+                        <Logo className="h-10 mx-auto mb-4" />
                         <h1 className="text-xl font-bold text-white mb-2">ProductionOS</h1>
                     </div>
 
@@ -154,11 +147,7 @@ export default function ResetPasswordPage({ onComplete }) {
         <div className="min-h-screen bg-dark-bg flex items-center justify-center p-4">
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
-                    <img
-                        src="/productionos-logo.svg"
-                        alt="ProductionOS Logo"
-                        className="h-10 mx-auto mb-4"
-                    />
+                    <Logo className="h-10 mx-auto mb-4" />
                     <h1 className="text-xl font-bold text-white mb-2">ProductionOS</h1>
                     <p className="text-gray-500 text-sm">Set New Password</p>
                 </div>

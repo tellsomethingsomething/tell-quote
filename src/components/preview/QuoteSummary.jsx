@@ -3,15 +3,18 @@ import { formatCurrency } from '../../utils/currency';
 import { calculateGrandTotalWithFees } from '../../utils/calculations';
 import { useToast } from '../common/Toast';
 import { usePdfExport } from '../../hooks/usePdfExport';
+import { usePDFWatermark } from '../../hooks/useSubscription';
 
 export default function QuoteSummary() {
     const { quote } = useQuoteStore();
     const toast = useToast();
+    const { shouldWatermark } = usePDFWatermark();
 
     // Use the hook with dynamic imports for PDF library (avoids 1.5MB bundle on initial load)
     const { exportPdf, previewPdf, isGenerating, isPreviewing } = usePdfExport(
         (msg) => toast.success(msg),
-        (err) => toast.error('Failed to generate PDF')
+        (err) => toast.error('Failed to generate PDF'),
+        { showWatermark: shouldWatermark }
     );
 
     // Calculate all totals
