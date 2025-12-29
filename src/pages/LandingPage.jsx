@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import {
-    Clapperboard,
     ArrowRight,
     Play,
     Check,
@@ -72,13 +71,7 @@ export default function LandingPage({ onLogin }) {
             <nav className={`fixed top-0 w-full z-50 transition-all duration-500 border-b border-white/[0.05] ${scrolled ? 'bg-[#050507]/80 backdrop-blur-xl py-4' : 'bg-transparent py-6'}`}>
                 <div className="container mx-auto px-6 md:px-12 flex items-center justify-between">
                     <div className="flex items-center gap-3 group cursor-pointer">
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-[#FF3366] blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
-                            <div className="relative w-10 h-10 bg-gradient-to-tr from-[#FF3366] to-[#FF5C8D] rounded-xl flex items-center justify-center text-white shadow-xl">
-                                <Clapperboard size={20} strokeWidth={2.5} />
-                            </div>
-                        </div>
-                        <span className="text-xl font-bold tracking-tight">Production<span className="text-[#FF3366]">OS</span></span>
+                        <img src="/productionos-logo.svg" alt="ProductionOS" className="h-8 group-hover:opacity-80 transition-opacity" />
                     </div>
 
                     <div className="hidden md:flex items-center gap-8">
@@ -423,8 +416,7 @@ export default function LandingPage({ onLogin }) {
 
                     <footer className="mt-32 border-t border-white/10 pt-12 flex flex-col md:flex-row justify-between items-center gap-8 text-white/40 text-sm">
                         <div className="flex items-center gap-2">
-                            <Clapperboard size={16} />
-                            <span className="font-semibold text-white/60">ProductionOS</span>
+                            <img src="/productionos-logo.svg" alt="ProductionOS" className="h-6 opacity-60" />
                         </div>
                         <div className="flex gap-8">
                             <a href="#" className="hover:text-white transition-colors">Privacy</a>

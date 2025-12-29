@@ -135,12 +135,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                 {/* Logo & Title */}
                 <div className="text-center mb-8">
                     <div className="flex items-center justify-center gap-2 mb-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-[10px] flex items-center justify-center text-white font-bold text-xl">
-                            P
-                        </div>
-                        <span className="text-2xl font-bold text-white tracking-tight">
-                            Production<span className="text-purple-500">OS</span>
-                        </span>
+                        <img src="/productionos-logo.svg" alt="ProductionOS" className="h-10" />
                     </div>
                     <p className="text-gray-500 text-sm">
                         {mode === 'login' ? 'Sign in to your account' : mode === 'signup' ? 'Create your account' : 'Reset Password'}
@@ -207,10 +202,10 @@ export default function LoginPage({ initialMode = 'login' }) {
                     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                         {/* Selected Plan Banner (if coming from Pricing page) */}
                         {mode === 'signup' && selectedPlan && selectedPlan !== 'free' && (
-                            <div className="bg-brand-teal/10 border border-brand-teal/30 rounded-lg p-3 mb-2">
-                                <p className="text-sm text-brand-teal text-center">
+                            <div className="bg-brand-primary/10 border border-brand-primary/30 rounded-lg p-3 mb-2">
+                                <p className="text-sm text-brand-primary text-center">
                                     Signing up for <span className="font-bold capitalize">{selectedPlan}</span> plan
-                                    <span className="text-brand-teal/70"> ({selectedCycle})</span>
+                                    <span className="text-brand-primary/70"> ({selectedCycle})</span>
                                 </p>
                             </div>
                         )}
@@ -367,7 +362,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                                     type="checkbox"
                                     checked={acceptedTerms}
                                     onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                    className="mt-1 h-4 w-4 rounded border-gray-600 bg-dark-bg text-brand-teal focus:ring-brand-teal/20 focus:ring-offset-0"
+                                    className="mt-1 h-4 w-4 rounded border-gray-600 bg-dark-bg text-brand-primary focus:ring-brand-primary/20 focus:ring-offset-0"
                                     disabled={rateLimited}
                                 />
                                 <label htmlFor="acceptTerms" className="text-sm text-gray-400">
@@ -376,7 +371,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                                         href="/legal/terms"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-brand-teal hover:text-brand-teal-light underline"
+                                        className="text-brand-primary hover:text-brand-primary-light underline"
                                     >
                                         Terms of Service
                                     </a>
@@ -385,7 +380,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                                         href="/legal/privacy"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-brand-teal hover:text-brand-teal-light underline"
+                                        className="text-brand-primary hover:text-brand-primary-light underline"
                                     >
                                         Privacy Policy
                                     </a>
@@ -401,7 +396,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                                     type="checkbox"
                                     checked={acceptedGDPR}
                                     onChange={(e) => setAcceptedGDPR(e.target.checked)}
-                                    className="mt-1 h-4 w-4 rounded border-gray-600 bg-dark-bg text-brand-teal focus:ring-brand-teal/20 focus:ring-offset-0"
+                                    className="mt-1 h-4 w-4 rounded border-gray-600 bg-dark-bg text-brand-primary focus:ring-brand-primary/20 focus:ring-offset-0"
                                     disabled={rateLimited}
                                 />
                                 <label htmlFor="acceptGDPR" className="text-sm text-gray-400">
@@ -410,7 +405,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                                         href="/legal/gdpr"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-brand-teal hover:text-brand-teal-light underline"
+                                        className="text-brand-primary hover:text-brand-primary-light underline"
                                     >
                                         Data Processing Agreement
                                     </a>
@@ -539,7 +534,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                                         <button
                                             type="button"
                                             onClick={() => switchMode('signup')}
-                                            className="text-brand-teal hover:text-brand-teal-light transition-colors"
+                                            className="text-brand-primary hover:text-brand-primary-light transition-colors"
                                         >
                                             Create account
                                         </button>
@@ -548,7 +543,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                                     <button
                                         type="button"
                                         onClick={() => switchMode('login')}
-                                        className="text-brand-teal hover:text-brand-teal-light transition-colors w-full text-center"
+                                        className="text-brand-primary hover:text-brand-primary-light transition-colors w-full text-center"
                                     >
                                         ← Back to Sign In
                                     </button>
@@ -556,7 +551,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                                     <button
                                         type="button"
                                         onClick={() => switchMode('login')}
-                                        className="text-brand-teal hover:text-brand-teal-light transition-colors w-full text-center"
+                                        className="text-brand-primary hover:text-brand-primary-light transition-colors w-full text-center"
                                     >
                                         Already have an account? Sign in
                                     </button>

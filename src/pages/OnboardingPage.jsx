@@ -43,12 +43,7 @@ export default function OnboardingPage() {
                 {/* Logo & Title */}
                 <div className="text-center mb-8">
                     <div className="flex items-center justify-center gap-2 mb-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-[10px] flex items-center justify-center text-white font-bold text-xl">
-                            P
-                        </div>
-                        <span className="text-2xl font-bold text-white tracking-tight">
-                            Production<span className="text-purple-500">OS</span>
-                        </span>
+                        <img src="/productionos-logo.svg" alt="ProductionOS" className="h-10" />
                     </div>
                     <h1 className="text-xl font-semibold text-white mb-2">
                         Welcome to ProductionOS!
