@@ -42,6 +42,7 @@ import OnboardingWizard from './components/onboarding/OnboardingWizard';
 import SubscriptionExpiredPage from './pages/SubscriptionExpiredPage';
 import { checkSubscriptionAccess, ACCESS_LEVELS } from './services/subscriptionGuard';
 import { SubscriptionProvider } from './hooks/useSubscription';
+import CommandPalette, { ShortcutsHelp } from './components/ui/CommandPalette';
 
 // Initialize auth store to set up OAuth listeners (must run once on app load)
 useAuthStore.getState().initialize();
@@ -149,6 +150,7 @@ function App() {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved === 'true';
   });
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarCollapsed(prev => {
@@ -374,6 +376,35 @@ function App() {
   const handleGoToAdmin = useCallback(() => {
     confirmNavigateAway(() => setView('admin'));
   }, [confirmNavigateAway]);
+
+  // Command palette navigation handler
+  const handleCommandPaletteNavigate = useCallback((viewName) => {
+    confirmNavigateAway(() => setView(viewName));
+  }, [confirmNavigateAway]);
+
+  // Command palette action handler
+  const handleCommandPaletteAction = useCallback((action) => {
+    switch (action) {
+      case 'newQuote':
+        handleNewQuote();
+        break;
+      case 'newClient':
+        confirmNavigateAway(() => setView('clients'));
+        break;
+      case 'newOpportunity':
+        confirmNavigateAway(() => setView('opportunities'));
+        break;
+      case 'toggleTheme':
+        const currentTheme = useSettingsStore.getState().settings.theme;
+        useSettingsStore.getState().updateSettings({ theme: currentTheme === 'dark' ? 'light' : 'dark' });
+        break;
+      case 'showShortcuts':
+        setShowShortcutsHelp(true);
+        break;
+      default:
+        break;
+    }
+  }, [confirmNavigateAway, handleNewQuote]);
 
   const handleConvertQuoteToProject = useCallback((projectId) => {
     setSelectedProjectId(projectId);
@@ -1116,6 +1147,16 @@ function App() {
             Skip to main content
           </a>
           <PWAStatus />
+
+          {/* Command Palette (Cmd/Ctrl+K) */}
+          <CommandPalette
+            onNavigate={handleCommandPaletteNavigate}
+            onAction={handleCommandPaletteAction}
+          />
+          <ShortcutsHelp
+            isOpen={showShortcutsHelp}
+            onClose={() => setShowShortcutsHelp(false)}
+          />
 
         {/* Sidebar - shown on all views except editor and full screen */}
         {!isEditorView && (
