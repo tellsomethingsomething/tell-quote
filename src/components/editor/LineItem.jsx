@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useRateCardStore } from '../../store/rateCardStore';
 import { calculateLineTotal, calculateLineMargin, getMarginColor } from '../../utils/calculations';
 import { formatCurrency, convertCurrency, getRegionCurrency, getCurrencySymbol } from '../../utils/currency';
 
-export default function LineItem({ item, sectionId, subsectionName }) {
+const LineItem = memo(function LineItem({ item, sectionId, subsectionName }) {
     const { quote, updateLineItem, deleteLineItem, rates } = useQuoteStore();
     const { items: rateCardItems, sections: rateCardSections } = useRateCardStore();
     const [showAutocomplete, setShowAutocomplete] = useState(false);
@@ -351,4 +351,21 @@ export default function LineItem({ item, sectionId, subsectionName }) {
             </div>
         </div>
     );
-}
+}, (prevProps, nextProps) => {
+    // Custom comparison - only re-render if item data changes
+    const prevItem = prevProps.item;
+    const nextItem = nextProps.item;
+    return (
+        prevItem.id === nextItem.id &&
+        prevItem.name === nextItem.name &&
+        prevItem.quantity === nextItem.quantity &&
+        prevItem.days === nextItem.days &&
+        prevItem.cost === nextItem.cost &&
+        prevItem.charge === nextItem.charge &&
+        prevItem.rateCardItemId === nextItem.rateCardItemId &&
+        prevProps.sectionId === nextProps.sectionId &&
+        prevProps.subsectionName === nextProps.subsectionName
+    );
+});
+
+export default LineItem;

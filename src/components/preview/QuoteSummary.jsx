@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { formatCurrency } from '../../utils/currency';
 import { calculateGrandTotalWithFees } from '../../utils/calculations';
@@ -5,7 +6,7 @@ import { useToast } from '../common/Toast';
 import { usePdfExport } from '../../hooks/usePdfExport';
 import { usePDFWatermark } from '../../hooks/useSubscription';
 
-export default function QuoteSummary() {
+const QuoteSummary = memo(function QuoteSummary() {
     const { quote } = useQuoteStore();
     const toast = useToast();
     const { shouldWatermark } = usePDFWatermark();
@@ -164,4 +165,6 @@ export default function QuoteSummary() {
 
         </div>
     );
-}
+});
+
+export default QuoteSummary;

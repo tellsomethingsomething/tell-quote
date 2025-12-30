@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useRateCardStore } from '../../store/rateCardStore';
 import LineItem from './LineItem';
@@ -37,7 +37,7 @@ const getRateCardSectionId = (sectionId, subsectionName) => {
     return 'other';
 };
 
-export default function Subsection({ sectionId, subsectionName, color, isDragging }) {
+const Subsection = memo(function Subsection({ sectionId, subsectionName, color, isDragging }) {
     const { quote, addLineItem, updateSubsectionName } = useQuoteStore();
     const { items: rateCardItems } = useRateCardStore();
     const section = quote.sections[sectionId];
@@ -304,4 +304,6 @@ export default function Subsection({ sectionId, subsectionName, color, isDraggin
             )}
         </div>
     );
-}
+});
+
+export default Subsection;

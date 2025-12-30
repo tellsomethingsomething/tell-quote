@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useActivityStore, ACTIVITY_TYPES, CALL_OUTCOMES, MEETING_TYPES, TASK_PRIORITIES } from '../../store/activityStore';
 import { useContactStore } from '../../store/contactStore';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import logger from '../../utils/logger';
 
 export default function LogActivityModal({
@@ -14,6 +15,7 @@ export default function LogActivityModal({
 }) {
     const { addActivity, logCall, logMeeting, addNote, createTask } = useActivityStore();
     const { getFullName } = useContactStore();
+    const { containerRef } = useFocusTrap(isOpen);
 
     const [form, setForm] = useState({
         activityType: 'note',
@@ -129,7 +131,13 @@ export default function LogActivityModal({
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md modal-backdrop p-4">
-            <div className="bg-[#1a1f2e] border border-dark-border rounded-xl p-6 w-full max-w-lg shadow-2xl modal-content relative max-h-[90vh] overflow-y-auto">
+            <div
+                ref={containerRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="log-activity-title"
+                className="bg-[#1a1f2e] border border-dark-border rounded-xl p-6 w-full max-w-lg shadow-2xl modal-content relative max-h-[90vh] overflow-y-auto"
+            >
                 {/* Close button */}
                 <button
                     onClick={onClose}
@@ -141,7 +149,7 @@ export default function LogActivityModal({
                     </svg>
                 </button>
 
-                <h2 className="text-xl font-bold text-gray-100 mb-1">Log Activity</h2>
+                <h2 id="log-activity-title" className="text-xl font-bold text-gray-100 mb-1">Log Activity</h2>
                 <p className="text-sm text-gray-500 mb-6">Record an interaction or note</p>
 
                 <form onSubmit={handleSubmit} className="space-y-5">

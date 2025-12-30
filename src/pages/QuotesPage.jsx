@@ -5,6 +5,7 @@ import { formatCurrency, convertCurrency } from '../utils/currency';
 import { useQuoteStore } from '../store/quoteStore';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { generateQuoteNumber } from '../utils/storage';
+import { useFocusTrap, useEscapeKey } from '../hooks/useFocusTrap';
 
 const STATUSES = [
     { id: 'all', label: 'All Quotes', color: 'gray' },
@@ -52,6 +53,14 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
     const [lossReasonModal, setLossReasonModal] = useState({ open: false, quoteId: null, newStatus: null });
     const [lossReason, setLossReason] = useState('');
     const [lossReasonNotes, setLossReasonNotes] = useState('');
+
+    // Focus trap for loss reason modal
+    const { containerRef: lossModalRef } = useFocusTrap(lossReasonModal.open);
+    useEscapeKey(lossReasonModal.open, () => {
+        setLossReasonModal({ open: false, quoteId: null, newStatus: null });
+        setLossReason('');
+        setLossReasonNotes('');
+    });
 
     // Get unique clients and tags from quotes
     const uniqueClients = useMemo(() => {
@@ -752,8 +761,14 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
             {/* Loss Reason Modal */}
             {lossReasonModal.open && (
                 <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/75 backdrop-blur-md modal-backdrop p-4">
-                    <div className="bg-[#1a1f2e] border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl">
-                        <h2 className="text-xl font-bold text-gray-100 mb-2">
+                    <div
+                        ref={lossModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="loss-reason-title"
+                        className="bg-[#1a1f2e] border border-dark-border rounded-xl p-6 w-full max-w-md shadow-2xl"
+                    >
+                        <h2 id="loss-reason-title" className="text-xl font-bold text-gray-100 mb-2">
                             Quote Lost
                         </h2>
                         <p className="text-sm text-gray-400 mb-6">

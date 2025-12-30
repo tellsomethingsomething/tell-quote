@@ -1098,6 +1098,9 @@ function App() {
   if (isFullScreenView) {
     return (
       <div className={`min-h-screen ${settings.theme === 'light' ? 'bg-light-bg' : 'bg-dark-bg'}`}>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <PWAStatus />
         {renderView()}
       </div>
@@ -1108,6 +1111,10 @@ function App() {
     <ErrorBoundary>
       <SubscriptionProvider>
         <div className={`min-h-screen flex ${settings.theme === 'light' ? 'bg-light-bg' : 'bg-dark-bg'}`}>
+          {/* Skip navigation link for keyboard users */}
+          <a href="#main-content" className="skip-link">
+            Skip to main content
+          </a>
           <PWAStatus />
 
         {/* Sidebar - shown on all views except editor and full screen */}
