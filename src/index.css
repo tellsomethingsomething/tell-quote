@@ -68,11 +68,11 @@
   }
 
   .btn-secondary {
-    @apply btn bg-brand-navy hover:bg-brand-navy-light text-white shadow-sm shadow-brand-navy/20 active:scale-95;
+    @apply btn bg-brand-secondary hover:bg-brand-secondary-light text-white shadow-sm shadow-brand-secondary/20 active:scale-95;
   }
 
   .btn-accent {
-    @apply btn bg-brand-orange hover:bg-brand-orange-light text-white shadow-sm shadow-brand-orange/25 active:scale-95;
+    @apply btn bg-gradient-to-r from-brand-primary to-brand-secondary text-white shadow-sm shadow-brand-primary/25 hover:opacity-90 active:scale-95;
   }
 
   .btn-ghost {

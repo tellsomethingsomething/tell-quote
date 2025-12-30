@@ -13,23 +13,22 @@ export default {
           background: '#0A0A0B',
           surface: '#141416',
           border: '#2A2A2E',
-          primary: '#6E44FF',      // Purple (darker end of gradient)
-          accent: '#A881FF',       // Purple (lighter end of gradient)
+          primary: '#8B5CF6',      // Violet (start of gradient)
+          accent: '#EC4899',       // Pink (end of gradient)
           success: '#10B981',
           text: {
             primary: '#FAFAFA',
             secondary: '#A1A1AA'
           }
         },
-        // Brand colors
+        // Brand colors - Purple to Pink gradient palette
         brand: {
-          primary: '#6E44FF',       // Primary brand color (purple) - buttons, links, selections
-          'primary-light': '#8B6AFF', // Lighter purple for hover states
-          'primary-dark': '#5835CC',  // Darker purple for active states
-          navy: '#143642',
-          'navy-light': '#1A4A5A',
-          orange: '#FE7F2D',
-          'orange-light': '#FF9A52',
+          primary: '#8B5CF6',       // Violet-500 - Primary brand color (start of gradient)
+          'primary-light': '#A78BFA', // Violet-400 - Lighter for hover states
+          'primary-dark': '#7C3AED',  // Violet-600 - Darker for active states
+          secondary: '#EC4899',     // Pink-500 - Secondary brand color (end of gradient)
+          'secondary-light': '#F472B6', // Pink-400 - Lighter pink
+          'secondary-dark': '#DB2777',  // Pink-600 - Darker pink
         },
         // Dark theme base
         dark: {
@@ -45,17 +44,17 @@ export default {
         },
         // Section accent colors - updated to align with brand
         section: {
-          productionCrew: '#6E44FF',      // Brand Purple
-          technicalCrew: '#143642',       // Brand Navy
+          productionCrew: '#8B5CF6',      // Violet (brand primary)
+          technicalCrew: '#7C3AED',       // Darker violet
           productionEquipment: '#06B6D4', // Cyan
-          creative: '#FE7F2D',            // Brand Orange
+          creative: '#EC4899',            // Pink (brand secondary)
           logistics: '#F59E0B',           // Amber
           expenses: '#10B981',            // Green
         },
-        // Primary accent - now uses brand purple
+        // Primary accent - uses brand violet
         accent: {
-          primary: '#6E44FF',
-          secondary: '#143642',
+          primary: '#8B5CF6',
+          secondary: '#EC4899',
         },
       },
       fontFamily: {
@@ -84,10 +83,10 @@ export default {
         },
         glow: {
           '0%, 100%': {
-            boxShadow: '0 0 5px rgba(110, 68, 255, 0.3), 0 0 10px rgba(168, 129, 255, 0.2)',
+            boxShadow: '0 0 5px rgba(139, 92, 246, 0.3), 0 0 10px rgba(236, 72, 153, 0.2)',
           },
           '50%': {
-            boxShadow: '0 0 15px rgba(110, 68, 255, 0.5), 0 0 25px rgba(168, 129, 255, 0.3)',
+            boxShadow: '0 0 15px rgba(139, 92, 246, 0.5), 0 0 25px rgba(236, 72, 153, 0.3)',
           },
         },
         shimmer: {
@@ -103,8 +102,8 @@ export default {
         shimmer: "shimmer 2s ease-in-out infinite",
       },
       boxShadow: {
-        'glow': '0 0 15px rgba(110, 68, 255, 0.4), 0 0 30px rgba(168, 129, 255, 0.2)',
-        'glow-lg': '0 0 25px rgba(110, 68, 255, 0.5), 0 0 50px rgba(168, 129, 255, 0.3)',
+        'glow': '0 0 15px rgba(139, 92, 246, 0.4), 0 0 30px rgba(236, 72, 153, 0.2)',
+        'glow-lg': '0 0 25px rgba(139, 92, 246, 0.5), 0 0 50px rgba(236, 72, 153, 0.3)',
       },
     },
   },

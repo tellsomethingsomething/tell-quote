@@ -129,7 +129,7 @@ The invoice designer (`/src/components/invoiceDesigner/`) allows customizing PDF
 
 - Tailwind CSS with custom brand colors defined in `tailwind.config.js`
 - Dark theme by default (`bg-dark-bg`, `dark-card`, `dark-border`)
-- Brand colors: navy (#143642), teal (#0F8B8D), orange (#FE7F2D)
+- Brand colors: violet (#8B5CF6), pink (#EC4899) - purple-to-pink gradient
 - Section colors defined in `/src/data/sections.js` for visual distinction
 
 ## Deployment

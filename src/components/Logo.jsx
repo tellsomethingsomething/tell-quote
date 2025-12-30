@@ -1,8 +1,12 @@
 /**
  * ProductionOS Logo Component
  * Renders the logo inline to avoid SVG caching issues
- * Icon: Purple-blue gradient with white P
- * Text: "Production" in white, "OS" in purple gradient
+ * Icon: Purple to pink gradient with white P
+ * Text: "Production" in white, "OS" in purple-to-pink gradient
+ *
+ * Brand Colors:
+ * - Purple: #8B5CF6 (violet-500)
+ * - Pink: #EC4899 (pink-500)
  */
 
 export default function Logo({ className = 'h-8', showText = true, variant = 'dark' }) {
@@ -19,23 +23,22 @@ export default function Logo({ className = 'h-8', showText = true, variant = 'da
             className={className}
         >
             <defs>
-                {/* Icon gradient - blue to purple/pink */}
-                <linearGradient id="iconGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#6366F1"/>
-                    <stop offset="50%" stopColor="#8B5CF6"/>
-                    <stop offset="100%" stopColor="#D946EF"/>
+                {/* Icon gradient - purple to pink (top-left to bottom-right) */}
+                <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8B5CF6"/>
+                    <stop offset="100%" stopColor="#EC4899"/>
                 </linearGradient>
                 {/* Text gradient for "OS" - purple to pink */}
                 <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#8B5CF6"/>
-                    <stop offset="100%" stopColor="#D946EF"/>
+                    <stop offset="100%" stopColor="#EC4899"/>
                 </linearGradient>
             </defs>
 
-            {/* P Icon Box with gradient - more rounded corners */}
+            {/* P Icon Box with gradient - rounded corners */}
             <rect x="0" y="0" width="40" height="40" rx="10" fill="url(#iconGradient)"/>
 
-            {/* P Letter in box (white) - bolder, centered */}
+            {/* P Letter in box (white) - bold, centered */}
             <text
                 x="20"
                 y="29"

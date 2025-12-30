@@ -14,7 +14,7 @@ export default defineConfig({
         name: 'ProductionOS - Production Management',
         short_name: 'ProductionOS',
         description: 'Multi-tenant SaaS platform for production companies - CRM, quoting, project management, and financial tools',
-        theme_color: '#143642',
+        theme_color: '#8B5CF6',
         background_color: '#0D0D0D',
         display: 'standalone',
         orientation: 'portrait',
