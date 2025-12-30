@@ -111,8 +111,8 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
         }));
     };
 
-    // Get active user name (assuming first user or default for now, can improve later with proper auth context)
-    const userName = settings?.users?.[0]?.name || 'User';
+    // Get active user name from auth context
+    const userName = user?.profile?.name || user?.email?.split('@')[0] || settings?.users?.[0]?.name || 'User';
 
     // Get unique years from quotes
     const years = useMemo(() => {

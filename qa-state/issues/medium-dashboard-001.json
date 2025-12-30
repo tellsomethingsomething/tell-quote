@@ -1,0 +1,21 @@
+{
+  "id": "dashboard-001",
+  "timestamp": "2025-12-31T00:10:00.000Z",
+  "view": "dashboard",
+  "section": "header",
+  "severity": "medium",
+  "type": "ux",
+  "title": "Welcome message shows 'User' instead of actual user name",
+  "description": "The dashboard welcome message displays 'Welcome back, User' instead of 'Welcome back, Tom'. The user's actual name should be displayed for a personalized experience.",
+  "steps_to_reproduce": [
+    "Login to ProductionOS",
+    "Navigate to /dashboard",
+    "Observe the welcome heading"
+  ],
+  "expected": "Welcome back, Tom",
+  "actual": "Welcome back, User",
+  "screenshot": "/qa-state/screenshots/dashboard-initial.png",
+  "code_location": "/src/pages/Dashboard.jsx",
+  "suggested_fix": "Fetch user name from authStore or user profile and display it instead of hardcoded 'User'",
+  "status": "open"
+}

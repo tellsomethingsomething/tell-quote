@@ -1,0 +1,21 @@
+{
+  "id": "dashboard-002",
+  "timestamp": "2025-12-31T00:10:00.000Z",
+  "view": "dashboard",
+  "section": "network",
+  "severity": "low",
+  "type": "error",
+  "title": "404 error - resource not found",
+  "description": "Console shows 'Failed to load resource: the server responded with a status of 404'. Some resource is not being loaded correctly.",
+  "steps_to_reproduce": [
+    "Login to ProductionOS",
+    "Navigate to /dashboard",
+    "Open browser console"
+  ],
+  "expected": "No 404 errors",
+  "actual": "404 error for unknown resource",
+  "screenshot": "/qa-state/screenshots/dashboard-initial.png",
+  "code_location": "Unknown - need to identify which resource is failing",
+  "suggested_fix": "Check network tab to identify which resource is 404ing and fix the reference",
+  "status": "open"
+}
