@@ -37,11 +37,33 @@ export default function LoginPage({ initialMode = 'login' }) {
     const [resetSuccess, setResetSuccess] = useState(false);
     const [resetError, setResetError] = useState(null);
     const [lockoutTimer, setLockoutTimer] = useState(0);
+    const [touched, setTouched] = useState({}); // Track which fields have been touched
+    const [formSubmitAttempted, setFormSubmitAttempted] = useState(false); // Track if user tried to submit
     const useSupabase = isSupabaseAuth();
 
     // Password validation for signup
     const passwordValidation = mode === 'signup' ? validatePassword(password) : { valid: true, error: null };
     const passwordStrength = mode === 'signup' ? getPasswordStrength(password) : null;
+
+    // Email validation helper
+    const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    // Field validation helpers for signup form
+    const signupValidation = {
+        name: name.trim().length > 0,
+        email: email.trim().length > 0 && isValidEmail(email),
+        emailFormat: email.trim().length === 0 || isValidEmail(email),
+        password: passwordValidation.valid,
+        confirmPassword: confirmPassword.length > 0 && password === confirmPassword,
+        terms: acceptedTerms,
+        gdpr: acceptedGDPR,
+    };
+
+    // Helper to mark field as touched on blur
+    const handleBlur = (field) => setTouched(prev => ({ ...prev, [field]: true }));
+
+    // Helper to check if we should show error (touched or form submit attempted)
+    const showFieldError = (field) => touched[field] || formSubmitAttempted;
 
     // Countdown timer for lockout
     useEffect(() => {
@@ -80,10 +102,14 @@ export default function LoginPage({ initialMode = 'login' }) {
         }
 
         if (mode === 'signup' && useSupabase) {
-            // Signup mode
-            if (!name || !email || !password || !confirmPassword) return;
-            if (password !== confirmPassword) {
-                return; // Show validation error instead
+            // Signup mode - validate all fields
+            const isFormValid = signupValidation.name && signupValidation.email &&
+                signupValidation.password && signupValidation.confirmPassword &&
+                signupValidation.terms && signupValidation.gdpr;
+
+            if (!isFormValid) {
+                setFormSubmitAttempted(true); // Show all validation errors
+                return;
             }
             const result = await signup(name, email, password);
             if (result && result.success) {
@@ -116,6 +142,8 @@ export default function LoginPage({ initialMode = 'login' }) {
         setSignupSuccess(false);
         setResetSuccess(false);
         setResetError(null);
+        setTouched({});
+        setFormSubmitAttempted(false);
         clearError();
     };
 
@@ -215,7 +243,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                         {useSupabase && mode === 'signup' && (
                             <div>
                                 <label htmlFor="name" className="label">
-                                    Full Name
+                                    Full Name <span className="text-red-400">*</span>
                                 </label>
                                 <input
                                     id="name"
@@ -226,13 +254,17 @@ export default function LoginPage({ initialMode = 'login' }) {
                                         setName(e.target.value);
                                         if (error) clearError();
                                     }}
+                                    onBlur={() => handleBlur('name')}
                                     placeholder="Your full name"
-                                    className="input"
+                                    className={`input ${showFieldError('name') && !signupValidation.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
                                     autoFocus
                                     autoComplete="name"
                                     disabled={rateLimited}
                                     required
                                 />
+                                {showFieldError('name') && !signupValidation.name && (
+                                    <p className="mt-1 text-xs text-red-400">Please enter your full name</p>
+                                )}
                             </div>
                         )}
 
@@ -247,7 +279,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                         {useSupabase && (
                             <div>
                                 <label htmlFor="email" className="label">
-                                    Email Address
+                                    Email Address {mode === 'signup' && <span className="text-red-400">*</span>}
                                 </label>
                                 <input
                                     id="email"
@@ -259,13 +291,19 @@ export default function LoginPage({ initialMode = 'login' }) {
                                         if (error) clearError();
                                         if (resetError) setResetError(null);
                                     }}
+                                    onBlur={() => mode === 'signup' && handleBlur('email')}
                                     placeholder="your.email@company.com"
-                                    className="input"
+                                    className={`input ${mode === 'signup' && showFieldError('email') && !signupValidation.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
                                     autoFocus={mode === 'login' || mode === 'forgot'}
                                     autoComplete="email"
                                     disabled={rateLimited}
                                     required
                                 />
+                                {mode === 'signup' && showFieldError('email') && !signupValidation.email && (
+                                    <p className="mt-1 text-xs text-red-400">
+                                        {email.trim().length === 0 ? 'Please enter your email address' : 'Please enter a valid email address'}
+                                    </p>
+                                )}
                             </div>
                         )}
 
@@ -273,7 +311,7 @@ export default function LoginPage({ initialMode = 'login' }) {
                         {mode !== 'forgot' && (
                         <div>
                             <label htmlFor="password" className="label">
-                                {useSupabase ? 'Password' : 'Access Password'}
+                                {useSupabase ? 'Password' : 'Access Password'} {mode === 'signup' && <span className="text-red-400">*</span>}
                             </label>
                             <input
                                 id="password"
@@ -284,8 +322,9 @@ export default function LoginPage({ initialMode = 'login' }) {
                                     setPassword(e.target.value);
                                     if (error) clearError();
                                 }}
+                                onBlur={() => mode === 'signup' && handleBlur('password')}
                                 placeholder={mode === 'signup' ? 'Create a password' : (useSupabase ? 'Enter your password' : 'Enter access password')}
-                                className={useSupabase ? 'input' : 'input text-center text-lg tracking-widest'}
+                                className={`${useSupabase ? 'input' : 'input text-center text-lg tracking-widest'} ${mode === 'signup' && showFieldError('password') && !password ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
                                 autoFocus={!useSupabase}
                                 autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                                 disabled={rateLimited}
@@ -293,6 +332,9 @@ export default function LoginPage({ initialMode = 'login' }) {
                                 aria-describedby={error ? 'password-error' : undefined}
                                 required
                             />
+                            {mode === 'signup' && showFieldError('password') && !password && (
+                                <p className="mt-1 text-xs text-red-400">Please enter a password</p>
+                            )}
                         </div>
                         )}
 
@@ -357,61 +399,72 @@ export default function LoginPage({ initialMode = 'login' }) {
 
                         {/* Terms and Conditions Checkbox (Signup only) */}
                         {useSupabase && mode === 'signup' && (
-                            <div className="flex items-start gap-3">
-                                <input
-                                    id="acceptTerms"
-                                    type="checkbox"
-                                    checked={acceptedTerms}
-                                    onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                    className="mt-1 h-4 w-4 rounded border-gray-600 bg-dark-bg text-brand-primary focus:ring-brand-primary/20 focus:ring-offset-0"
-                                    disabled={rateLimited}
-                                />
-                                <label htmlFor="acceptTerms" className="text-sm text-gray-400">
-                                    I agree to the{' '}
-                                    <a
-                                        href="/legal/terms"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-brand-primary hover:text-brand-primary-light underline"
-                                    >
-                                        Terms of Service
-                                    </a>
-                                    {' '}and{' '}
-                                    <a
-                                        href="/legal/privacy"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-brand-primary hover:text-brand-primary-light underline"
-                                    >
-                                        Privacy Policy
-                                    </a>
-                                </label>
+                            <div>
+                                <div className="flex items-start gap-3">
+                                    <input
+                                        id="acceptTerms"
+                                        type="checkbox"
+                                        checked={acceptedTerms}
+                                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                        className={`mt-1 h-4 w-4 rounded border-gray-600 bg-dark-bg text-brand-primary focus:ring-brand-primary/20 focus:ring-offset-0 ${formSubmitAttempted && !acceptedTerms ? 'border-red-500' : ''}`}
+                                        disabled={rateLimited}
+                                    />
+                                    <label htmlFor="acceptTerms" className="text-sm text-gray-400">
+                                        I agree to the{' '}
+                                        <a
+                                            href="/legal/terms"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-brand-primary hover:text-brand-primary-light underline"
+                                        >
+                                            Terms of Service
+                                        </a>
+                                        {' '}and{' '}
+                                        <a
+                                            href="/legal/privacy"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-brand-primary hover:text-brand-primary-light underline"
+                                        >
+                                            Privacy Policy
+                                        </a>
+                                        {' '}<span className="text-red-400">*</span>
+                                    </label>
+                                </div>
+                                {formSubmitAttempted && !acceptedTerms && (
+                                    <p className="mt-1 text-xs text-red-400 ml-7">You must accept the Terms of Service to continue</p>
+                                )}
                             </div>
                         )}
 
                         {/* GDPR Consent Checkbox (Signup only) */}
                         {useSupabase && mode === 'signup' && (
-                            <div className="flex items-start gap-3">
-                                <input
-                                    id="acceptGDPR"
-                                    type="checkbox"
-                                    checked={acceptedGDPR}
-                                    onChange={(e) => setAcceptedGDPR(e.target.checked)}
-                                    className="mt-1 h-4 w-4 rounded border-gray-600 bg-dark-bg text-brand-primary focus:ring-brand-primary/20 focus:ring-offset-0"
-                                    disabled={rateLimited}
-                                />
-                                <label htmlFor="acceptGDPR" className="text-sm text-gray-400">
-                                    I consent to ProductionOS processing my personal data as described in the{' '}
-                                    <a
-                                        href="/legal/gdpr"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-brand-primary hover:text-brand-primary-light underline"
-                                    >
-                                        Data Processing Agreement
-                                    </a>
-                                    . I understand I can withdraw consent at any time.
-                                </label>
+                            <div>
+                                <div className="flex items-start gap-3">
+                                    <input
+                                        id="acceptGDPR"
+                                        type="checkbox"
+                                        checked={acceptedGDPR}
+                                        onChange={(e) => setAcceptedGDPR(e.target.checked)}
+                                        className={`mt-1 h-4 w-4 rounded border-gray-600 bg-dark-bg text-brand-primary focus:ring-brand-primary/20 focus:ring-offset-0 ${formSubmitAttempted && !acceptedGDPR ? 'border-red-500' : ''}`}
+                                        disabled={rateLimited}
+                                    />
+                                    <label htmlFor="acceptGDPR" className="text-sm text-gray-400">
+                                        I consent to ProductionOS processing my personal data as described in the{' '}
+                                        <a
+                                            href="/legal/gdpr"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-brand-primary hover:text-brand-primary-light underline"
+                                        >
+                                            Data Processing Agreement
+                                        </a>
+                                        . I understand I can withdraw consent at any time. <span className="text-red-400">*</span>
+                                    </label>
+                                </div>
+                                {formSubmitAttempted && !acceptedGDPR && (
+                                    <p className="mt-1 text-xs text-red-400 ml-7">You must consent to data processing to continue</p>
+                                )}
                             </div>
                         )}
 

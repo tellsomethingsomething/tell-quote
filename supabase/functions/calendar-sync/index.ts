@@ -30,29 +30,30 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Get access token
-    const { data: tokenRecord, error: tokenError } = await supabase
-      .from('google_tokens')
-      .select('access_token, expires_at')
+    // Get access token from google_connections (single source of truth)
+    const { data: connection, error: connError } = await supabase
+      .from('google_connections')
+      .select('access_token, token_expires_at')
       .eq('user_id', userId)
+      .eq('status', 'active')
       .single()
 
-    if (tokenError || !tokenRecord) {
+    if (connError || !connection) {
       return new Response(
-        JSON.stringify({ error: 'No Google connection found' }),
+        JSON.stringify({ error: 'No active Google connection found' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
     // Check if token is expired
-    if (new Date(tokenRecord.expires_at) < new Date()) {
+    if (new Date(connection.token_expires_at) < new Date()) {
       return new Response(
         JSON.stringify({ error: 'Token expired, please refresh' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    const accessToken = tokenRecord.access_token
+    const accessToken = connection.access_token
     const calendarId = 'primary'
 
     // Create calendar event

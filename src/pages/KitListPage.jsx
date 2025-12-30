@@ -3,6 +3,7 @@ import { useKitStore, KIT_STATUS, KIT_STATUS_CONFIG, KIT_CONDITION, KIT_CONDITIO
 import { useRateCardStore } from '../store/rateCardStore';
 import { formatCurrency } from '../utils/currency';
 import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
+import CSVImportModal from '../components/common/CSVImportModal';
 
 // Stats Card Component
 function StatsCard({ stats }) {
@@ -858,6 +859,7 @@ export default function KitListPage() {
     const [showModal, setShowModal] = useState(false);
     const [editItem, setEditItem] = useState(null);
     const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     // Feature gating for equipment creation
     const { checkAndProceed, PromptComponent } = useFeatureGuard(FEATURES.ADD_EQUIPMENT);
@@ -929,6 +931,18 @@ export default function KitListPage() {
                     <p className="text-sm text-gray-500">Equipment tracking and management</p>
                 </div>
                 <div className="flex items-center gap-2">
+                    {/* Import button */}
+                    <button
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="btn-ghost text-sm flex items-center gap-2"
+                        title="Import equipment from CSV"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Import
+                    </button>
+
                     {/* Export dropdown */}
                     <div className="relative group">
                         <button className="btn-ghost text-sm flex items-center gap-2">
@@ -1121,6 +1135,17 @@ export default function KitListPage() {
 
             {/* Upgrade prompt for feature gate */}
             <PromptComponent />
+
+            {/* CSV Import Modal */}
+            <CSVImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                dataType="equipment"
+                onImportComplete={(result) => {
+                    console.log(`Imported ${result.imported} equipment items`);
+                    setIsImportModalOpen(false);
+                }}
+            />
         </div>
     );
 }

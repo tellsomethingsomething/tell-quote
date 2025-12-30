@@ -265,7 +265,7 @@ export default function RateCardPage() {
                     <div className="flex items-center justify-between sm:justify-start gap-3">
                         <div>
                             <h1 className="text-lg sm:text-xl font-bold text-gray-100">Rate Card</h1>
-                            <p className="text-xs text-gray-500">{items.length} services</p>
+                            <p className="text-xs text-gray-500">{items.length} {items.length === 1 ? 'service' : 'services'}</p>
                         </div>
                         {showSaved && (
                             <span className="text-xs text-green-400 flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded-full">

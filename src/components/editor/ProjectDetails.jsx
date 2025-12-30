@@ -137,7 +137,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                         type="text"
                         value={project.title}
                         onChange={(e) => handleChange('title', e.target.value)}
-                        placeholder="e.g. Shopee Cup Semi-Final"
+                        placeholder="e.g. Corporate Summit 2025"
                         className="input"
                         disabled={quote.isLocked}
                     />
@@ -202,7 +202,7 @@ export default function ProjectDetails({ onGoToSettings }) {
                             type="text"
                             value={project.venue}
                             onChange={(e) => handleChange('venue', e.target.value)}
-                            placeholder="e.g. Jalan Besar Stadium"
+                            placeholder="e.g. Grand Convention Center"
                             className="input"
                             disabled={quote.isLocked}
                         />

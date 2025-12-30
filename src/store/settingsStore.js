@@ -404,10 +404,10 @@ const defaultSettings = {
     },
     // Tax configuration for invoicing
     taxConfig: {
-        homeCountry: 'MY', // ISO country code
-        taxRegistered: true, // Whether company is registered for tax
-        domesticTaxRate: 6, // Tax rate for domestic invoicing
-        domesticTaxName: 'SST', // Name of domestic tax (VAT, GST, SST, etc.)
+        homeCountry: '', // ISO country code - user sets during onboarding
+        taxRegistered: false, // Whether company is registered for tax - user sets during setup
+        domesticTaxRate: 0, // Tax rate for domestic invoicing - user configures
+        domesticTaxName: 'VAT', // Name of domestic tax (VAT, GST, SST, etc.)
         applyTaxToInternational: false, // Whether to charge tax on international invoices
         showTaxBreakdown: true, // Show tax as separate line item
         reverseChargeEnabled: true, // Enable reverse charge for EU B2B
@@ -435,7 +435,7 @@ const defaultSettings = {
         routingNumber: '', // US routing number
         branchCode: '', // Branch code (various countries)
         bsbNumber: '', // Australian BSB
-        currency: 'MYR',
+        currency: 'USD', // Default to USD - user configures during setup
         additionalInfo: '', // Any other payment instructions
     },
     quoteDefaults: {
@@ -480,20 +480,17 @@ const defaultSettings = {
         { id: 'other', label: 'Other' },
     ],
     regions: [
-        { id: 'SEA', label: 'South East Asia', currency: 'USD', countries: ['Malaysia', 'Singapore', 'Indonesia', 'Thailand', 'Vietnam', 'Philippines', 'Myanmar', 'Cambodia', 'Laos', 'Brunei'] },
-        { id: 'GCC', label: 'Gulf States', currency: 'KWD', countries: ['Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman'] },
-        { id: 'LEVANT', label: 'Levant', currency: 'USD', countries: ['Jordan', 'Lebanon', 'Iraq'] },
-        { id: 'CENTRAL_ASIA', label: 'Central Asia', currency: 'USD', countries: ['Kazakhstan', 'Uzbekistan', 'Turkmenistan', 'Tajikistan', 'Kyrgyzstan'] },
+        // Global regions - users can customize these in Settings
+        { id: 'AMERICAS', label: 'Americas', currency: 'USD', countries: ['United States', 'Canada', 'Mexico', 'Brazil', 'Argentina', 'Colombia', 'Chile'] },
+        { id: 'EUROPE', label: 'Europe', currency: 'EUR', countries: ['United Kingdom', 'Germany', 'France', 'Italy', 'Spain', 'Netherlands', 'Poland', 'Sweden'] },
+        { id: 'APAC', label: 'Asia Pacific', currency: 'USD', countries: ['Australia', 'Japan', 'South Korea', 'Singapore', 'Hong Kong', 'India', 'China'] },
+        { id: 'MEA', label: 'Middle East & Africa', currency: 'USD', countries: ['UAE', 'Saudi Arabia', 'South Africa', 'Nigeria', 'Israel', 'Egypt'] },
     ],
     // Preferred currencies - shown in dropdowns throughout the app
     // User selects which currencies they commonly use
-    preferredCurrencies: ['USD', 'EUR', 'GBP', 'MYR', 'SGD'],
-    // Company OKRs that guide research priorities
-    okrs: [
-        { id: 'okr1', objective: 'Expand into GCC market', keyResult: 'Win 3 major sports broadcast contracts in Saudi Arabia or UAE by end of 2025', priority: 1 },
-        { id: 'okr2', objective: 'Grow recurring revenue', keyResult: 'Establish 5 long-term league partnerships across SEA region', priority: 2 },
-        { id: 'okr3', objective: 'Build Central Asia presence', keyResult: 'Deliver 2 multi-sport events in Kazakhstan or Uzbekistan', priority: 3 },
-    ],
+    preferredCurrencies: ['USD', 'EUR', 'GBP', 'AUD', 'CAD'],
+    // Company OKRs that guide research priorities - users set these in Settings
+    okrs: [],
     // Opportunities page preferences (synced across devices)
     opsPreferences: {
         expandedCountries: {}, // { countryName: boolean }

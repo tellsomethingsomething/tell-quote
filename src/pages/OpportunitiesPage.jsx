@@ -7,6 +7,8 @@ import { useClientStore } from '../store/clientStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { formatCurrency, convertCurrency } from '../utils/currency';
+import { getPricingForUser } from '../services/pppService';
+import PipelineKanban from '../components/crm/PipelineKanban';
 
 // Lazy load timeline component
 const OpportunityTimeline = lazy(() => import('../components/timeline/OpportunityTimeline'));
@@ -350,6 +352,7 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
         addOpportunity,
         deleteOpportunity,
         updateOpportunity,
+        updateStage,
     } = useOpportunityStore();
     const { clients } = useClientStore();
     const { settings, setOpsPreferences } = useSettingsStore();
@@ -372,12 +375,28 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
     }, [opsPrefs.expandedCountries]);
 
     const hiddenCountries = opsPrefs.hiddenCountries || {};
-    const dashboardCurrency = opsPrefs.dashboardCurrency || 'USD';
+
+    // Auto-detect currency based on user's location (PPP)
+    const [dashboardCurrency, setDashboardCurrency] = useState('USD');
+
+    useEffect(() => {
+        const detectCurrency = async () => {
+            try {
+                const pricingInfo = await getPricingForUser();
+                if (pricingInfo?.currency) {
+                    setDashboardCurrency(pricingInfo.currency);
+                }
+            } catch (error) {
+                console.warn('Currency detection failed, using USD');
+            }
+        };
+        detectCurrency();
+    }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRegion, setFilterRegion] = useState('all');
     const [filterStatus, setFilterStatus] = useState('active');
-    const [viewMode, setViewMode] = useState('map'); // 'map' | 'timeline'
+    const [viewMode, setViewMode] = useState('pipeline'); // 'pipeline' | 'map' | 'timeline'
 
     const [expandedOpportunities, setExpandedOpportunities] = useState({});
     const [quickAddCountry, setQuickAddCountry] = useState(null);
@@ -439,10 +458,6 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
     const setHiddenCountries = (updater) => {
         const newHidden = typeof updater === 'function' ? updater(hiddenCountries) : updater;
         setOpsPreferences({ hiddenCountries: newHidden });
-    };
-
-    const setDashboardCurrency = (currency) => {
-        setOpsPreferences({ dashboardCurrency: currency });
     };
 
     // Filter opportunities
@@ -850,23 +865,36 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
                         <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Opportunities</h1>
-                        <p className="text-xs sm:text-sm text-gray-500">Track deals across GCC, Central Asia & SEA</p>
+                        <p className="text-xs sm:text-sm text-gray-500">Manage your sales pipeline and track deals worldwide</p>
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                         {/* View Toggle */}
                         <div className="flex items-center bg-dark-card rounded-lg p-1 gap-1">
+                            <button
+                                onClick={() => setViewMode('pipeline')}
+                                className={`px-3 py-1.5 text-xs rounded-md flex items-center gap-1.5 transition-colors ${viewMode === 'pipeline'
+                                    ? 'bg-accent-primary/20 text-accent-primary'
+                                    : 'text-gray-400 hover:text-gray-200'
+                                    }`}
+                                title="Pipeline Kanban View"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                                </svg>
+                                Pipeline
+                            </button>
                             <button
                                 onClick={() => setViewMode('map')}
                                 className={`px-3 py-1.5 text-xs rounded-md flex items-center gap-1.5 transition-colors ${viewMode === 'map'
                                     ? 'bg-accent-primary/20 text-accent-primary'
                                     : 'text-gray-400 hover:text-gray-200'
                                     }`}
-                                title="Map View"
+                                title="Country Map View"
                             >
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                                 </svg>
-                                Map
+                                Region
                             </button>
                             <button
                                 onClick={() => setViewMode('timeline')}
@@ -931,26 +959,48 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                                 <option value="won">Won</option>
                                 <option value="lost">Lost</option>
                             </select>
-                            <div className="h-4 w-px bg-dark-border mx-1"></div>
-                            <span className="text-xs text-gray-500">View:</span>
-                            <select
-                                value={dashboardCurrency}
-                                onChange={(e) => setDashboardCurrency(e.target.value)}
-                                className="input-sm text-sm bg-dark-card border-none w-20"
-                            >
-                                <option value="USD">USD</option>
-                                <option value="GBP">GBP</option>
-                                <option value="EUR">EUR</option>
-                                <option value="MYR">MYR</option>
-                                <option value="SGD">SGD</option>
-                                <option value="AED">AED</option>
-                                <option value="SAR">SAR</option>
-                                <option value="QAR">QAR</option>
-                                <option value="KWD">KWD</option>
-                            </select>
                         </div>
                     </div>
                 </div>
+
+                {/* Pipeline Kanban View */}
+                {viewMode === 'pipeline' && (
+                    <>
+                        {/* Pipeline Stats */}
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                            <div className="card bg-gradient-to-br from-blue-900/20 to-blue-950/20 border-blue-900/30">
+                                <p className="text-xs text-blue-400 mb-1 uppercase tracking-wider">Active</p>
+                                <p className="text-2xl font-bold text-white">{stats.totalCount}</p>
+                            </div>
+                            <div className="card bg-gradient-to-br from-emerald-900/20 to-emerald-950/20 border-emerald-900/30">
+                                <p className="text-xs text-emerald-400 mb-1 uppercase tracking-wider">Pipeline</p>
+                                <p className="text-2xl font-bold text-white">{formatCurrency(stats.totalValue, dashboardCurrency, 0)}</p>
+                            </div>
+                            <div className="card bg-gradient-to-br from-amber-900/20 to-amber-950/20 border-amber-900/30">
+                                <p className="text-xs text-amber-400 mb-1 uppercase tracking-wider">Weighted</p>
+                                <p className="text-2xl font-bold text-white">{formatCurrency(stats.weightedValue, dashboardCurrency, 0)}</p>
+                            </div>
+                            <div className="card bg-gradient-to-br from-green-900/20 to-green-950/20 border-green-900/30">
+                                <p className="text-xs text-green-400 mb-1 uppercase tracking-wider">Won</p>
+                                <p className="text-2xl font-bold text-green-400">{stats.wonCount}</p>
+                            </div>
+                            <div className="card bg-gradient-to-br from-red-900/20 to-red-950/20 border-red-900/30">
+                                <p className="text-xs text-red-400 mb-1 uppercase tracking-wider">Lost</p>
+                                <p className="text-2xl font-bold text-red-400">{stats.lostCount}</p>
+                            </div>
+                        </div>
+
+                        {/* Pipeline Kanban */}
+                        <PipelineKanban
+                            opportunities={filteredOpportunities}
+                            onSelectOpportunity={onSelectOpportunity}
+                            onDeleteOpportunity={deleteOpportunity}
+                            onUpdateStage={updateStage}
+                            dashboardCurrency={dashboardCurrency}
+                            rates={rates}
+                        />
+                    </>
+                )}
 
                 {/* Timeline View */}
                 {viewMode === 'timeline' && (
@@ -962,7 +1012,7 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                     </Suspense>
                 )}
 
-                {/* Map View - Pipeline Stats */}
+                {/* Region Map View - Pipeline Stats */}
                 {viewMode === 'map' && (
                     <>
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
@@ -1128,7 +1178,7 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                                                     value={newOppForm.clientLocation || ''}
                                                     onChange={e => setNewOppForm({ ...newOppForm, clientLocation: e.target.value })}
                                                     className="input"
-                                                    placeholder="e.g. Kuala Lumpur"
+                                                    placeholder="e.g. New York"
                                                 />
                                             </div>
                                         </div>
@@ -1184,7 +1234,7 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                                             value={newOppForm.contactPhone}
                                             onChange={e => setNewOppForm({ ...newOppForm, contactPhone: e.target.value })}
                                             className="input"
-                                            placeholder="+60 12 345 6789"
+                                            placeholder="+1 555 123 4567"
                                         />
                                     </div>
                                 </div>
@@ -1250,7 +1300,7 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                                         value={newOppForm.venue}
                                         onChange={e => setNewOppForm({ ...newOppForm, venue: e.target.value })}
                                         className="input"
-                                        placeholder="e.g. Axiata Arena, Bukit Jalil"
+                                        placeholder="e.g. Madison Square Garden"
                                     />
                                 </div>
                                 <div>

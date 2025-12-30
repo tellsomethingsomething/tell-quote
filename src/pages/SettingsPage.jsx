@@ -1130,7 +1130,7 @@ export default function SettingsPage() {
                                         value={settings.company.phone}
                                         onChange={(e) => saveCompanyInfo({ phone: e.target.value })}
                                         className="input"
-                                        placeholder="+60 3 1234 5678"
+                                        placeholder="+1 555 123 4567"
                                     />
                                 </div>
                                 <div>

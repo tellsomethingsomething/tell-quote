@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import { supabase, isSupabaseConfigured, shouldUseSupabaseAuth } from '../lib/supabase';
-import { logSecurityEvent } from '../utils/encryption';
+import { logSecurityEvent, encryptData, decryptData } from '../utils/encryption';
 import { trackConversion, Events, trackEvent } from '../services/analyticsService';
 import { setUserContext } from '../services/errorTrackingService';
+import { isAdminRole, hasPermission as checkRolePermission, getEffectiveRoleLevel } from '../types/roles';
 import logger from '../utils/logger';
 
 const AUTH_KEY = 'tell_auth_session';
+const AUTH_KEY_ENCRYPTED = 'tell_auth_session_enc';
 const RATE_LIMIT_KEY = 'tell_auth_attempts';
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
@@ -16,23 +18,55 @@ const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 const FALLBACK_PASSWORD = import.meta.env.VITE_APP_PASSWORD || null;
 
 /**
- * Load authentication session from localStorage
+ * Load authentication session from localStorage (async, encrypted)
+ * Handles migration from plaintext to encrypted storage
  */
-function loadAuthSession() {
+async function loadAuthSessionAsync() {
     try {
-        const saved = localStorage.getItem(AUTH_KEY);
-        if (!saved) return null;
+        // First check for encrypted session
+        const encrypted = localStorage.getItem(AUTH_KEY_ENCRYPTED);
+        if (encrypted) {
+            const decrypted = await decryptData(encrypted);
+            if (decrypted) {
+                const session = JSON.parse(decrypted);
 
-        const session = JSON.parse(saved);
+                // Check if session has expired
+                if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
+                    localStorage.removeItem(AUTH_KEY_ENCRYPTED);
+                    logSecurityEvent('session_expired', { email: session.email });
+                    return null;
+                }
 
-        // Check if session has expired
-        if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
-            localStorage.removeItem(AUTH_KEY);
-            logSecurityEvent('session_expired', { email: session.email });
-            return null;
+                return session;
+            }
         }
 
-        return session;
+        // Migrate from old plaintext storage (backward compatibility)
+        const saved = localStorage.getItem(AUTH_KEY);
+        if (saved) {
+            try {
+                const session = JSON.parse(saved);
+
+                // Check if session has expired
+                if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
+                    localStorage.removeItem(AUTH_KEY);
+                    logSecurityEvent('session_expired', { email: session.email });
+                    return null;
+                }
+
+                // Migrate to encrypted storage
+                await saveAuthSessionAsync(session);
+                localStorage.removeItem(AUTH_KEY); // Remove old plaintext
+                logSecurityEvent('session_migrated_to_encrypted', { email: session.email });
+
+                return session;
+            } catch (parseError) {
+                logger.error('Failed to parse old session:', parseError);
+                localStorage.removeItem(AUTH_KEY);
+            }
+        }
+
+        return null;
     } catch (e) {
         logger.error('Failed to load auth session:', e);
         return null;
@@ -40,23 +74,39 @@ function loadAuthSession() {
 }
 
 /**
- * Save authentication session to localStorage
+ * Synchronous load for initial state (returns null, actual load happens in initialize)
  */
-function saveAuthSession(session) {
+function loadAuthSessionSync() {
+    // Check for encrypted session marker only
+    return localStorage.getItem(AUTH_KEY_ENCRYPTED) || localStorage.getItem(AUTH_KEY) ? 'pending' : null;
+}
+
+/**
+ * Save authentication session to localStorage (async, encrypted)
+ */
+async function saveAuthSessionAsync(session) {
     try {
         if (session) {
-            localStorage.setItem(AUTH_KEY, JSON.stringify(session));
+            const encrypted = await encryptData(JSON.stringify(session));
+            localStorage.setItem(AUTH_KEY_ENCRYPTED, encrypted);
+            // Remove old plaintext if exists
+            localStorage.removeItem(AUTH_KEY);
             logSecurityEvent('session_created', {
                 email: session.email,
-                expiresAt: session.expiresAt
+                expiresAt: session.expiresAt,
+                encrypted: true
             });
         } else {
+            localStorage.removeItem(AUTH_KEY_ENCRYPTED);
             localStorage.removeItem(AUTH_KEY);
         }
     } catch (e) {
         logger.error('Failed to save auth session:', e);
     }
 }
+
+// Alias for backward compatibility in store
+const saveAuthSession = saveAuthSessionAsync;
 
 /**
  * Rate limiting for login attempts
@@ -167,8 +217,10 @@ async function fetchUserProfile(authUserId) {
 }
 
 export const useAuthStore = create((set, get) => ({
-    isAuthenticated: !!loadAuthSession(),
-    user: loadAuthSession(),
+    // Initial state - check if session exists but don't load yet (async happens in initialize)
+    isAuthenticated: !!loadAuthSessionSync(),
+    user: null, // Will be loaded in initialize()
+    isSessionLoading: !!loadAuthSessionSync(), // True if session needs to be loaded
     error: null,
     isLoading: false,
     rateLimited: false,
@@ -176,9 +228,25 @@ export const useAuthStore = create((set, get) => ({
     needsOnboarding: false,
 
     /**
-     * Initialize Supabase auth session (if configured)
+     * Initialize auth session - loads encrypted session and sets up Supabase listeners
      */
     initialize: async () => {
+        // First, load the encrypted session from localStorage
+        const savedSession = await loadAuthSessionAsync();
+        if (savedSession) {
+            set({
+                isAuthenticated: true,
+                user: savedSession,
+                isSessionLoading: false
+            });
+        } else {
+            set({
+                isAuthenticated: false,
+                user: null,
+                isSessionLoading: false
+            });
+        }
+
         if (!isSupabaseConfigured()) {
             // Fallback mode: password-based auth
             return;
@@ -198,6 +266,7 @@ export const useAuthStore = create((set, get) => ({
                     expiresAt: new Date(Date.now() + SESSION_DURATION).toISOString(),
                     provider: 'supabase',
                     profile: profile,
+                    emailVerified: !!session.user.email_confirmed_at,
                 };
 
                 saveAuthSession(authSession);
@@ -207,7 +276,7 @@ export const useAuthStore = create((set, get) => ({
                     error: null
                 });
 
-                logSecurityEvent('session_restored', { email: session.user.email });
+                logSecurityEvent('session_restored', { email: session.user.email, emailVerified: authSession.emailVerified });
             }
 
             // Listen for auth changes
@@ -288,6 +357,7 @@ export const useAuthStore = create((set, get) => ({
                         expiresAt: new Date(Date.now() + SESSION_DURATION).toISOString(),
                         provider: 'supabase',
                         profile: profile,
+                        emailVerified: !!session.user.email_confirmed_at,
                     };
 
                     saveAuthSession(authSession);
@@ -436,6 +506,7 @@ export const useAuthStore = create((set, get) => ({
                     expiresAt: new Date(Date.now() + SESSION_DURATION).toISOString(),
                     provider: 'supabase',
                     profile: profile,
+                    emailVerified: !!data.user.email_confirmed_at,
                 };
 
                 saveAuthSession(authSession);
@@ -448,7 +519,7 @@ export const useAuthStore = create((set, get) => ({
 
                 // Set user context for error tracking
                 setUserContext({ id: data.user.id });
-                trackEvent('Login', { provider: 'email' });
+                trackEvent('Login', { provider: 'email', emailVerified: authSession.emailVerified });
 
                 // Check if user needs onboarding (no organization)
                 setTimeout(() => get().checkNeedsOnboarding(), 100);
@@ -661,21 +732,24 @@ export const useAuthStore = create((set, get) => ({
             }
         }
 
-        saveAuthSession(null);
+        await saveAuthSession(null);
         set({
             isAuthenticated: false,
             user: null,
             error: null
         });
 
+        // Broadcast logout to other tabs
+        get().broadcastLogout();
+
         logSecurityEvent('logout');
     },
 
     /**
-     * Check if session is still valid
+     * Check if session is still valid (async)
      */
-    validateSession: () => {
-        const session = loadAuthSession();
+    validateSession: async () => {
+        const session = await loadAuthSessionAsync();
 
         if (!session) {
             set({ isAuthenticated: false, user: null });
@@ -683,7 +757,7 @@ export const useAuthStore = create((set, get) => ({
         }
 
         if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
-            saveAuthSession(null);
+            await saveAuthSession(null);
             set({
                 isAuthenticated: false,
                 user: null,
@@ -696,18 +770,18 @@ export const useAuthStore = create((set, get) => ({
     },
 
     /**
-     * Extend session (refresh expiration)
+     * Extend session (refresh expiration) - async
      */
-    extendSession: () => {
-        const session = loadAuthSession();
-        if (!session) return;
+    extendSession: async () => {
+        const { user } = get();
+        if (!user) return;
 
         const extended = {
-            ...session,
+            ...user,
             expiresAt: new Date(Date.now() + SESSION_DURATION).toISOString(),
         };
 
-        saveAuthSession(extended);
+        await saveAuthSession(extended);
         set({ user: extended });
     },
 
@@ -736,30 +810,66 @@ export const useAuthStore = create((set, get) => ({
 
     /**
      * Check if current user has permission to access a tab
+     * Checks organization role first, then falls back to profile role
      */
     hasPermission: (tabId) => {
         const { user } = get();
 
         // No user = no access
-        if (!user?.profile) {
-            // Fallback for password auth mode (no profiles)
-            if (user?.provider === 'password') return true;
-            return false;
-        }
+        if (!user) return false;
 
-        // Admins have access to everything
-        if (user.profile.role === 'admin') return true;
+        // Fallback for password auth mode (no profiles)
+        if (user.provider === 'password') return true;
 
-        // Check tab permissions
-        return user.profile.tabPermissions?.includes(tabId) ?? false;
+        // Get organization role (from organizationStore or cached in session)
+        const orgRole = user.organizationRole || null;
+        const profileRole = user.profile?.role || null;
+
+        // Admin-level roles have access to everything
+        if (isAdminRole(orgRole, profileRole)) return true;
+
+        // Check tab permissions from profile
+        return user.profile?.tabPermissions?.includes(tabId) ?? false;
     },
 
     /**
      * Check if current user is admin
+     * Checks organization role first, then profile role
      */
     isAdmin: () => {
         const { user } = get();
-        return user?.profile?.role === 'admin' || user?.provider === 'password';
+
+        // Password mode = admin access
+        if (user?.provider === 'password') return true;
+
+        // No user = not admin
+        if (!user) return false;
+
+        // Get organization role and profile role
+        const orgRole = user.organizationRole || null;
+        const profileRole = user.profile?.role || null;
+
+        // Check using centralized role system
+        return isAdminRole(orgRole, profileRole);
+    },
+
+    /**
+     * Get the user's organization role
+     */
+    getOrganizationRole: () => {
+        const { user } = get();
+        return user?.organizationRole || null;
+    },
+
+    /**
+     * Get the effective role level (higher = more permissions)
+     */
+    getRoleLevel: () => {
+        const { user } = get();
+        if (!user) return 0;
+        if (user.provider === 'password') return 100; // Max level for password mode
+
+        return getEffectiveRoleLevel(user.organizationRole, user.profile?.role);
     },
 
     /**
@@ -901,23 +1011,102 @@ export const useAuthStore = create((set, get) => ({
     setNeedsOnboarding: (value) => {
         set({ needsOnboarding: value });
     },
+
+    /**
+     * Check if user's email is verified
+     */
+    isEmailVerified: () => {
+        const { user } = get();
+        if (!user) return false;
+        if (user.provider === 'password') return true; // Skip for legacy auth
+        return user.emailVerified === true;
+    },
+
+    /**
+     * Broadcast logout to other tabs
+     */
+    broadcastLogout: () => {
+        if (typeof BroadcastChannel !== 'undefined') {
+            const channel = new BroadcastChannel('auth_channel');
+            channel.postMessage({ type: 'LOGOUT' });
+            channel.close();
+        }
+    },
+
+    /**
+     * Broadcast session update to other tabs
+     */
+    broadcastSessionUpdate: (session) => {
+        if (typeof BroadcastChannel !== 'undefined') {
+            const channel = new BroadcastChannel('auth_channel');
+            channel.postMessage({ type: 'SESSION_UPDATE', session });
+            channel.close();
+        }
+    },
 }));
 
-// Auto-validate session on page load
+// Auto-initialize auth on page load
 if (typeof window !== 'undefined') {
-    useAuthStore.getState().validateSession();
+    // Initialize auth session (loads encrypted session)
+    useAuthStore.getState().initialize();
 
-    // Auto-extend session on user activity
+    // Auto-extend session on meaningful user activity (not just mouse move)
     let activityTimeout;
+    let lastExtension = Date.now();
+    const MIN_EXTENSION_INTERVAL = 5 * 60 * 1000; // 5 minutes between extensions
+
     const extendOnActivity = () => {
         clearTimeout(activityTimeout);
-        activityTimeout = setTimeout(() => {
-            if (useAuthStore.getState().isAuthenticated) {
-                useAuthStore.getState().extendSession();
+        activityTimeout = setTimeout(async () => {
+            const now = Date.now();
+            // Only extend if enough time has passed and user is authenticated
+            if (useAuthStore.getState().isAuthenticated && (now - lastExtension) > MIN_EXTENSION_INTERVAL) {
+                await useAuthStore.getState().extendSession();
+                lastExtension = now;
             }
         }, 60000); // Extend after 1 minute of activity
     };
 
-    window.addEventListener('mousemove', extendOnActivity);
+    // Only extend on meaningful interactions, not mouse movement
+    window.addEventListener('click', extendOnActivity);
     window.addEventListener('keydown', extendOnActivity);
+    window.addEventListener('submit', extendOnActivity);
+
+    // Cross-tab session synchronization using BroadcastChannel
+    if (typeof BroadcastChannel !== 'undefined') {
+        const authChannel = new BroadcastChannel('auth_channel');
+
+        authChannel.onmessage = async (event) => {
+            const { type, session } = event.data;
+
+            switch (type) {
+                case 'LOGOUT':
+                    // Another tab logged out - sync this tab
+                    await saveAuthSessionAsync(null);
+                    useAuthStore.setState({
+                        isAuthenticated: false,
+                        user: null,
+                        error: null,
+                    });
+                    logSecurityEvent('cross_tab_logout');
+                    break;
+
+                case 'SESSION_UPDATE':
+                    // Another tab updated the session - refresh our state
+                    if (session) {
+                        useAuthStore.setState({
+                            isAuthenticated: true,
+                            user: session,
+                        });
+                        logSecurityEvent('cross_tab_session_sync');
+                    }
+                    break;
+            }
+        };
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            authChannel.close();
+        });
+    }
 }

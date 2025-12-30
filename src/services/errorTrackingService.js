@@ -114,23 +114,10 @@ export function addBreadcrumb(message, category = 'user', data = {}) {
     });
 }
 
-// Track performance of async operations
-export function startTransaction(name, op = 'task') {
-    if (!SENTRY_DSN) {
-        return { finish: () => {} };
-    }
-
-    return Sentry.startInactiveSpan({
-        name,
-        op,
-    });
-}
-
 export default {
     initErrorTracking,
     captureError,
     captureMessage,
     setUserContext,
     addBreadcrumb,
-    startTransaction,
 };

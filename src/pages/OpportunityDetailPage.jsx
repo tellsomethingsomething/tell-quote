@@ -576,7 +576,7 @@ export default function OpportunityDetailPage({ opportunityId, onBack, onConvert
                                                     value={editForm.clientLocation || ''}
                                                     onChange={e => setEditForm({ ...editForm, clientLocation: e.target.value })}
                                                     className="input w-full"
-                                                    placeholder="e.g. Kuala Lumpur"
+                                                    placeholder="e.g. New York"
                                                 />
                                             </div>
                                         </div>

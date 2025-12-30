@@ -180,7 +180,7 @@ export default function ClientDetails() {
                             type="text"
                             value={client.contact}
                             onChange={(e) => handleChange('contact', e.target.value)}
-                            placeholder="e.g. Ahmad Rahman"
+                            placeholder="e.g. John Smith"
                             className="input"
                             disabled={quote.isLocked}
                         />
@@ -218,7 +218,7 @@ export default function ClientDetails() {
                             type="tel"
                             value={client.phone}
                             onChange={(e) => handleContactFieldChange('phone', e.target.value)}
-                            placeholder="+65 9123 4567"
+                            placeholder="+1 555 123 4567"
                             className="input"
                             disabled={quote.isLocked}
                         />

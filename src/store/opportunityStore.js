@@ -3,21 +3,59 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import logger from '../utils/logger';
 
-// Regions and countries
-export const REGIONS = {
-    SEA: ['Malaysia', 'Singapore', 'Indonesia', 'Thailand', 'Vietnam', 'Philippines', 'Myanmar', 'Cambodia', 'Laos', 'Brunei'],
-    GCC: ['Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman'],
-    Levant: ['Jordan', 'Lebanon', 'Iraq', 'Syria'],
-    'Central Asia': ['Kazakhstan', 'Uzbekistan', 'Turkmenistan', 'Tajikistan', 'Kyrgyzstan', 'Afghanistan'],
+// Sales pipeline stages
+export const PIPELINE_STAGES = {
+    lead: { id: 'lead', label: 'Lead', color: '#6B7280', order: 0 },
+    qualified: { id: 'qualified', label: 'Qualified', color: '#3B82F6', order: 1 },
+    proposal: { id: 'proposal', label: 'Proposal', color: '#8B5CF6', order: 2 },
+    negotiation: { id: 'negotiation', label: 'Negotiation', color: '#F59E0B', order: 3 },
+    won: { id: 'won', label: 'Closed Won', color: '#10B981', order: 4 },
+    lost: { id: 'lost', label: 'Closed Lost', color: '#EF4444', order: 5 },
 };
 
-export const ALL_COUNTRIES = [...REGIONS.SEA, ...REGIONS.GCC, ...REGIONS.Levant, ...REGIONS['Central Asia']];
+export const PIPELINE_STAGE_ORDER = ['lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
+
+// Global regions and countries - comprehensive list for international SaaS
+export const REGIONS = {
+    // Americas
+    'North America': ['United States', 'Canada', 'Mexico'],
+    'Central America': ['Guatemala', 'Belize', 'El Salvador', 'Honduras', 'Nicaragua', 'Costa Rica', 'Panama'],
+    'Caribbean': ['Cuba', 'Jamaica', 'Haiti', 'Dominican Republic', 'Puerto Rico', 'Trinidad and Tobago', 'Barbados', 'Bahamas'],
+    'South America': ['Brazil', 'Argentina', 'Colombia', 'Peru', 'Venezuela', 'Chile', 'Ecuador', 'Bolivia', 'Paraguay', 'Uruguay', 'Guyana', 'Suriname'],
+    // Europe
+    'Western Europe': ['United Kingdom', 'Ireland', 'France', 'Germany', 'Netherlands', 'Belgium', 'Luxembourg', 'Switzerland', 'Austria', 'Liechtenstein'],
+    'Southern Europe': ['Spain', 'Portugal', 'Italy', 'Greece', 'Malta', 'Cyprus', 'Andorra', 'San Marino', 'Monaco', 'Vatican City'],
+    'Northern Europe': ['Sweden', 'Norway', 'Denmark', 'Finland', 'Iceland', 'Estonia', 'Latvia', 'Lithuania'],
+    'Eastern Europe': ['Poland', 'Czech Republic', 'Slovakia', 'Hungary', 'Romania', 'Bulgaria', 'Ukraine', 'Belarus', 'Moldova', 'Russia'],
+    'Balkans': ['Croatia', 'Slovenia', 'Serbia', 'Bosnia and Herzegovina', 'Montenegro', 'North Macedonia', 'Albania', 'Kosovo'],
+    // Middle East
+    'GCC': ['Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman'],
+    'Levant': ['Jordan', 'Lebanon', 'Iraq', 'Syria', 'Israel', 'Palestine'],
+    'Other Middle East': ['Turkey', 'Iran', 'Yemen'],
+    // Asia
+    'Central Asia': ['Kazakhstan', 'Uzbekistan', 'Turkmenistan', 'Tajikistan', 'Kyrgyzstan', 'Afghanistan', 'Mongolia'],
+    'South Asia': ['India', 'Pakistan', 'Bangladesh', 'Sri Lanka', 'Nepal', 'Bhutan', 'Maldives'],
+    'Southeast Asia': ['Malaysia', 'Singapore', 'Indonesia', 'Thailand', 'Vietnam', 'Philippines', 'Myanmar', 'Cambodia', 'Laos', 'Brunei', 'Timor-Leste'],
+    'East Asia': ['China', 'Japan', 'South Korea', 'Taiwan', 'Hong Kong', 'Macau'],
+    // Oceania
+    'Oceania': ['Australia', 'New Zealand', 'Fiji', 'Papua New Guinea', 'Samoa', 'Tonga', 'Vanuatu', 'Solomon Islands'],
+    // Africa
+    'North Africa': ['Egypt', 'Morocco', 'Algeria', 'Tunisia', 'Libya', 'Sudan'],
+    'West Africa': ['Nigeria', 'Ghana', 'Senegal', "Cote d'Ivoire", 'Mali', 'Burkina Faso', 'Niger', 'Guinea', 'Benin', 'Togo', 'Sierra Leone', 'Liberia', 'Mauritania', 'Gambia'],
+    'East Africa': ['Kenya', 'Tanzania', 'Uganda', 'Ethiopia', 'Rwanda', 'Burundi', 'Somalia', 'Djibouti', 'Eritrea', 'South Sudan', 'Mauritius', 'Seychelles', 'Madagascar'],
+    'Central Africa': ['DR Congo', 'Congo', 'Central African Republic', 'Cameroon', 'Chad', 'Gabon', 'Equatorial Guinea', 'Sao Tome and Principe', 'Angola'],
+    'Southern Africa': ['South Africa', 'Zimbabwe', 'Zambia', 'Botswana', 'Namibia', 'Mozambique', 'Malawi', 'Eswatini', 'Lesotho'],
+    // Caucasus
+    'Caucasus': ['Georgia', 'Armenia', 'Azerbaijan'],
+};
+
+// Flattened list of all countries for dropdowns
+export const ALL_COUNTRIES = Object.values(REGIONS).flat().sort();
 
 export const getRegionForCountry = (country) => {
-    if (REGIONS.SEA.includes(country)) return 'SEA';
-    if (REGIONS.GCC.includes(country)) return 'GCC';
-    if (REGIONS.Levant.includes(country)) return 'Levant';
-    if (REGIONS['Central Asia'].includes(country)) return 'Central Asia';
+    for (const [region, countries] of Object.entries(REGIONS)) {
+        if (countries.includes(country)) return region;
+    }
     return 'Other';
 };
 
@@ -31,6 +69,7 @@ function fromDbFormat(o) {
         region: o.region,
         country: o.country,
         status: o.status || 'active',
+        stage: o.stage || 'lead', // Pipeline stage
         value: o.value,
         currency: o.currency || 'USD',
         probability: o.probability || 50,
@@ -58,6 +97,7 @@ function toDbFormat(opp) {
         region: opp.region,
         country: opp.country,
         status: opp.status,
+        stage: opp.stage || 'lead',
         value: opp.value,
         currency: opp.currency,
         probability: opp.probability,
@@ -181,6 +221,7 @@ export const useOpportunityStore = create(
                     region: opportunityData.region || getRegionForCountry(opportunityData.country),
                     country: opportunityData.country || '',
                     status: opportunityData.status || 'active',
+                    stage: opportunityData.stage || 'lead',
                     value: opportunityData.value || 0,
                     currency: opportunityData.currency || 'USD',
                     probability: opportunityData.probability || 50,
@@ -240,6 +281,7 @@ export const useOpportunityStore = create(
                 if (updates.region !== undefined) dbUpdates.region = updates.region;
                 if (updates.country !== undefined) dbUpdates.country = updates.country;
                 if (updates.status !== undefined) dbUpdates.status = updates.status;
+                if (updates.stage !== undefined) dbUpdates.stage = updates.stage;
                 if (updates.value !== undefined) dbUpdates.value = updates.value;
                 if (updates.currency !== undefined) dbUpdates.currency = updates.currency;
                 if (updates.probability !== undefined) dbUpdates.probability = updates.probability;
@@ -353,6 +395,43 @@ export const useOpportunityStore = create(
         // Update status
         updateStatus: async (opportunityId, status) => {
             await get().updateOpportunity(opportunityId, { status });
+        },
+
+        // Update stage (pipeline)
+        updateStage: async (opportunityId, stage) => {
+            // Auto-update status based on stage
+            let updates = { stage };
+            if (stage === 'won') {
+                updates.status = 'won';
+            } else if (stage === 'lost') {
+                updates.status = 'lost';
+            } else if (['lead', 'qualified', 'proposal', 'negotiation'].includes(stage)) {
+                updates.status = 'active';
+            }
+            await get().updateOpportunity(opportunityId, updates);
+        },
+
+        // Get opportunities grouped by stage
+        getOpportunitiesGroupedByStage: () => {
+            const { opportunities } = get();
+            const grouped = {};
+
+            // Initialize all stages
+            PIPELINE_STAGE_ORDER.forEach(stageId => {
+                grouped[stageId] = [];
+            });
+
+            // Group opportunities
+            opportunities.forEach(opp => {
+                const stage = opp.stage || 'lead';
+                if (grouped[stage]) {
+                    grouped[stage].push(opp);
+                } else {
+                    grouped['lead'].push(opp);
+                }
+            });
+
+            return grouped;
         },
 
         // Add contact to opportunity

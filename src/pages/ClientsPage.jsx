@@ -7,22 +7,32 @@ import { formatCurrency, convertCurrency } from '../utils/currency';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { validateForm, sanitizeString } from '../utils/validation';
 import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
+import { getPricingForUser } from '../services/pppService';
+import CSVImportModal from '../components/common/CSVImportModal';
 
 export default function ClientsPage({ onSelectClient }) {
     const { clients, savedQuotes, getClientQuotes, getClientHealth, addClient, deleteClient } = useClientStore();
     const { rates } = useQuoteStore();
-    const { settings, setClientsPreferences } = useSettingsStore();
+    const { settings } = useSettingsStore();
     const activities = useActivityStore(state => state.activities);
     const projectTypes = settings.projectTypes || [];
 
-    // Get clients preferences from settings (synced via Supabase)
-    const clientsPrefs = settings.clientsPreferences || {};
-    const dashboardCurrency = clientsPrefs.currency || 'USD';
+    // Auto-detect currency based on user's location (PPP)
+    const [dashboardCurrency, setDashboardCurrency] = useState('USD');
 
-    // Helper function to update preferences (synced to Supabase)
-    const setDashboardCurrency = (currency) => {
-        setClientsPreferences({ currency });
-    };
+    useEffect(() => {
+        const detectCurrency = async () => {
+            try {
+                const pricingInfo = await getPricingForUser();
+                if (pricingInfo?.currency) {
+                    setDashboardCurrency(pricingInfo.currency);
+                }
+            } catch (error) {
+                console.warn('Currency detection failed, using USD');
+            }
+        };
+        detectCurrency();
+    }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterIndustry, setFilterIndustry] = useState('all');
@@ -31,6 +41,7 @@ export default function ClientsPage({ onSelectClient }) {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [selectedMonth, setSelectedMonth] = useState('all');
     const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     // Feature gating for client creation
     const { checkAndProceed, PromptComponent } = useFeatureGuard(FEATURES.ADD_CLIENT);
@@ -432,17 +443,6 @@ export default function ClientsPage({ onSelectClient }) {
                             </select>
                         </div>
 
-                        {/* Currency Selector */}
-                        <select
-                            value={dashboardCurrency}
-                            onChange={(e) => setDashboardCurrency(e.target.value)}
-                            className="input-sm text-sm w-20 sm:w-24 min-h-[40px] bg-dark-card border-none flex-shrink-0"
-                        >
-                            <option value="USD">USD</option>
-                            <option value="GBP">GBP</option>
-                            <option value="MYR">MYR</option>
-                        </select>
-
                         {/* Advanced Filters */}
                         {filterOptions.industries.length > 0 && (
                             <select
@@ -490,6 +490,18 @@ export default function ClientsPage({ onSelectClient }) {
                                 ))}
                             </select>
                         )}
+
+                        {/* Import Button - Desktop only */}
+                        <button
+                            onClick={() => setIsImportModalOpen(true)}
+                            className="hidden sm:flex btn-secondary text-sm items-center gap-2 flex-shrink-0"
+                            title="Import clients from CSV"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            Import
+                        </button>
 
                         {/* Add Client Button - Desktop only */}
                         <button
@@ -1035,7 +1047,7 @@ export default function ClientsPage({ onSelectClient }) {
                                                         if (formErrors.phone) setFormErrors({ ...formErrors, phone: null });
                                                     }}
                                                     className={`input w-full ${formErrors.phone ? 'border-red-500 focus:ring-red-500' : ''}`}
-                                                    placeholder="+65 1234 5678"
+                                                    placeholder="+1 555 123 4567"
                                                     aria-invalid={formErrors.phone ? 'true' : 'false'}
                                                     aria-describedby={formErrors.phone ? 'phone-error' : 'phone-hint'}
                                                     autoComplete="tel"
@@ -1075,6 +1087,17 @@ export default function ClientsPage({ onSelectClient }) {
 
             {/* Feature gate upgrade prompt */}
             <PromptComponent />
+
+            {/* CSV Import Modal */}
+            <CSVImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                dataType="clients"
+                onImportComplete={(result) => {
+                    console.log(`Imported ${result.imported} clients`);
+                    setIsImportModalOpen(false);
+                }}
+            />
         </div >
     );
 }

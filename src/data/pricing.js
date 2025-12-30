@@ -86,10 +86,16 @@ export const plans = [
             GBP: { monthly: 39, annual: 31 },
             EUR: { monthly: 45, annual: 36 },
         },
+        // Per-user pricing for additional team members
+        perUserPricing: {
+            USD: 10,
+            GBP: 8,
+            EUR: 9,
+        },
         description: "For production companies with 3+ users.",
         features: [
             "Everything in Individual",
-            "3 users included (+£10/user)",
+            "3 users included", // Per-user price shown dynamically based on currency
             "Purchase Orders",
             "50,000 AI tokens/month",
             "AI SOP Generator",

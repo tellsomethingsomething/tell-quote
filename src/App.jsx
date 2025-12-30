@@ -101,10 +101,11 @@ const AboutPage = lazy(() => import('./pages/company/AboutPage'));
 const ContactPage = lazy(() => import('./pages/company/ContactPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const EmailVerificationPage = lazy(() => import('./pages/EmailVerificationPage'));
 
 // Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings' | 'contacts'
 function App() {
-  const { isAuthenticated, user, needsOnboarding, setNeedsOnboarding } = useAuthStore();
+  const { isAuthenticated, user, needsOnboarding, setNeedsOnboarding, isEmailVerified } = useAuthStore();
   const { organization, loading: isOrgLoading, initialize: initializeOrganization } = useOrganizationStore();
   const initializeQuote = useQuoteStore(state => state.initialize);
   const initializeClients = useClientStore(state => state.initialize);
@@ -718,6 +719,15 @@ function App() {
   // Show loading while checking organization
   if (isOrgLoading) {
     return <LoadingSpinner text="Setting up your workspace..." />;
+  }
+
+  // Show email verification page if email not verified (skip for OAuth providers)
+  if (user?.provider === 'supabase' && !isEmailVerified()) {
+    return (
+      <Suspense fallback={<LoadingSpinner text="Loading..." />}>
+        <EmailVerificationPage />
+      </Suspense>
+    );
   }
 
   // Show onboarding wizard for new users without an organization

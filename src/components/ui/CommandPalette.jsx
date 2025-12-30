@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, ArrowRight, FileText, Users, Settings, Home, BarChart3, Calendar, Package, Briefcase } from 'lucide-react';
+import { Search, ArrowRight, FileText, Users, Settings, Home, BarChart3, Calendar, Package, Briefcase, FolderKanban, UserCheck, Receipt, Mail, CheckSquare, Wrench, ClipboardList, FileSignature, ShoppingCart, GitBranch, ListOrdered, DollarSign, BookOpen, Library, Contact, Shield } from 'lucide-react';
 import { useKeyboardShortcut, formatShortcut, SHORTCUT_CATEGORIES } from '../../hooks/useKeyboardShortcuts';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -34,15 +34,48 @@ export default function CommandPalette({ onNavigate, onAction }) {
 
     // Define commands
     const commands = useMemo(() => [
-        // Navigation
-        { id: 'nav-dashboard', label: 'Go to Dashboard', category: 'Navigation', icon: Home, action: () => onNavigate?.('dashboard') },
-        { id: 'nav-quotes', label: 'Go to Quotes', category: 'Navigation', icon: FileText, action: () => onNavigate?.('quotes') },
-        { id: 'nav-clients', label: 'Go to Clients', category: 'Navigation', icon: Users, action: () => onNavigate?.('clients') },
-        { id: 'nav-opportunities', label: 'Go to Opportunities', category: 'Navigation', icon: Briefcase, action: () => onNavigate?.('opportunities') },
-        { id: 'nav-rate-card', label: 'Go to Rate Card', category: 'Navigation', icon: Package, action: () => onNavigate?.('rate-card') },
-        { id: 'nav-calendar', label: 'Go to Calendar', category: 'Navigation', icon: Calendar, action: () => onNavigate?.('calendar') },
-        { id: 'nav-reports', label: 'Go to Reports', category: 'Navigation', icon: BarChart3, action: () => onNavigate?.('reports') },
-        { id: 'nav-settings', label: 'Go to Settings', category: 'Navigation', icon: Settings, action: () => onNavigate?.('settings') },
+        // Navigation - CRM
+        { id: 'nav-dashboard', label: 'Go to Dashboard', category: 'CRM', icon: Home, action: () => onNavigate?.('dashboard') },
+        { id: 'nav-clients', label: 'Go to Clients', category: 'CRM', icon: Users, action: () => onNavigate?.('clients') },
+        { id: 'nav-contacts', label: 'Go to Contacts', category: 'CRM', icon: Contact, action: () => onNavigate?.('contacts') },
+        { id: 'nav-opportunities', label: 'Go to Opportunities', category: 'CRM', icon: Briefcase, action: () => onNavigate?.('opportunities') },
+
+        // Navigation - Quoting
+        { id: 'nav-quotes', label: 'Go to Quotes', category: 'Quoting', icon: FileText, action: () => onNavigate?.('quotes') },
+        { id: 'nav-rate-card', label: 'Go to Rate Card', category: 'Quoting', icon: Package, action: () => onNavigate?.('rate-card') },
+
+        // Navigation - Projects
+        { id: 'nav-projects', label: 'Go to Projects', category: 'Projects', icon: FolderKanban, action: () => onNavigate?.('projects') },
+        { id: 'nav-tasks', label: 'Go to Task Board', category: 'Projects', icon: CheckSquare, action: () => onNavigate?.('task-board') },
+
+        // Navigation - Operations
+        { id: 'nav-crew', label: 'Go to Crew', category: 'Operations', icon: UserCheck, action: () => onNavigate?.('crew') },
+        { id: 'nav-kit', label: 'Go to Equipment/Kit', category: 'Operations', icon: Wrench, action: () => onNavigate?.('kit') },
+        { id: 'nav-kit-bookings', label: 'Go to Kit Bookings', category: 'Operations', icon: Calendar, action: () => onNavigate?.('kit-bookings') },
+        { id: 'nav-call-sheets', label: 'Go to Call Sheets', category: 'Operations', icon: ClipboardList, action: () => onNavigate?.('call-sheets') },
+        { id: 'nav-calendar', label: 'Go to Calendar', category: 'Operations', icon: Calendar, action: () => onNavigate?.('calendar') },
+
+        // Navigation - Finance
+        { id: 'nav-invoices', label: 'Go to Invoices', category: 'Finance', icon: Receipt, action: () => onNavigate?.('invoices') },
+        { id: 'nav-expenses', label: 'Go to Expenses', category: 'Finance', icon: DollarSign, action: () => onNavigate?.('expenses') },
+        { id: 'nav-purchase-orders', label: 'Go to Purchase Orders', category: 'Finance', icon: ShoppingCart, action: () => onNavigate?.('purchase-orders') },
+        { id: 'nav-pl', label: 'Go to Profit & Loss', category: 'Finance', icon: BarChart3, action: () => onNavigate?.('pl') },
+        { id: 'nav-contracts', label: 'Go to Contracts', category: 'Finance', icon: FileSignature, action: () => onNavigate?.('contracts') },
+
+        // Navigation - Communication
+        { id: 'nav-email', label: 'Go to Email', category: 'Communication', icon: Mail, action: () => onNavigate?.('email') },
+        { id: 'nav-email-templates', label: 'Go to Email Templates', category: 'Communication', icon: Mail, action: () => onNavigate?.('email-templates') },
+        { id: 'nav-sequences', label: 'Go to Sequences', category: 'Communication', icon: ListOrdered, action: () => onNavigate?.('sequences') },
+        { id: 'nav-workflows', label: 'Go to Workflows', category: 'Communication', icon: GitBranch, action: () => onNavigate?.('workflows') },
+
+        // Navigation - Resources
+        { id: 'nav-knowledge', label: 'Go to Knowledge Base', category: 'Resources', icon: Library, action: () => onNavigate?.('knowledge') },
+        { id: 'nav-sop', label: 'Go to SOPs', category: 'Resources', icon: BookOpen, action: () => onNavigate?.('sop') },
+
+        // Navigation - Analytics & Settings
+        { id: 'nav-analytics', label: 'Go to Analytics', category: 'Analytics', icon: BarChart3, action: () => onNavigate?.('analytics') },
+        { id: 'nav-settings', label: 'Go to Settings', category: 'Settings', icon: Settings, action: () => onNavigate?.('settings') },
+        { id: 'nav-admin', label: 'Go to Admin', category: 'Settings', icon: Shield, action: () => onNavigate?.('admin') },
 
         // Actions
         { id: 'action-new-quote', label: 'Create New Quote', category: 'Actions', shortcut: 'mod+n', action: () => onAction?.('newQuote') },
@@ -50,8 +83,8 @@ export default function CommandPalette({ onNavigate, onAction }) {
         { id: 'action-new-opportunity', label: 'Create Opportunity', category: 'Actions', action: () => onAction?.('newOpportunity') },
 
         // Quick settings
-        { id: 'setting-theme', label: 'Toggle Theme', category: 'Settings', action: () => onAction?.('toggleTheme') },
-        { id: 'setting-shortcuts', label: 'View Keyboard Shortcuts', category: 'Settings', shortcut: '?', action: () => onAction?.('showShortcuts') },
+        { id: 'setting-theme', label: 'Toggle Theme', category: 'Preferences', action: () => onAction?.('toggleTheme') },
+        { id: 'setting-shortcuts', label: 'View Keyboard Shortcuts', category: 'Preferences', shortcut: '?', action: () => onAction?.('showShortcuts') },
     ], [onNavigate, onAction]);
 
     // Filter commands based on search

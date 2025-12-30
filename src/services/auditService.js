@@ -65,6 +65,14 @@ export const ENTITY_TYPES = {
 
 /**
  * Log an audit event
+ * @param {Object} params - Audit event parameters
+ * @param {string} params.action - Action type (from AUDIT_ACTIONS)
+ * @param {string} params.entityType - Entity type (from ENTITY_TYPES)
+ * @param {string} params.entityId - ID of the entity
+ * @param {string} params.entityName - Human-readable name
+ * @param {Object} params.changes - Object describing changes
+ * @param {Object} params.metadata - Additional metadata
+ * @param {string} params.organizationId - Organization ID (optional, falls back to store)
  */
 export async function logAuditEvent({
     action,
@@ -73,6 +81,7 @@ export async function logAuditEvent({
     entityName = null,
     changes = null,
     metadata = null,
+    organizationId = null,
 }) {
     if (!isSupabaseConfigured()) {
         logger.debug('[Audit]', action, entityType, entityId, entityName);
@@ -81,10 +90,11 @@ export async function logAuditEvent({
 
     try {
         const { data: { user } } = await supabase.auth.getUser();
-        const organizationId = useOrganizationStore.getState().getOrganizationId();
+        // Accept organizationId as parameter for decoupling, fall back to store for backward compatibility
+        const orgId = organizationId || useOrganizationStore.getState().getOrganizationId();
 
         const auditLog = {
-            organization_id: organizationId,
+            organization_id: orgId,
             user_id: user?.id || null,
             user_email: user?.email || null,
             action,

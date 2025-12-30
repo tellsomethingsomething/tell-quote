@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, HelpCircle, X, Loader2 } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import TokenPacks from '../components/ui/TokenPacks';
-import { plans, pricingFaqs, comparisonTable, currencyConfig } from '../data/pricing';
+import { plans, pricingFaqs, comparisonTable } from '../data/pricing';
 import { useAuthStore } from '../store/authStore';
-import { createCheckoutSession, getRegionalStripePriceId } from '../services/billingService';
+import { createCheckoutSession } from '../services/billingService';
 import { getPricingForUser, formatLocalPrice } from '../services/pppService';
 import logger from '../utils/logger';
 
@@ -119,22 +119,6 @@ export default function Pricing() {
                     All plans include unlimited projects and quotes. Pay for users, not usage.
                 </p>
 
-                {/* Currency Selector */}
-                <div className="flex items-center justify-center gap-2 mb-6">
-                    <span className="text-sm text-marketing-text-secondary">Currency:</span>
-                    <select
-                        value={currency}
-                        onChange={(e) => setCurrency(e.target.value)}
-                        className="bg-marketing-surface border border-marketing-border rounded-lg px-3 py-1.5 text-sm text-marketing-text-primary focus:outline-none focus:ring-2 focus:ring-marketing-primary/50 cursor-pointer"
-                    >
-                        {Object.entries(currencyConfig).map(([code, config]) => (
-                            <option key={code} value={code}>
-                                {config.symbol} {code}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
                 {/* Toggle */}
                 <div className="flex items-center justify-center gap-4 mb-16">
                     <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-marketing-text-primary' : 'text-marketing-text-secondary'}`}>Monthly</span>
@@ -225,12 +209,20 @@ export default function Pricing() {
 
                             <p className="text-xs font-bold text-marketing-text-secondary uppercase mb-4 tracking-wider">Includes:</p>
                             <div className="space-y-3 flex-1">
-                                {plan.features.map((feature, idx) => (
-                                    <div key={idx} className="flex items-start gap-3 text-sm text-marketing-text-secondary">
-                                        <Check size={16} className="text-marketing-primary mt-0.5 shrink-0" />
-                                        <span>{feature}</span>
-                                    </div>
-                                ))}
+                                {plan.features.map((feature, idx) => {
+                                    // Add per-user pricing for Team plan
+                                    let displayFeature = feature;
+                                    if (feature === '3 users included' && plan.perUserPricing) {
+                                        const perUserPrice = plan.perUserPricing[currency] || plan.perUserPricing.USD;
+                                        displayFeature = `3 users included (+${formatLocalPrice(perUserPrice, currency)}/user)`;
+                                    }
+                                    return (
+                                        <div key={idx} className="flex items-start gap-3 text-sm text-marketing-text-secondary">
+                                            <Check size={16} className="text-marketing-primary mt-0.5 shrink-0" />
+                                            <span>{displayFeature}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </motion.div>
                     ))}

@@ -290,7 +290,8 @@ export default function OnboardingWizard({ userId, onComplete }) {
                 await handleComplete();
             }
         } catch (err) {
-            setError(err.message || 'Failed to save progress');
+            logger.error('handleNext error:', err);
+            setError('Failed to save progress. Please try again.');
         } finally {
             setIsSaving(false);
         }
@@ -315,7 +316,8 @@ export default function OnboardingWizard({ userId, onComplete }) {
                 await handleComplete();
             }
         } catch (err) {
-            setError(err.message || 'Failed to skip step');
+            logger.error('handleSkip error:', err);
+            setError('Failed to skip step. Please try again.');
         } finally {
             setIsSaving(false);
         }
@@ -407,7 +409,8 @@ export default function OnboardingWizard({ userId, onComplete }) {
             onComplete?.(org, formData.firstAction);
         } catch (err) {
             logger.error('Onboarding error:', err);
-            setError(err.message || 'Failed to complete setup. Please try again.');
+            // Show user-friendly message instead of raw technical error
+            setError('Failed to complete setup. Please try again or contact support if the problem persists.');
             setIsSaving(false);
         }
     };

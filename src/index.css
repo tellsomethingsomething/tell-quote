@@ -447,6 +447,12 @@ select.input-sm {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
+  cursor: pointer;
+}
+
+select.input:hover,
+select.input-sm:hover {
+  border-color: #6b7280;
 }
 
 select.input:focus,

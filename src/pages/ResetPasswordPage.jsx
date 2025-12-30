@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
 import Logo from '../components/Logo';
+import { validatePassword, getPasswordStrength } from '../utils/validation';
 
 export default function ResetPasswordPage({ onComplete }) {
     const { updatePassword, isLoading } = useAuthStore();
@@ -39,6 +40,10 @@ export default function ResetPasswordPage({ onComplete }) {
         return () => subscription.unsubscribe();
     }, []);
 
+    // Password validation (same as signup)
+    const passwordValidation = validatePassword(password);
+    const passwordStrength = getPasswordStrength(password);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
@@ -48,8 +53,8 @@ export default function ResetPasswordPage({ onComplete }) {
             return;
         }
 
-        if (password.length < 6) {
-            setError('Password must be at least 6 characters');
+        if (!passwordValidation.valid) {
+            setError(passwordValidation.error);
             return;
         }
 
@@ -173,6 +178,30 @@ export default function ResetPasswordPage({ onComplete }) {
                                 autoComplete="new-password"
                                 required
                             />
+                            {password && !passwordValidation.valid && (
+                                <p className="mt-1 text-xs text-red-400">{passwordValidation.error}</p>
+                            )}
+                            {password && passwordValidation.valid && (
+                                <div className="mt-2 flex items-center gap-2">
+                                    <div className="flex-1 h-1 bg-dark-border rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full transition-all ${
+                                                passwordStrength.score <= 1 ? 'bg-red-500 w-1/4' :
+                                                passwordStrength.score === 2 ? 'bg-yellow-500 w-1/2' :
+                                                passwordStrength.score === 3 ? 'bg-green-400 w-3/4' :
+                                                'bg-green-500 w-full'
+                                            }`}
+                                        />
+                                    </div>
+                                    <span className={`text-xs ${
+                                        passwordStrength.score <= 1 ? 'text-red-400' :
+                                        passwordStrength.score === 2 ? 'text-yellow-400' :
+                                        'text-green-400'
+                                    }`}>
+                                        {passwordStrength.label}
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         <div>
@@ -205,7 +234,7 @@ export default function ResetPasswordPage({ onComplete }) {
 
                         <button
                             type="submit"
-                            disabled={isLoading || !password || !confirmPassword || !passwordsMatch}
+                            disabled={isLoading || !password || !confirmPassword || !passwordsMatch || !passwordValidation.valid}
                             className="btn-primary w-full py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? (
@@ -232,7 +261,7 @@ export default function ResetPasswordPage({ onComplete }) {
                 </div>
 
                 <p className="text-center text-gray-600 text-xs mt-6">
-                    Password must be at least 6 characters
+                    Password must be at least 8 characters with uppercase, lowercase, number, and special character
                 </p>
             </div>
         </div>

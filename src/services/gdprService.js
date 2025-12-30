@@ -10,8 +10,9 @@ import logger from '../utils/logger';
 /**
  * Request a data export
  * Creates a request that will be processed asynchronously
+ * @param {string} organizationId - Organization ID (required for decoupling from store)
  */
-export async function requestDataExport() {
+export async function requestDataExport(organizationId = null) {
     if (!isSupabaseConfigured()) {
         throw new Error('Database not configured');
     }
@@ -19,12 +20,13 @@ export async function requestDataExport() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const organizationId = useOrganizationStore.getState().getOrganizationId();
+    // Accept organizationId as parameter for decoupling, fall back to store for backward compatibility
+    const orgId = organizationId || useOrganizationStore.getState().getOrganizationId();
 
     const { data, error } = await supabase
         .from('data_export_requests')
         .insert({
-            organization_id: organizationId,
+            organization_id: orgId,
             user_id: user.id,
             status: 'pending',
         })
@@ -35,7 +37,7 @@ export async function requestDataExport() {
 
     // In a full implementation, this would trigger a background job
     // For now, we'll generate the export immediately
-    const exportData = await generateExportData(user.id, organizationId);
+    const exportData = await generateExportData(user.id, orgId);
 
     return { requestId: data.id, data: exportData };
 }
@@ -158,8 +160,10 @@ export function downloadExportAsJSON(data, filename = 'my-data-export.json') {
 /**
  * Request account deletion
  * Creates a deletion request with 30-day grace period
+ * @param {string} reason - Reason for deletion
+ * @param {string} organizationId - Organization ID (required for decoupling from store)
  */
-export async function requestAccountDeletion(reason = '') {
+export async function requestAccountDeletion(reason = '', organizationId = null) {
     if (!isSupabaseConfigured()) {
         throw new Error('Database not configured');
     }
@@ -167,7 +171,8 @@ export async function requestAccountDeletion(reason = '') {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const organizationId = useOrganizationStore.getState().getOrganizationId();
+    // Accept organizationId as parameter for decoupling, fall back to store for backward compatibility
+    const orgId = organizationId || useOrganizationStore.getState().getOrganizationId();
 
     // Check if there's already a pending request
     const { data: existing } = await supabase
@@ -192,7 +197,7 @@ export async function requestAccountDeletion(reason = '') {
         .from('account_deletion_requests')
         .insert({
             user_id: user.id,
-            organization_id: organizationId,
+            organization_id: orgId,
             reason,
             status: 'pending',
             confirmation_token: confirmationToken,

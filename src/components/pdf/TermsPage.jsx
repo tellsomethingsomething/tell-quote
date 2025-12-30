@@ -220,7 +220,7 @@ export default function TermsPage({ quoteNumber, companyWebsite, companyName, co
                         </Text>
                         <Text style={styles.subsectionTitle}>5.4 Assignment of Rights</Text>
                         <Text style={styles.text}>
-                            Transfer or assignment of copyright in Footage to the Client shall only occur if: (a) expressly agreed in writing; (b) specified in the statement of work or quotation; and (c) all Fees have been paid in full. Any such assignment shall be made pursuant to Section 27 of the Copyright Act 1987 (Malaysia).
+                            Transfer or assignment of copyright in Footage to the Client shall only occur if: (a) expressly agreed in writing; (b) specified in the statement of work or quotation; and (c) all Fees have been paid in full. Any such assignment shall be made in accordance with applicable copyright law.
                         </Text>
                         <Text style={styles.subsectionTitle}>5.5 Company's Rights</Text>
                         <Text style={styles.text}>
@@ -274,7 +274,7 @@ export default function TermsPage({ quoteNumber, companyWebsite, companyName, co
                         <Text style={styles.sectionTitle}>9. LIMITATION OF LIABILITY</Text>
                         <Text style={styles.subsectionTitle}>9.1 Liability Cap</Text>
                         <Text style={styles.text}>
-                            The Company's total liability under or in connection with this Agreement shall not exceed the total Fees paid or payable by the Client in the 12 months preceding the claim, or RM 500,000, whichever is greater.
+                            The Company's total liability under or in connection with this Agreement shall not exceed the total Fees paid or payable by the Client in the 12 months preceding the claim, or USD $100,000, whichever is greater.
                         </Text>
                         <Text style={styles.subsectionTitle}>9.2 Exclusion of Consequential Loss</Text>
                         <Text style={styles.text}>
@@ -296,7 +296,7 @@ export default function TermsPage({ quoteNumber, companyWebsite, companyName, co
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>11. DATA PROTECTION</Text>
                         <Text style={styles.text}>
-                            Each Party shall comply with its obligations under the Personal Data Protection Act 2010 (Malaysia) in connection with any personal data processed under this Agreement. Where personal data is transferred outside Malaysia, the transferring Party shall ensure compliance with applicable data protection requirements.
+                            Each Party shall comply with its obligations under applicable data protection laws in connection with any personal data processed under this Agreement. Where personal data is transferred across jurisdictions, the transferring Party shall ensure compliance with applicable data protection requirements.
                         </Text>
                     </View>
 
@@ -324,14 +324,14 @@ export default function TermsPage({ quoteNumber, companyWebsite, companyName, co
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>15. DISPUTE RESOLUTION</Text>
                         <Text style={styles.text}>
-                            Any dispute arising from this Agreement shall first be referred to good faith negotiation between the Parties. If not resolved within 30 days, the dispute shall be finally determined by arbitration administered by the Asian International Arbitration Centre (AIAC) in Kuala Lumpur, Malaysia, in accordance with the AIAC Arbitration Rules. The arbitration shall be conducted in English by a single arbitrator.
+                            Any dispute arising from this Agreement shall first be referred to good faith negotiation between the Parties. If not resolved within 30 days, the dispute shall be resolved by binding arbitration in accordance with recognized international arbitration rules. The arbitration shall be conducted in English by a single arbitrator at a mutually agreed neutral venue.
                         </Text>
                     </View>
 
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>16. GOVERNING LAW</Text>
                         <Text style={styles.text}>
-                            This Agreement shall be governed by and construed in accordance with the laws of Malaysia.
+                            This Agreement shall be governed by and construed in accordance with the laws of the jurisdiction specified in the Company's quotation or proposal, or in the absence of such specification, the laws of the Company's principal place of business.
                         </Text>
                     </View>
 

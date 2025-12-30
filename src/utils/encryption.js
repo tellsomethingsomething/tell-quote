@@ -170,21 +170,6 @@ export function isEncrypted(data) {
 }
 
 /**
- * Securely wipe a string from memory (best effort)
- * Note: JavaScript doesn't provide true memory wiping
- */
-export function secureWipe(str) {
-    if (typeof str !== 'string') return;
-
-    // Overwrite the string value (limited effectiveness in JS)
-    try {
-        str = '\0'.repeat(str.length);
-    } catch (e) {
-        // Strings are immutable in JS, this is best effort
-    }
-}
-
-/**
  * Mask sensitive data for display (e.g., API keys)
  * @param {string} value - Value to mask
  * @param {number} visibleChars - Number of chars to show at start/end

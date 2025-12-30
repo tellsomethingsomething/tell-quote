@@ -1,5 +1,5 @@
 // Supabase Edge Function: Create Trial Checkout Session
-// Creates a Stripe checkout session with a 48-hour trial period
+// Creates a Stripe checkout session with a 5-day (120-hour) trial period
 // Card is captured but not charged until trial ends
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
@@ -44,7 +44,7 @@ serve(async (req: Request) => {
             priceId,
             organizationId,
             customerEmail,
-            trialPeriodDays = 2, // 48 hours = 2 days
+            trialPeriodDays = 5, // 120 hours = 5 days
             successUrl,
             cancelUrl
         } = await req.json();
@@ -92,7 +92,7 @@ serve(async (req: Request) => {
                 .eq('id', organizationId);
         }
 
-        // Calculate trial end time (48 hours from now)
+        // Calculate trial end time (5 days from now)
         const trialEnd = new Date();
         trialEnd.setDate(trialEnd.getDate() + trialPeriodDays);
 
@@ -129,7 +129,7 @@ serve(async (req: Request) => {
             // Custom text for trial
             custom_text: {
                 submit: {
-                    message: `Start your ${trialPeriodDays * 24}-hour free trial. You won't be charged today.`,
+                    message: `Start your ${trialPeriodDays}-day free trial. You won't be charged until the trial ends.`,
                 },
             },
             // Consent for future charges after trial

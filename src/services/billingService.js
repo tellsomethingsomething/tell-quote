@@ -306,9 +306,14 @@ export const PLANS = {
             GBP: { monthly: 39, annual: 372 },
             EUR: { monthly: 45, annual: 432 },
         },
+        perUserPricing: {
+            USD: 10,
+            GBP: 8,
+            EUR: 9,
+        },
         features: [
             'Everything in Individual',
-            '3 users included (+$10/user)',
+            '3 users included', // Per-user price shown dynamically
             'Purchase Orders',
             '50,000 AI tokens/month',
             'AI SOP Generator',
@@ -320,7 +325,7 @@ export const PLANS = {
             crewContacts: -1,
             equipmentItems: -1,
             regions: -1,
-            teamMembers: 3, // +$10/user for additional
+            teamMembers: 3, // Additional users available at per-user pricing
             aiTokens: 50000,
         },
     },
@@ -471,16 +476,30 @@ export async function createSetupIntent(organizationId, userEmail) {
         throw new Error('Database not configured');
     }
 
-    // Call Supabase Edge Function to create Stripe setup intent
-    const { data, error } = await supabase.functions.invoke('create-setup-intent', {
-        body: {
-            organizationId,
-            customerEmail: userEmail,
-        },
-    });
+    try {
+        // Call Supabase Edge Function to create Stripe setup intent
+        const { data, error } = await supabase.functions.invoke('create-setup-intent', {
+            body: {
+                organizationId,
+                customerEmail: userEmail,
+            },
+        });
 
-    if (error) throw error;
-    return data; // { clientSecret, customerId }
+        if (error) {
+            logger.error('SetupIntent Edge Function error:', error);
+            // Provide user-friendly error message
+            throw new Error('Unable to initialize payment form. Please try again or skip billing for now.');
+        }
+
+        return data; // { clientSecret, customerId }
+    } catch (err) {
+        logger.error('CreateSetupIntent error:', err);
+        // Re-throw with user-friendly message if not already formatted
+        if (err.message?.includes('Unable to initialize')) {
+            throw err;
+        }
+        throw new Error('Payment setup temporarily unavailable. Please try again or continue with the free plan.');
+    }
 }
 
 /**
@@ -489,8 +508,9 @@ export async function createSetupIntent(organizationId, userEmail) {
  * @param {string} billingCycle - 'monthly' or 'annual'
  * @param {string} currency - Currency code
  * @param {string} tier - Optional pricing tier from PPP service
+ * @param {string} organizationId - Organization ID (optional, falls back to store)
  */
-export async function createCheckoutSession(planId, billingCycle = 'monthly', currency = 'USD', tier = null) {
+export async function createCheckoutSession(planId, billingCycle = 'monthly', currency = 'USD', tier = null, organizationId = null) {
     if (!isSupabaseConfigured()) {
         throw new Error('Database not configured');
     }
@@ -498,8 +518,9 @@ export async function createCheckoutSession(planId, billingCycle = 'monthly', cu
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const organizationId = useOrganizationStore.getState().getOrganizationId();
-    if (!organizationId) throw new Error('No organization selected');
+    // Accept organizationId as parameter for decoupling, fall back to store for backward compatibility
+    const orgId = organizationId || useOrganizationStore.getState().getOrganizationId();
+    if (!orgId) throw new Error('No organization selected');
 
     const plan = PLANS[planId];
     if (!plan) throw new Error('Invalid plan');
@@ -515,7 +536,7 @@ export async function createCheckoutSession(planId, billingCycle = 'monthly', cu
     const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: {
             priceId,
-            organizationId,
+            organizationId: orgId,
             tier: tier || 'tier1',
             currency,
             successUrl: `${window.location.origin}/settings?tab=billing&success=true`,
@@ -529,8 +550,11 @@ export async function createCheckoutSession(planId, billingCycle = 'monthly', cu
 
 /**
  * Create a Stripe checkout session for purchasing a token pack
+ * @param {number} tokens - Number of tokens to purchase
+ * @param {string} currency - Currency code
+ * @param {string} organizationId - Organization ID (optional, falls back to store)
  */
-export async function createTokenPackCheckoutSession(tokens, currency = 'USD') {
+export async function createTokenPackCheckoutSession(tokens, currency = 'USD', organizationId = null) {
     if (!isSupabaseConfigured()) {
         throw new Error('Database not configured');
     }
@@ -538,8 +562,9 @@ export async function createTokenPackCheckoutSession(tokens, currency = 'USD') {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const organizationId = useOrganizationStore.getState().getOrganizationId();
-    if (!organizationId) throw new Error('No organization selected');
+    // Accept organizationId as parameter for decoupling, fall back to store for backward compatibility
+    const orgId = organizationId || useOrganizationStore.getState().getOrganizationId();
+    if (!orgId) throw new Error('No organization selected');
 
     const priceId = getTokenPackPriceId(tokens, currency);
     if (!priceId) {
@@ -550,7 +575,7 @@ export async function createTokenPackCheckoutSession(tokens, currency = 'USD') {
     const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: {
             priceId,
-            organizationId,
+            organizationId: orgId,
             mode: 'payment', // One-time payment, not subscription
             successUrl: `${window.location.origin}/settings?tab=billing&tokens=success`,
             cancelUrl: `${window.location.origin}/settings?tab=billing&tokens=canceled`,
@@ -563,8 +588,9 @@ export async function createTokenPackCheckoutSession(tokens, currency = 'USD') {
 
 /**
  * Create a Stripe customer portal session for managing subscription
+ * @param {string} organizationId - Organization ID (optional, falls back to store)
  */
-export async function createPortalSession() {
+export async function createPortalSession(organizationId = null) {
     if (!isSupabaseConfigured()) {
         throw new Error('Database not configured');
     }
@@ -572,13 +598,14 @@ export async function createPortalSession() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const organizationId = useOrganizationStore.getState().getOrganizationId();
-    if (!organizationId) throw new Error('No organization selected');
+    // Accept organizationId as parameter for decoupling, fall back to store for backward compatibility
+    const orgId = organizationId || useOrganizationStore.getState().getOrganizationId();
+    if (!orgId) throw new Error('No organization selected');
 
     // Call Supabase Edge Function to create Stripe portal session
     const { data, error } = await supabase.functions.invoke('create-portal-session', {
         body: {
-            organizationId,
+            organizationId: orgId,
             returnUrl: `${window.location.origin}/settings?tab=billing`,
         },
     });

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSettingsStore } from '../store/settingsStore';
@@ -10,10 +10,10 @@ import { useAuthStore } from '../store/authStore';
 import { useOrgContext } from '../hooks/useOrgContext';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { formatCurrency, convertCurrency } from '../utils/currency';
-import { CURRENCIES } from '../data/currencies';
 import CRMMetricsGrid from '../components/dashboard/CRMMetricsWidgets';
 import OnboardingChecklist from '../components/onboarding/OnboardingChecklist';
 import TrialBanner from '../components/onboarding/TrialBanner';
+import { getPricingForUser } from '../services/pppService';
 
 // Status colors aligned with brand palette for visual harmony
 const STATUSES = [
@@ -71,14 +71,25 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
 
     // Get dashboard preferences from settings (synced via Supabase)
     const dashboardPrefs = settings.dashboardPreferences || {};
-    const dashboardCurrency = dashboardPrefs.currency || 'USD';
     const collapsedColumns = dashboardPrefs.collapsedColumns || {};
     const pipelineMinimized = dashboardPrefs.pipelineMinimized || false;
 
-    // Helper functions to update preferences (synced to Supabase)
-    const setDashboardCurrency = (currency) => {
-        setDashboardPreferences({ currency });
-    };
+    // Auto-detect currency based on user's location (PPP)
+    const [dashboardCurrency, setDashboardCurrency] = useState('USD');
+
+    useEffect(() => {
+        const detectCurrency = async () => {
+            try {
+                const pricingInfo = await getPricingForUser();
+                if (pricingInfo?.currency) {
+                    setDashboardCurrency(pricingInfo.currency);
+                }
+            } catch (error) {
+                console.warn('Currency detection failed, using USD');
+            }
+        };
+        detectCurrency();
+    }, []);
     const setCollapsedColumns = (updater) => {
         const newCollapsed = typeof updater === 'function' ? updater(collapsedColumns) : updater;
         setDashboardPreferences({ collapsedColumns: newCollapsed });
@@ -550,25 +561,6 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
                             {MONTHS.map((m, i) => (
                                 <option key={m} value={i}>{m}</option>
                             ))}
-                        </select>
-
-                        {/* Dashboard Currency Selector */}
-                        <div className="hidden sm:block h-4 w-px bg-dark-border mx-2"></div>
-                        <span className="text-sm text-gray-400 hidden sm:inline">View:</span>
-                        <select
-                            value={dashboardCurrency}
-                            onChange={(e) => setDashboardCurrency(e.target.value)}
-                            className="input-sm text-sm w-20 sm:w-24 min-h-[40px]"
-                        >
-                            <option value="USD">USD</option>
-                            <option value="GBP">GBP</option>
-                            <option value="EUR">EUR</option>
-                            <option value="MYR">MYR</option>
-                            <option value="SGD">SGD</option>
-                            <option value="AED">AED</option>
-                            <option value="SAR">SAR</option>
-                            <option value="QAR">QAR</option>
-                            <option value="KWD">KWD</option>
                         </select>
                     </div>
 

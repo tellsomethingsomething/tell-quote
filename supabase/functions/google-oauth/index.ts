@@ -1,3 +1,6 @@
+// Google OAuth Edge Function
+// Consolidated to use google_connections table (single source of truth)
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -7,13 +10,14 @@ const corsHeaders = {
 
 const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID')!
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET')!
-const GOOGLE_REDIRECT_URI = Deno.env.get('GOOGLE_REDIRECT_URI') || 'https://tell-quote.vercel.app/auth/google/callback'
+const GOOGLE_REDIRECT_URI = Deno.env.get('GOOGLE_REDIRECT_URI') || 'https://productionos.io/auth/google/callback'
 
 const SCOPES = [
   'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/calendar.events',
   'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/userinfo.profile',
 ]
 
 Deno.serve(async (req) => {
@@ -104,7 +108,7 @@ Deno.serve(async (req) => {
         )
       }
 
-      // Get user email from Google
+      // Get user info from Google
       const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: { Authorization: `Bearer ${tokenData.access_token}` },
       })
@@ -113,22 +117,28 @@ Deno.serve(async (req) => {
       // Calculate expiry time
       const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
 
-      // Upsert tokens in database
+      // Upsert connection in google_connections table (single source of truth)
       const { error: dbError } = await supabase
-        .from('google_tokens')
+        .from('google_connections')
         .upsert({
           user_id: userId,
+          google_email: userInfo.email,
+          google_user_id: userInfo.id,
+          google_name: userInfo.name || userInfo.email?.split('@')[0],
+          google_picture: userInfo.picture,
           access_token: tokenData.access_token,
           refresh_token: tokenData.refresh_token,
-          expires_at: expiresAt,
+          token_expires_at: expiresAt,
           scopes: SCOPES,
-          email: userInfo.email,
-          updated_at: new Date().toISOString(),
+          status: 'active',
+          sync_enabled: true,
+          sync_from_date: new Date().toISOString().split('T')[0],
         }, {
-          onConflict: 'user_id',
+          onConflict: 'user_id,google_email',
         })
 
       if (dbError) {
+        console.error('Database error:', dbError)
         return new Response(
           JSON.stringify({ error: dbError.message }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -139,6 +149,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           success: true,
           email: userInfo.email,
+          name: userInfo.name,
           expiresAt,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -156,16 +167,17 @@ Deno.serve(async (req) => {
         )
       }
 
-      // Get current tokens
-      const { data: tokenRecord, error: fetchError } = await supabase
-        .from('google_tokens')
+      // Get current connection
+      const { data: connection, error: fetchError } = await supabase
+        .from('google_connections')
         .select('*')
         .eq('user_id', userId)
+        .eq('status', 'active')
         .single()
 
-      if (fetchError || !tokenRecord) {
+      if (fetchError || !connection) {
         return new Response(
-          JSON.stringify({ error: 'No tokens found for user' }),
+          JSON.stringify({ error: 'No active Google connection found for user' }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
@@ -177,7 +189,7 @@ Deno.serve(async (req) => {
         body: new URLSearchParams({
           client_id: GOOGLE_CLIENT_ID,
           client_secret: GOOGLE_CLIENT_SECRET,
-          refresh_token: tokenRecord.refresh_token,
+          refresh_token: connection.refresh_token,
           grant_type: 'refresh_token',
         }),
       })
@@ -185,6 +197,13 @@ Deno.serve(async (req) => {
       const refreshData = await refreshResponse.json()
 
       if (refreshData.error) {
+        // If refresh fails, mark connection as inactive
+        if (refreshData.error === 'invalid_grant') {
+          await supabase
+            .from('google_connections')
+            .update({ status: 'expired' })
+            .eq('id', connection.id)
+        }
         return new Response(
           JSON.stringify({ error: refreshData.error_description || refreshData.error }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -194,15 +213,14 @@ Deno.serve(async (req) => {
       // Calculate new expiry
       const expiresAt = new Date(Date.now() + refreshData.expires_in * 1000).toISOString()
 
-      // Update tokens in database
+      // Update connection in database
       const { error: updateError } = await supabase
-        .from('google_tokens')
+        .from('google_connections')
         .update({
           access_token: refreshData.access_token,
-          expires_at: expiresAt,
-          updated_at: new Date().toISOString(),
+          token_expires_at: expiresAt,
         })
-        .eq('user_id', userId)
+        .eq('id', connection.id)
 
       if (updateError) {
         return new Response(
@@ -232,13 +250,14 @@ Deno.serve(async (req) => {
         )
       }
 
-      const { data: tokenRecord } = await supabase
-        .from('google_tokens')
-        .select('email, expires_at, scopes')
+      const { data: connection } = await supabase
+        .from('google_connections')
+        .select('google_email, google_name, google_picture, token_expires_at, scopes, status, sync_enabled')
         .eq('user_id', userId)
+        .eq('status', 'active')
         .single()
 
-      if (!tokenRecord) {
+      if (!connection) {
         return new Response(
           JSON.stringify({ connected: false }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -248,15 +267,18 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           connected: true,
-          email: tokenRecord.email,
-          expiresAt: tokenRecord.expires_at,
-          scopes: tokenRecord.scopes,
+          email: connection.google_email,
+          name: connection.google_name,
+          picture: connection.google_picture,
+          expiresAt: connection.token_expires_at,
+          scopes: connection.scopes,
+          syncEnabled: connection.sync_enabled,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Disconnect (revoke and delete tokens)
+    // Disconnect (revoke and delete connection)
     if (action === 'disconnect') {
       const { userId } = await req.json()
 
@@ -267,24 +289,29 @@ Deno.serve(async (req) => {
         )
       }
 
-      // Get tokens to revoke
-      const { data: tokenRecord } = await supabase
-        .from('google_tokens')
-        .select('access_token')
+      // Get connection to revoke
+      const { data: connection } = await supabase
+        .from('google_connections')
+        .select('id, access_token')
         .eq('user_id', userId)
+        .eq('status', 'active')
         .single()
 
-      if (tokenRecord) {
+      if (connection) {
         // Revoke token at Google
-        await fetch(`https://oauth2.googleapis.com/revoke?token=${tokenRecord.access_token}`, {
-          method: 'POST',
-        })
+        try {
+          await fetch(`https://oauth2.googleapis.com/revoke?token=${connection.access_token}`, {
+            method: 'POST',
+          })
+        } catch (e) {
+          console.error('Token revocation failed:', e)
+        }
 
-        // Delete from database
+        // Mark as disconnected (soft delete)
         await supabase
-          .from('google_tokens')
-          .delete()
-          .eq('user_id', userId)
+          .from('google_connections')
+          .update({ status: 'disconnected' })
+          .eq('id', connection.id)
       }
 
       return new Response(
@@ -299,6 +326,7 @@ Deno.serve(async (req) => {
     )
 
   } catch (error) {
+    console.error('Google OAuth error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

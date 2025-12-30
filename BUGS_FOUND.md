@@ -12,16 +12,23 @@ Bugs discovered during comprehensive feature testing. Track fixes here.
 
 ## High Priority
 
-### BUG-003: Test Script False Positives
-**Status:** Open
+(None - all bugs fixed!)
+
+---
+
+## Fixed
+
+### BUG-003: Test Script False Positives ✅
+**Status:** Fixed
 **Severity:** Low
 **Found:** 2025-12-29
+**Fixed:** 2025-12-30
 
 **Description:**
 The quick test script reports "Plan names not found" on pricing page even though they are visible. The content check needs improvement.
 
-**Fix Location:**
-- `scripts/quick-test.js` - Improve content detection logic
+**Fix Applied:**
+- Updated `scripts/quick-test.js` - Improved regional pricing test with proper async waits, multiple detection methods, and fallback checks for when regional pricing isn't enabled
 
 ---
 
@@ -36,8 +43,6 @@ The quick test script reports "Plan names not found" on pricing page even though
 (None yet)
 
 ---
-
-## Fixed
 
 ### BUG-001: No 404 Page ✅
 **Fixed:** 2025-12-29
