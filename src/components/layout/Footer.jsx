@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
+import Logo from '../Logo';
 
 export default function Footer() {
     const [email, setEmail] = useState('');
@@ -39,13 +40,8 @@ export default function Footer() {
 
                     {/* Brand Column */}
                     <div className="lg:col-span-2">
-                        <Link to="/" className="flex items-center gap-2 mb-6">
-                            <div className="w-8 h-8 bg-gradient-to-br from-marketing-accent to-marketing-primary rounded-[10px] flex items-center justify-center text-white font-bold text-lg">
-                                P
-                            </div>
-                            <span className="text-xl font-bold text-marketing-text-primary tracking-tight">
-                                Production<span className="text-marketing-primary">OS</span>
-                            </span>
+                        <Link to="/" className="inline-block mb-6">
+                            <Logo className="h-8" />
                         </Link>
                         <p className="text-marketing-text-secondary mb-8 max-w-sm">
                             The operating system for production companies. Quotes, projects, crew, and finances in one unified platform.
