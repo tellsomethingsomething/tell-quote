@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -78,35 +79,70 @@ export default defineConfig({
             options: {
               cacheName: 'images-cache',
               expiration: {
-                maxEntries: 50,
+                maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
               },
             },
           },
           {
-            // Cache API calls with network-first strategy
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
+            // Cache API calls with stale-while-revalidate for better offline UX
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/.*/i,
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'api-cache',
               expiration: {
-                maxEntries: 100,
+                maxEntries: 200,
                 maxAgeSeconds: 60 * 60 * 24, // 24 hours
               },
-              networkTimeoutSeconds: 10,
               cacheableResponse: {
                 statuses: [0, 200],
+              },
+              backgroundSync: {
+                name: 'api-sync-queue',
+                options: {
+                  maxRetentionTime: 60 * 24, // 24 hours
+                },
+              },
+            },
+          },
+          {
+            // Cache Supabase auth endpoints with network-first
+            urlPattern: /^https:\/\/.*\.supabase\.co\/auth\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'auth-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60, // 1 hour
+              },
+              networkTimeoutSeconds: 5,
+            },
+          },
+          {
+            // Cache static assets from CDNs
+            urlPattern: /^https:\/\/cdn\..*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'cdn-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
               },
             },
           },
         ],
         // Pre-cache important assets
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Exclude large PDF vendor from precache (lazy loaded)
+        globIgnores: ['**/pdf-vendor*.js'],
         // Clean up old caches
         cleanupOutdatedCaches: true,
         // Skip waiting for new service worker
         skipWaiting: false,
         clientsClaim: true,
+        // Offline fallback
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api/, /^\/auth/],
       },
       devOptions: {
         enabled: false, // Disable in dev mode
@@ -148,8 +184,26 @@ export default defineConfig({
 
           // Supabase client
           'supabase-vendor': ['@supabase/supabase-js'],
+
+          // DnD kit
+          'dnd-vendor': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+
+          // Date utilities
+          'date-vendor': ['date-fns'],
+
+          // Animations
+          'motion-vendor': ['framer-motion'],
         },
       },
+      plugins: [
+        // Bundle visualizer - generates stats.html
+        process.env.ANALYZE === 'true' && visualizer({
+          filename: 'dist/stats.html',
+          open: true,
+          gzipSize: true,
+          brotliSize: true,
+        }),
+      ].filter(Boolean),
     },
 
     // Chunk size warnings
@@ -174,19 +228,5 @@ export default defineConfig({
   },
 
   // Optional: Bundle analyzer (set ANALYZE=true to enable)
-  ...(process.env.ANALYZE === 'true' && {
-    build: {
-      rollupOptions: {
-        plugins: [
-          // Uncomment if you install rollup-plugin-visualizer
-          // import { visualizer } from 'rollup-plugin-visualizer'
-          // visualizer({
-          //   open: true,
-          //   gzipSize: true,
-          //   brotliSize: true,
-          // }),
-        ],
-      },
-    },
-  }),
+  // Usage: ANALYZE=true npm run build
 })
