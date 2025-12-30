@@ -168,6 +168,7 @@ let cachedPricingInfo = null;
 
 /**
  * Detect user's country using multiple methods
+ * Uses timezone first (instant), then upgrades with IP geolocation in background
  * @returns {Promise<string>} ISO 3166-1 alpha-2 country code
  */
 export async function detectCountry() {
@@ -184,26 +185,44 @@ export async function detectCountry() {
         }
     }
 
+    // Use timezone detection first (instant)
+    cachedCountry = detectCountryFromTimezone();
+
+    // Fire off IP geolocation in background to potentially upgrade accuracy
+    // but don't wait for it
+    fetchIPGeolocation().catch(() => {});
+
+    return cachedCountry;
+}
+
+/**
+ * Fetch IP-based geolocation in background
+ * Updates cache if successful but doesn't block initial load
+ */
+async function fetchIPGeolocation() {
     try {
-        // Try IP-based geolocation (free, no API key needed)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
         const response = await fetch('https://ipapi.co/json/', {
-            timeout: 3000,
+            signal: controller.signal,
             headers: { 'Accept': 'application/json' }
         });
 
+        clearTimeout(timeoutId);
+
         if (response.ok) {
             const data = await response.json();
-            if (data.country_code) {
+            if (data.country_code && data.country_code !== cachedCountry) {
+                logger.debug(`[PPP] IP geolocation updated country: ${cachedCountry} -> ${data.country_code}`);
                 cachedCountry = data.country_code;
-                return cachedCountry;
+                // Clear pricing cache so next request uses updated country
+                cachedPricingInfo = null;
             }
         }
     } catch (error) {
-        logger.warn('IP geolocation failed, falling back to timezone detection:', error);
+        // Silently ignore - timezone fallback is good enough
     }
-
-    // Fallback: Timezone-based detection
-    return detectCountryFromTimezone();
 }
 
 /**

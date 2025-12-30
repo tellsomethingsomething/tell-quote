@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, HelpCircle, X, Loader2, MapPin } from 'lucide-react';
+import { Check, HelpCircle, X, Loader2 } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import TokenPacks from '../components/ui/TokenPacks';
 import { plans, pricingFaqs, comparisonTable, currencyConfig } from '../data/pricing';
 import { useAuthStore } from '../store/authStore';
 import { createCheckoutSession, getRegionalStripePriceId } from '../services/billingService';
-import { getPricingForUser, formatLocalPrice, PRICING_TIERS } from '../services/pppService';
+import { getPricingForUser, formatLocalPrice } from '../services/pppService';
 import logger from '../utils/logger';
 
 export default function Pricing() {
@@ -60,20 +60,6 @@ export default function Pricing() {
     const formatPriceDisplay = (amount) => {
         if (amount === 0) return 'Free';
         return formatLocalPrice(amount, currency);
-    };
-
-    // Get discount percentage if applicable
-    const getDiscountBadge = () => {
-        if (!pricingInfo || pricingInfo.tier === 'tier1') return null;
-        const tier = PRICING_TIERS[pricingInfo.tier];
-        if (!tier) return null;
-
-        // Calculate discount from tier1
-        const tier1Price = PRICING_TIERS.tier1.individual.monthly;
-        const tierPrice = tier.individual.monthly;
-        const discount = Math.round((1 - tierPrice / tier1Price) * 100);
-
-        return discount > 0 ? `${discount}% OFF` : null;
     };
 
     const handleSelectPlan = async (plan) => {
@@ -132,23 +118,6 @@ export default function Pricing() {
                 <p className="text-lg md:text-xl text-marketing-text-secondary max-w-2xl mx-auto mb-8 md:mb-12">
                     All plans include unlimited projects and quotes. Pay for users, not usage.
                 </p>
-
-                {/* Regional Pricing Badge */}
-                {pricingInfo && pricingInfo.tier !== 'tier1' && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-marketing-success/10 border border-marketing-success/30 text-marketing-success text-sm font-medium mb-8"
-                    >
-                        <MapPin size={16} />
-                        <span>Regional pricing for {pricingInfo.countryCode}</span>
-                        {getDiscountBadge() && (
-                            <span className="bg-marketing-success text-white px-2 py-0.5 rounded text-xs font-bold">
-                                {getDiscountBadge()}
-                            </span>
-                        )}
-                    </motion.div>
-                )}
 
                 {/* Currency Selector */}
                 <div className="flex items-center justify-center gap-2 mb-6">
