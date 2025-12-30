@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 /**
  * ProductionOS Logo Component
  * Renders the logo inline to avoid SVG caching issues
@@ -10,6 +12,10 @@
  */
 
 export default function Logo({ className = 'h-8', showText = true, variant = 'dark' }) {
+    // Unique IDs for gradients to avoid conflicts when multiple logos on page
+    const id = useId();
+    const iconGradientId = `iconGradient-${id}`;
+    const textGradientId = `textGradient-${id}`;
     // Variant controls text color for "Production" part
     // 'dark' = white text (for dark backgrounds)
     // 'light' = dark text (for light backgrounds)
@@ -24,19 +30,19 @@ export default function Logo({ className = 'h-8', showText = true, variant = 'da
         >
             <defs>
                 {/* Icon gradient - purple to pink (top-left to bottom-right) */}
-                <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient id={iconGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#8B5CF6"/>
                     <stop offset="100%" stopColor="#EC4899"/>
                 </linearGradient>
                 {/* Text gradient for "OS" - purple to pink */}
-                <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <linearGradient id={textGradientId} x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#8B5CF6"/>
                     <stop offset="100%" stopColor="#EC4899"/>
                 </linearGradient>
             </defs>
 
             {/* P Icon Box with gradient - rounded corners */}
-            <rect x="0" y="0" width="40" height="40" rx="10" fill="url(#iconGradient)"/>
+            <rect x="0" y="0" width="40" height="40" rx="10" fill={`url(#${iconGradientId})`}/>
 
             {/* P Letter in box (white) - bold, centered */}
             <text
@@ -68,7 +74,7 @@ export default function Logo({ className = 'h-8', showText = true, variant = 'da
                     <text
                         x="175"
                         y="28"
-                        fill="url(#textGradient)"
+                        fill={`url(#${textGradientId})`}
                         fontSize="24"
                         fontFamily="system-ui, -apple-system, sans-serif"
                         fontWeight="500"
