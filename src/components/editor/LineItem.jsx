@@ -4,6 +4,26 @@ import { useRateCardStore } from '../../store/rateCardStore';
 import { calculateLineTotal, calculateLineMargin, getMarginColor } from '../../utils/calculations';
 import { formatCurrency, convertCurrency, getRegionCurrency, getCurrencySymbol } from '../../utils/currency';
 
+/**
+ * @typedef {Object} LineItemData
+ * @property {string} id - Unique identifier for the line item
+ * @property {string} description - Description of the item
+ * @property {number} quantity - Quantity of items
+ * @property {number} days - Number of days (for day-rate items)
+ * @property {number} cost - Cost per unit
+ * @property {number} charge - Charge per unit to client
+ * @property {string} [rateCardItemId] - Reference to linked rate card item
+ */
+
+/**
+ * Editable line item component for quote sections
+ * Handles cost/charge calculations, rate card linking, and currency conversion
+ *
+ * @param {Object} props
+ * @param {LineItemData} props.item - The line item data object
+ * @param {string} props.sectionId - Parent section identifier (e.g., 'production', 'postProduction')
+ * @param {string} props.subsectionName - Parent subsection name (e.g., 'Director', 'Camera')
+ */
 const LineItem = memo(function LineItem({ item, sectionId, subsectionName }) {
     const { quote, updateLineItem, deleteLineItem, rates } = useQuoteStore();
     const { items: rateCardItems, sections: rateCardSections } = useRateCardStore();

@@ -125,7 +125,7 @@ export default function FeatureShowcase() {
                 <div className="flex justify-center gap-2 mt-4 sm:hidden">
                     {features.map((feature, index) => (
                         <button
-                            key={index}
+                            key={feature.id}
                             onClick={() => scrollTo(index)}
                             aria-label={`View ${feature.title}`}
                             className={`w-2 h-2 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-marketing-primary focus:ring-offset-1 focus:ring-offset-marketing-background ${

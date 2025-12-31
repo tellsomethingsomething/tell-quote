@@ -5,6 +5,15 @@ import { calculateSectionTotal } from '../../utils/calculations';
 import { formatCurrency, convertCurrency, getRegionCurrency } from '../../utils/currency';
 import Subsection from './Subsection';
 
+/**
+ * Collapsible section component for quote editor
+ * Manages subsections, calculates totals, and handles drag-and-drop reordering
+ *
+ * @param {Object} props
+ * @param {string} props.sectionId - Section identifier key (e.g., 'production', 'postProduction', 'talent')
+ * @param {number} props.index - Position index in the sections list (0-based)
+ * @param {number} props.totalSections - Total number of sections for navigation
+ */
 const Section = memo(function Section({ sectionId, index, totalSections }) {
     const { quote, toggleSection, moveSection, updateSectionName, moveSubsection, rates } = useQuoteStore();
     const section = quote.sections[sectionId];

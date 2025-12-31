@@ -3,6 +3,17 @@ import { useQuoteStore } from '../../store/quoteStore';
 import { useRateCardStore } from '../../store/rateCardStore';
 import LineItem from './LineItem';
 
+/**
+ * Subsection component within a quote section
+ * Displays and manages line items, supports drag-and-drop, and rate card integration
+ *
+ * @param {Object} props
+ * @param {string} props.sectionId - Parent section identifier (e.g., 'productionTeam')
+ * @param {string} props.subsectionName - Display name of the subsection (e.g., 'Technical Crew')
+ * @param {string} props.color - Tailwind color class for the subsection accent (e.g., 'violet', 'pink')
+ * @param {boolean} [props.isDragging=false] - Whether the subsection is currently being dragged
+ */
+
 // Smart map for DB sections
 const getRateCardSectionId = (sectionId, subsectionName) => {
     // Creative, Logistics, Expenses (Flat)

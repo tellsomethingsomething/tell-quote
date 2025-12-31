@@ -4,6 +4,18 @@ import { X } from 'lucide-react';
 /**
  * Accessible Modal component with focus trap
  * Implements WCAG 2.1 guidelines for modal dialogs
+ *
+ * @param {Object} props
+ * @param {boolean} props.isOpen - Controls modal visibility
+ * @param {Function} props.onClose - Callback when modal is closed
+ * @param {string} [props.title] - Modal title displayed in header
+ * @param {React.ReactNode} props.children - Modal body content
+ * @param {'sm'|'md'|'lg'|'xl'|'full'} [props.size='md'] - Modal width variant
+ * @param {boolean} [props.showCloseButton=true] - Whether to show the X close button
+ * @param {boolean} [props.closeOnOverlayClick=true] - Close when clicking backdrop
+ * @param {boolean} [props.closeOnEsc=true] - Close when pressing Escape key
+ * @param {string} [props.className=''] - Additional CSS classes for modal content
+ * @param {React.ReactNode} [props.footer=null] - Optional footer content (buttons, etc.)
  */
 export default function Modal({
     isOpen,

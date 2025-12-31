@@ -126,8 +126,8 @@ export default function TokenPacks({ currency = 'USD', showBuyButtons = true }) 
                     What can you do with tokens?
                 </h4>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {Object.values(tokenEstimates).map((estimate, i) => (
-                        <div key={i} className="flex items-center gap-3 text-sm">
+                    {Object.entries(tokenEstimates).map(([key, estimate]) => (
+                        <div key={key} className="flex items-center gap-3 text-sm">
                             <span className="text-marketing-primary font-bold min-w-[60px]">
                                 ~{estimate.tokens}
                             </span>
