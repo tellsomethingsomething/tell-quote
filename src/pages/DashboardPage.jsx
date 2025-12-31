@@ -14,6 +14,7 @@ import CRMMetricsGrid from '../components/dashboard/CRMMetricsWidgets';
 import OnboardingChecklist from '../components/onboarding/OnboardingChecklist';
 import TrialBanner from '../components/onboarding/TrialBanner';
 import { getPricingForUser } from '../services/pppService';
+import logger from '../utils/logger';
 
 // Status colors aligned with brand palette for visual harmony
 const STATUSES = [
@@ -85,7 +86,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
                     setDashboardCurrency(pricingInfo.currency);
                 }
             } catch (error) {
-                console.warn('Currency detection failed, using USD');
+                logger.warn('Currency detection failed, using USD');
             }
         };
         detectCurrency();

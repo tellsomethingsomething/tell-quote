@@ -9,6 +9,8 @@ import { validateForm, sanitizeString } from '../utils/validation';
 import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
 import { getPricingForUser } from '../services/pppService';
 import CSVImportModal from '../components/common/CSVImportModal';
+import { useToast } from '../components/common/Toast';
+import logger from '../utils/logger';
 
 export default function ClientsPage({ onSelectClient }) {
     const { clients, savedQuotes, getClientQuotes, getClientHealth, addClient, deleteClient } = useClientStore();
@@ -16,6 +18,7 @@ export default function ClientsPage({ onSelectClient }) {
     const { settings } = useSettingsStore();
     const activities = useActivityStore(state => state.activities);
     const projectTypes = settings.projectTypes || [];
+    const toast = useToast();
 
     // Auto-detect currency based on user's location (PPP)
     const [dashboardCurrency, setDashboardCurrency] = useState('USD');
@@ -28,7 +31,7 @@ export default function ClientsPage({ onSelectClient }) {
                     setDashboardCurrency(pricingInfo.currency);
                 }
             } catch (error) {
-                console.warn('Currency detection failed, using USD');
+                logger.warn('Currency detection failed, using USD');
             }
         };
         detectCurrency();
@@ -1094,7 +1097,7 @@ export default function ClientsPage({ onSelectClient }) {
                 onClose={() => setIsImportModalOpen(false)}
                 dataType="clients"
                 onImportComplete={(result) => {
-                    console.log(`Imported ${result.imported} clients`);
+                    toast.success(`Imported ${result.imported} clients successfully`);
                     setIsImportModalOpen(false);
                 }}
             />

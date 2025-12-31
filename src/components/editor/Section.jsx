@@ -144,6 +144,7 @@ const Section = memo(function Section({ sectionId, index, totalSections }) {
                 }}
                 aria-expanded={section.isExpanded}
                 aria-controls={`section-${sectionId}-content`}
+                aria-label={`${section.isExpanded ? 'Collapse' : 'Expand'} ${displayName} section`}
             >
                 <div className="flex items-center gap-3">
                     <div

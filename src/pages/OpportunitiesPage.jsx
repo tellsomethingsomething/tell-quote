@@ -9,6 +9,7 @@ import { useQuoteStore } from '../store/quoteStore';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { getPricingForUser } from '../services/pppService';
 import PipelineKanban from '../components/crm/PipelineKanban';
+import logger from '../utils/logger';
 
 // Lazy load timeline component
 const OpportunityTimeline = lazy(() => import('../components/timeline/OpportunityTimeline'));
@@ -387,7 +388,7 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
                     setDashboardCurrency(pricingInfo.currency);
                 }
             } catch (error) {
-                console.warn('Currency detection failed, using USD');
+                logger.warn('Currency detection failed, using USD');
             }
         };
         detectCurrency();
