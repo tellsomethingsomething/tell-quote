@@ -6,6 +6,18 @@ import { Calendar, Clock, ArrowRight, User } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 
 const blogPosts = [
+    // Featured: Emerging Markets
+    {
+        id: 200,
+        slug: "production-os-emerging-markets",
+        title: "Scaling Your Production Company in Emerging Markets",
+        excerpt: "How modern production management software is leveling the playing field for video and event companies in Southeast Asia, Middle East, Africa, and beyond.",
+        category: "Global",
+        author: "ProductionOS Team",
+        date: "Dec 31, 2025",
+        readTime: "10 min read",
+        image: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&h=450&fit=crop",
+    },
     // Comparison Posts (SEO)
     {
         id: 101,
