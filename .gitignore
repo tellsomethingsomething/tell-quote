@@ -36,3 +36,7 @@ dist-ssr
 # Test results
 test-results/
 playwright-report/
+
+# QA state files with sensitive info
+qa-state/MASTER_PROMPT.md
+qa-state/MASTER_PROMPT.txt
