@@ -342,7 +342,7 @@ export default function Sidebar({
                                         <button
                                             key={item.id}
                                             onClick={() => handleNavClick(item.id)}
-                                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-1 ${isDark ? 'focus:ring-offset-dark-bg' : 'focus:ring-offset-white'} ${
                                                 isActive
                                                     ? 'bg-accent-primary/20 text-accent-primary'
                                                     : `${textSecondary} ${hoverText} ${hoverBg}`
@@ -403,7 +403,7 @@ export default function Sidebar({
                                                     <button
                                                         key={item.id}
                                                         onClick={() => handleNavClick(item.id)}
-                                                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+                                                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-1 ${isDark ? 'focus:ring-offset-dark-bg' : 'focus:ring-offset-white'} ${
                                                             isActive
                                                                 ? 'bg-accent-primary/20 text-accent-primary'
                                                                 : `${textSecondary} ${hoverText} ${hoverBg}`
@@ -440,7 +440,7 @@ export default function Sidebar({
                     {/* Full Screen Analytics */}
                     <button
                         onClick={() => { if (isMobile) setMobileOpen(false); onGoToFS(); }}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg ${isDark ? 'text-brand-primary hover:bg-brand-primary/10' : 'text-brand-primary hover:bg-brand-primary/10'} transition-colors ${!isOpen && !isMobile ? 'justify-center' : ''}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg ${isDark ? 'text-brand-primary hover:bg-brand-primary/10' : 'text-brand-primary hover:bg-brand-primary/10'} transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-1 ${isDark ? 'focus:ring-offset-dark-bg' : 'focus:ring-offset-white'} ${!isOpen && !isMobile ? 'justify-center' : ''}`}
                         title="Full Screen Analytics"
                     >
                         <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -452,7 +452,7 @@ export default function Sidebar({
                     {/* Theme Toggle */}
                     <button
                         onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg ${textSecondary} ${hoverText} ${hoverBg} transition-colors ${!isOpen && !isMobile ? 'justify-center' : ''}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg ${textSecondary} ${hoverText} ${hoverBg} transition-colors focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-1 ${isDark ? 'focus:ring-offset-dark-bg' : 'focus:ring-offset-white'} ${!isOpen && !isMobile ? 'justify-center' : ''}`}
                         title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
                     >
                         {isDark ? (
@@ -471,7 +471,7 @@ export default function Sidebar({
                     {user?.profile?.role === 'admin' && (
                         <button
                             onClick={() => handleNavClick('admin')}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-1 ${isDark ? 'focus:ring-offset-dark-bg' : 'focus:ring-offset-white'} ${
                                 activeTab === 'admin'
                                     ? 'bg-accent-primary/20 text-accent-primary'
                                     : `${textSecondary} ${hoverText} ${hoverBg}`
@@ -488,7 +488,7 @@ export default function Sidebar({
                     {/* Settings */}
                     <button
                         onClick={() => handleNavClick('settings')}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-1 ${isDark ? 'focus:ring-offset-dark-bg' : 'focus:ring-offset-white'} ${
                             activeTab === 'settings'
                                 ? 'bg-accent-primary/20 text-accent-primary'
                                 : `${textSecondary} ${hoverText} ${hoverBg}`

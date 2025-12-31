@@ -31,11 +31,12 @@ export default function Navigation({ activeTab, onTabChange }) {
                     <button
                         key={tab.id}
                         onClick={() => onTabChange(tab.id)}
-                        className={`px-5 py-2 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab.id
+                        className={`px-5 py-2 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-1 focus:ring-offset-gray-900 ${activeTab === tab.id
                                 ? 'bg-accent-primary/20 text-accent-primary border border-accent-primary/30'
                                 : 'text-gray-400 hover:text-gray-200 hover:bg-white/5 border border-transparent'
                             }`}
                         aria-current={activeTab === tab.id ? 'page' : undefined}
+                        aria-label={`Navigate to ${tab.label}`}
                     >
                         {tab.label}
                     </button>
