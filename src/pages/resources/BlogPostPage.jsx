@@ -311,19 +311,62 @@ const blogPosts = [
         readTime: "8 min read",
         image: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=1200&h=600&fit=crop",
         content: `
-            <p>Pricing your production services effectively is one of the most critical decisions you'll make as a production company owner. Get it right, and you'll build a sustainable, profitable business. Get it wrong, and you'll either leave money on the table or price yourself out of the market.</p>
+            <p><strong>Pricing your production services effectively is one of the most critical decisions you'll make as a production company owner.</strong> Get it right, and you'll build a sustainable, profitable business. Get it wrong, and you'll either leave money on the table or price yourself out of the market.</p>
 
-            <h2>Understanding Your Costs</h2>
-            <p>Before you can set competitive rates, you need to understand your true costs. This includes not just your direct costs (equipment, crew, travel) but also your overhead (office space, software, insurance) and the often-forgotten cost of your own time.</p>
+            <p>The production industry has evolved significantly, and so have client expectations. In 2025, you're not just competing on price—you're competing on value, reliability, and the overall client experience.</p>
 
-            <h2>Market Research</h2>
-            <p>Understanding what competitors charge is valuable, but don't let it dictate your pricing. Your rates should reflect the value you provide, not just match what others charge. Premium positioning often attracts better clients who value quality over cost.</p>
+            <h2>Understanding Your True Costs</h2>
 
-            <h2>Value-Based Pricing</h2>
-            <p>The most successful production companies price based on the value they deliver to clients, not just their costs. A commercial that helps a brand increase sales by millions is worth far more than the sum of crew days and equipment rentals.</p>
+            <p>Before you can set competitive rates, you need to understand your <strong>true costs</strong>. Most production companies underestimate what it actually costs to deliver a project.</p>
+
+            <h3>Direct Costs</h3>
+            <p>These are the obvious expenses: <strong>equipment rentals, crew day rates, travel, locations, and post-production.</strong> Track these meticulously for every project.</p>
+
+            <h3>Overhead Costs</h3>
+            <p>Don't forget the hidden costs that keep your business running: <strong>office space, software subscriptions, insurance, accounting, and marketing.</strong> These need to be factored into every quote.</p>
+
+            <h3>Your Time</h3>
+            <p><strong>The most often-forgotten cost is your own time.</strong> How many hours do you spend on pre-production calls, location scouts, client management, and revisions? Calculate an hourly rate for yourself and include it in your cost calculations.</p>
+
+            <h2>Market Research: Know Your Competition</h2>
+
+            <p><strong>Understanding what competitors charge is valuable, but don't let it dictate your pricing.</strong> Your rates should reflect the value you provide, not just match what others charge.</p>
+
+            <p>Research the market by:</p>
+            <p>• <strong>Networking with peers</strong> at industry events and online communities<br/>
+            • <strong>Reviewing public rate cards</strong> from production companies in your market<br/>
+            • <strong>Talking to clients</strong> about what they've paid for similar work<br/>
+            • <strong>Analyzing lost quotes</strong> to understand where you're pricing yourself out</p>
+
+            <p><strong>Premium positioning often attracts better clients</strong> who value quality over cost. Don't race to the bottom.</p>
+
+            <h2>Value-Based Pricing: The Key to Profitability</h2>
+
+            <p><strong>The most successful production companies price based on the value they deliver to clients, not just their costs.</strong></p>
+
+            <p>Consider this: A commercial that helps a brand increase sales by millions is worth far more than the sum of crew days and equipment rentals. When you understand the business impact of your work, you can price accordingly.</p>
+
+            <h3>How to Implement Value-Based Pricing</h3>
+            <p>• <strong>Ask discovery questions</strong> about the project's business objectives<br/>
+            • <strong>Understand the client's budget range</strong> before you quote<br/>
+            • <strong>Quantify the potential ROI</strong> of the content you're creating<br/>
+            • <strong>Present your quote</strong> in terms of value delivered, not just deliverables</p>
 
             <h2>Regional Considerations</h2>
-            <p>Rates vary significantly by region. What works in London or New York may not be appropriate for smaller markets. ProductionOS helps you manage regional rate cards so you can quote appropriately for each market.</p>
+
+            <p><strong>Rates vary significantly by region.</strong> What works in London or New York may not be appropriate for smaller markets or emerging economies.</p>
+
+            <p>Key factors to consider:</p>
+            <p>• <strong>Local crew rates</strong> and cost of living<br/>
+            • <strong>Currency fluctuations</strong> for international clients<br/>
+            • <strong>Client budgets</strong> in different markets<br/>
+            • <strong>Competition density</strong> in your region</p>
+
+            <p><strong>ProductionOS helps you manage regional rate cards</strong> so you can quote appropriately for each market while maintaining visibility into your margins.</p>
+
+            <h2>The Bottom Line</h2>
+
+            <p><strong>Pricing isn't just about covering costs—it's about building a sustainable business.</strong> Take the time to understand your true costs, research your market, and price based on the value you deliver. Your future self will thank you.</p>
         `
     },
     {
@@ -337,16 +380,65 @@ const blogPosts = [
         readTime: "6 min read",
         image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&h=600&fit=crop",
         content: `
-            <p>A well-crafted call sheet is the backbone of any successful production day. It's the single document that tells everyone where to be, when to be there, and what to expect.</p>
+            <p><strong>A well-crafted call sheet is the backbone of any successful production day.</strong> It's the single document that tells everyone where to be, when to be there, and what to expect. Get it wrong, and you'll spend the morning fielding calls from lost crew members.</p>
 
-            <h2>Essential Elements</h2>
-            <p>Every call sheet should include: production title, date, location address with parking info, call times for each department, weather forecast, emergency contacts, and a brief schedule of the day.</p>
+            <h2>What is a Call Sheet?</h2>
+
+            <p>A call sheet is the <strong>official production document</strong> that communicates all essential information about a shoot day. It's typically sent by the production coordinator or assistant director and serves as the single source of truth for everyone involved.</p>
+
+            <h2>Essential Elements of a Call Sheet</h2>
+
+            <p>Every professional call sheet should include:</p>
+
+            <h3>Production Information</h3>
+            <p>• <strong>Production title and date</strong><br/>
+            • <strong>Director and key contacts</strong><br/>
+            • <strong>Production company details</strong><br/>
+            • <strong>Client/agency information</strong> (if applicable)</p>
+
+            <h3>Location Details</h3>
+            <p>• <strong>Full address with GPS coordinates</strong><br/>
+            • <strong>Parking instructions</strong> and access details<br/>
+            • <strong>Nearest hospital</strong> and emergency services<br/>
+            • <strong>Base camp location</strong> if different from set</p>
+
+            <h3>Call Times</h3>
+            <p>• <strong>General crew call</strong><br/>
+            • <strong>Department-specific calls</strong> (camera, grip, lighting, etc.)<br/>
+            • <strong>Talent call times</strong><br/>
+            • <strong>First shot time</strong> and wrap estimate</p>
+
+            <h3>Schedule Overview</h3>
+            <p>• <strong>Scene breakdown</strong> for the day<br/>
+            • <strong>Meal times</strong> and catering details<br/>
+            • <strong>Key milestones</strong> and turnarounds</p>
 
             <h2>Timing is Everything</h2>
-            <p>Send call sheets at least 12 hours before the shoot, ideally the evening before. This gives crew time to plan their travel and prepare any necessary equipment.</p>
 
-            <h2>Digital Distribution</h2>
-            <p>Gone are the days of faxing call sheets. Modern production companies use digital tools like ProductionOS to generate and distribute call sheets automatically, with real-time updates if anything changes.</p>
+            <p><strong>Send call sheets at least 12 hours before the shoot</strong>—ideally the evening before. This gives crew time to:</p>
+
+            <p>• Plan their travel route and timing<br/>
+            • Prepare necessary equipment and gear<br/>
+            • Get adequate rest before an early call<br/>
+            • Flag any conflicts or concerns</p>
+
+            <h3>When to Send Updates</h3>
+            <p>If anything changes after the initial send, issue a <strong>revised call sheet</strong> clearly marked with the revision number and time. Never assume people will check their email again—send a text or call for significant changes.</p>
+
+            <h2>Digital Distribution Best Practices</h2>
+
+            <p><strong>Gone are the days of faxing call sheets.</strong> Modern production companies use digital tools like ProductionOS to generate and distribute call sheets automatically.</p>
+
+            <h3>Benefits of Digital Call Sheets</h3>
+            <p>• <strong>Real-time updates</strong> that sync automatically<br/>
+            • <strong>Mobile-friendly formats</strong> for on-the-go access<br/>
+            • <strong>Automatic weather integration</strong><br/>
+            • <strong>GPS links</strong> that open in navigation apps<br/>
+            • <strong>One-click distribution</strong> to entire crew</p>
+
+            <h2>The Bottom Line</h2>
+
+            <p><strong>A professional call sheet sets the tone for the entire production.</strong> It shows your crew that you're organized, prepared, and respectful of their time. Invest in getting your call sheets right, and your shoots will run smoother from day one.</p>
         `
     },
     {
@@ -360,13 +452,75 @@ const blogPosts = [
         readTime: "5 min read",
         image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=600&fit=crop",
         content: `
-            <p>International production work is incredibly rewarding, but it comes with complex financial challenges. Managing different currencies, understanding local labor laws, and maintaining consistent margins across regions requires careful planning.</p>
+            <p><strong>International production work is incredibly rewarding, but it comes with complex financial challenges.</strong> Managing different currencies, understanding local labor laws, and maintaining consistent margins across regions requires careful planning and the right systems.</p>
+
+            <h2>The Challenge of Multi-Regional Operations</h2>
+
+            <p>When you're producing content across multiple markets, you're juggling:</p>
+
+            <p>• <strong>Different crew rate expectations</strong> by market<br/>
+            • <strong>Multiple currencies</strong> with fluctuating exchange rates<br/>
+            • <strong>Varying labor laws</strong> and overtime rules<br/>
+            • <strong>Different tax implications</strong> and withholding requirements<br/>
+            • <strong>Client expectations</strong> about local market pricing</p>
 
             <h2>Building Regional Rate Cards</h2>
-            <p>Create separate rate cards for each region you operate in. What's a competitive day rate in Southeast Asia will be very different from rates in Western Europe or North America.</p>
+
+            <p><strong>Create separate rate cards for each region you operate in.</strong> What's a competitive day rate in Southeast Asia will be very different from rates in Western Europe or North America.</p>
+
+            <h3>Key Considerations by Region</h3>
+
+            <p><strong>Western Markets (US, UK, EU, Australia):</strong><br/>
+            Higher base rates, strict overtime rules, union considerations, comprehensive insurance requirements.</p>
+
+            <p><strong>Asia-Pacific (SEA, India, ANZ):</strong><br/>
+            Variable rates by country, different holiday calendars, varying equipment availability, potential language considerations.</p>
+
+            <p><strong>Middle East & Africa:</strong><br/>
+            Premium rates for certain roles, cultural considerations, import/export logistics, varying payment terms.</p>
+
+            <h3>Structuring Your Rate Cards</h3>
+            <p>For each region, define:</p>
+            <p>• <strong>Standard day rates</strong> by role (Director, DP, Gaffer, etc.)<br/>
+            • <strong>Overtime calculations</strong> (10-hour day vs. 12-hour day)<br/>
+            • <strong>Kit fees</strong> and equipment rates<br/>
+            • <strong>Travel day rates</strong> and per diems<br/>
+            • <strong>Prep and wrap day rates</strong></p>
 
             <h2>Currency Management</h2>
-            <p>Quote in your client's preferred currency when possible, but always calculate your margins in your home currency. Use real-time exchange rates and build in a buffer for currency fluctuations.</p>
+
+            <p><strong>Quote in your client's preferred currency when possible</strong>, but always calculate your margins in your home currency.</p>
+
+            <h3>Best Practices</h3>
+            <p>• <strong>Use real-time exchange rates</strong> at the time of quoting<br/>
+            • <strong>Lock rates when confirmed</strong> to protect margins<br/>
+            • <strong>Build in a buffer</strong> (2-5%) for currency fluctuations<br/>
+            • <strong>Specify payment currency</strong> in your terms and conditions<br/>
+            • <strong>Consider hedging</strong> for large international projects</p>
+
+            <h3>Handling Multiple Currencies in One Project</h3>
+            <p>For a typical international shoot, you might have:</p>
+            <p>• <strong>Client invoicing in USD</strong><br/>
+            • <strong>Local crew paid in local currency</strong><br/>
+            • <strong>Equipment rentals in another currency</strong><br/>
+            • <strong>Your profit calculated in your home currency</strong></p>
+
+            <p><strong>ProductionOS handles this complexity automatically</strong>, converting all costs to your base currency while maintaining visibility into local pricing.</p>
+
+            <h2>Staying Compliant</h2>
+
+            <p><strong>Each region has different requirements</strong> for working with freelance crew:</p>
+
+            <p>• <strong>Tax withholding obligations</strong><br/>
+            • <strong>Work permit requirements</strong> for foreign crew<br/>
+            • <strong>Insurance minimums</strong><br/>
+            • <strong>Contractual requirements</strong></p>
+
+            <p>When in doubt, work with a local fixer or production services company who understands the local regulations.</p>
+
+            <h2>The Bottom Line</h2>
+
+            <p><strong>Managing crew rates across regions doesn't have to be chaotic.</strong> With the right systems and clear rate cards for each market, you can quote confidently, maintain healthy margins, and deliver great productions anywhere in the world.</p>
         `
     },
     {
@@ -380,13 +534,67 @@ const blogPosts = [
         readTime: "7 min read",
         image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1200&h=600&fit=crop",
         content: `
-            <p>Effective client communication is the difference between a one-time project and a long-term relationship. But managing multiple clients across multiple projects can quickly become overwhelming.</p>
+            <p><strong>Effective client communication is the difference between a one-time project and a long-term relationship.</strong> But managing multiple clients across multiple projects can quickly become overwhelming without the right systems in place.</p>
 
-            <h2>Set Clear Expectations</h2>
-            <p>At the start of every project, establish communication norms: how often you'll update them, what channels you'll use, and who their main point of contact will be.</p>
+            <h2>The Communication Challenge</h2>
 
-            <h2>Centralize Communication</h2>
-            <p>Use a dedicated platform for project communication rather than scattered emails and messages. This creates a clear record and ensures nothing falls through the cracks.</p>
+            <p>Production projects generate a <strong>constant stream of decisions</strong>: creative approvals, schedule changes, budget updates, and delivery confirmations. Without clear communication protocols, you'll drown in emails, miss critical updates, and frustrate clients who feel out of the loop.</p>
+
+            <h2>Set Clear Expectations from Day One</h2>
+
+            <p><strong>At the start of every project, establish communication norms:</strong></p>
+
+            <h3>Define Your Update Cadence</h3>
+            <p>• <strong>Weekly status updates</strong> for longer projects<br/>
+            • <strong>Daily check-ins</strong> during production<br/>
+            • <strong>Milestone notifications</strong> at key stages<br/>
+            • <strong>Immediate alerts</strong> for budget or schedule changes</p>
+
+            <h3>Establish Channels</h3>
+            <p>• <strong>Email</strong> for formal approvals and documentation<br/>
+            • <strong>Project management tools</strong> for task tracking<br/>
+            • <strong>Messaging apps</strong> for quick questions (with boundaries)<br/>
+            • <strong>Video calls</strong> for creative reviews and complex discussions</p>
+
+            <h3>Designate Points of Contact</h3>
+            <p><strong>One person on each side should "own" the communication.</strong> This prevents crossed wires and ensures accountability. Make sure both sides know who to contact for what.</p>
+
+            <h2>Centralize Your Communication</h2>
+
+            <p><strong>Use a dedicated platform for project communication</strong> rather than scattered emails and messages. This creates a clear record and ensures nothing falls through the cracks.</p>
+
+            <h3>Benefits of Centralized Communication</h3>
+            <p>• <strong>Complete audit trail</strong> of all decisions<br/>
+            • <strong>Easy handoffs</strong> between team members<br/>
+            • <strong>Searchable history</strong> for reference<br/>
+            • <strong>Reduced email overload</strong> for everyone<br/>
+            • <strong>Clear accountability</strong> for responses</p>
+
+            <h2>Managing Difficult Conversations</h2>
+
+            <p><strong>Not all client communication is easy.</strong> Sometimes you need to deliver bad news about budgets, timelines, or creative direction.</p>
+
+            <h3>Best Practices for Tough Talks</h3>
+            <p>• <strong>Be proactive</strong>—don't wait for clients to discover problems<br/>
+            • <strong>Present solutions</strong> alongside problems<br/>
+            • <strong>Document everything</strong> in writing after verbal discussions<br/>
+            • <strong>Stay professional</strong> even when clients are frustrated<br/>
+            • <strong>Own mistakes</strong> and focus on resolution</p>
+
+            <h2>Automating Routine Updates</h2>
+
+            <p><strong>Many updates can be automated</strong> to save time while keeping clients informed:</p>
+
+            <p>• <strong>Quote status changes</strong> (sent, viewed, approved)<br/>
+            • <strong>Project milestone completions</strong><br/>
+            • <strong>Invoice and payment confirmations</strong><br/>
+            • <strong>Delivery notifications</strong></p>
+
+            <p>ProductionOS can automatically notify clients at key moments, reducing manual communication overhead.</p>
+
+            <h2>The Bottom Line</h2>
+
+            <p><strong>Great communication doesn't mean constant communication.</strong> It means the right information, to the right people, at the right time. Set clear expectations, centralize your conversations, and automate what you can. Your clients—and your inbox—will thank you.</p>
         `
     },
     {
@@ -400,13 +608,74 @@ const blogPosts = [
         readTime: "6 min read",
         image: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1200&h=600&fit=crop",
         content: `
-            <p>Lost equipment, double-bookings, and mystery damage are the bane of every production company's existence. But with the right systems in place, equipment management can become a competitive advantage.</p>
+            <p><strong>Lost equipment, double-bookings, and mystery damage are the bane of every production company's existence.</strong> But with the right systems in place, equipment management can become a competitive advantage rather than a constant headache.</p>
 
-            <h2>Digital Inventory</h2>
-            <p>Maintain a complete digital inventory of every piece of equipment you own. Include purchase price, current value, serial numbers, and maintenance history.</p>
+            <h2>The True Cost of Equipment Chaos</h2>
 
-            <h2>Check-in/Check-out Systems</h2>
-            <p>Implement a formal check-in/check-out process for every shoot. This creates accountability and helps identify when and where damage occurs.</p>
+            <p>Poor equipment management costs production companies more than they realize:</p>
+
+            <p>• <strong>Lost gear</strong> that needs to be replaced<br/>
+            • <strong>Rental fees</strong> for equipment you already own but can't find<br/>
+            • <strong>Production delays</strong> from missing or damaged kit<br/>
+            • <strong>Insurance claims</strong> and increased premiums<br/>
+            • <strong>Client frustration</strong> from unprofessional operations</p>
+
+            <h2>Building a Digital Inventory</h2>
+
+            <p><strong>Maintain a complete digital inventory of every piece of equipment you own.</strong> This is the foundation of effective equipment management.</p>
+
+            <h3>What to Track for Each Item</h3>
+            <p>• <strong>Make, model, and serial number</strong><br/>
+            • <strong>Purchase date and price</strong><br/>
+            • <strong>Current replacement value</strong><br/>
+            • <strong>Condition and maintenance history</strong><br/>
+            • <strong>Associated accessories</strong> and cables<br/>
+            • <strong>Storage location</strong> when not in use</p>
+
+            <h3>Organizing Your Inventory</h3>
+            <p>Group equipment logically:</p>
+            <p>• <strong>By department</strong> (Camera, Lighting, Grip, Audio)<br/>
+            • <strong>By kit package</strong> (A-Camera Kit, Interview Setup)<br/>
+            • <strong>By project assignment</strong> when on shoots</p>
+
+            <h2>Implementing Check-in/Check-out</h2>
+
+            <p><strong>A formal check-in/check-out process creates accountability</strong> and helps identify when and where damage occurs.</p>
+
+            <h3>Before Every Shoot</h3>
+            <p>• <strong>Document what's going out</strong> with the assigned crew member<br/>
+            • <strong>Note condition</strong> of each item<br/>
+            • <strong>Confirm return date</strong><br/>
+            • <strong>Get sign-off</strong> from the responsible party</p>
+
+            <h3>After Every Shoot</h3>
+            <p>• <strong>Check each item</strong> against the checkout list<br/>
+            • <strong>Inspect for damage</strong> and note any issues<br/>
+            • <strong>Update status</strong> in your system immediately<br/>
+            • <strong>Flag maintenance needs</strong> before the next booking</p>
+
+            <h2>Preventing Double-Bookings</h2>
+
+            <p><strong>Nothing is worse than realizing your A-camera is on two shoots at once.</strong> Prevent this with:</p>
+
+            <p>• <strong>Real-time availability tracking</strong> integrated with project scheduling<br/>
+            • <strong>Automatic conflict alerts</strong> when booking<br/>
+            • <strong>Buffer days</strong> between bookings for prep and maintenance<br/>
+            • <strong>Clear visibility</strong> into equipment calendars for your whole team</p>
+
+            <h2>Maximizing Equipment Utilization</h2>
+
+            <p><strong>Understanding how your equipment is used helps you make smarter purchasing decisions.</strong></p>
+
+            <h3>Key Metrics to Track</h3>
+            <p>• <strong>Utilization rate</strong>—how often is each item used?<br/>
+            • <strong>Revenue per item</strong>—is the equipment paying for itself?<br/>
+            • <strong>Maintenance costs</strong>—when does repair exceed replacement?<br/>
+            • <strong>Rental offset</strong>—how much would you spend renting this gear?</p>
+
+            <h2>The Bottom Line</h2>
+
+            <p><strong>Equipment tracking isn't glamorous, but it directly impacts your profitability.</strong> Every lost item, every rental you didn't need, every shoot delayed by missing gear—it all adds up. Invest in proper systems, train your team on processes, and turn equipment management from a liability into an asset.</p>
         `
     },
     {
@@ -420,13 +689,89 @@ const blogPosts = [
         readTime: "9 min read",
         image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=600&fit=crop",
         content: `
-            <p>Your crew network is one of your most valuable assets. The ability to quickly assemble a talented, reliable team can make or break your production company's reputation.</p>
+            <p><strong>Your crew network is one of your most valuable assets.</strong> The ability to quickly assemble a talented, reliable team can make or break your production company's reputation. In a freelance-driven industry, the strength of your network directly correlates with your ability to deliver quality work.</p>
+
+            <h2>Why Your Crew Network Matters</h2>
+
+            <p><strong>The best freelancers are always in demand.</strong> When you need a great DP or gaffer for a last-minute shoot, you don't want to be cold-calling strangers. You want trusted professionals who know your standards and are eager to work with you.</p>
+
+            <p>A strong crew network means:</p>
+            <p>• <strong>Faster crewing</strong>—fill positions in hours, not days<br/>
+            • <strong>Consistent quality</strong>—work with people you trust<br/>
+            • <strong>Reliable recommendations</strong>—your crew knows other great crew<br/>
+            • <strong>Competitive advantage</strong>—access to talent others can't get</p>
 
             <h2>Quality Over Quantity</h2>
-            <p>It's better to have a smaller network of trusted freelancers than a massive database of people you barely know. Focus on building deep relationships with your go-to crew members.</p>
+
+            <p><strong>It's better to have a smaller network of trusted freelancers than a massive database of people you barely know.</strong></p>
+
+            <h3>Building Your Core Team</h3>
+            <p>Identify 2-3 trusted freelancers for each key role:</p>
+            <p>• <strong>Your go-to person</strong>—first call, always reliable<br/>
+            • <strong>Backup options</strong>—equally trusted, different availability<br/>
+            • <strong>Specialists</strong>—for specific types of work</p>
+
+            <h3>Expanding Thoughtfully</h3>
+            <p>When you do need new crew:</p>
+            <p>• <strong>Ask for referrals</strong> from your trusted network<br/>
+            • <strong>Check reels and references</strong> thoroughly<br/>
+            • <strong>Start with smaller jobs</strong> to test the relationship<br/>
+            • <strong>Document your experience</strong> for future reference</p>
 
             <h2>Fair Rates and Prompt Payment</h2>
-            <p>Pay competitive rates and pay on time, every time. Word travels fast in the production community, and your reputation as a good client will attract the best talent.</p>
+
+            <p><strong>Pay competitive rates and pay on time, every time.</strong> This is non-negotiable if you want to attract and retain top talent.</p>
+
+            <h3>Rate Considerations</h3>
+            <p>• <strong>Know market rates</strong> for your region and project type<br/>
+            • <strong>Be transparent</strong> about budget constraints<br/>
+            • <strong>Offer kit fees</strong> when using freelancer equipment<br/>
+            • <strong>Include overtime</strong> calculations in your rates<br/>
+            • <strong>Don't nickel and dime</strong>—it damages relationships</p>
+
+            <h3>Payment Best Practices</h3>
+            <p>• <strong>Set clear payment terms</strong> upfront (Net 7, Net 14, Net 30)<br/>
+            • <strong>Process invoices promptly</strong>—don't make crew chase payment<br/>
+            • <strong>Communicate proactively</strong> if there are delays<br/>
+            • <strong>Consider fast-pay options</strong> for loyal crew</p>
+
+            <p><strong>Word travels fast in the production community.</strong> Your reputation as a good client will attract the best talent—and a reputation for slow payment will drive them away.</p>
+
+            <h2>Maintaining Relationships Between Projects</h2>
+
+            <p><strong>Don't just call when you need something.</strong> Strong relationships require ongoing investment:</p>
+
+            <p>• <strong>Share industry news</strong> and opportunities<br/>
+            • <strong>Refer them to other productions</strong> when you can<br/>
+            • <strong>Remember personal details</strong>—birthdays, life events<br/>
+            • <strong>Meet for coffee</strong> occasionally, not just on set<br/>
+            • <strong>Provide honest feedback</strong> after projects</p>
+
+            <h2>Organizing Your Crew Database</h2>
+
+            <p><strong>A well-organized crew database saves time when crewing up fast.</strong></p>
+
+            <h3>Essential Information to Track</h3>
+            <p>• <strong>Contact details</strong> (phone, email, location)<br/>
+            • <strong>Roles and skills</strong><br/>
+            • <strong>Day rates</strong> by role and project type<br/>
+            • <strong>Equipment they own</strong><br/>
+            • <strong>Availability preferences</strong><br/>
+            • <strong>Notes from past projects</strong></p>
+
+            <h3>Rating and Notes</h3>
+            <p>After each project, document:</p>
+            <p>• <strong>Quality of work</strong><br/>
+            • <strong>Reliability and punctuality</strong><br/>
+            • <strong>Attitude and collaboration</strong><br/>
+            • <strong>Any issues or concerns</strong><br/>
+            • <strong>Would you hire them again?</strong></p>
+
+            <p><strong>ProductionOS provides a built-in crew database</strong> that tracks all of this information, making it easy to find the right person for every project.</p>
+
+            <h2>The Bottom Line</h2>
+
+            <p><strong>Your crew network is an investment that pays dividends over your entire career.</strong> Treat freelancers well, pay them fairly and promptly, and maintain relationships between projects. The production company that's known for being great to work with will always have access to the best talent.</p>
         `
     },
 ];
@@ -502,9 +847,11 @@ export default function BlogPostPage() {
                             className="prose prose-invert prose-lg max-w-none
                                 prose-headings:text-white prose-headings:font-bold
                                 prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-6
+                                prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4 prose-h3:text-marketing-primary
                                 prose-p:text-marketing-text-secondary prose-p:leading-relaxed
+                                prose-strong:text-white prose-strong:font-semibold
                                 prose-a:text-marketing-primary prose-a:no-underline hover:prose-a:underline
-                                [&>p]:mb-6 [&>h2]:mt-12 [&>h2]:mb-6 [&>p+p]:mt-6"
+                                [&>p]:mb-6 [&>h2]:mt-12 [&>h2]:mb-6 [&>h3]:mt-8 [&>h3]:mb-4 [&>p+p]:mt-6"
                             dangerouslySetInnerHTML={{ __html: post.content }}
                         />
 
