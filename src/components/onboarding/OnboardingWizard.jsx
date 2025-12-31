@@ -351,16 +351,22 @@ export default function OnboardingWizard({ userId, onComplete }) {
 
     const handleComplete = async () => {
         setIsSaving(true);
+        setError(null);
 
         try {
             // 1. Get or create the organization
             let org;
             if (organizationId) {
-                const { data } = await supabase
+                const { data, error: fetchError } = await supabase
                     .from('organizations')
                     .select('*')
                     .eq('id', organizationId)
                     .single();
+
+                if (fetchError) {
+                    logger.error('Failed to fetch organization:', fetchError);
+                    throw new Error('Failed to load organization');
+                }
                 org = data;
             } else {
                 org = await createOrganization(formData.companyName, userId, formData.userName);
@@ -390,23 +396,45 @@ export default function OnboardingWizard({ userId, onComplete }) {
                 },
             };
 
-            await supabase
+            const { error: settingsError } = await supabase
                 .from('settings')
                 .update(settingsData)
                 .eq('organization_id', org.id);
 
+            if (settingsError) {
+                logger.warn('Settings update warning:', settingsError);
+                // Don't throw - settings update is not critical for completion
+            }
+
             // 3. Mark onboarding as complete
-            await completeOnboarding(userId, org.id);
+            try {
+                await completeOnboarding(userId, org.id);
+            } catch (onboardErr) {
+                logger.warn('Onboarding progress update warning:', onboardErr);
+                // Don't throw - this is not critical for completion
+            }
 
-            // 4. Create onboarding checklist
-            await supabase.from('onboarding_checklist').insert({
-                user_id: userId,
-                organization_id: org.id,
-                company_profile_setup: true,
-            });
+            // 4. Create onboarding checklist (ignore errors - not critical)
+            try {
+                await supabase.from('onboarding_checklist').insert({
+                    user_id: userId,
+                    organization_id: org.id,
+                    company_profile_setup: true,
+                });
+            } catch (checklistErr) {
+                logger.warn('Checklist creation warning:', checklistErr);
+            }
 
-            // 5. Call completion handler
-            onComplete?.(org, formData.firstAction);
+            // 5. Call completion handler - this is the critical action
+            logger.info('Onboarding complete, calling completion handler');
+            setIsSaving(false);
+
+            if (onComplete) {
+                onComplete(org, formData.firstAction);
+            } else {
+                logger.error('No onComplete callback provided');
+                setError('Setup complete but navigation failed. Please refresh the page.');
+            }
         } catch (err) {
             logger.error('Onboarding error:', err);
             // Show user-friendly message instead of raw technical error

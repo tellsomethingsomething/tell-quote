@@ -17,5 +17,6 @@
   "screenshot": "/qa-state/screenshots/dashboard-initial.png",
   "code_location": "/src/pages/Dashboard.jsx",
   "suggested_fix": "Fetch user name from authStore or user profile and display it instead of hardcoded 'User'",
-  "status": "open"
+  "status": "fixed",
+  "fix_commit": "b6e2833"
 }

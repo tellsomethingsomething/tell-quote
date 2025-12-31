@@ -1,0 +1,32 @@
+{
+  "id": "research-rls-error",
+  "timestamp": "2025-12-31T03:35:00.000Z",
+  "view": "research",
+  "section": "sports-research",
+  "severity": "medium",
+  "type": "database",
+  "title": "Research Sports Research tab shows RLS policy error",
+  "description": "The Sports Research tab in the Research view displays an error: 'new row violates row-level security policy for table sports_events'. This indicates the sports_events table RLS policies are not properly configured for the current user/organization.",
+  "steps_to_reproduce": [
+    "Navigate to Company Knowledge > Research",
+    "Click on 'Sports Research' tab",
+    "Observe RLS error message"
+  ],
+  "expected": "Sports Research data should load or show empty state",
+  "actual": "Error message about RLS policy violation with suggestion to run supabase-complete-setup.sql",
+  "screenshot": "/qa-state/screenshots/research-rls-error.png",
+  "code_location": "Supabase RLS policies for sports_events table",
+  "suggested_fix": "Review and update RLS policies for sports_events table. Ensure policies allow organization members to read/write their own data. May need to run supabase-complete-setup.sql or update policies manually.",
+  "status": "fixed",
+  "blocking": false,
+  "fix_applied": {
+    "timestamp": "2025-12-31T05:00:00.000Z",
+    "migration": "supabase-sports-events-fix.sql",
+    "changes": [
+      "Added organization_id column to sports_events table",
+      "Created RLS policies for SELECT/INSERT/UPDATE/DELETE",
+      "Policies allow access to events with NULL organization_id (shared data)",
+      "Policies allow access to events in user's organization"
+    ]
+  }
+}

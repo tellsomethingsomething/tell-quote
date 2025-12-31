@@ -1,0 +1,33 @@
+{
+  "id": "calendar-view-toggle",
+  "timestamp": "2025-12-31T03:00:00.000Z",
+  "view": "calendar",
+  "section": "view-toggle",
+  "severity": "low",
+  "type": "ux",
+  "title": "Calendar Week/Day view toggles don't change display",
+  "description": "When clicking Week or Day buttons in the Calendar view, the buttons highlight but the calendar grid remains in Month view. The view toggle appears non-functional.",
+  "steps_to_reproduce": [
+    "Navigate to Calendar view",
+    "Click 'Week' button in top right",
+    "Observe: Button highlights but calendar still shows month grid",
+    "Click 'Day' button",
+    "Observe: Same behavior - button highlights but view doesn't change"
+  ],
+  "expected": "Calendar should switch to week or day view layout",
+  "actual": "Month grid remains displayed regardless of which view mode is selected",
+  "screenshot": "/qa-state/screenshots/calendar-view-toggle.png",
+  "code_location": "/src/pages/Calendar.jsx or calendar component",
+  "suggested_fix": "Implement conditional rendering based on selected view mode state",
+  "status": "fixed",
+  "blocking": false,
+  "fix_applied": {
+    "timestamp": "2025-12-31T05:00:00.000Z",
+    "files_modified": ["/src/pages/CalendarPage.jsx"],
+    "changes": [
+      "Added WeekView component with 7-day time grid (lines 32-131)",
+      "Added DayView component with hour-by-hour display (lines 134-208)",
+      "Updated render logic to conditionally render view based on viewMode state"
+    ]
+  }
+}

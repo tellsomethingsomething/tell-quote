@@ -170,6 +170,16 @@ export const useOrganizationStore = create(
             return true;
         },
 
+        /**
+         * Set organization directly (used after onboarding)
+         */
+        setOrganization: (org) => {
+            if (!org) return;
+            const orgWithRole = org.userRole ? org : { ...org, userRole: 'owner' };
+            set({ organization: orgWithRole });
+            localStorage.setItem('current_organization_id', org.id);
+        },
+
         // ============================================================
         // ORGANIZATION CRUD
         // ============================================================

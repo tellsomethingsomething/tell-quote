@@ -138,7 +138,26 @@ function App() {
   const [subscriptionAccess, setSubscriptionAccess] = useState(null);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
 
-  const [view, setView] = useState('dashboard');
+  // Valid view names that map to URL paths
+  const validViews = [
+    'dashboard', 'clients', 'client-detail', 'opportunities', 'opportunity-detail',
+    'quotes', 'editor', 'rate-card', 'settings', 'tasks', 'task-board', 'sop',
+    'knowledge', 'kit', 'kit-bookings', 'contacts', 'projects', 'project-detail',
+    'crew', 'crew-detail', 'call-sheets', 'call-sheet-detail', 'invoices', 'expenses',
+    'pl', 'purchase-orders', 'contracts', 'email', 'email-templates', 'workflows',
+    'calendar', 'sequences', 'resources', 'fs', 'admin', 'rates'
+  ];
+
+  // Initialize view from URL path
+  const getInitialView = () => {
+    const path = window.location.pathname.replace(/^\//, '').replace(/\/$/, '');
+    if (path && validViews.includes(path)) {
+      return path;
+    }
+    return 'dashboard';
+  };
+
+  const [view, setView] = useState(getInitialView);
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState(null);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
@@ -152,6 +171,20 @@ function App() {
     return saved === 'true';
   });
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+
+  // Sync URL with view state (for browser history and direct linking)
+  useEffect(() => {
+    if (isAuthenticated && organization) {
+      const currentPath = window.location.pathname.replace(/^\//, '').replace(/\/$/, '');
+      const viewPath = view === 'dashboard' ? '' : view;
+
+      // Only update URL if it differs from current view
+      if (currentPath !== viewPath && currentPath !== view) {
+        const newPath = viewPath ? `/${viewPath}` : '/';
+        window.history.replaceState(null, '', newPath);
+      }
+    }
+  }, [view, isAuthenticated, organization]);
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarCollapsed(prev => {
@@ -732,12 +765,18 @@ function App() {
 
   // Show onboarding wizard for new users without an organization
   if (showOnboarding || needsOnboarding || (!organization && !isOrgLoading)) {
-    const handleOnboardingComplete = (newOrg) => {
+    const handleOnboardingComplete = (newOrg, firstAction) => {
+      logger.info('Onboarding complete, org:', newOrg?.id, 'firstAction:', firstAction);
+
+      // Ensure organization is set in store if passed
+      if (newOrg && !organization) {
+        useOrganizationStore.getState().setOrganization(newOrg);
+      }
+
       setShowOnboarding(false);
       setNeedsOnboarding(false);
       // Reset subscription access so it gets rechecked
       setSubscriptionAccess(null);
-      // The organization store will be updated by the wizard
     };
 
     return (

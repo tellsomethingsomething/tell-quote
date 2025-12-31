@@ -1,0 +1,41 @@
+{
+  "id": "onboarding-get-started-stuck",
+  "timestamp": "2025-12-31T01:30:00.000Z",
+  "view": "onboarding",
+  "section": "step-3",
+  "severity": "critical",
+  "type": "functional",
+  "title": "Onboarding Get Started button does not navigate to app",
+  "description": "After completing onboarding steps 1-3, clicking the 'Get Started' button on Step 3 does nothing. The button appears clickable but does not navigate to the dashboard or complete the onboarding flow. This completely blocks new users from accessing the app.",
+  "steps_to_reproduce": [
+    "Create new account or login with fresh account",
+    "Complete Step 1: Company Setup (name, company, type, team size, country)",
+    "Complete Step 2: Skip payment or select plan",
+    "On Step 3: Select 'Explore the dashboard' option",
+    "Click 'Get Started' button",
+    "Observe: Nothing happens, page remains on Step 3"
+  ],
+  "expected": "User should be redirected to the dashboard after clicking Get Started",
+  "actual": "Button click has no effect, user is stuck on onboarding Step 3",
+  "screenshot": "/qa-state/screenshots/onboarding-stuck.png",
+  "code_location": "/src/components/onboarding/OnboardingWizard.jsx, /src/App.jsx",
+  "suggested_fix": "Check the onClick handler for the Get Started button. Verify it properly calls the navigation function and completes the onboarding state.",
+  "fix_applied": {
+    "timestamp": "2025-12-31T04:00:00.000Z",
+    "files_modified": [
+      "/src/components/onboarding/OnboardingWizard.jsx",
+      "/src/store/organizationStore.js",
+      "/src/App.jsx"
+    ],
+    "changes": [
+      "Added setIsSaving(false) in success path of handleComplete",
+      "Added better error handling for non-critical operations (settings, checklist)",
+      "Added explicit check for onComplete callback with error message if missing",
+      "Added setOrganization method to organizationStore",
+      "Enhanced handleOnboardingComplete in App.jsx to explicitly set organization in store"
+    ]
+  },
+  "status": "fixed",
+  "blocking": false,
+  "needs_testing": true
+}

@@ -29,7 +29,186 @@ import {
 import { useOpportunityStore } from '../store/opportunityStore';
 import { useClientStore } from '../store/clientStore';
 
-// Calendar Grid Component
+// Week View Component
+function WeekView({ currentDate, events, onDateSelect, selectedDate }) {
+    const getWeekDays = () => {
+        const startOfWeek = new Date(currentDate);
+        const day = startOfWeek.getDay();
+        startOfWeek.setDate(startOfWeek.getDate() - day);
+
+        const days = [];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(startOfWeek);
+            date.setDate(date.getDate() + i);
+            days.push(date);
+        }
+        return days;
+    };
+
+    const weekDays = getWeekDays();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+
+    const getEventsForDate = (date) => {
+        const dateStr = date.toISOString().split('T')[0];
+        return events.filter(e => {
+            const eventDate = new Date(e.start_time).toISOString().split('T')[0];
+            return eventDate === dateStr;
+        });
+    };
+
+    return (
+        <div className="overflow-auto max-h-[600px]">
+            {/* Day Headers */}
+            <div className="grid grid-cols-8 border-b border-dark-border sticky top-0 bg-dark-card z-10">
+                <div className="p-2 text-center text-xs font-medium text-gray-500 border-r border-dark-border">
+                    Time
+                </div>
+                {weekDays.map((date, i) => {
+                    const isToday = date.getTime() === today.getTime();
+                    const isSelected = selectedDate &&
+                        date.toISOString().split('T')[0] === selectedDate.toISOString().split('T')[0];
+                    return (
+                        <div
+                            key={i}
+                            onClick={() => onDateSelect(date)}
+                            className={`p-2 text-center cursor-pointer hover:bg-dark-nav transition-colors ${
+                                isSelected ? 'bg-brand-primary/20' : ''
+                            }`}
+                        >
+                            <div className="text-xs text-gray-400">
+                                {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                            </div>
+                            <div className={`text-lg font-medium ${
+                                isToday ? 'text-brand-primary' : 'text-white'
+                            }`}>
+                                {date.getDate()}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Time Grid */}
+            <div className="grid grid-cols-8">
+                {hours.map(hour => (
+                    <React.Fragment key={hour}>
+                        <div className="p-2 text-xs text-gray-500 text-right border-r border-b border-dark-border h-12">
+                            {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                        </div>
+                        {weekDays.map((date, dayIndex) => {
+                            const dayEvents = getEventsForDate(date).filter(e => {
+                                const eventHour = new Date(e.start_time).getHours();
+                                return eventHour === hour;
+                            });
+                            return (
+                                <div
+                                    key={dayIndex}
+                                    className="border-b border-r border-dark-border h-12 p-0.5 hover:bg-dark-nav/50 cursor-pointer"
+                                    onClick={() => onDateSelect(date)}
+                                >
+                                    {dayEvents.map(event => {
+                                        const typeConfig = EVENT_TYPES[event.event_type] || EVENT_TYPES.meeting;
+                                        return (
+                                            <div
+                                                key={event.id}
+                                                className={`text-[10px] px-1 py-0.5 rounded truncate ${typeConfig.color} bg-dark-bg`}
+                                                title={event.title}
+                                            >
+                                                {event.title}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })}
+                    </React.Fragment>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// Day View Component
+function DayView({ currentDate, events, onDateSelect, selectedDate }) {
+    const displayDate = selectedDate || currentDate;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+
+    const getEventsForHour = (hour) => {
+        const dateStr = displayDate.toISOString().split('T')[0];
+        return events.filter(e => {
+            const eventDate = new Date(e.start_time).toISOString().split('T')[0];
+            const eventHour = new Date(e.start_time).getHours();
+            return eventDate === dateStr && eventHour === hour;
+        });
+    };
+
+    const isToday = displayDate.toISOString().split('T')[0] === today.toISOString().split('T')[0];
+
+    return (
+        <div className="overflow-auto max-h-[600px]">
+            {/* Day Header */}
+            <div className="p-4 border-b border-dark-border sticky top-0 bg-dark-card z-10 text-center">
+                <div className="text-sm text-gray-400">
+                    {displayDate.toLocaleDateString('en-US', { weekday: 'long' })}
+                </div>
+                <div className={`text-2xl font-semibold ${isToday ? 'text-brand-primary' : 'text-white'}`}>
+                    {displayDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                </div>
+            </div>
+
+            {/* Hour Grid */}
+            <div>
+                {hours.map(hour => {
+                    const hourEvents = getEventsForHour(hour);
+                    const isCurrentHour = isToday && new Date().getHours() === hour;
+
+                    return (
+                        <div
+                            key={hour}
+                            className={`flex border-b border-dark-border ${
+                                isCurrentHour ? 'bg-brand-primary/10' : ''
+                            }`}
+                        >
+                            <div className="w-20 p-3 text-sm text-gray-500 text-right border-r border-dark-border flex-shrink-0">
+                                {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                            </div>
+                            <div className="flex-1 min-h-[60px] p-2 hover:bg-dark-nav/50">
+                                {hourEvents.map(event => {
+                                    const typeConfig = EVENT_TYPES[event.event_type] || EVENT_TYPES.meeting;
+                                    return (
+                                        <div
+                                            key={event.id}
+                                            className={`mb-1 p-2 rounded ${typeConfig.color} bg-dark-bg border border-dark-border`}
+                                        >
+                                            <div className="font-medium text-sm text-white">{event.title}</div>
+                                            <div className="text-xs text-gray-400">
+                                                {formatEventTime(event.start_time, event.end_time, event.all_day)}
+                                            </div>
+                                            {event.location && (
+                                                <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                                                    <MapPin className="w-3 h-3" />
+                                                    {event.location}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+// Calendar Grid Component (Month View)
 function CalendarGrid({ currentDate, events, onDateSelect, selectedDate }) {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -713,12 +892,26 @@ export default function CalendarPage() {
                             </div>
                         </div>
 
-                        {/* Calendar Grid */}
+                        {/* Calendar View (Month/Week/Day) */}
                         <div className="p-4">
                             {isLoading ? (
                                 <div className="flex items-center justify-center py-12">
                                     <div className="animate-spin w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full" />
                                 </div>
+                            ) : viewMode === 'week' ? (
+                                <WeekView
+                                    currentDate={currentDate}
+                                    events={events}
+                                    onDateSelect={setSelectedDate}
+                                    selectedDate={selectedDate}
+                                />
+                            ) : viewMode === 'day' ? (
+                                <DayView
+                                    currentDate={currentDate}
+                                    events={events}
+                                    onDateSelect={setSelectedDate}
+                                    selectedDate={selectedDate}
+                                />
                             ) : (
                                 <CalendarGrid
                                     currentDate={currentDate}

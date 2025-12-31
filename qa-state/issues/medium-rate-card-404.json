@@ -1,0 +1,20 @@
+{
+  "id": "rate-card-404",
+  "timestamp": "2025-12-31T01:15:00.000Z",
+  "view": "rate-card",
+  "section": "routing",
+  "severity": "medium",
+  "type": "functional",
+  "title": "Rate Card route returns 404",
+  "description": "Navigating directly to /rate-card URL returns a 404 Page Not Found. The app uses state-based navigation (view state in App.jsx), not URL-based routing. This breaks direct linking and browser back/forward navigation.",
+  "steps_to_reproduce": [
+    "Navigate directly to https://www.productionos.io/rate-card",
+    "Observe 404 page"
+  ],
+  "expected": "Rate Card view should load",
+  "actual": "404 Page not found",
+  "screenshot": "/qa-state/screenshots/rate-card-404.png",
+  "code_location": "/src/App.jsx - view state management",
+  "suggested_fix": "Implement URL-based routing with react-router-dom or similar, or add URL parameter handling to sync view state with URL",
+  "status": "open"
+}
