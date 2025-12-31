@@ -103,7 +103,7 @@ export default function LandingPage({ onLogin }) {
             {mobileMenuOpen && (
                 <div className="fixed inset-0 z-40 md:hidden">
                     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-                    <div className="fixed top-0 right-0 w-full max-w-sm h-full bg-[#0A0A0F] border-l border-white/10 p-6 pt-20">
+                    <div className="fixed top-0 right-0 w-full max-w-sm h-full bg-[#0A0A0F]/95 backdrop-blur-xl border-l border-white/10 p-6 pt-20">
                         <button
                             className="absolute top-6 right-6 text-white/60 hover:text-white"
                             onClick={() => setMobileMenuOpen(false)}
@@ -201,8 +201,8 @@ export default function LandingPage({ onLogin }) {
                                 </div>
 
                                 {/* Dashboard Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
-                                    <div className="col-span-2 bg-gradient-to-br from-white/5 to-transparent rounded-xl border border-white/5 p-6 relative overflow-hidden">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 h-full">
+                                    <div className="col-span-1 md:col-span-2 bg-gradient-to-br from-white/5 to-transparent rounded-xl border border-white/5 p-4 md:p-6 relative overflow-hidden">
                                         <div className="absolute top-0 right-0 p-4 opacity-20">
                                             <Zap className="text-white w-24 h-24" />
                                         </div>
@@ -221,7 +221,7 @@ export default function LandingPage({ onLogin }) {
                                         </div>
                                         <div className="text-3xl font-mono text-white">$24,500</div>
                                     </div>
-                                    <div className="col-span-3 h-32 bg-white/5 rounded-xl border border-white/5 p-6 flex items-center gap-8 overflow-hidden">
+                                    <div className="col-span-1 md:col-span-3 h-24 md:h-32 bg-white/5 rounded-xl border border-white/5 p-4 md:p-6 flex items-center gap-4 md:gap-8 overflow-hidden">
                                         {[1, 2, 3, 4].map(i => (
                                             <div key={i} className="flex-1 space-y-3 opacity-50">
                                                 <div className="h-2 w-full bg-white/10 rounded-full" />
@@ -252,9 +252,9 @@ export default function LandingPage({ onLogin }) {
                         </a>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 grid-rows-2 gap-6 h-auto md:h-[800px]">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 auto-rows-auto lg:grid-rows-2 lg:h-[800px]">
                         {/* Main Feature - Large */}
-                        <div className="col-span-1 md:col-span-2 row-span-2 rounded-3xl bg-[#0F1016] border border-white/5 p-8 md:p-12 relative overflow-hidden group hover:border-white/10 transition-colors">
+                        <div className="col-span-1 sm:col-span-2 lg:row-span-2 rounded-3xl bg-[#0F1016] border border-white/5 p-6 sm:p-8 lg:p-12 relative overflow-hidden group hover:border-white/10 transition-colors min-h-[300px] sm:min-h-[400px]">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF3366]/10 blur-[80px] rounded-full group-hover:bg-[#FF3366]/20 transition-all duration-700" />
 
                             <div className="relative z-10 h-full flex flex-col justify-between">
@@ -291,7 +291,7 @@ export default function LandingPage({ onLogin }) {
                         </div>
 
                         {/* Secondary Feature 1 */}
-                        <div className="col-span-1 md:col-span-1 row-span-1 rounded-3xl bg-[#0F1016] border border-white/5 p-8 relative overflow-hidden group hover:border-white/10 transition-colors">
+                        <div className="col-span-1 rounded-3xl bg-[#0F1016] border border-white/5 p-6 sm:p-8 relative overflow-hidden group hover:border-white/10 transition-colors min-h-[200px]">
                             <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-white mb-6 border border-white/5">
                                 <BoxIcon size={20} />
                             </div>
@@ -302,7 +302,7 @@ export default function LandingPage({ onLogin }) {
                         </div>
 
                         {/* Secondary Feature 2 */}
-                        <div className="col-span-1 md:col-span-1 row-span-1 rounded-3xl bg-[#0F1016] border border-white/5 p-8 relative overflow-hidden group hover:border-white/10 transition-colors">
+                        <div className="col-span-1 rounded-3xl bg-[#0F1016] border border-white/5 p-6 sm:p-8 relative overflow-hidden group hover:border-white/10 transition-colors min-h-[200px]">
                             <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-white mb-6 border border-white/5">
                                 <ChartIcon size={20} />
                             </div>
@@ -313,7 +313,7 @@ export default function LandingPage({ onLogin }) {
                         </div>
 
                         {/* Wide Feature */}
-                        <div className="col-span-1 md:col-span-2 row-span-1 rounded-3xl bg-[#0F1016] border border-white/5 p-8 relative overflow-hidden group hover:border-white/10 transition-colors flex flex-col md:flex-row gap-8 items-center">
+                        <div className="col-span-1 sm:col-span-2 rounded-3xl bg-[#0F1016] border border-white/5 p-6 sm:p-8 relative overflow-hidden group hover:border-white/10 transition-colors flex flex-col sm:flex-row gap-4 sm:gap-8 items-center">
                             <div className="flex-1">
                                 <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-white mb-6 border border-white/5">
                                     <FileIcon size={20} />

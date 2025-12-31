@@ -523,7 +523,7 @@ export default function Sidebar({
                         {showUserMenu && (
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
-                                <div className={`absolute z-50 ${isDark ? 'bg-[#1a1f2e] border-dark-border' : 'bg-white border-gray-200'} border rounded-lg shadow-2xl overflow-hidden ${
+                                <div className={`absolute z-50 ${isDark ? 'bg-[#1a1f2e]/95 backdrop-blur-md border-dark-border' : 'bg-white/95 backdrop-blur-md border-gray-200'} border rounded-lg shadow-2xl overflow-hidden ${
                                     !isOpen && !isMobile ? 'left-full ml-2 bottom-0 w-48' : 'left-0 bottom-full mb-2 w-full'
                                 }`}>
                                     <button

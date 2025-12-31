@@ -177,7 +177,7 @@ export default function CommandPalette({ onNavigate, onAction }) {
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
                         transition={{ duration: 0.15 }}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-full max-w-lg bg-dark-card border border-dark-border rounded-xl shadow-2xl overflow-hidden"
+                        className="w-full max-w-lg bg-dark-card/95 backdrop-blur-xl border border-dark-border rounded-xl shadow-2xl overflow-hidden"
                     >
                         {/* Search input */}
                         <div className="flex items-center gap-3 px-4 py-3 border-b border-dark-border">
