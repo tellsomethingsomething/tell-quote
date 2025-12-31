@@ -397,18 +397,48 @@ export const useOpportunityStore = create(
             await get().updateOpportunity(opportunityId, { status });
         },
 
-        // Update stage (pipeline)
-        updateStage: async (opportunityId, stage) => {
+        // Update stage (pipeline) with validation
+        updateStage: async (opportunityId, newStage) => {
+            const opportunity = get().getOpportunity(opportunityId);
+            if (!opportunity) {
+                logger.error('Cannot update stage: opportunity not found', { opportunityId });
+                return { success: false, error: 'Opportunity not found' };
+            }
+
+            const currentStage = opportunity.stage || 'lead';
+
+            // Validate stage exists
+            if (!PIPELINE_STAGES[newStage]) {
+                logger.error('Invalid stage', { newStage });
+                return { success: false, error: `Invalid stage: ${newStage}` };
+            }
+
+            // Terminal stages ('won' and 'lost') cannot be changed
+            // Users must create a new opportunity if they want to reopen
+            if (currentStage === 'won' || currentStage === 'lost') {
+                logger.warn('Cannot change stage of closed opportunity', {
+                    opportunityId,
+                    currentStage,
+                    attemptedStage: newStage
+                });
+                return {
+                    success: false,
+                    error: `Cannot change stage of a ${currentStage === 'won' ? 'won' : 'lost'} opportunity. Create a new opportunity instead.`
+                };
+            }
+
             // Auto-update status based on stage
-            let updates = { stage };
-            if (stage === 'won') {
+            let updates = { stage: newStage };
+            if (newStage === 'won') {
                 updates.status = 'won';
-            } else if (stage === 'lost') {
+            } else if (newStage === 'lost') {
                 updates.status = 'lost';
-            } else if (['lead', 'qualified', 'proposal', 'negotiation'].includes(stage)) {
+            } else if (['lead', 'qualified', 'proposal', 'negotiation'].includes(newStage)) {
                 updates.status = 'active';
             }
+
             await get().updateOpportunity(opportunityId, updates);
+            return { success: true };
         },
 
         // Get opportunities grouped by stage
@@ -542,6 +572,49 @@ export const useOpportunityStore = create(
         // Clear error
         clearError: () => {
             set({ error: null });
+        },
+
+        // Convert opportunity to quote data (for use with quoteStore)
+        // Returns quote data object that can be loaded into quoteStore
+        convertToQuoteData: (opportunityId) => {
+            const opportunity = get().getOpportunity(opportunityId);
+            if (!opportunity) return null;
+
+            // Get primary contact from opportunity
+            const primaryContact = opportunity.contacts?.find(c => c.isPrimary) || opportunity.contacts?.[0];
+
+            return {
+                // Client info
+                client: {
+                    company: opportunity.client?.company || opportunity.title || '',
+                    contact: primaryContact?.name || '',
+                    email: primaryContact?.email || '',
+                    phone: primaryContact?.phone || '',
+                    role: primaryContact?.role || '',
+                    clientId: opportunity.clientId || null,
+                },
+                // Project info from opportunity
+                project: {
+                    title: opportunity.title || '',
+                    description: opportunity.brief || '',
+                    type: 'broadcast', // Default type
+                },
+                // Settings
+                currency: opportunity.currency || 'USD',
+                region: opportunity.region || '',
+                // Link back to opportunity
+                opportunityId: opportunity.id,
+                // Copy value as initial estimate
+                estimatedValue: opportunity.value || 0,
+            };
+        },
+
+        // Mark opportunity as converted to quote
+        markAsConvertedToQuote: async (opportunityId, quoteId) => {
+            await get().updateOpportunity(opportunityId, {
+                convertedToQuoteId: quoteId,
+                stage: 'proposal', // Move to proposal stage
+            });
         },
     }))
 );

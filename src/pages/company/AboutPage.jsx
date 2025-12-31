@@ -166,7 +166,7 @@ export default function AboutPage() {
                             Start Free Trial <ArrowRight size={18} />
                         </Link>
                         <Link
-                            to="/company/contact"
+                            to="/contact"
                             className="inline-flex items-center gap-2 px-8 py-4 bg-marketing-surface border border-marketing-border text-white font-bold rounded-xl hover:bg-marketing-border/50 transition-all"
                         >
                             Contact Us

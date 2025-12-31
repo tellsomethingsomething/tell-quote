@@ -715,6 +715,8 @@ function App() {
             {/* Company Pages */}
             <Route path="/company/about" element={<AboutPage />} />
             <Route path="/company/contact" element={<ContactPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
 
             {/* Protected routes - redirect to login */}
             <Route path="/dashboard" element={<Navigate to="/auth/login" replace />} />

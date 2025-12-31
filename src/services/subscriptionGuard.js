@@ -305,7 +305,7 @@ export async function getUsage(organizationId) {
                 .select('id', { count: 'exact', head: true })
                 .eq('organization_id', organizationId),
             supabase
-                .from('crew_contacts')
+                .from('crew')
                 .select('id', { count: 'exact', head: true })
                 .eq('organization_id', organizationId),
             supabase

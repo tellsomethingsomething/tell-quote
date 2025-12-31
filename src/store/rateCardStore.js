@@ -435,12 +435,16 @@ export const useRateCardStore = create(
         },
 
         updateItem: async (itemId, updates) => {
+            let updatedItem = null;
+
             set(state => {
-                const items = state.items.map(item =>
-                    item.id === itemId
-                        ? { ...item, ...updates, updatedAt: new Date().toISOString() }
-                        : item
-                );
+                const items = state.items.map(item => {
+                    if (item.id === itemId) {
+                        updatedItem = { ...item, ...updates, updatedAt: new Date().toISOString() };
+                        return updatedItem;
+                    }
+                    return item;
+                });
                 saveRateCardLocal(items);
                 return { items };
             });
@@ -454,12 +458,24 @@ export const useRateCardStore = create(
                     if (updates.section !== undefined) dbUpdates.section = updates.section;
                     if (updates.unit !== undefined) dbUpdates.unit = updates.unit;
                     if (updates.pricing !== undefined) dbUpdates.pricing = updates.pricing;
+                    if (updates.kitItemId !== undefined) dbUpdates.kit_item_id = updates.kitItemId;
 
                     if (Object.keys(dbUpdates).length > 0) {
                         await supabase.from('rate_cards').update(dbUpdates).eq('id', itemId);
                     }
                 } catch (e) {
                     logger.error('Failed to update item in DB:', e);
+                }
+            }
+
+            // Sync pricing changes back to kit item if linked (bi-directional sync)
+            if (updatedItem?.kitItemId && updates.pricing) {
+                try {
+                    const { useKitStore } = await import('./kitStore');
+                    const kitStore = useKitStore.getState();
+                    await kitStore.syncFromRateCard(updatedItem);
+                } catch (e) {
+                    logger.error('Failed to sync to kit item:', e);
                 }
             }
         },

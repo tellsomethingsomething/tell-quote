@@ -59,7 +59,7 @@ export default function NotFoundPage() {
                             <Link to="/help" className="text-marketing-primary hover:underline">
                                 Help Center
                             </Link>
-                            <Link to="/company/contact" className="text-marketing-primary hover:underline">
+                            <Link to="/contact" className="text-marketing-primary hover:underline">
                                 Contact Us
                             </Link>
                         </div>

@@ -210,11 +210,56 @@ export const useActivityStore = create(
                 .slice(0, limit);
         },
 
-        // Add new activity
+        // Add new activity with validation
         addActivity: async (activityData) => {
             if (!isSupabaseConfigured()) {
                 set({ error: 'Supabase not configured' });
                 return null;
+            }
+
+            // Validate activity type
+            if (!activityData.activityType || !ACTIVITY_TYPES[activityData.activityType]) {
+                const errorMsg = `Invalid activity type: ${activityData.activityType}. Valid types: ${Object.keys(ACTIVITY_TYPES).join(', ')}`;
+                logger.error(errorMsg);
+                set({ error: errorMsg });
+                return null;
+            }
+
+            // Validate at least one entity reference is provided
+            const hasEntityReference = activityData.clientId ||
+                                       activityData.opportunityId ||
+                                       activityData.contactId ||
+                                       activityData.quoteId;
+
+            if (!hasEntityReference) {
+                const errorMsg = 'Activity must be linked to at least one entity (client, opportunity, contact, or quote)';
+                logger.error(errorMsg);
+                set({ error: errorMsg });
+                return null;
+            }
+
+            // Validate call-specific fields
+            if (activityData.activityType === 'call') {
+                if (activityData.callOutcome && !CALL_OUTCOMES.find(o => o.id === activityData.callOutcome)) {
+                    logger.warn('Invalid call outcome, ignoring:', activityData.callOutcome);
+                    activityData.callOutcome = null;
+                }
+            }
+
+            // Validate meeting-specific fields
+            if (activityData.activityType === 'meeting') {
+                if (activityData.meetingType && !MEETING_TYPES.find(t => t.id === activityData.meetingType)) {
+                    logger.warn('Invalid meeting type, ignoring:', activityData.meetingType);
+                    activityData.meetingType = null;
+                }
+            }
+
+            // Validate task-specific fields
+            if (activityData.activityType === 'task') {
+                if (activityData.priority && !TASK_PRIORITIES.find(p => p.id === activityData.priority)) {
+                    logger.warn('Invalid task priority, defaulting to medium:', activityData.priority);
+                    activityData.priority = 'medium';
+                }
             }
 
             try {

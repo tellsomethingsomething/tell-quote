@@ -610,6 +610,80 @@ export const useKitStore = create(
             set({ error: null });
         },
 
+        // Sync rate card item updates back to kit item (bidirectional sync)
+        // Call this when a rate card item linked to kit is updated
+        syncFromRateCard: async (rateCardItem) => {
+            if (!rateCardItem || !rateCardItem.kitItemId) return false;
+
+            const { items } = get();
+            const kitItem = items.find(i => i.id === rateCardItem.kitItemId || i.rateCardItemId === rateCardItem.id);
+
+            if (!kitItem) {
+                logger.warn('Kit item not found for rate card sync:', rateCardItem.id);
+                return false;
+            }
+
+            try {
+                // Extract the rate from the rate card item pricing
+                // Rate card uses regional pricing, kit uses flat rates
+                // Default to SEA region for equipment
+                const pricing = rateCardItem.pricing || {};
+                const seaPricing = pricing.SEA || pricing.EU || pricing.ME || Object.values(pricing)[0];
+
+                if (!seaPricing) {
+                    logger.warn('No pricing found in rate card item');
+                    return false;
+                }
+
+                // Update kit item with rate card prices
+                const updates = {};
+                if (seaPricing.cost?.amount !== undefined) {
+                    updates.dayRate = seaPricing.cost.amount;
+                }
+                if (seaPricing.cost?.baseCurrency) {
+                    updates.rateCurrency = seaPricing.cost.baseCurrency;
+                }
+
+                if (Object.keys(updates).length > 0) {
+                    await get().updateItem(kitItem.id, updates);
+                    logger.info(`Synced rate card changes to kit item ${kitItem.kitId}`);
+                    return true;
+                }
+
+                return false;
+            } catch (e) {
+                logger.error('Failed to sync from rate card:', e);
+                return false;
+            }
+        },
+
+        // Unlink kit item from rate card
+        unlinkFromRateCard: async (itemId) => {
+            const item = get().items.find(i => i.id === itemId);
+            if (!item || !item.rateCardItemId) return;
+
+            try {
+                // Remove the link in kit item
+                await supabase.from('kit_items')
+                    .update({ rate_card_item_id: null })
+                    .eq('id', itemId);
+
+                // Also update the rate card item to remove kit link
+                const rateCardStore = useRateCardStore.getState();
+                if (rateCardStore.updateItem) {
+                    await rateCardStore.updateItem(item.rateCardItemId, { kitItemId: null });
+                }
+
+                set((state) => ({
+                    items: state.items.map(i => i.id === itemId ? { ...i, rateCardItemId: null } : i),
+                }));
+
+                logger.info(`Unlinked kit item ${item.kitId} from rate card`);
+            } catch (e) {
+                logger.error('Failed to unlink from rate card:', e);
+            }
+        },
+
         // Upload image for kit item
         uploadImage: async (itemId, file) => {
             if (!isSupabaseConfigured()) {

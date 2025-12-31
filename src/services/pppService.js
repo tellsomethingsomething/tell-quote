@@ -167,8 +167,7 @@ let cachedCountry = null;
 let cachedPricingInfo = null;
 
 /**
- * Detect user's country using multiple methods
- * Uses timezone first (instant), then upgrades with IP geolocation in background
+ * Detect user's country using IP geolocation with timezone fallback
  * @returns {Promise<string>} ISO 3166-1 alpha-2 country code
  */
 export async function detectCountry() {
@@ -185,19 +184,23 @@ export async function detectCountry() {
         }
     }
 
-    // Use timezone detection first (instant)
+    // Try IP geolocation first (more accurate)
+    const ipCountry = await fetchIPGeolocation();
+    if (ipCountry) {
+        cachedCountry = ipCountry;
+        logger.debug(`[PPP] Country detected via IP: ${cachedCountry}`);
+        return cachedCountry;
+    }
+
+    // Fall back to timezone detection
     cachedCountry = detectCountryFromTimezone();
-
-    // Fire off IP geolocation in background to potentially upgrade accuracy
-    // but don't wait for it
-    fetchIPGeolocation().catch(() => {});
-
+    logger.debug(`[PPP] Country detected via timezone: ${cachedCountry}`);
     return cachedCountry;
 }
 
 /**
- * Fetch IP-based geolocation in background
- * Updates cache if successful but doesn't block initial load
+ * Fetch IP-based geolocation
+ * @returns {Promise<string|null>} Country code or null if failed
  */
 async function fetchIPGeolocation() {
     try {
@@ -213,15 +216,15 @@ async function fetchIPGeolocation() {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.country_code && data.country_code !== cachedCountry) {
-                logger.debug(`[PPP] IP geolocation updated country: ${cachedCountry} -> ${data.country_code}`);
-                cachedCountry = data.country_code;
-                // Clear pricing cache so next request uses updated country
-                cachedPricingInfo = null;
+            if (data.country_code) {
+                return data.country_code;
             }
         }
+        return null;
     } catch (error) {
-        // Silently ignore - timezone fallback is good enough
+        // Silently ignore - will fall back to timezone
+        logger.debug('[PPP] IP geolocation failed, using timezone fallback');
+        return null;
     }
 }
 
@@ -248,7 +251,7 @@ function detectCountryFromTimezone() {
             'Europe/Oslo': 'NO', 'Europe/Warsaw': 'PL', 'Europe/Prague': 'CZ',
             'Europe/Budapest': 'HU', 'Europe/Bucharest': 'RO', 'Europe/Sofia': 'BG',
             // Asia Pacific
-            'Asia/Singapore': 'SG', 'Asia/Kuala_Lumpur': 'MY', 'Asia/Bangkok': 'TH',
+            'Asia/Singapore': 'SG', 'Asia/Kuala_Lumpur': 'MY', 'Asia/Kuching': 'MY', 'Asia/Bangkok': 'TH',
             'Asia/Ho_Chi_Minh': 'VN', 'Asia/Jakarta': 'ID', 'Asia/Manila': 'PH',
             'Asia/Kolkata': 'IN', 'Asia/Tokyo': 'JP', 'Asia/Seoul': 'KR',
             'Asia/Hong_Kong': 'HK', 'Asia/Taipei': 'TW', 'Asia/Shanghai': 'CN',
@@ -272,10 +275,11 @@ function detectCountryFromTimezone() {
         }
 
         // Try to extract country from timezone region
+        // Use neutral tier3 fallbacks where possible to avoid overcharging
         const region = timezone.split('/')[0];
         if (region === 'America') return 'US';
         if (region === 'Europe') return 'GB';
-        if (region === 'Asia') return 'SG';
+        if (region === 'Asia') return 'MY'; // Default to Malaysia (tier3) instead of Singapore (tier1)
         if (region === 'Australia') return 'AU';
         if (region === 'Africa') return 'ZA';
 

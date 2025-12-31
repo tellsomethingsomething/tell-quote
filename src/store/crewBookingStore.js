@@ -147,11 +147,55 @@ export const useCrewBookingStore = create(
             }
         },
 
-        // Create new crew booking
+        // Create new crew booking with validation
         createBooking: async (bookingData) => {
             if (!isSupabaseConfigured()) {
                 logger.error('Supabase not configured');
+                set({ error: 'Supabase not configured' });
                 return null;
+            }
+
+            // Validate project reference - bookings must be linked to a project
+            if (!bookingData.projectId) {
+                const errorMsg = 'Crew booking must be linked to a project (projectId required)';
+                logger.error(errorMsg);
+                set({ error: errorMsg });
+                return null;
+            }
+
+            // Validate crew identification - need at least crewId or crewName
+            if (!bookingData.crewId && !bookingData.crewName) {
+                const errorMsg = 'Crew booking must have either crewId or crewName';
+                logger.error(errorMsg);
+                set({ error: errorMsg });
+                return null;
+            }
+
+            // Validate status if provided
+            const status = bookingData.status || 'pending';
+            if (!CREW_BOOKING_STATUSES[status]) {
+                const errorMsg = `Invalid booking status: ${status}. Valid statuses: ${Object.keys(CREW_BOOKING_STATUSES).join(', ')}`;
+                logger.error(errorMsg);
+                set({ error: errorMsg });
+                return null;
+            }
+
+            // Validate dates if provided
+            if (bookingData.startDate && bookingData.endDate) {
+                const start = new Date(bookingData.startDate);
+                const end = new Date(bookingData.endDate);
+                if (end < start) {
+                    const errorMsg = 'End date cannot be before start date';
+                    logger.error(errorMsg);
+                    set({ error: errorMsg });
+                    return null;
+                }
+            }
+
+            // Validate day rate is non-negative
+            if (bookingData.dayRate !== undefined && bookingData.dayRate < 0) {
+                logger.warn('Day rate cannot be negative, setting to 0');
+                bookingData.dayRate = 0;
             }
 
             try {
@@ -163,7 +207,7 @@ export const useCrewBookingStore = create(
                     ...bookingData,
                     poNumber,
                     totalCost,
-                    status: bookingData.status || 'pending',
+                    status,
                 };
 
                 const { data, error } = await supabase
@@ -175,10 +219,11 @@ export const useCrewBookingStore = create(
                 if (error) throw error;
 
                 const created = fromDbFormat(data);
-                set({ bookings: [created, ...state.bookings] });
+                set({ bookings: [created, ...state.bookings], error: null });
                 return created;
             } catch (error) {
                 logger.error('Failed to create crew booking:', error);
+                set({ error: error.message });
                 return null;
             }
         },

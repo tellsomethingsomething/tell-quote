@@ -80,8 +80,8 @@ export default function Footer() {
                         <ul className="space-y-4 text-sm text-marketing-text-secondary">
                             <li><Link to="/resources/blog" className="hover:text-marketing-primary transition-colors">Blog</Link></li>
                             <li><Link to="/help" className="hover:text-marketing-primary transition-colors">Help Center</Link></li>
-                            <li><Link to="/company/about" className="hover:text-marketing-primary transition-colors">About Us</Link></li>
-                            <li><Link to="/company/contact" className="hover:text-marketing-primary transition-colors">Contact</Link></li>
+                            <li><Link to="/about" className="hover:text-marketing-primary transition-colors">About Us</Link></li>
+                            <li><Link to="/contact" className="hover:text-marketing-primary transition-colors">Contact</Link></li>
                         </ul>
 
                         <h4 className="font-semibold text-marketing-text-primary mb-4 mt-8">Compare</h4>
