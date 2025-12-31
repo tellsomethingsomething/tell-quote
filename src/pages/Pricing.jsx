@@ -243,29 +243,30 @@ export default function Pricing() {
 
             {/* Comparison Table */}
             <section id="comparison" className="py-20 bg-marketing-surface border-y border-marketing-border">
-                <div className="container mx-auto px-6 md:px-12 max-w-6xl">
-                    <h2 className="text-3xl font-bold text-center mb-12">Feature Comparison</h2>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse min-w-[800px]">
+                <div className="container mx-auto px-4 md:px-12 max-w-6xl">
+                    <h2 className="text-3xl font-bold text-center mb-4">Feature Comparison</h2>
+                    <p className="text-center text-marketing-text-secondary text-sm mb-8 md:hidden">← Swipe to see all plans →</p>
+                    <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                        <table className="w-full text-left border-collapse min-w-[600px]">
                             <thead>
                                 <tr>
-                                    <th className="p-4 border-b border-marketing-border text-marketing-text-secondary font-medium w-1/4">Feature</th>
-                                    <th className="p-4 border-b border-marketing-border text-marketing-text-primary font-bold text-lg w-1/4">Free</th>
-                                    <th className="p-4 border-b border-marketing-border text-marketing-primary font-bold text-lg w-1/4 bg-marketing-primary/5 rounded-t-xl">Individual</th>
-                                    <th className="p-4 border-b border-marketing-border text-marketing-text-primary font-bold text-lg w-1/4">Team</th>
+                                    <th className="p-3 md:p-4 border-b border-marketing-border text-marketing-text-secondary font-medium text-sm md:text-base whitespace-nowrap">Feature</th>
+                                    <th className="p-3 md:p-4 border-b border-marketing-border text-marketing-text-primary font-bold text-sm md:text-lg whitespace-nowrap">Free</th>
+                                    <th className="p-3 md:p-4 border-b border-marketing-border text-marketing-primary font-bold text-sm md:text-lg bg-marketing-primary/5 rounded-t-xl whitespace-nowrap">Individual</th>
+                                    <th className="p-3 md:p-4 border-b border-marketing-border text-marketing-text-primary font-bold text-sm md:text-lg whitespace-nowrap">Team</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {comparisonTable.map((row, i) => (
                                     <tr key={i} className="border-b border-marketing-border/50 hover:bg-marketing-background/50">
-                                        <td className="p-4 font-medium text-marketing-text-primary">{row.feature}</td>
-                                        <td className="p-4 text-marketing-text-secondary">
+                                        <td className="p-3 md:p-4 font-medium text-marketing-text-primary text-sm md:text-base whitespace-nowrap">{row.feature}</td>
+                                        <td className="p-3 md:p-4 text-marketing-text-secondary text-sm md:text-base whitespace-nowrap">
                                             {row.free === true ? <Check className="text-marketing-success" size={20} /> : row.free === false ? <span className="opacity-20">-</span> : row.free}
                                         </td>
-                                        <td className="p-4 bg-marketing-primary/5 text-marketing-text-primary font-medium">
+                                        <td className="p-3 md:p-4 bg-marketing-primary/5 text-marketing-text-primary font-medium text-sm md:text-base whitespace-nowrap">
                                             {row.individual === true ? <Check className="text-marketing-success" size={20} /> : row.individual === false ? <span className="opacity-20">-</span> : row.individual}
                                         </td>
-                                        <td className="p-4 text-marketing-text-secondary">
+                                        <td className="p-3 md:p-4 text-marketing-text-secondary text-sm md:text-base whitespace-nowrap">
                                             {row.team === true ? <Check className="text-marketing-success" size={20} /> : row.team === false ? <span className="opacity-20">-</span> : row.team}
                                         </td>
                                     </tr>

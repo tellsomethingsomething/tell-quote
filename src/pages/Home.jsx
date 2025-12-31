@@ -131,16 +131,16 @@ export default function Home() {
                 </div>
 
                 {/* Auto-scrolling testimonials marquee */}
-                <div className="relative">
-                    <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-marketing-background to-transparent z-10" aria-hidden="true" />
-                    <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-marketing-background to-transparent z-10" aria-hidden="true" />
+                <div className="relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 w-8 md:w-32 bg-gradient-to-r from-marketing-background to-transparent z-10" aria-hidden="true" />
+                    <div className="absolute right-0 top-0 bottom-0 w-8 md:w-32 bg-gradient-to-l from-marketing-background to-transparent z-10" aria-hidden="true" />
 
                     <motion.div
-                        className="flex gap-6"
+                        className="flex gap-4 md:gap-6 pl-4 md:pl-0"
                         role="region"
                         aria-label="Customer testimonials"
                         animate={{
-                            x: [0, -(testimonials.length * 424)] // 400px card width + 24px gap
+                            x: [0, -(testimonials.length * 340)] // Adjusted for responsive width
                         }}
                         transition={{
                             x: {
@@ -154,7 +154,7 @@ export default function Home() {
                         {[...testimonials, ...testimonials].map((t, i) => (
                             <div
                                 key={`${t.author}-${i}`}
-                                className="flex-shrink-0 w-[400px] p-8 bg-marketing-surface/50 backdrop-blur-sm border border-marketing-border/50 rounded-3xl"
+                                className="flex-shrink-0 w-[320px] md:w-[400px] p-6 md:p-8 bg-marketing-surface/50 backdrop-blur-sm border border-marketing-border/50 rounded-3xl"
                             >
                                 <div className="flex text-marketing-primary mb-6" role="img" aria-label="5 out of 5 stars">
                                     {[...Array(5)].map((_, j) => <Star key={j} size={18} fill="currentColor" className="opacity-80" aria-hidden="true" />)}
