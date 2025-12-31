@@ -45,14 +45,31 @@ const LineItem = memo(function LineItem({ item, sectionId, subsectionName }) {
         }
     };
 
+    // Use locked rates if quote has them (finalized quote), else use live rates
+    const effectiveRates = quote.lockedExchangeRates?.rates || rates;
+
     // Convert for display
     const regionCurrency = getRegionCurrency(quote.region);
     const displayCharge = quote.region === 'MALAYSIA'
         ? totals.totalCharge
-        : convertCurrency(totals.totalCharge, regionCurrency, quote.currency, rates);
+        : convertCurrency(totals.totalCharge, regionCurrency, quote.currency, effectiveRates);
 
     const handleChange = (field, value) => {
         updateLineItem(sectionId, subsectionName, item.id, { [field]: value });
+    };
+
+    // Safe number change handler - prevents NaN from being stored
+    const handleNumberChange = (field, value, defaultValue = 0) => {
+        if (value === '') {
+            handleChange(field, '');
+            return;
+        }
+        const num = parseFloat(value);
+        // Only update if valid finite number
+        if (!isNaN(num) && isFinite(num) && num >= 0) {
+            handleChange(field, num);
+        }
+        // Invalid input is ignored, keeping previous value
     };
 
     // Search Rate Card items
@@ -185,7 +202,7 @@ const LineItem = memo(function LineItem({ item, sectionId, subsectionName }) {
                     {showAutocomplete && (
                         <div
                             id={`autocomplete-${item.id}`}
-                            className="absolute z-20 top-full left-0 right-0 mt-1 bg-dark-card border border-dark-border rounded-lg shadow-xl overflow-hidden"
+                            className="absolute z-20 top-full left-0 right-0 mt-1 bg-dark-card/95 backdrop-blur-md border border-dark-border rounded-lg shadow-xl overflow-hidden"
                             role="listbox"
                             aria-label="Item suggestions"
                         >
@@ -230,8 +247,8 @@ const LineItem = memo(function LineItem({ item, sectionId, subsectionName }) {
                         id={`quantity-${item.id}`}
                         type="number"
                         value={item.quantity}
-                        onChange={(e) => handleChange('quantity', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                        onBlur={(e) => { if (e.target.value === '' || isNaN(item.quantity)) handleChange('quantity', 1); }}
+                        onChange={(e) => handleNumberChange('quantity', e.target.value)}
+                        onBlur={() => { if (item.quantity === '' || !isFinite(item.quantity) || item.quantity <= 0) handleChange('quantity', 1); }}
                         onFocus={(e) => e.target.select()}
                         min="0.01"
                         step="0.5"
@@ -252,8 +269,8 @@ const LineItem = memo(function LineItem({ item, sectionId, subsectionName }) {
                         id={`days-${item.id}`}
                         type="number"
                         value={item.days}
-                        onChange={(e) => handleChange('days', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                        onBlur={(e) => { if (e.target.value === '' || isNaN(item.days)) handleChange('days', 1); }}
+                        onChange={(e) => handleNumberChange('days', e.target.value)}
+                        onBlur={() => { if (item.days === '' || !isFinite(item.days) || item.days <= 0) handleChange('days', 1); }}
                         onFocus={(e) => e.target.select()}
                         min="0.5"
                         step="0.5"
@@ -276,8 +293,8 @@ const LineItem = memo(function LineItem({ item, sectionId, subsectionName }) {
                             id={`cost-${item.id}`}
                             type="number"
                             value={item.cost}
-                            onChange={(e) => handleChange('cost', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                            onBlur={(e) => { if (e.target.value === '' || isNaN(item.cost)) handleChange('cost', 0); }}
+                            onChange={(e) => handleNumberChange('cost', e.target.value)}
+                            onBlur={() => { if (item.cost === '' || !isFinite(item.cost)) handleChange('cost', 0); }}
                             onFocus={(e) => e.target.select()}
                             min="0"
                             className="input-sm w-full pl-6 text-left text-sm text-gray-500"
@@ -299,8 +316,8 @@ const LineItem = memo(function LineItem({ item, sectionId, subsectionName }) {
                             id={`charge-${item.id}`}
                             type="number"
                             value={item.charge}
-                            onChange={(e) => handleChange('charge', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                            onBlur={(e) => { if (e.target.value === '' || isNaN(item.charge)) handleChange('charge', 0); }}
+                            onChange={(e) => handleNumberChange('charge', e.target.value)}
+                            onBlur={() => { if (item.charge === '' || !isFinite(item.charge)) handleChange('charge', 0); }}
                             onFocus={(e) => e.target.select()}
                             min="0"
                             className="input-sm w-full pl-5 sm:pl-6 text-left text-sm"

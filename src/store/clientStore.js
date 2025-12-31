@@ -66,37 +66,49 @@ function saveSyncQueue(queue) {
 // Using secure generateId from utils/generateId.js
 
 // Migrate legacy contact fields to contacts[] array
+// Includes error handling to prevent data corruption on migration failure
 function migrateLegacyContacts(clients) {
+    if (!clients || !Array.isArray(clients)) {
+        logger.warn('migrateLegacyContacts: Invalid clients array');
+        return { clients: clients || [], migratedCount: 0 };
+    }
+
     let migratedCount = 0;
     const migratedClients = clients.map(client => {
-        // Skip if already has contacts
-        if (client.contacts && client.contacts.length > 0) {
+        try {
+            // Skip if already has contacts
+            if (client.contacts && client.contacts.length > 0) {
+                return client;
+            }
+
+            // Check for legacy contact data
+            const hasLegacyContact = client.contact || client.email || client.phone;
+            if (!hasLegacyContact) {
+                return client;
+            }
+
+            // Create new contact from legacy fields
+            const newContact = {
+                id: generateId(),
+                name: client.contact || 'Primary Contact',
+                email: client.email || '',
+                phone: client.phone || '',
+                role: '',
+                isPrimary: true,
+                createdAt: new Date().toISOString(),
+            };
+
+            migratedCount++;
+            return {
+                ...client,
+                contacts: [newContact],
+                _contactsMigrated: true, // Flag to track migration
+            };
+        } catch (e) {
+            // If migration fails for this client, return unmigrated to preserve data
+            logger.error(`Failed to migrate client ${client.id || 'unknown'}:`, e);
             return client;
         }
-
-        // Check for legacy contact data
-        const hasLegacyContact = client.contact || client.email || client.phone;
-        if (!hasLegacyContact) {
-            return client;
-        }
-
-        // Create new contact from legacy fields
-        const newContact = {
-            id: generateId(),
-            name: client.contact || 'Primary Contact',
-            email: client.email || '',
-            phone: client.phone || '',
-            role: '',
-            isPrimary: true,
-            createdAt: new Date().toISOString(),
-        };
-
-        migratedCount++;
-        return {
-            ...client,
-            contacts: [newContact],
-            _contactsMigrated: true, // Flag to track migration
-        };
     });
 
     if (migratedCount > 0) {

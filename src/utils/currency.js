@@ -65,17 +65,32 @@ export function convertCurrency(amount, fromCurrency, toCurrency, rates = {}) {
     if (fromCurrency === toCurrency) return amount;
     if (!amount || isNaN(amount)) return 0;
 
-    const fromRate = rates[fromCurrency] || FALLBACK_RATES[fromCurrency] || 1;
-    const toRate = rates[toCurrency] || FALLBACK_RATES[toCurrency] || 1;
+    // Get rates with fallbacks, explicitly guard against zero/invalid values
+    let fromRate = rates[fromCurrency] || FALLBACK_RATES[fromCurrency] || 1;
+    let toRate = rates[toCurrency] || FALLBACK_RATES[toCurrency] || 1;
+
+    // CRITICAL: Prevent division by zero - if rate is 0 or negative, use 1
+    if (fromRate <= 0 || !isFinite(fromRate)) {
+        logger.warn(`Invalid fromRate for ${fromCurrency}: ${fromRate}, using 1`);
+        fromRate = 1;
+    }
+    if (toRate <= 0 || !isFinite(toRate)) {
+        logger.warn(`Invalid toRate for ${toCurrency}: ${toRate}, using 1`);
+        toRate = 1;
+    }
 
     // Convert to USD first, then to target currency
     const usdAmount = amount / fromRate;
     const result = usdAmount * toRate;
 
-    // Ensure we never return NaN
+    // Ensure we never return NaN or Infinity
+    if (!isFinite(result)) {
+        logger.warn(`Currency conversion resulted in non-finite value: ${result}`);
+        return 0;
+    }
+
     // Round to 2 decimal places to avoid floating point precision issues
     // e.g., 99.99999999997 becomes 100.00
-    if (isNaN(result)) return 0;
     return Math.round(result * 100) / 100;
 }
 

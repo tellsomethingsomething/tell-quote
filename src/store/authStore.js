@@ -1052,17 +1052,28 @@ if (typeof window !== 'undefined') {
 
     // Auto-extend session on meaningful user activity (not just mouse move)
     let activityTimeout;
-    let lastExtension = Date.now();
+    let lastExtension = Date.now(); // Initialize to now to prevent immediate extension
     const MIN_EXTENSION_INTERVAL = 5 * 60 * 1000; // 5 minutes between extensions
 
     const extendOnActivity = () => {
         clearTimeout(activityTimeout);
+
+        // Check immediately if we're within the minimum interval - if so, skip scheduling
+        const now = Date.now();
+        const timeSinceLastExtension = now - lastExtension;
+        if (timeSinceLastExtension < MIN_EXTENSION_INTERVAL) {
+            // Too soon, don't schedule an extension
+            return;
+        }
+
         activityTimeout = setTimeout(async () => {
-            const now = Date.now();
-            // Only extend if enough time has passed and user is authenticated
-            if (useAuthStore.getState().isAuthenticated && (now - lastExtension) > MIN_EXTENSION_INTERVAL) {
+            // Re-check at execution time with fresh values to avoid stale closure issues
+            const execTime = Date.now();
+            const currentTimeSinceExtension = execTime - lastExtension;
+
+            if (useAuthStore.getState().isAuthenticated && currentTimeSinceExtension > MIN_EXTENSION_INTERVAL) {
                 await useAuthStore.getState().extendSession();
-                lastExtension = now;
+                lastExtension = execTime; // Update after successful extension
             }
         }, 60000); // Extend after 1 minute of activity
     };

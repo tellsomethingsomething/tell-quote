@@ -16,10 +16,17 @@ export function calculateLineTotal(item) {
 }
 
 // Calculate margin percentage
+// Returns null if margin is undefined (charge is 0 but cost is non-zero)
 export function calculateMargin(cost, charge) {
     const numCost = Number(cost) || 0;
     const numCharge = Number(charge) || 0;
-    if (numCharge === 0) return 0;
+
+    // If both are zero, margin is 0% (no profit, no loss)
+    if (numCharge === 0 && numCost === 0) return 0;
+
+    // If charge is 0 but cost is non-zero, margin is undefined (complete loss)
+    if (numCharge === 0) return null;
+
     return ((numCharge - numCost) / numCharge) * 100;
 }
 
@@ -31,14 +38,18 @@ export function calculateLineMargin(item) {
 }
 
 // Get margin color class based on percentage
+// Returns error color for null (undefined margin - complete loss)
 export function getMarginColor(margin) {
+    if (margin === null) return 'text-red-500'; // Error state: complete loss
     if (margin >= 30) return 'text-green-400';
     if (margin >= 20) return 'text-amber-400';
     return 'text-red-400';
 }
 
 // Get margin background class based on percentage
+// Returns error color for null (undefined margin - complete loss)
 export function getMarginBgColor(margin) {
+    if (margin === null) return 'bg-red-500/10'; // Error state: complete loss
     if (margin >= 30) return 'bg-green-400/10';
     if (margin >= 20) return 'bg-amber-400/10';
     return 'bg-red-400/10';

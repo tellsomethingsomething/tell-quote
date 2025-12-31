@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { useCallSheetStore, CALL_SHEET_STATUS, CALL_SHEET_STATUS_CONFIG, DEPARTMENTS } from '../store/callSheetStore';
 import { useCrewStore } from '../store/crewStore';
@@ -1799,6 +1799,13 @@ export default function CallSheetDetailPage({ callSheetId, onBack }) {
     const [enabledSections, setEnabledSections] = useState(getDefaultSections());
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
+    // Track if component is mounted to prevent memory leaks
+    const isMountedRef = useRef(true);
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => { isMountedRef.current = false; };
+    }, []);
+
     // Load call sheet
     useEffect(() => {
         const load = async () => {
@@ -1827,17 +1834,23 @@ export default function CallSheetDetailPage({ callSheetId, onBack }) {
         handleUpdate({ enabledSections: newSections });
     };
 
-    // Debounced save
+    // Debounced save with unmount protection
     const saveChanges = useCallback(async (changes) => {
         if (Object.keys(changes).length === 0) return;
+        if (!isMountedRef.current) return; // Guard against unmount
+
         setSaving(true);
         try {
             await updateCallSheet(id, changes);
-            setPendingChanges({});
+            if (isMountedRef.current) {
+                setPendingChanges({});
+            }
         } catch (e) {
             logger.error('Failed to save:', e);
         } finally {
-            setSaving(false);
+            if (isMountedRef.current) {
+                setSaving(false);
+            }
         }
     }, [id, updateCallSheet]);
 

@@ -6,6 +6,7 @@ import { FALLBACK_RATES } from '../data/currencies';
 import { REGIONS } from '../data/currencies';
 import { saveQuote, loadQuote, generateQuoteNumber } from '../utils/storage';
 import { fetchLiveRates, convertCurrency } from '../utils/currency';
+import { quoteToDb, quoteFromDb } from '../utils/dbFieldMapping';
 import { useRateCardStore } from './rateCardStore';
 import { useClientStore } from './clientStore';
 import { useSettingsStore } from './settingsStore';
@@ -16,6 +17,7 @@ import logger from '../utils/logger';
 // Auto-save interval (30 seconds)
 let autoSaveInterval = null;
 let lastSavedQuote = null;
+let isSyncing = false; // Mutex flag to prevent concurrent auto-saves
 
 // Save quote to localStorage AND auto-save to library/DB if previously saved
 function saveQuoteWithLibrarySync(quote) {
@@ -43,25 +45,8 @@ async function syncQuoteToSupabase(quote) {
     if (quoteStr === lastSavedQuote) return { synced: false, reason: 'no changes' };
 
     try {
-        const dbQuote = {
-            quote_number: quote.quoteNumber,
-            quote_date: quote.quoteDate,
-            validity_days: quote.validityDays,
-            status: quote.status || 'draft',
-            currency: quote.currency,
-            region: quote.region,
-            prepared_by: quote.preparedBy,
-            client: quote.client,
-            project: {
-                ...quote.project,
-                // Store section order and names in project JSONB to avoid schema changes
-                _sectionOrder: quote.sectionOrder,
-                _sectionNames: quote.sectionNames,
-            },
-            sections: quote.sections,
-            fees: quote.fees,
-            proposal: quote.proposal,
-        };
+        // Use centralized field mapping for consistent snake_case conversion
+        const dbQuote = quoteToDb(quote);
 
         let savedId = quote.id;
         let saveSucceeded = false;
@@ -154,9 +139,20 @@ async function syncQuoteToSupabase(quote) {
 function startAutoSave() {
     if (autoSaveInterval) return;
 
-    autoSaveInterval = setInterval(() => {
-        const quote = useQuoteStore.getState().quote;
-        syncQuoteToSupabase(quote);
+    autoSaveInterval = setInterval(async () => {
+        // Skip if already syncing (prevents race condition)
+        if (isSyncing) {
+            logger.debug('Auto-save skipped: sync already in progress');
+            return;
+        }
+
+        try {
+            isSyncing = true;
+            const quote = useQuoteStore.getState().quote;
+            await syncQuoteToSupabase(quote);
+        } finally {
+            isSyncing = false;
+        }
     }, 30000); // 30 seconds
 
     // Clean up on page unload to prevent memory leaks
@@ -325,8 +321,24 @@ export const useQuoteStore = create(
 
         // Manual sync to Supabase (for Save button)
         syncToSupabase: async () => {
-            const quote = useQuoteStore.getState().quote;
-            return syncQuoteToSupabase(quote);
+            // Wait if auto-save is in progress, then proceed
+            if (isSyncing) {
+                logger.debug('Manual save waiting for auto-save to complete');
+                // Wait for current sync to finish (max 5 seconds)
+                let waited = 0;
+                while (isSyncing && waited < 5000) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    waited += 100;
+                }
+            }
+
+            try {
+                isSyncing = true;
+                const quote = useQuoteStore.getState().quote;
+                return await syncQuoteToSupabase(quote);
+            } finally {
+                isSyncing = false;
+            }
         },
 
         // Reset to new quote
@@ -690,12 +702,15 @@ export const useQuoteStore = create(
                 const sectionData = { ...sections[sectionId] };
                 const subsections = { ...sectionData.subsections };
 
-                // Find the old item for logging
-                const oldItem = subsections[subsection].find(item => item.id === itemId);
+                // Find the old item for logging (with null check)
+                const oldItem = subsections[subsection]?.find(item => item.id === itemId);
 
-                subsections[subsection] = subsections[subsection].map(item =>
-                    item.id === itemId ? { ...item, ...updates } : item
-                );
+                // Safely map items with null check
+                if (subsections[subsection]) {
+                    subsections[subsection] = subsections[subsection].map(item =>
+                        item.id === itemId ? { ...item, ...updates } : item
+                    );
+                }
 
                 sectionData.subsections = subsections;
                 sections[sectionId] = sectionData;
@@ -732,10 +747,13 @@ export const useQuoteStore = create(
                 const sectionData = { ...sections[sectionId] };
                 const subsections = { ...sectionData.subsections };
 
-                // Find the item for logging before deleting
-                const deletedItem = subsections[subsection].find(item => item.id === itemId);
+                // Find the item for logging before deleting (with null check)
+                const deletedItem = subsections[subsection]?.find(item => item.id === itemId);
 
-                subsections[subsection] = subsections[subsection].filter(item => item.id !== itemId);
+                // Safely filter items with null check
+                if (subsections[subsection]) {
+                    subsections[subsection] = subsections[subsection].filter(item => item.id !== itemId);
+                }
 
                 sectionData.subsections = subsections;
                 sections[sectionId] = sectionData;

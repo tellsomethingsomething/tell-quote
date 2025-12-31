@@ -221,20 +221,30 @@ export const useInvoiceStore = create(
             const lineItems = [];
 
             // Extract line items from quote sections
+            // Quote structure: sections[sectionId].subsections[subsectionName] = array of items
             if (quote.sections) {
-                Object.entries(quote.sections).forEach(([sectionName, section]) => {
+                Object.entries(quote.sections).forEach(([sectionId, section]) => {
                     if (section.subsections) {
-                        Object.entries(section.subsections).forEach(([subsectionName, subsection]) => {
-                            if (subsection.items) {
-                                subsection.items.forEach(item => {
-                                    if (item.description && (item.charge > 0 || item.total > 0)) {
+                        Object.entries(section.subsections).forEach(([subsectionName, items]) => {
+                            // Subsections are arrays of items directly (not objects with .items)
+                            if (Array.isArray(items)) {
+                                items.forEach(item => {
+                                    // Quote line items use 'name' field, not 'description'
+                                    const itemName = item.name || item.description || '';
+                                    const charge = Number(item.charge) || 0;
+                                    const cost = Number(item.cost) || 0;
+                                    const quantity = Number(item.quantity) || 1;
+                                    const days = Number(item.days) || 1;
+                                    const calculatedTotal = charge * quantity * days;
+
+                                    if (itemName && (charge > 0 || calculatedTotal > 0)) {
                                         lineItems.push({
-                                            description: item.description,
-                                            quantity: item.quantity || 1,
-                                            days: item.days || 1,
-                                            rate: item.charge || item.cost || 0,
-                                            total: item.total || (item.quantity * item.days * (item.charge || item.cost || 0)),
-                                            section: sectionName,
+                                            description: itemName,
+                                            quantity: quantity,
+                                            days: days,
+                                            rate: charge || cost,
+                                            total: calculatedTotal,
+                                            section: section.name || sectionId,
                                             subsection: subsectionName,
                                         });
                                     }
@@ -255,13 +265,30 @@ export const useInvoiceStore = create(
             const dueDate = new Date();
             dueDate.setDate(dueDate.getDate() + 30);
 
+            // Build client address from separate fields if available
+            let clientAddress = '';
+            if (client) {
+                const addressParts = [
+                    client.street,
+                    client.city,
+                    client.state,
+                    client.zip,
+                    client.country
+                ].filter(Boolean);
+                clientAddress = addressParts.join(', ');
+            }
+            // Fall back to quote's clientAddress if no client or address built
+            if (!clientAddress && quote.clientAddress) {
+                clientAddress = quote.clientAddress;
+            }
+
             const invoiceData = {
                 quoteId: quote.id,
-                quoteNumber: quote.quote_number || quote.quoteNumber || '',
-                clientId: quote.clientId || client?.id,
-                clientName: client?.company || quote.clientName || '',
-                clientEmail: client?.email || quote.clientEmail || '',
-                clientAddress: client?.address || quote.clientAddress || '',
+                quoteNumber: quote.quoteNumber || '',
+                clientId: quote.clientId || quote.client?.id || client?.id,
+                clientName: client?.company || quote.client?.company || quote.clientName || '',
+                clientEmail: client?.email || quote.client?.email || quote.clientEmail || '',
+                clientAddress: clientAddress,
                 projectId: quote.projectId || null,
                 currency: quote.currency || 'USD',
                 lineItems,
@@ -327,24 +354,30 @@ export const useInvoiceStore = create(
                 recordedAt: new Date().toISOString(),
             };
 
-            // Calculate new paid amount
+            // Calculate new paid amount with floating point precision fix
             const payments = [...(invoice.payments || []), payment];
             const paidAmount = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+            // Round to cents to avoid floating point precision issues
+            // (e.g., 99.99 + 0.01 might equal 99.99999999999999 instead of 100.00)
+            const roundedPaid = Math.round(paidAmount * 100) / 100;
+            const roundedTotal = Math.round((invoice.total || 0) * 100) / 100;
+            const EPSILON = 0.005; // Half a cent tolerance
 
             // Determine new status based on payment
             let status = invoice.status;
             let paidDate = invoice.paidDate;
 
-            if (paidAmount >= invoice.total) {
+            if (roundedPaid >= roundedTotal - EPSILON) {
                 status = 'paid';
                 paidDate = payment.date;
-            } else if (paidAmount > 0) {
+            } else if (roundedPaid > EPSILON) {
                 status = 'partial';
             }
 
             const updates = {
                 payments,
-                paidAmount,
+                paidAmount: roundedPaid, // Use rounded value for consistency
                 status,
                 paidDate,
             };
