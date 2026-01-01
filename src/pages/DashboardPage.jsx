@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { shallow } from 'zustand/shallow';
 import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSettingsStore } from '../store/settingsStore';
@@ -14,14 +15,15 @@ import { formatCurrency, convertCurrency } from '../utils/currency';
 import CRMMetricsGrid from '../components/dashboard/CRMMetricsWidgets';
 import OnboardingChecklist from '../components/onboarding/OnboardingChecklist';
 import TrialBanner from '../components/onboarding/TrialBanner';
+import { getStatusColors, getStatusLabel } from '../constants/statusColors';
 
-// Status colors aligned with brand palette for visual harmony
+// Status colors derived from centralized constants
 const STATUSES = [
-    { id: 'draft', label: 'Drafts', color: '#9CA3AF', bgColor: 'bg-gray-400/10' },
-    { id: 'sent', label: 'Sent', color: '#8B5CF6', bgColor: 'bg-[#8B5CF6]/10' },
-    { id: 'won', label: 'Won', color: '#22c55e', bgColor: 'bg-green-500/10' },
-    { id: 'dead', label: 'Dead', color: '#F87171', bgColor: 'bg-red-400/10' },
-];
+    { id: 'draft', label: 'Drafts', ...getStatusColors('draft') },
+    { id: 'sent', label: 'Sent', ...getStatusColors('sent') },
+    { id: 'won', label: 'Won', ...getStatusColors('won') },
+    { id: 'dead', label: 'Dead', ...getStatusColors('dead') },
+].map(s => ({ ...s, color: s.hex, bgColor: s.bg }));
 
 const MONTHS = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -56,13 +58,35 @@ function isFollowUpOverdue(nextFollowUpDate) {
 }
 
 export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportunities, onGoToKnowledge, onGoToSettings }) {
-    const { savedQuotes, clients, updateQuoteStatus } = useClientStore();
-    const { rates, ratesUpdated, refreshRates, ratesLoading } = useQuoteStore();
-    const { settings, setDashboardPreferences } = useSettingsStore();
-    const { opportunities } = useOpportunityStore();
-    const { getOverdueFollowUps, activities } = useActivityStore();
-    const { fragments, learnings, getStats, getPendingReview } = useKnowledgeStore();
-    const { user } = useAuthStore();
+    // Optimized Zustand selectors - only subscribe to needed state
+    const { savedQuotes, clients } = useClientStore(
+        state => ({ savedQuotes: state.savedQuotes, clients: state.clients }),
+        shallow
+    );
+    const updateQuoteStatus = useClientStore(state => state.updateQuoteStatus);
+
+    const { rates, ratesUpdated, ratesLoading } = useQuoteStore(
+        state => ({ rates: state.rates, ratesUpdated: state.ratesUpdated, ratesLoading: state.ratesLoading }),
+        shallow
+    );
+    const refreshRates = useQuoteStore(state => state.refreshRates);
+
+    const settings = useSettingsStore(state => state.settings);
+    const setDashboardPreferences = useSettingsStore(state => state.setDashboardPreferences);
+
+    const opportunities = useOpportunityStore(state => state.opportunities);
+
+    const activities = useActivityStore(state => state.activities);
+
+    const { fragments, learnings } = useKnowledgeStore(
+        state => ({
+            fragments: state.fragments,
+            learnings: state.learnings
+        }),
+        shallow
+    );
+
+    const user = useAuthStore(state => state.user);
     const { organizationId } = useOrgContext();
     const [selectedMonth, setSelectedMonth] = useState('all');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -370,10 +394,16 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
             })
             .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
 
-        // Get overdue follow-ups from activity store
-        const overdueFollowUps = getOverdueFollowUps().map(activity => {
+        // Calculate overdue follow-ups inline (avoid function reference in deps)
+        const overdueActivities = activities.filter(a =>
+            !a.isCompleted &&
+            a.dueDate &&
+            new Date(a.dueDate) < now
+        ).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+        const overdueFollowUps = overdueActivities.map(activity => {
             const client = clients.find(c => c.id === activity.clientId);
-            const daysOverdue = Math.floor((now - new Date(activity.followUpDate)) / (1000 * 60 * 60 * 24));
+            const daysOverdue = Math.floor((now - new Date(activity.dueDate)) / (1000 * 60 * 60 * 24));
             return {
                 ...activity,
                 clientName: client?.company || 'Unknown Client',
@@ -386,12 +416,38 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
             overdueFollowUps,
             totalCount: expiringQuotes.length + overdueFollowUps.length,
         };
-    }, [savedQuotes, clients, getOverdueFollowUps]);
+    }, [savedQuotes, clients, activities]);
 
     // Knowledge Base Stats
     const knowledgeStats = useMemo(() => {
-        const stats = getStats();
-        const pending = getPendingReview();
+        // Calculate stats inline (avoid function references in deps)
+        const verifiedFragments = fragments.filter(f => f.verified);
+        const byType = {};
+        const byRegion = {};
+
+        fragments.forEach(f => {
+            byType[f.type] = (byType[f.type] || 0) + 1;
+            if (f.region) {
+                byRegion[f.region] = (byRegion[f.region] || 0) + 1;
+            }
+        });
+
+        const stats = {
+            totalFragments: fragments.length,
+            verifiedFragments: verifiedFragments.length,
+            pendingVerification: fragments.length - verifiedFragments.length,
+            totalLearnings: learnings.length,
+            verifiedLearnings: learnings.filter(l => l.verified).length,
+            byType,
+            byRegion,
+            avgConfidence: verifiedFragments.length > 0
+                ? verifiedFragments.reduce((sum, f) => sum + f.confidence, 0) / verifiedFragments.length
+                : 0,
+        };
+
+        // Calculate pending review inline
+        const pendingFragments = fragments.filter(f => !f.verified || f.needsReview);
+        const pendingLearnings = learnings.filter(l => !l.verified);
 
         // Count by type
         const typeLabels = {
@@ -414,12 +470,12 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
 
         return {
             ...stats,
-            pendingCount: pending.totalCount,
-            pendingFragments: pending.fragments.length,
-            pendingLearnings: pending.learnings.length,
+            pendingCount: pendingFragments.length + pendingLearnings.length,
+            pendingFragments: pendingFragments.length,
+            pendingLearnings: pendingLearnings.length,
             topTypes,
         };
-    }, [fragments, learnings, getStats, getPendingReview]);
+    }, [fragments, learnings]);
 
     // Get client name
     const getClientName = (quote) => {
