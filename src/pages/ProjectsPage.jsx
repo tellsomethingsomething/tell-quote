@@ -6,6 +6,7 @@ import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
 import { useDisplayCurrency } from '../hooks/useDisplayCurrency';
 import { useQuoteStore } from '../store/quoteStore';
 import ProjectTimelineView from '../components/projects/ProjectTimelineView';
+import { getStatusClasses, getStatusLabel } from '../constants/statusColors';
 
 // Format date helper
 const formatDate = (dateStr) => {
@@ -23,20 +24,11 @@ const formatDateShort = (dateStr) => {
 
 // Status badge component
 function StatusBadge({ status }) {
-    const statusInfo = PROJECT_STATUSES[status] || { label: status, color: 'gray' };
-
-    const colorClasses = {
-        gray: 'text-gray-400 bg-gray-500/10 border-gray-500/20',
-        blue: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-        yellow: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
-        green: 'text-green-400 bg-green-500/10 border-green-500/20',
-        purple: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
-        red: 'text-red-400 bg-red-500/10 border-red-500/20',
-    };
+    const statusInfo = PROJECT_STATUSES[status] || { label: status };
 
     return (
-        <span className={`text-xs px-2 py-0.5 rounded border ${colorClasses[statusInfo.color] || colorClasses.gray}`}>
-            {statusInfo.label}
+        <span className={getStatusClasses(status, 'pill')}>
+            {statusInfo.label || getStatusLabel(status)}
         </span>
     );
 }

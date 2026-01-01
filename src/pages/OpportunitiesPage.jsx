@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
+import { shallow } from 'zustand/shallow';
 import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -336,16 +337,22 @@ function OpportunityCard({ opportunity, onSelect, onDelete, onUpdateNotes, isExp
 }
 
 export default function OpportunitiesPage({ onSelectOpportunity }) {
-    const {
-        opportunities,
-        addOpportunity,
-        deleteOpportunity,
-        updateOpportunity,
-        updateStage,
-    } = useOpportunityStore();
-    const { clients } = useClientStore();
-    const { settings, setOpsPreferences } = useSettingsStore();
-    const { rates } = useQuoteStore();
+    // Optimized Zustand selectors - only subscribe to needed state
+    const opportunities = useOpportunityStore(state => state.opportunities);
+    const { addOpportunity, deleteOpportunity, updateOpportunity, updateStage } = useOpportunityStore(
+        state => ({
+            addOpportunity: state.addOpportunity,
+            deleteOpportunity: state.deleteOpportunity,
+            updateOpportunity: state.updateOpportunity,
+            updateStage: state.updateStage,
+        }),
+        shallow
+    );
+
+    const clients = useClientStore(state => state.clients);
+    const settings = useSettingsStore(state => state.settings);
+    const setOpsPreferences = useSettingsStore(state => state.setOpsPreferences);
+    const rates = useQuoteStore(state => state.rates);
     const users = settings.users || [];
 
     // Get ops preferences from settings (synced via Supabase)

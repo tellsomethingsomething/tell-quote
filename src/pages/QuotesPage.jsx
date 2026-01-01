@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { shallow } from 'zustand/shallow';
 import { useClientStore } from '../store/clientStore';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { useQuoteStore } from '../store/quoteStore';
@@ -7,6 +8,7 @@ import { generateQuoteNumber } from '../utils/storage';
 import { useFocusTrap, useEscapeKey } from '../hooks/useFocusTrap';
 import { useDisplayCurrency } from '../hooks/useDisplayCurrency';
 import { useSettingsStore } from '../store/settingsStore';
+import { getStatusClasses } from '../constants/statusColors';
 
 const STATUSES = [
     { id: 'all', label: 'All Quotes', color: 'gray' },
@@ -17,9 +19,15 @@ const STATUSES = [
 ];
 
 export default function QuotesPage({ onEditQuote, onNewQuote }) {
-    const { savedQuotes, updateQuoteStatus, deleteQuote } = useClientStore();
-    const { settings, setQuotesPreferences } = useSettingsStore();
-    const { rates } = useQuoteStore();
+    // Optimized Zustand selectors - only subscribe to needed state
+    const savedQuotes = useClientStore(state => state.savedQuotes);
+    const { updateQuoteStatus, deleteQuote } = useClientStore(
+        state => ({ updateQuoteStatus: state.updateQuoteStatus, deleteQuote: state.deleteQuote }),
+        shallow
+    );
+    const settings = useSettingsStore(state => state.settings);
+    const setQuotesPreferences = useSettingsStore(state => state.setQuotesPreferences);
+    const rates = useQuoteStore(state => state.rates);
 
     // Use global display currency from settings
     const { currency: displayCurrency } = useDisplayCurrency();
@@ -175,16 +183,6 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
     const SortIcon = ({ field }) => {
         if (sortBy !== field) return <span className="text-gray-600 ml-1">↕</span>;
         return <span className="text-accent-primary ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>;
-    };
-
-    // Get status color
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'sent': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-            case 'won': return 'bg-green-500/20 text-green-400 border-green-500/30';
-            case 'dead': return 'bg-red-500/20 text-red-400 border-red-500/30';
-            default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-        }
     };
 
     // Get prepared by name
@@ -463,7 +461,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                             handleStatusChange(quote.id, e.target.value);
                                         }}
                                         onClick={(e) => e.stopPropagation()}
-                                        className={`text-xs px-2 py-1 min-h-[32px] rounded border ${getStatusColor(quote.status)}`}
+                                        className={`min-h-[32px] ${getStatusClasses(quote.status || 'draft')}`}
                                         disabled={quote.isLocked}
                                     >
                                         <option value="draft">Draft</option>
@@ -639,7 +637,7 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                                             <select
                                                 value={quote.status || 'draft'}
                                                 onChange={(e) => handleStatusChange(quote.id, e.target.value)}
-                                                className={`text-xs px-2 py-1 min-h-[36px] rounded border ${getStatusColor(quote.status)}`}
+                                                className={`min-h-[36px] ${getStatusClasses(quote.status || 'draft')}`}
                                                 disabled={quote.isLocked}
                                             >
                                                 <option value="draft">Draft</option>

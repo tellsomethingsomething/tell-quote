@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import {
     TrendingUp, TrendingDown, Target, Clock, Users,
     Phone, Calendar, Mail, FileText, Activity,
@@ -11,7 +11,7 @@ import { useClientStore } from '../../store/clientStore';
 import { formatCurrency, convertCurrency } from '../../utils/currency';
 
 // Win Rate Widget
-export function WinRateWidget({ dashboardCurrency, rates, timeRange = 'all' }) {
+export const WinRateWidget = memo(function WinRateWidget({ dashboardCurrency, rates, timeRange = 'all' }) {
     const { opportunities } = useOpportunityStore();
     const { savedQuotes } = useClientStore();
 
@@ -91,10 +91,10 @@ export function WinRateWidget({ dashboardCurrency, rates, timeRange = 'all' }) {
             </div>
         </div>
     );
-}
+});
 
 // Sales Velocity Widget
-export function SalesVelocityWidget({ dashboardCurrency, rates }) {
+export const SalesVelocityWidget = memo(function SalesVelocityWidget({ dashboardCurrency, rates }) {
     const { opportunities } = useOpportunityStore();
     const { savedQuotes } = useClientStore();
 
@@ -201,10 +201,10 @@ export function SalesVelocityWidget({ dashboardCurrency, rates }) {
             </div>
         </div>
     );
-}
+});
 
 // Activity Summary Widget
-export function ActivitySummaryWidget() {
+export const ActivitySummaryWidget = memo(function ActivitySummaryWidget() {
     const { activities } = useActivityStore();
 
     const stats = useMemo(() => {
@@ -283,10 +283,10 @@ export function ActivitySummaryWidget() {
             </div>
         </div>
     );
-}
+});
 
 // Contact Coverage Widget
-export function ContactCoverageWidget() {
+export const ContactCoverageWidget = memo(function ContactCoverageWidget() {
     const { contacts } = useContactStore();
     const { clients } = useClientStore();
 
@@ -369,10 +369,10 @@ export function ContactCoverageWidget() {
             </div>
         </div>
     );
-}
+});
 
 // Pipeline Health Widget
-export function PipelineHealthWidget({ dashboardCurrency, rates }) {
+export const PipelineHealthWidget = memo(function PipelineHealthWidget({ dashboardCurrency, rates }) {
     const { opportunities } = useOpportunityStore();
 
     const health = useMemo(() => {
@@ -489,10 +489,10 @@ export function PipelineHealthWidget({ dashboardCurrency, rates }) {
             </div>
         </div>
     );
-}
+});
 
 // Combined CRM Metrics Grid
-export default function CRMMetricsGrid({ dashboardCurrency, rates }) {
+const CRMMetricsGrid = memo(function CRMMetricsGrid({ dashboardCurrency, rates }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <WinRateWidget dashboardCurrency={dashboardCurrency} rates={rates} />
@@ -501,4 +501,6 @@ export default function CRMMetricsGrid({ dashboardCurrency, rates }) {
             <PipelineHealthWidget dashboardCurrency={dashboardCurrency} rates={rates} />
         </div>
     );
-}
+});
+
+export default CRMMetricsGrid;

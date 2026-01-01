@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { shallow } from 'zustand/shallow';
 import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSettingsStore } from '../store/settingsStore';
@@ -12,9 +13,22 @@ import CSVImportModal from '../components/common/CSVImportModal';
 import { useToast } from '../components/common/Toast';
 
 export default function ClientsPage({ onSelectClient }) {
-    const { clients, savedQuotes, getClientQuotes, getClientHealth, addClient, deleteClient } = useClientStore();
-    const { rates } = useQuoteStore();
-    const { settings } = useSettingsStore();
+    // Optimized Zustand selectors - only subscribe to needed state
+    const { clients, savedQuotes } = useClientStore(
+        state => ({ clients: state.clients, savedQuotes: state.savedQuotes }),
+        shallow
+    );
+    const { getClientQuotes, getClientHealth, addClient, deleteClient } = useClientStore(
+        state => ({
+            getClientQuotes: state.getClientQuotes,
+            getClientHealth: state.getClientHealth,
+            addClient: state.addClient,
+            deleteClient: state.deleteClient
+        }),
+        shallow
+    );
+    const rates = useQuoteStore(state => state.rates);
+    const settings = useSettingsStore(state => state.settings);
     const activities = useActivityStore(state => state.activities);
     const projectTypes = settings.projectTypes || [];
     const toast = useToast();

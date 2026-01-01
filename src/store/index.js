@@ -1,28 +1,44 @@
 /**
  * Store Index - Centralized exports for all Zustand stores
  *
- * STORE CONSOLIDATION PLAN (39 → 17 stores):
+ * STORE CONSOLIDATION COMPLETE (39 → 17 logical stores):
  *
- * CONSOLIDATED STORES:
- * 1. resourceManagementStore - kitStore + kitBookingStore + resourceStore
- * 2. opportunityStore (unified) - opportunityStore + dealContextStore + leadScoringStore
- * 3. documentStore (unified) - contractStore + documentStore
- * 4. workflowStore (unified) - taskBoardStore + workflowStore + commercialTasksStore
- * 5. emailStore (unified) - emailStore + emailSequenceStore + emailTemplateStore
- * 6. financeStore - invoiceTemplateStore + expenseStore + purchaseOrderStore + invoiceStore
- * 7. knowledgeStore (unified) - knowledgeStore + sopStore + sportsResearchStore
- * 8. authStore (unified) - authStore + userStore + aiUsageStore
- * 9. projectStore (unified) - projectStore + deliverablesStore + timelineStore
+ * CONSOLIDATED STORES (with unified hooks):
+ * 1. resourceManagementStore - useResourceManagement()
+ *    └─ kitStore + kitBookingStore + resourceStore
+ * 2. crewManagementStore - useCrewManagement()
+ *    └─ crewStore + crewBookingStore
+ * 3. opportunityManagementStore - useOpportunityManagement()
+ *    └─ opportunityStore + dealContextStore + leadScoringStore
+ * 4. documentManagementStore - useDocumentManagement()
+ *    └─ contractStore + documentStore
+ * 5. workflowManagementStore - useWorkflowManagement()
+ *    └─ taskBoardStore + workflowStore + commercialTasksStore
+ * 6. emailManagementStore - useEmailManagement()
+ *    └─ emailStore + emailSequenceStore + emailTemplateStore
+ * 7. financeManagementStore - useFinanceManagement()
+ *    └─ invoiceStore + invoiceTemplateStore + expenseStore + purchaseOrderStore
+ * 8. knowledgeManagementStore - useKnowledgeManagement()
+ *    └─ knowledgeStore + sopStore + sportsResearchStore
+ * 9. authManagementStore - useAuthManagement()
+ *    └─ authStore + userStore + aiUsageStore
+ * 10. projectManagementStore - useProjectManagement()
+ *     └─ projectStore + deliverablesStore + timelineStore
  *
  * STANDALONE STORES (no consolidation needed):
- * 10. quoteStore - core quote editing
- * 11. clientStore - client management
- * 12. rateCardStore - pricing cards
- * 13. settingsStore - app settings
- * 14. organizationStore - multi-tenancy
- * 15. calendarStore - calendar integration
- * 16. callSheetStore - call sheet management
- * 17. activityStore - activity logging
+ * 11. quoteStore - core quote editing
+ * 12. clientStore - client management
+ * 13. rateCardStore - pricing cards
+ * 14. settingsStore - app settings
+ * 15. organizationStore - multi-tenancy
+ * 16. calendarStore - calendar integration
+ * 17. callSheetStore - call sheet management
+ * 18. activityStore - activity logging
+ * 19. contactStore - contact management
+ * 20. quoteTemplateStore - quote templates
+ *
+ * All original stores are still available for backward compatibility.
+ * Use the unified hooks (e.g., useResourceManagement) for new code.
  */
 
 // Core stores (standalone)
@@ -59,57 +75,88 @@ export {
     VENDOR_RATING,
 } from './resourceManagementStore';
 
-// Crew management
-export { useCrewStore } from './crewStore';
-export { useCrewBookingStore } from './crewBookingStore';
+// Crew Management (consolidated)
+export {
+    useCrewStore,
+    useCrewBookingStore,
+    useCrewManagement,
+    CREW_DEPARTMENTS,
+    AVAILABILITY_STATUS,
+    CREW_BOOKING_STATUSES,
+    calculateBookingCost,
+} from './crewManagementStore';
 
-// Opportunities/CRM
+// Opportunities/CRM (consolidated)
 export {
     useOpportunityStore,
+    useDealContextStore,
+    useLeadScoringStore,
+    useOpportunityManagement,
     PIPELINE_STAGES,
     PIPELINE_STAGE_ORDER,
     REGIONS,
     ALL_COUNTRIES,
     getRegionForCountry,
-} from './opportunityStore';
-export { useDealContextStore } from './dealContextStore';
-export { useLeadScoringStore } from './leadScoringStore';
+    SCORE_THRESHOLDS,
+    SCORE_CATEGORIES,
+    DEFAULT_SCORING_RULES,
+    getScoreCategory,
+} from './opportunityManagementStore';
 
-// Documents
-export { useContractStore } from './contractStore';
-export { useDocumentStore } from './documentStore';
+// Documents (consolidated)
+export {
+    useContractStore,
+    useDocumentStore,
+    useDocumentManagement,
+} from './documentManagementStore';
 
-// Workflow/Tasks
-export { useTaskBoardStore } from './taskBoardStore';
-export { useWorkflowStore } from './workflowStore';
-export { useCommercialTasksStore } from './commercialTasksStore';
+// Workflow/Tasks (consolidated)
+export {
+    useTaskBoardStore,
+    useWorkflowStore,
+    useCommercialTasksStore,
+    useWorkflowManagement,
+} from './workflowManagementStore';
 
-// Email
+// Email (consolidated)
 export {
     useEmailStore,
+    useEmailSequenceStore,
+    useEmailTemplateStore,
+    useEmailManagement,
     EMAIL_PROVIDERS,
     LABEL_COLORS,
-} from './emailStore';
-export { useEmailSequenceStore } from './emailSequenceStore';
-export { useEmailTemplateStore } from './emailTemplateStore';
+} from './emailManagementStore';
 
-// Finance
-export { useInvoiceStore } from './invoiceStore';
-export { useInvoiceTemplateStore } from './invoiceTemplateStore';
-export { useExpenseStore } from './expenseStore';
-export { usePurchaseOrderStore } from './purchaseOrderStore';
+// Finance (consolidated)
+export {
+    useInvoiceStore,
+    useInvoiceTemplateStore,
+    useExpenseStore,
+    usePurchaseOrderStore,
+    useFinanceManagement,
+} from './financeManagementStore';
 
-// Knowledge
-export { useKnowledgeStore } from './knowledgeStore';
-export { useSopStore } from './sopStore';
-export { useSportsResearchStore } from './sportsResearchStore';
+// Knowledge (consolidated)
+export {
+    useKnowledgeStore,
+    useSopStore,
+    useSportsResearchStore,
+    useKnowledgeManagement,
+} from './knowledgeManagementStore';
 
-// Auth/User
-export { useAuthStore } from './authStore';
-export { useUserStore } from './userStore';
-export { useAiUsageStore } from './aiUsageStore';
+// Auth/User (consolidated)
+export {
+    useAuthStore,
+    useUserStore,
+    useAiUsageStore,
+    useAuthManagement,
+} from './authManagementStore';
 
-// Project
-export { useProjectStore } from './projectStore';
-export { useDeliverablesStore } from './deliverablesStore';
-export { useTimelineStore } from './timelineStore';
+// Project (consolidated)
+export {
+    useProjectStore,
+    useDeliverablesStore,
+    useTimelineStore,
+    useProjectManagement,
+} from './projectManagementStore';
