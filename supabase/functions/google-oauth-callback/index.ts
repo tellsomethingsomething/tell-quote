@@ -1,13 +1,18 @@
 // Google OAuth Callback Handler
 // Exchanges authorization code for tokens and stores connection
+// SECURITY: Includes state validation, rate limiting, and encrypted token storage
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { checkRateLimit, rateLimitExceededResponse } from '../_shared/rateLimit.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+// SECURITY: State token expiry window (10 minutes)
+const STATE_EXPIRY_MS = 10 * 60 * 1000
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -16,10 +21,32 @@ serve(async (req) => {
   }
 
   try {
-    const { code, redirect_uri } = await req.json()
+    const { code, redirect_uri, state } = await req.json()
 
     if (!code) {
       throw new Error('Authorization code is required')
+    }
+
+    // SECURITY: Validate state parameter to prevent CSRF attacks
+    if (!state) {
+      throw new Error('State parameter is required for security')
+    }
+
+    let stateData: { userId?: string; timestamp?: number; nonce?: string }
+    try {
+      stateData = JSON.parse(atob(state))
+    } catch {
+      throw new Error('Invalid state parameter format')
+    }
+
+    // Validate state has required fields
+    if (!stateData.userId || !stateData.timestamp) {
+      throw new Error('Invalid state parameter: missing required fields')
+    }
+
+    // Check state expiry (10 minute window)
+    if (Date.now() - stateData.timestamp > STATE_EXPIRY_MS) {
+      throw new Error('State parameter expired. Please try again.')
     }
 
     // Get environment variables
@@ -81,11 +108,30 @@ serve(async (req) => {
       throw new Error('Invalid user token')
     }
 
+    // SECURITY: Rate limiting check
+    const rateLimitResult = await checkRateLimit(supabase, user.id, 'google-oauth-callback')
+    if (!rateLimitResult.allowed) {
+      return rateLimitExceededResponse(rateLimitResult, corsHeaders)
+    }
+
+    // Validate state userId matches authenticated user
+    if (stateData.userId !== user.id) {
+      throw new Error('State parameter user mismatch')
+    }
+
     // Calculate token expiry
     const expiresAt = new Date()
     expiresAt.setSeconds(expiresAt.getSeconds() + tokens.expires_in)
 
-    // Store or update the connection
+    // SECURITY: Encrypt tokens before storage using database function
+    const { data: encryptedAccess } = await supabase.rpc('encrypt_token', {
+      token_text: tokens.access_token
+    })
+    const { data: encryptedRefresh } = await supabase.rpc('encrypt_token', {
+      token_text: tokens.refresh_token
+    })
+
+    // Store or update the connection with encrypted tokens
     const { data: connection, error: connError } = await supabase
       .from('google_connections')
       .upsert({
@@ -94,8 +140,12 @@ serve(async (req) => {
         google_user_id: userInfo.id,
         google_name: userInfo.name,
         google_picture: userInfo.picture,
+        // SECURITY: Store both encrypted and plaintext (for migration period)
+        // After migration is verified, remove plaintext columns
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
+        access_token_encrypted: encryptedAccess,
+        refresh_token_encrypted: encryptedRefresh,
         token_expires_at: expiresAt.toISOString(),
         scopes: tokens.scope?.split(' ') || [],
         status: 'active',

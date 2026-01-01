@@ -1,14 +1,26 @@
 /**
  * Client-side encryption utility for sensitive data in localStorage
  *
- * IMPORTANT SECURITY NOTES:
- * - This provides obfuscation, NOT military-grade encryption
- * - Client-side encryption can always be reverse-engineered
+ * SECURITY IMPLEMENTATION:
+ * - Uses AES-GCM (256-bit) for authenticated encryption
+ * - PBKDF2 with 100,000 iterations for key derivation
+ * - Random 12-byte IV per encryption operation
+ * - Device fingerprint + salt for key material
+ *
+ * IMPORTANT NOTES:
+ * - Client-side encryption is defense-in-depth, not absolute security
  * - Best practice: Move API keys to a backend proxy
- * - This is a defense-in-depth measure, not a complete solution
+ * - Keys are derived from device characteristics (semi-unique per device)
  */
 
 import logger from './logger';
+
+// Encryption configuration constants
+const PBKDF2_ITERATIONS = 100000;
+const AES_KEY_LENGTH = 256;
+const IV_LENGTH = 12; // 96 bits for GCM
+const SALT = 'productionos-v2'; // Static salt for key derivation
+const VERSION_PREFIX = 'v2:'; // Prefix to identify AES-GCM encrypted data
 
 // Generate a device-specific key based on browser fingerprint
 function getDeviceKey() {
@@ -25,32 +37,62 @@ function getDeviceKey() {
     return entropy;
 }
 
-// Simple XOR cipher with key derivation
-async function deriveKey(passphrase) {
+/**
+ * Derive an AES-GCM key using PBKDF2
+ * @param {string} passphrase - The passphrase to derive key from
+ * @returns {Promise<CryptoKey>} AES-GCM CryptoKey
+ */
+async function deriveAESKey(passphrase) {
+    const encoder = new TextEncoder();
+
+    // Import passphrase as key material
+    const keyMaterial = await window.crypto.subtle.importKey(
+        'raw',
+        encoder.encode(passphrase),
+        'PBKDF2',
+        false,
+        ['deriveBits', 'deriveKey']
+    );
+
+    // Derive AES-GCM key using PBKDF2
+    return await window.crypto.subtle.deriveKey(
+        {
+            name: 'PBKDF2',
+            salt: encoder.encode(SALT),
+            iterations: PBKDF2_ITERATIONS,
+            hash: 'SHA-256',
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: AES_KEY_LENGTH },
+        false,
+        ['encrypt', 'decrypt']
+    );
+}
+
+/**
+ * Legacy XOR key derivation for backward compatibility
+ * @deprecated Will be removed after migration period
+ */
+async function deriveLegacyKey(passphrase) {
     const encoder = new TextEncoder();
     const data = encoder.encode(passphrase);
 
-    // Use SubtleCrypto if available (more secure)
     if (window.crypto && window.crypto.subtle) {
         try {
             const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
             return Array.from(new Uint8Array(hashBuffer));
         } catch (e) {
-            logger.warn('SubtleCrypto unavailable, using fallback');
+            logger.warn('SubtleCrypto unavailable for legacy key');
         }
     }
 
     // Fallback: Simple hash function
-    return simplHash(passphrase);
-}
-
-function simplHash(str) {
     const hash = [];
     for (let i = 0; i < 32; i++) {
         let h = 0;
-        for (let j = 0; j < str.length; j++) {
-            h = ((h << 5) - h) + str.charCodeAt(j) + i;
-            h = h & h; // Convert to 32bit integer
+        for (let j = 0; j < passphrase.length; j++) {
+            h = ((h << 5) - h) + passphrase.charCodeAt(j) + i;
+            h = h & h;
         }
         hash.push(Math.abs(h) % 256);
     }
@@ -58,29 +100,63 @@ function simplHash(str) {
 }
 
 /**
- * Encrypt sensitive data for localStorage storage
+ * Legacy XOR decryption for backward compatibility
+ * @deprecated Will be removed after migration period
+ */
+async function decryptLegacyXOR(encryptedData) {
+    const deviceKey = getDeviceKey();
+    const keyBytes = await deriveLegacyKey(deviceKey);
+
+    const encrypted = new Uint8Array(
+        atob(encryptedData).split('').map(c => c.charCodeAt(0))
+    );
+
+    const decrypted = new Uint8Array(encrypted.length);
+    for (let i = 0; i < encrypted.length; i++) {
+        decrypted[i] = encrypted[i] ^ keyBytes[i % keyBytes.length];
+    }
+
+    const decoder = new TextDecoder();
+    return decoder.decode(decrypted);
+}
+
+/**
+ * Encrypt sensitive data for localStorage storage using AES-GCM
  * @param {string} data - Plain text data to encrypt
- * @returns {Promise<string>} Base64 encoded encrypted data
+ * @returns {Promise<string>} Base64 encoded encrypted data with version prefix
  */
 export async function encryptData(data) {
     if (!data) return '';
 
     try {
-        const deviceKey = getDeviceKey();
-        const keyBytes = await deriveKey(deviceKey);
-
-        // Convert data to bytes
-        const encoder = new TextEncoder();
-        const dataBytes = encoder.encode(data);
-
-        // XOR encryption
-        const encrypted = new Uint8Array(dataBytes.length);
-        for (let i = 0; i < dataBytes.length; i++) {
-            encrypted[i] = dataBytes[i] ^ keyBytes[i % keyBytes.length];
+        // Check for Web Crypto API support
+        if (!window.crypto || !window.crypto.subtle) {
+            logger.error('Web Crypto API not available');
+            return data;
         }
 
-        // Convert to base64
-        return btoa(String.fromCharCode(...encrypted));
+        const deviceKey = getDeviceKey();
+        const key = await deriveAESKey(deviceKey);
+
+        // Generate random IV
+        const iv = window.crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+
+        // Encrypt the data
+        const encoder = new TextEncoder();
+        const encryptedBuffer = await window.crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv },
+            key,
+            encoder.encode(data)
+        );
+
+        // Combine IV + ciphertext
+        const combined = new Uint8Array(iv.length + encryptedBuffer.byteLength);
+        combined.set(iv);
+        combined.set(new Uint8Array(encryptedBuffer), iv.length);
+
+        // Convert to base64 with version prefix
+        const base64 = btoa(String.fromCharCode(...combined));
+        return VERSION_PREFIX + base64;
     } catch (e) {
         logger.error('Encryption failed:', e);
         return data; // Fallback to unencrypted
@@ -89,6 +165,7 @@ export async function encryptData(data) {
 
 /**
  * Decrypt data from localStorage
+ * Supports both new AES-GCM format (v2:) and legacy XOR format
  * @param {string} encryptedData - Base64 encoded encrypted data
  * @returns {Promise<string>} Decrypted plain text
  */
@@ -96,27 +173,65 @@ export async function decryptData(encryptedData) {
     if (!encryptedData) return '';
 
     try {
-        const deviceKey = getDeviceKey();
-        const keyBytes = await deriveKey(deviceKey);
-
-        // Decode from base64
-        const encrypted = new Uint8Array(
-            atob(encryptedData).split('').map(c => c.charCodeAt(0))
-        );
-
-        // XOR decryption (same as encryption)
-        const decrypted = new Uint8Array(encrypted.length);
-        for (let i = 0; i < encrypted.length; i++) {
-            decrypted[i] = encrypted[i] ^ keyBytes[i % keyBytes.length];
+        // Check for Web Crypto API support
+        if (!window.crypto || !window.crypto.subtle) {
+            logger.error('Web Crypto API not available');
+            return encryptedData;
         }
 
-        // Convert back to string
-        const decoder = new TextDecoder();
-        return decoder.decode(decrypted);
+        // Check if this is new format (v2:) or legacy XOR
+        if (encryptedData.startsWith(VERSION_PREFIX)) {
+            // New AES-GCM format
+            const base64Data = encryptedData.slice(VERSION_PREFIX.length);
+            return await decryptAESGCM(base64Data);
+        } else {
+            // Legacy XOR format - attempt migration
+            try {
+                const decrypted = await decryptLegacyXOR(encryptedData);
+                // Validate decryption produced readable text
+                if (decrypted && /^[\x20-\x7E\s]+$/.test(decrypted)) {
+                    logger.debug('Decrypted legacy XOR data successfully');
+                    return decrypted;
+                }
+            } catch (legacyError) {
+                logger.debug('Legacy decryption failed, trying as plain text');
+            }
+            // If legacy decryption fails, return as-is (might be unencrypted)
+            return encryptedData;
+        }
     } catch (e) {
         logger.error('Decryption failed:', e);
         return encryptedData; // Fallback to returning as-is
     }
+}
+
+/**
+ * Decrypt AES-GCM encrypted data
+ * @param {string} base64Data - Base64 encoded IV + ciphertext
+ * @returns {Promise<string>} Decrypted plain text
+ */
+async function decryptAESGCM(base64Data) {
+    const deviceKey = getDeviceKey();
+    const key = await deriveAESKey(deviceKey);
+
+    // Decode from base64
+    const combined = new Uint8Array(
+        atob(base64Data).split('').map(c => c.charCodeAt(0))
+    );
+
+    // Extract IV and ciphertext
+    const iv = combined.slice(0, IV_LENGTH);
+    const ciphertext = combined.slice(IV_LENGTH);
+
+    // Decrypt
+    const decryptedBuffer = await window.crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        ciphertext
+    );
+
+    const decoder = new TextDecoder();
+    return decoder.decode(decryptedBuffer);
 }
 
 /**

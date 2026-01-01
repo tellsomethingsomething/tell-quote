@@ -6,6 +6,13 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import logger from '../utils/logger';
 
+// SECURITY: File size and content limits to prevent DoS attacks
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_ROWS = 50000;
+const MAX_COLUMNS = 100;
+const MAX_CSV_CONTENT_SIZE = 50 * 1024 * 1024; // 50MB for parsed content
+const ALLOWED_MIME_TYPES = ['text/csv', 'text/plain', 'application/vnd.ms-excel'];
+
 // Expected column mappings for each data type
 export const IMPORT_SCHEMAS = {
     clients: {
@@ -324,19 +331,51 @@ export async function importEquipment(equipment, organizationId, userId) {
 
 /**
  * Process file and determine format
+ * SECURITY: Validates file size, type, and content limits
  */
 export async function processImportFile(file) {
     return new Promise((resolve, reject) => {
+        // SECURITY: File size validation
+        if (file.size > MAX_FILE_SIZE) {
+            reject(new Error(`File size exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit. Your file: ${(file.size / 1024 / 1024).toFixed(2)}MB`));
+            return;
+        }
+
+        // SECURITY: MIME type validation (with fallback for files without type)
+        if (file.type && !ALLOWED_MIME_TYPES.includes(file.type) && !file.name.toLowerCase().endsWith('.csv')) {
+            reject(new Error('Invalid file type. Please upload a CSV file.'));
+            return;
+        }
+
         const reader = new FileReader();
 
         reader.onload = (e) => {
             const content = e.target.result;
+
+            // SECURITY: Content size validation
+            if (content.length > MAX_CSV_CONTENT_SIZE) {
+                reject(new Error(`File content exceeds maximum allowed size.`));
+                return;
+            }
 
             // Check file extension
             const extension = file.name.split('.').pop().toLowerCase();
 
             if (extension === 'csv' || extension === 'txt') {
                 const { headers, rows } = parseCSV(content);
+
+                // SECURITY: Row limit validation
+                if (rows.length > MAX_ROWS) {
+                    reject(new Error(`File contains ${rows.length.toLocaleString()} rows. Maximum allowed: ${MAX_ROWS.toLocaleString()}`));
+                    return;
+                }
+
+                // SECURITY: Column limit validation
+                if (headers.length > MAX_COLUMNS) {
+                    reject(new Error(`File contains ${headers.length} columns. Maximum allowed: ${MAX_COLUMNS}`));
+                    return;
+                }
+
                 resolve({ headers, rows, format: 'csv' });
             } else if (extension === 'xlsx' || extension === 'xls') {
                 // For Excel files, we'd need a library like xlsx

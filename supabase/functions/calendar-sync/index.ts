@@ -1,8 +1,72 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { checkRateLimit, rateLimitExceededResponse } from '../_shared/rateLimit.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+/**
+ * Refresh Google OAuth tokens using the refresh token
+ */
+async function refreshGoogleToken(
+  supabase: ReturnType<typeof createClient>,
+  connectionId: string,
+  refreshToken: string
+): Promise<string | null> {
+  const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID')
+  const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET')
+
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    console.error('Google OAuth credentials not configured for token refresh')
+    return null
+  }
+
+  try {
+    const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+      }),
+    })
+
+    if (!refreshResponse.ok) {
+      const errorData = await refreshResponse.text()
+      console.error('Token refresh failed:', errorData)
+      return null
+    }
+
+    const newTokens = await refreshResponse.json()
+
+    // Calculate new expiry
+    const newExpiresAt = new Date()
+    newExpiresAt.setSeconds(newExpiresAt.getSeconds() + newTokens.expires_in)
+
+    // Update tokens in database
+    const { error: updateError } = await supabase
+      .from('google_connections')
+      .update({
+        access_token: newTokens.access_token,
+        token_expires_at: newExpiresAt.toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', connectionId)
+
+    if (updateError) {
+      console.error('Failed to update refreshed token:', updateError)
+      return null
+    }
+
+    console.log('Successfully refreshed Google token')
+    return newTokens.access_token
+  } catch (error) {
+    console.error('Token refresh error:', error)
+    return null
+  }
 }
 
 Deno.serve(async (req) => {
@@ -30,10 +94,16 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
+    // SECURITY: Rate limiting check
+    const rateLimitResult = await checkRateLimit(supabase, userId, 'calendar-sync')
+    if (!rateLimitResult.allowed) {
+      return rateLimitExceededResponse(rateLimitResult, corsHeaders)
+    }
+
     // Get access token from google_connections (single source of truth)
     const { data: connection, error: connError } = await supabase
       .from('google_connections')
-      .select('access_token, token_expires_at')
+      .select('id, access_token, refresh_token, token_expires_at')
       .eq('user_id', userId)
       .eq('status', 'active')
       .single()
@@ -45,15 +115,33 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Check if token is expired
-    if (new Date(connection.token_expires_at) < new Date()) {
-      return new Response(
-        JSON.stringify({ error: 'Token expired, please refresh' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    let accessToken = connection.access_token
 
-    const accessToken = connection.access_token
+    // Check if token is expired or about to expire (5 minute buffer)
+    const tokenExpiresAt = new Date(connection.token_expires_at)
+    const fiveMinutesFromNow = new Date(Date.now() + 5 * 60 * 1000)
+
+    if (tokenExpiresAt < fiveMinutesFromNow) {
+      console.log('Token expired or expiring soon, attempting refresh...')
+
+      if (!connection.refresh_token) {
+        return new Response(
+          JSON.stringify({ error: 'No refresh token available. Please reconnect your Google account.' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      const newAccessToken = await refreshGoogleToken(supabase, connection.id, connection.refresh_token)
+
+      if (!newAccessToken) {
+        return new Response(
+          JSON.stringify({ error: 'Failed to refresh token. Please reconnect your Google account.' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      accessToken = newAccessToken
+    }
     const calendarId = 'primary'
 
     // Create calendar event

@@ -47,11 +47,20 @@ export const ACCESS_LEVELS = {
  */
 export async function checkSubscriptionAccess(organizationId) {
     if (!isSupabaseConfigured() || !organizationId) {
-        // If Supabase isn't configured, allow access (local dev)
+        // SECURITY: Only allow full access in development when Supabase isn't configured
+        if (import.meta.env.DEV) {
+            return {
+                access: ACCESS_LEVELS.FULL,
+                subscription: null,
+                message: 'Development mode - Supabase not configured',
+                daysRemaining: null,
+            };
+        }
+        // In production, block access if configuration is missing
         return {
-            access: ACCESS_LEVELS.FULL,
+            access: ACCESS_LEVELS.BLOCKED,
             subscription: null,
-            message: null,
+            message: 'Configuration error. Please contact support.',
             daysRemaining: null,
         };
     }
@@ -229,11 +238,11 @@ export async function checkSubscriptionAccess(organizationId) {
 
     } catch (error) {
         logger.error('Subscription check error:', error);
-        // On error, allow access but log it (fail open for better UX)
+        // SECURITY: Fail closed - block access on error to prevent bypass attacks
         return {
-            access: ACCESS_LEVELS.FULL,
+            access: ACCESS_LEVELS.BLOCKED,
             subscription: null,
-            message: null,
+            message: 'Unable to verify subscription. Please try again later.',
             daysRemaining: null,
             error: error.message,
         };

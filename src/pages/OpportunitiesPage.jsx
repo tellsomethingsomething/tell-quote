@@ -9,6 +9,7 @@ import { useQuoteStore } from '../store/quoteStore';
 import { useDisplayCurrency } from '../hooks/useDisplayCurrency';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { formatDate } from '../utils/dateFormatting';
+import { getStatusClasses, getStatusLabel } from '../constants/statusColors';
 import PipelineKanban from '../components/crm/PipelineKanban';
 
 // Lazy load timeline component
@@ -72,13 +73,7 @@ function OpportunityCard({ opportunity, onSelect, onDelete, onUpdateNotes, isExp
     const [editingNotes, setEditingNotes] = useState(false);
     const [notesValue, setNotesValue] = useState(opportunity.notes || '');
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'won': return 'text-green-400 bg-green-500/10 border-green-500/20';
-            case 'lost': return 'text-red-400 bg-red-500/10 border-red-500/20';
-            default: return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
-        }
-    };
+    // Use centralized status colors
 
     const handleSaveNotes = () => {
         onUpdateNotes(opportunity.id, notesValue);
@@ -129,8 +124,8 @@ function OpportunityCard({ opportunity, onSelect, onDelete, onUpdateNotes, isExp
                             >
                                 {opportunity.title || 'Untitled'}
                             </h4>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${getStatusColor(opportunity.status)}`}>
-                                {opportunity.status}
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${getStatusClasses(opportunity.status)}`}>
+                                {getStatusLabel(opportunity.status)}
                             </span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">

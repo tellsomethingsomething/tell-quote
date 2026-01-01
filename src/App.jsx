@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import Sidebar from './components/layout/Sidebar';
 import EditorHeader from './components/layout/EditorHeader';
+import Breadcrumbs from './components/layout/Breadcrumbs';
 import EditorPanel from './components/layout/EditorPanel';
 import LoginPage from './pages/LoginPage';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -1226,6 +1227,14 @@ function App() {
           {isEditorView && (
             <EditorHeader
               onGoToDashboard={handleGoToDashboard}
+            />
+          )}
+
+          {/* Breadcrumbs for navigation context */}
+          {!isEditorView && !isFullScreenView && view !== 'dashboard' && (
+            <Breadcrumbs
+              view={view}
+              onNavigate={handleSidebarTabChange}
             />
           )}
 

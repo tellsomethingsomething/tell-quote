@@ -10,6 +10,7 @@ import logger from '../utils/logger';
 /**
  * Request a data export
  * Creates a request that will be processed asynchronously
+ * SECURITY: Requires authenticated user with admin/owner role in the organization
  * @param {string} organizationId - Organization ID (required for decoupling from store)
  */
 export async function requestDataExport(organizationId = null) {
@@ -22,6 +23,22 @@ export async function requestDataExport(organizationId = null) {
 
     // Accept organizationId as parameter for decoupling, fall back to store for backward compatibility
     const orgId = organizationId || useOrganizationStore.getState().getOrganizationId();
+
+    // SECURITY: Verify user is a member of this organization with admin/owner role
+    const { data: membership, error: membershipError } = await supabase
+        .from('organization_members')
+        .select('role')
+        .eq('organization_id', orgId)
+        .eq('user_id', user.id)
+        .single();
+
+    if (membershipError || !membership) {
+        throw new Error('Unauthorized: You are not a member of this organization');
+    }
+
+    if (!['admin', 'owner'].includes(membership.role)) {
+        throw new Error('Unauthorized: Only organization admins can export data');
+    }
 
     const { data, error } = await supabase
         .from('data_export_requests')
