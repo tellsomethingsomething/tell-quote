@@ -273,6 +273,28 @@ export const useOpportunityStore = create(
                 updates.region = getRegionForCountry(updates.country);
             }
 
+            // Stage transition validation - require certain fields for key stages
+            if (updates.stage) {
+                const opp = get().opportunities.find(o => o.id === opportunityId);
+                const merged = { ...opp, ...updates };
+
+                // Validate required fields for 'won' stage
+                if (updates.stage === 'won') {
+                    if (!merged.value || merged.value <= 0) {
+                        set({ error: 'Cannot mark as won: Deal value is required' });
+                        logger.warn('Opportunity stage validation failed: missing value for won stage');
+                        return { success: false, error: 'Deal value is required to mark as won' };
+                    }
+                }
+
+                // Auto-set probability based on stage
+                if (updates.stage === 'won' && !updates.probability) {
+                    updates.probability = 100;
+                } else if (updates.stage === 'lost' && !updates.probability) {
+                    updates.probability = 0;
+                }
+            }
+
             try {
                 const dbUpdates = {};
                 if (updates.title !== undefined) dbUpdates.title = updates.title;

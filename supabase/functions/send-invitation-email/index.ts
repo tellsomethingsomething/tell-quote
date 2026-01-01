@@ -2,11 +2,7 @@
 // Sends team invitation emails via Resend
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders, handleCorsPrelight } from '../_shared/cors.ts'
 
 interface InvitationEmailRequest {
   invitationId: string

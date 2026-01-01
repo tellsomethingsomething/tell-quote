@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useClientStore } from '../store/clientStore';
-import { useSettingsStore } from '../store/settingsStore';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { useQuoteStore } from '../store/quoteStore';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { generateQuoteNumber } from '../utils/storage';
 import { useFocusTrap, useEscapeKey } from '../hooks/useFocusTrap';
+import { useDisplayCurrency } from '../hooks/useDisplayCurrency';
+import { useSettingsStore } from '../store/settingsStore';
 
 const STATUSES = [
     { id: 'all', label: 'All Quotes', color: 'gray' },
@@ -20,16 +21,15 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
     const { settings, setQuotesPreferences } = useSettingsStore();
     const { rates } = useQuoteStore();
 
+    // Use global display currency from settings
+    const { currency: displayCurrency } = useDisplayCurrency();
+
     // Get quotes preferences from settings (synced via Supabase)
     const quotesPrefs = settings.quotesPreferences || {};
-    const displayCurrency = quotesPrefs.displayCurrency || 'USD';
     const sortBy = quotesPrefs.sortBy || 'updatedAt';
     const sortDir = quotesPrefs.sortDir || 'desc';
 
     // Helper functions to update preferences (synced to Supabase)
-    const setDisplayCurrency = (currency) => {
-        setQuotesPreferences({ displayCurrency: currency });
-    };
     const setSortBy = (value) => {
         setQuotesPreferences({ sortBy: value });
     };
@@ -350,19 +350,6 @@ export default function QuotesPage({ onEditQuote, onNewQuote }) {
                         {allTags.map(t => (
                             <option key={t} value={t}>{t}</option>
                         ))}
-                    </select>
-
-                    {/* Display Currency */}
-                    <select
-                        value={displayCurrency}
-                        onChange={(e) => setDisplayCurrency(e.target.value)}
-                        className="input min-h-[44px] w-full sm:w-24"
-                    >
-                        <option value="USD">USD</option>
-                        <option value="MYR">MYR</option>
-                        <option value="SGD">SGD</option>
-                        <option value="GBP">GBP</option>
-                        <option value="AED">AED</option>
                     </select>
                 </div>
 

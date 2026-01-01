@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useClientStore } from '../store/clientStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { useSettingsStore } from '../store/settingsStore';
@@ -8,13 +8,12 @@ import { useKnowledgeStore, FRAGMENT_TYPES } from '../store/knowledgeStore';
 import { useContactStore } from '../store/contactStore';
 import { useAuthStore } from '../store/authStore';
 import { useOrgContext } from '../hooks/useOrgContext';
+import { useDisplayCurrency } from '../hooks/useDisplayCurrency';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import CRMMetricsGrid from '../components/dashboard/CRMMetricsWidgets';
 import OnboardingChecklist from '../components/onboarding/OnboardingChecklist';
 import TrialBanner from '../components/onboarding/TrialBanner';
-import { getPricingForUser } from '../services/pppService';
-import logger from '../utils/logger';
 
 // Status colors aligned with brand palette for visual harmony
 const STATUSES = [
@@ -75,22 +74,9 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
     const collapsedColumns = dashboardPrefs.collapsedColumns || {};
     const pipelineMinimized = dashboardPrefs.pipelineMinimized || false;
 
-    // Auto-detect currency based on user's location (PPP)
-    const [dashboardCurrency, setDashboardCurrency] = useState('USD');
+    // Use global display currency from settings
+    const { currency: dashboardCurrency } = useDisplayCurrency();
 
-    useEffect(() => {
-        const detectCurrency = async () => {
-            try {
-                const pricingInfo = await getPricingForUser();
-                if (pricingInfo?.currency) {
-                    setDashboardCurrency(pricingInfo.currency);
-                }
-            } catch (error) {
-                logger.warn('Currency detection failed, using USD');
-            }
-        };
-        detectCurrency();
-    }, []);
     const setCollapsedColumns = (updater) => {
         const newCollapsed = typeof updater === 'function' ? updater(collapsedColumns) : updater;
         setDashboardPreferences({ collapsedColumns: newCollapsed });

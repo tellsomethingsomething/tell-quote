@@ -42,20 +42,20 @@ export default function LandingPage({ onLogin }) {
 
                 {/* Open Graph / Facebook */}
                 <meta property="og:type" content="website" />
-                <meta property="og:url" content="https://productionos.com/" />
+                <meta property="og:url" content="https://www.productionos.io/" />
                 <meta property="og:title" content="ProductionOS - Production Management Software" />
                 <meta property="og:description" content="Streamline your production workflow. Manage quotes, crews, equipment, and projects in one place." />
-                <meta property="og:image" content="https://productionos.com/og-image.png" />
+                <meta property="og:image" content="https://www.productionos.io/og-image.png" />
 
                 {/* Twitter */}
                 <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:url" content="https://productionos.com/" />
+                <meta name="twitter:url" content="https://www.productionos.io/" />
                 <meta name="twitter:title" content="ProductionOS - Production Management Software" />
                 <meta name="twitter:description" content="Streamline your production workflow. Manage quotes, crews, equipment, and projects in one place." />
-                <meta name="twitter:image" content="https://productionos.com/og-image.png" />
+                <meta name="twitter:image" content="https://www.productionos.io/og-image.png" />
 
                 {/* Additional SEO */}
-                <link rel="canonical" href="https://productionos.com/" />
+                <link rel="canonical" href="https://www.productionos.io/" />
                 <meta name="robots" content="index, follow" />
                 <meta name="author" content="ProductionOS" />
             </Helmet>

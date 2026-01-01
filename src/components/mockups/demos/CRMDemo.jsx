@@ -62,7 +62,7 @@ export default function CRMDemo() {
     const [activeTab, setActiveTab] = useState('overview');
 
     return (
-        <div className="p-4 sm:p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4 max-w-full overflow-hidden">
             {/* Client Header */}
             <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0">

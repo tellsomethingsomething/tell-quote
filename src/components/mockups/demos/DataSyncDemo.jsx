@@ -54,7 +54,7 @@ export default function DataSyncDemo() {
     };
 
     return (
-        <div className="p-4 sm:p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4 max-w-full overflow-hidden">
             <AnimatePresence mode="wait">
                 {stage === 'quote' && (
                     <motion.div

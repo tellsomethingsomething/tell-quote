@@ -489,6 +489,8 @@ const defaultSettings = {
     // Preferred currencies - shown in dropdowns throughout the app
     // User selects which currencies they commonly use
     preferredCurrencies: ['USD', 'EUR', 'GBP', 'AUD', 'CAD'],
+    // Display currency - used across all app pages for unified display
+    displayCurrency: 'USD',
     // Company OKRs that guide research priorities - users set these in Settings
     okrs: [],
     // Opportunities page preferences (synced across devices)
@@ -825,6 +827,18 @@ export const useSettingsStore = create(
                 preferredCurrencies,
             };
             await saveSettingsLocal(updated);
+            set({ settings: updated });
+        },
+
+        // Update display currency (used across all app pages)
+        setDisplayCurrency: async (displayCurrency) => {
+            const state = get();
+            const updated = {
+                ...state.settings,
+                displayCurrency,
+            };
+            await saveSettingsLocal(updated);
+            saveSettingsToDb(updated);
             set({ settings: updated });
         },
 

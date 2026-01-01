@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useProjectStore, PROJECT_STATUSES, PROJECT_TEMPLATES } from '../store/projectStore';
 import { useClientStore } from '../store/clientStore';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency, convertCurrency } from '../utils/currency';
 import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
+import { useDisplayCurrency } from '../hooks/useDisplayCurrency';
+import { useQuoteStore } from '../store/quoteStore';
 import ProjectTimelineView from '../components/projects/ProjectTimelineView';
 
 // Format date helper
@@ -363,11 +365,15 @@ export default function ProjectsPage({ onSelectProject }) {
         getArchivedProjects,
     } = useProjectStore();
     const { clients, initialize: initClients } = useClientStore();
+    const { rates } = useQuoteStore();
     const [statusFilter, setStatusFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [showNewModal, setShowNewModal] = useState(false);
     const [showArchived, setShowArchived] = useState(false);
     const [viewMode, setViewMode] = useState('grid'); // grid, list, or timeline
+
+    // Use global display currency from settings
+    const { currency: displayCurrency } = useDisplayCurrency();
 
     // Feature gating for project creation
     const { checkAndProceed, PromptComponent } = useFeatureGuard(FEATURES.CREATE_PROJECT);
@@ -434,7 +440,7 @@ export default function ProjectsPage({ onSelectProject }) {
                         {stats.activeCount} active project{stats.activeCount !== 1 ? 's' : ''}
                         {stats.totalBudget > 0 && (
                             <span className="ml-2">
-                                • {formatCurrency(stats.totalBudget, 'USD', 0)} total budget
+                                • {formatCurrency(stats.totalBudget, displayCurrency, 0)} total budget
                             </span>
                         )}
                     </p>

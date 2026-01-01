@@ -7,10 +7,9 @@ import { formatCurrency, convertCurrency } from '../utils/currency';
 import { calculateGrandTotalWithFees } from '../utils/calculations';
 import { validateForm, sanitizeString } from '../utils/validation';
 import { useFeatureGuard, FEATURES } from '../components/billing/FeatureGate';
-import { getPricingForUser } from '../services/pppService';
+import { useDisplayCurrency } from '../hooks/useDisplayCurrency';
 import CSVImportModal from '../components/common/CSVImportModal';
 import { useToast } from '../components/common/Toast';
-import logger from '../utils/logger';
 
 export default function ClientsPage({ onSelectClient }) {
     const { clients, savedQuotes, getClientQuotes, getClientHealth, addClient, deleteClient } = useClientStore();
@@ -20,22 +19,8 @@ export default function ClientsPage({ onSelectClient }) {
     const projectTypes = settings.projectTypes || [];
     const toast = useToast();
 
-    // Auto-detect currency based on user's location (PPP)
-    const [dashboardCurrency, setDashboardCurrency] = useState('USD');
-
-    useEffect(() => {
-        const detectCurrency = async () => {
-            try {
-                const pricingInfo = await getPricingForUser();
-                if (pricingInfo?.currency) {
-                    setDashboardCurrency(pricingInfo.currency);
-                }
-            } catch (error) {
-                logger.warn('Currency detection failed, using USD');
-            }
-        };
-        detectCurrency();
-    }, []);
+    // Use global display currency from settings
+    const { currency: dashboardCurrency } = useDisplayCurrency();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterIndustry, setFilterIndustry] = useState('all');

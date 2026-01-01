@@ -871,6 +871,7 @@ export default function SettingsPage() {
         setQuoteDefaults,
         setPdfOptions,
         setAiSettings,
+        setDisplayCurrency,
         addUser,
         updateUser,
         deleteUser,
@@ -1153,6 +1154,43 @@ export default function SettingsPage() {
                                     className="input"
                                     placeholder="https://www.company.com"
                                 />
+                            </div>
+                        </div>
+
+                        {/* Display Preferences */}
+                        <div className="mt-8 pt-6 border-t border-dark-border">
+                            <h4 className="text-lg font-semibold text-gray-200 mb-4">Display Preferences</h4>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="label">Display Currency</label>
+                                    <p className="text-xs text-gray-500 mb-2">
+                                        All amounts across the app will be converted and displayed in this currency.
+                                    </p>
+                                    <select
+                                        value={settings.displayCurrency || 'USD'}
+                                        onChange={(e) => {
+                                            setDisplayCurrency(e.target.value);
+                                            triggerSaved();
+                                        }}
+                                        className="input w-48"
+                                    >
+                                        {/* Preferred currencies first */}
+                                        <optgroup label="Preferred">
+                                            {(settings.preferredCurrencies || ['USD', 'EUR', 'GBP']).map(code => {
+                                                const curr = CURRENCIES.find(c => c.code === code);
+                                                return curr ? (
+                                                    <option key={code} value={code}>{curr.code} - {curr.name}</option>
+                                                ) : null;
+                                            })}
+                                        </optgroup>
+                                        {/* All currencies */}
+                                        <optgroup label="All Currencies">
+                                            {CURRENCIES.filter(c => !(settings.preferredCurrencies || []).includes(c.code)).map(c => (
+                                                <option key={c.code} value={c.code}>{c.code} - {c.name}</option>
+                                            ))}
+                                        </optgroup>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>

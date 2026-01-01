@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, ArrowLeft, User } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import Layout from '../../components/layout/Layout';
+import SEOHead, { createBreadcrumbSchema } from '../../components/common/SEOHead';
 
 const blogPosts = [
     // Featured: Emerging Markets
@@ -786,10 +787,22 @@ export default function BlogPostPage() {
 
     return (
         <Layout>
-            <Helmet>
-                <title>{post.title} - ProductionOS Blog</title>
-                <meta name="description" content={post.excerpt} />
-            </Helmet>
+            <SEOHead
+                title={`${post.title} - ProductionOS Blog`}
+                description={post.excerpt}
+                path={`/resources/blog/${slug}`}
+                type="article"
+                image={post.image}
+                article={{
+                    datePublished: post.date,
+                    author: post.author
+                }}
+                structuredData={createBreadcrumbSchema([
+                    { name: 'Home', url: 'https://www.productionos.io/' },
+                    { name: 'Blog', url: 'https://www.productionos.io/resources/blog' },
+                    { name: post.title, url: `https://www.productionos.io/resources/blog/${slug}` }
+                ])}
+            />
 
             <article className="pt-32 pb-20 bg-marketing-background">
                 <div className="container mx-auto px-6 max-w-4xl">
@@ -846,13 +859,16 @@ export default function BlogPostPage() {
                         <div
                             className="prose prose-invert prose-lg max-w-none
                                 prose-headings:text-white prose-headings:font-bold
-                                prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-6
-                                prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4 prose-h3:text-marketing-primary
-                                prose-p:text-marketing-text-secondary prose-p:leading-relaxed
+                                prose-h2:text-3xl prose-h2:font-bold prose-h2:mt-12 prose-h2:mb-6
+                                prose-h3:text-2xl prose-h3:font-semibold prose-h3:mt-8 prose-h3:mb-4 prose-h3:text-marketing-primary
+                                prose-h4:text-xl prose-h4:font-semibold prose-h4:mt-6 prose-h4:mb-3
+                                prose-p:text-marketing-text-secondary prose-p:leading-relaxed prose-p:text-lg
                                 prose-strong:text-white prose-strong:font-semibold
                                 prose-a:text-marketing-primary prose-a:no-underline hover:prose-a:underline
+                                prose-ul:text-marketing-text-secondary prose-ol:text-marketing-text-secondary
+                                prose-li:text-lg prose-li:leading-relaxed
                                 [&>p]:mb-6 [&>h2]:mt-12 [&>h2]:mb-6 [&>h3]:mt-8 [&>h3]:mb-4 [&>p+p]:mt-6"
-                            dangerouslySetInnerHTML={{ __html: post.content }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
                         />
 
                         {/* CTA */}

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Loader2 } from 'lucide-react';
 import Layout from '../components/layout/Layout';
+import SEOHead, { createFAQSchema } from '../components/common/SEOHead';
 import TokenPacks from '../components/ui/TokenPacks';
 import { plans, pricingFaqs, comparisonTable } from '../data/pricing';
 import { useAuthStore } from '../store/authStore';
@@ -105,12 +105,20 @@ export default function Pricing() {
         }
     };
 
+    // Create FAQ schema for structured data
+    const faqSchema = createFAQSchema(pricingFaqs.map(faq => ({
+        question: faq.q,
+        answer: faq.a
+    })));
+
     return (
         <Layout>
-            <Helmet>
-                <title>Pricing - ProductionOS</title>
-                <meta name="description" content="Simple pricing for production companies. Free, Individual, and Team plans. Start free today, upgrade when you're ready." />
-            </Helmet>
+            <SEOHead
+                title="Pricing - Production Management Software"
+                description="Simple pricing for video production, event production, and photography studios. Individual plan from $24/month. Team plan from $49/month. Start free 5-day trial."
+                path="/pricing"
+                structuredData={faqSchema}
+            />
 
             {/* Header */}
             <section className="pt-24 md:pt-32 pb-8 md:pb-12 text-center container mx-auto px-4 md:px-6">
@@ -120,20 +128,20 @@ export default function Pricing() {
                 </p>
 
                 {/* Toggle */}
-                <div className="flex items-center justify-center gap-4 mb-16">
-                    <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-marketing-text-primary' : 'text-marketing-text-secondary'}`}>Monthly</span>
+                <div className="flex items-center justify-center gap-6 mb-16 w-full">
+                    <span className={`text-2xl md:text-3xl font-medium ${billingCycle === 'monthly' ? 'text-marketing-text-primary' : 'text-marketing-text-secondary'}`}>Monthly</span>
                     <button
                         onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'annual' : 'monthly')}
-                        className="w-14 h-8 bg-marketing-surface border border-marketing-border rounded-full relative transition-colors focus:outline-none focus:ring-2 focus:ring-marketing-primary/50 cursor-pointer"
+                        className="w-20 h-12 bg-marketing-surface border-2 border-marketing-border rounded-xl relative transition-colors focus:outline-none focus:ring-2 focus:ring-marketing-primary/50 cursor-pointer flex-shrink-0"
                     >
                         <motion.div
-                            className="absolute top-1 left-1 w-6 h-6 bg-marketing-primary rounded-full shadow-lg"
-                            animate={{ x: billingCycle === 'annual' ? 24 : 0 }}
+                            className="absolute top-1.5 left-1.5 w-8 h-8 bg-marketing-primary rounded-lg shadow-lg"
+                            animate={{ x: billingCycle === 'annual' ? 32 : 0 }}
                             transition={{ type: "spring", stiffness: 500, damping: 30 }}
                         />
                     </button>
-                    <span className={`text-sm font-medium ${billingCycle === 'annual' ? 'text-marketing-text-primary' : 'text-marketing-text-secondary'}`}>
-                        Annual <span className="text-marketing-success text-xs ml-1 font-bold">SAVE 20%</span>
+                    <span className={`text-2xl md:text-3xl font-medium ${billingCycle === 'annual' ? 'text-marketing-text-primary' : 'text-marketing-text-secondary'}`}>
+                        Annual <span className="text-marketing-success text-lg md:text-xl ml-2 font-bold">SAVE 20%</span>
                     </span>
                 </div>
 
@@ -152,7 +160,7 @@ export default function Pricing() {
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
-                            className={`relative bg-marketing-surface border ${plan.popular ? 'border-marketing-primary shadow-2xl shadow-marketing-primary/10 scale-105 z-10' : 'border-marketing-border'} rounded-2xl p-8 flex flex-col text-left`}
+                            className={`relative bg-marketing-surface border ${plan.popular ? 'border-marketing-primary shadow-2xl shadow-marketing-primary/10 md:scale-105 z-10' : 'border-marketing-border'} rounded-2xl p-6 md:p-8 flex flex-col text-left`}
                         >
                             {plan.popular && (
                                 <div className="absolute -top-3 inset-x-0 flex justify-center">
@@ -232,10 +240,10 @@ export default function Pricing() {
             {/* Includes Section */}
             <section className="py-12 md:py-16 text-center max-w-4xl mx-auto px-4 md:px-6">
                 <h3 className="text-base md:text-lg font-bold mb-6 md:mb-8 uppercase tracking-widest text-marketing-text-secondary">Every plan includes</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 text-xs md:text-sm">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-6 text-[11px] sm:text-xs md:text-sm">
                     {['No credit card for Free', 'Cancel anytime', 'Data export', 'Bank-level security', 'Regular updates', '99.9% uptime'].map(item => (
-                        <div key={item} className="flex items-center justify-center gap-2 text-marketing-text-primary font-medium p-3 bg-marketing-surface border border-marketing-border rounded-lg">
-                            <Check size={14} className="text-marketing-success" /> {item}
+                        <div key={item} className="flex items-center justify-center gap-1.5 sm:gap-2 text-marketing-text-primary font-medium p-2 sm:p-3 bg-marketing-surface border border-marketing-border rounded-lg">
+                            <Check size={12} className="text-marketing-success shrink-0" /> <span className="truncate">{item}</span>
                         </div>
                     ))}
                 </div>

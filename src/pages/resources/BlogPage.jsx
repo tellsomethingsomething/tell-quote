@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, ArrowRight, User } from 'lucide-react';
 import Layout from '../../components/layout/Layout';
+import SEOHead from '../../components/common/SEOHead';
 
 const blogPosts = [
     // Featured: Emerging Markets
@@ -135,26 +135,27 @@ const blogPosts = [
 export default function BlogPage() {
     return (
         <Layout>
-            <Helmet>
-                <title>Blog - ProductionOS | Production Industry Insights</title>
-                <meta name="description" content="Expert insights, tips, and best practices for video production companies. Learn about pricing, operations, crew management, and more." />
-            </Helmet>
+            <SEOHead
+                title="Production Industry Blog - Tips, Guides & Best Practices"
+                description="Expert insights for video production, event production, and photography businesses. Learn about quoting, pricing, crew management, equipment tracking, and growing your production company."
+                path="/resources/blog"
+            />
 
             {/* Hero */}
-            <section className="pt-32 pb-16 bg-marketing-background">
-                <div className="container mx-auto px-6 text-center">
+            <section className="pt-24 md:pt-32 pb-12 md:pb-16 bg-marketing-background">
+                <div className="container mx-auto px-4 md:px-6 text-center">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
                     >
-                        <span className="inline-block py-1 px-3 rounded-full bg-marketing-surface border border-marketing-border text-marketing-text-secondary text-xs font-medium mb-6 uppercase tracking-widest">
+                        <span className="inline-block py-1 px-3 rounded-full bg-marketing-surface border border-marketing-border text-marketing-text-secondary text-xs font-medium mb-4 md:mb-6 uppercase tracking-widest">
                             Blog
                         </span>
-                        <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">
+                        <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 md:mb-6 text-white">
                             Production Industry Insights
                         </h1>
-                        <p className="text-xl text-marketing-text-secondary max-w-2xl mx-auto">
+                        <p className="text-lg md:text-xl text-marketing-text-secondary max-w-2xl mx-auto">
                             Expert tips, best practices, and industry trends for modern production companies.
                         </p>
                     </motion.div>
@@ -162,9 +163,9 @@ export default function BlogPage() {
             </section>
 
             {/* Blog Grid */}
-            <section className="py-16 bg-marketing-background">
-                <div className="container mx-auto px-6">
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <section className="py-12 md:py-16 bg-marketing-background">
+                <div className="container mx-auto px-4 md:px-6">
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 max-w-6xl mx-auto">
                         {blogPosts.map((post, index) => (
                             <motion.div
                                 key={post.id}
@@ -183,27 +184,25 @@ export default function BlogPage() {
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
                                     </div>
-                                    <div className="p-6">
-                                        <span className="inline-block px-3 py-1 text-xs font-medium text-marketing-primary bg-marketing-primary/10 rounded-full mb-4">
+                                    <div className="p-4 md:p-6">
+                                        <span className="inline-block px-2 md:px-3 py-1 text-xs font-medium text-marketing-primary bg-marketing-primary/10 rounded-full mb-3 md:mb-4">
                                             {post.category}
                                         </span>
-                                        <h2 className="text-xl font-bold text-white mb-3 group-hover:text-marketing-primary transition-colors">
+                                        <h2 className="text-base md:text-xl font-bold text-white mb-2 md:mb-3 group-hover:text-marketing-primary transition-colors line-clamp-2">
                                             {post.title}
                                         </h2>
-                                        <p className="text-marketing-text-secondary mb-4 line-clamp-2">
+                                        <p className="text-sm text-marketing-text-secondary mb-3 md:mb-4 line-clamp-2">
                                             {post.excerpt}
                                         </p>
-                                        <div className="flex items-center justify-between text-sm text-marketing-text-secondary">
-                                            <div className="flex items-center gap-4">
-                                                <span className="flex items-center gap-1">
-                                                    <Calendar size={14} />
-                                                    {post.date}
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <Clock size={14} />
-                                                    {post.readTime}
-                                                </span>
-                                            </div>
+                                        <div className="flex items-center flex-wrap gap-2 md:gap-4 text-xs md:text-sm text-marketing-text-secondary">
+                                            <span className="flex items-center gap-1">
+                                                <Calendar size={12} />
+                                                {post.date}
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <Clock size={12} />
+                                                {post.readTime}
+                                            </span>
                                         </div>
                                     </div>
                                 </Link>
@@ -221,17 +220,17 @@ export default function BlogPage() {
             </section>
 
             {/* CTA */}
-            <section className="py-20 bg-marketing-surface border-t border-marketing-border">
-                <div className="container mx-auto px-6 text-center">
-                    <h2 className="text-3xl font-bold text-white mb-4">Ready to streamline your production workflow?</h2>
-                    <p className="text-marketing-text-secondary mb-8 max-w-xl mx-auto">
+            <section className="py-12 md:py-20 bg-marketing-surface border-t border-marketing-border">
+                <div className="container mx-auto px-4 md:px-6 text-center">
+                    <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 md:mb-4">Ready to streamline your production workflow?</h2>
+                    <p className="text-sm md:text-base text-marketing-text-secondary mb-6 md:mb-8 max-w-xl mx-auto">
                         Join hundreds of production companies using ProductionOS to manage their operations.
                     </p>
                     <Link
                         to="/auth/signup"
-                        className="inline-flex items-center gap-2 px-8 py-4 bg-marketing-primary text-white font-bold rounded-xl hover:bg-marketing-primary/90 transition-all"
+                        className="inline-flex items-center gap-2 px-6 md:px-8 py-3 md:py-4 bg-marketing-primary text-white font-bold rounded-xl hover:bg-marketing-primary/90 transition-all text-sm md:text-base"
                     >
-                        Start Free Trial <ArrowRight size={18} />
+                        Start Free Trial <ArrowRight size={16} />
                     </Link>
                 </div>
             </section>

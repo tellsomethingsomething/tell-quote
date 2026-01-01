@@ -4,7 +4,8 @@ import { useInvoiceStore } from '../store/invoiceStore';
 import { useExpenseStore } from '../store/expenseStore';
 import { useCrewBookingStore } from '../store/crewBookingStore';
 import { useClientStore } from '../store/clientStore';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency, convertCurrency } from '../utils/currency';
+import { useDisplayCurrency } from '../hooks/useDisplayCurrency';
 
 // Format date helper
 const formatDate = (dateStr) => {
@@ -32,7 +33,7 @@ function PLStatsCard({ label, value, isPositive, color, icon, subValue }) {
 }
 
 // Project P&L Row - now includes crew costs
-function ProjectPLRow({ project, invoices, expenses, crewBookings, clients, onSelect }) {
+function ProjectPLRow({ project, invoices, expenses, crewBookings, clients, onSelect, displayCurrency }) {
     const client = clients.find(c => c.id === project.clientId);
 
     // Calculate revenue from paid invoices for this project
@@ -82,22 +83,22 @@ function ProjectPLRow({ project, invoices, expenses, crewBookings, clients, onSe
                 </span>
             </td>
             <td className="px-4 py-3 text-right">
-                <div className="text-green-400 font-medium">{formatCurrency(revenue, 'USD')}</div>
+                <div className="text-green-400 font-medium">{formatCurrency(revenue, displayCurrency)}</div>
                 {pendingRevenue > 0 && (
-                    <div className="text-xs text-gray-500">+{formatCurrency(pendingRevenue, 'USD')} pending</div>
+                    <div className="text-xs text-gray-500">+{formatCurrency(pendingRevenue, displayCurrency)} pending</div>
                 )}
             </td>
             <td className="px-4 py-3 text-right">
-                <div className="text-orange-400">{formatCurrency(crewCost, 'USD')}</div>
+                <div className="text-orange-400">{formatCurrency(crewCost, displayCurrency)}</div>
                 <div className="text-xs text-gray-500">{projectCrewBookings.length} bookings</div>
             </td>
             <td className="px-4 py-3 text-right">
-                <div className="text-red-400">{formatCurrency(expensesCost, 'USD')}</div>
+                <div className="text-red-400">{formatCurrency(expensesCost, displayCurrency)}</div>
                 <div className="text-xs text-gray-500">{projectExpenses.length} expenses</div>
             </td>
             <td className="px-4 py-3 text-right">
                 <div className={`font-semibold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                    {isPositive ? '+' : ''}{formatCurrency(profit, 'USD')}
+                    {isPositive ? '+' : ''}{formatCurrency(profit, displayCurrency)}
                 </div>
                 {revenue > 0 && (
                     <div className={`text-xs ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
@@ -110,7 +111,7 @@ function ProjectPLRow({ project, invoices, expenses, crewBookings, clients, onSe
 }
 
 // Cost Category Breakdown - includes crew as a category
-function CategoryBreakdown({ expenses, crewBookings }) {
+function CategoryBreakdown({ expenses, crewBookings, displayCurrency }) {
     const byCategory = useMemo(() => {
         const grouped = {};
 
@@ -162,7 +163,7 @@ function CategoryBreakdown({ expenses, crewBookings }) {
                                 )}
                                 {category}
                             </span>
-                            <span className="text-gray-400">{formatCurrency(amount, 'USD')}</span>
+                            <span className="text-gray-400">{formatCurrency(amount, displayCurrency)}</span>
                         </div>
                         <div className="h-2 bg-dark-bg rounded-full overflow-hidden">
                             <div
@@ -182,7 +183,7 @@ function CategoryBreakdown({ expenses, crewBookings }) {
 }
 
 // Monthly Trend Chart - includes crew costs
-function MonthlyTrend({ invoices, expenses, crewBookings }) {
+function MonthlyTrend({ invoices, expenses, crewBookings, displayCurrency }) {
     const months = useMemo(() => {
         const result = [];
         const now = new Date();
@@ -241,17 +242,17 @@ function MonthlyTrend({ invoices, expenses, crewBookings }) {
                         <div
                             className="flex-1 bg-green-500/30 rounded-t"
                             style={{ height: `${(month.revenue / maxValue) * 100}%` }}
-                            title={`Revenue: ${formatCurrency(month.revenue, 'USD')}`}
+                            title={`Revenue: ${formatCurrency(month.revenue, displayCurrency)}`}
                         />
                         <div
                             className="flex-1 bg-orange-500/30 rounded-t"
                             style={{ height: `${(month.crewCosts / maxValue) * 100}%` }}
-                            title={`Crew: ${formatCurrency(month.crewCosts, 'USD')}`}
+                            title={`Crew: ${formatCurrency(month.crewCosts, displayCurrency)}`}
                         />
                         <div
                             className="flex-1 bg-red-500/30 rounded-t"
                             style={{ height: `${(month.expenses / maxValue) * 100}%` }}
-                            title={`Expenses: ${formatCurrency(month.expenses, 'USD')}`}
+                            title={`Expenses: ${formatCurrency(month.expenses, displayCurrency)}`}
                         />
                     </div>
                     <div className="text-xs text-gray-500">{month.month}</div>
@@ -262,7 +263,7 @@ function MonthlyTrend({ invoices, expenses, crewBookings }) {
 }
 
 // Crew Cost Summary Card
-function CrewCostSummary({ crewBookings }) {
+function CrewCostSummary({ crewBookings, displayCurrency }) {
     const stats = useMemo(() => {
         const active = crewBookings.filter(b => b.status !== 'cancelled');
         return {
@@ -288,7 +289,7 @@ function CrewCostSummary({ crewBookings }) {
                 </div>
                 <div className="flex justify-between items-center">
                     <span className="text-gray-400">Total Cost</span>
-                    <span className="text-orange-400 font-semibold">{formatCurrency(stats.totalCost, 'USD')}</span>
+                    <span className="text-orange-400 font-semibold">{formatCurrency(stats.totalCost, displayCurrency)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                     <span className="text-gray-400">Paid</span>
@@ -297,7 +298,7 @@ function CrewCostSummary({ crewBookings }) {
                 {stats.unpaidCost > 0 && (
                     <div className="flex justify-between items-center pt-2 border-t border-dark-border">
                         <span className="text-gray-400">Unpaid</span>
-                        <span className="text-yellow-400 font-medium">{formatCurrency(stats.unpaidCost, 'USD')}</span>
+                        <span className="text-yellow-400 font-medium">{formatCurrency(stats.unpaidCost, displayCurrency)}</span>
                     </div>
                 )}
             </div>
@@ -312,6 +313,9 @@ export default function ProfitLossPage({ onSelectProject }) {
     const { expenses, initialize: initExpenses } = useExpenseStore();
     const { bookings: crewBookings, initialize: initCrewBookings } = useCrewBookingStore();
     const { clients } = useClientStore();
+
+    // Use global display currency from settings
+    const { currency: displayCurrency, rates } = useDisplayCurrency();
 
     const [timeRange, setTimeRange] = useState('all');
     const [showOnlyActive, setShowOnlyActive] = useState(false);
@@ -391,28 +395,28 @@ export default function ProfitLossPage({ onSelectProject }) {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                 <PLStatsCard
                     label="Revenue"
-                    value={formatCurrency(stats.totalRevenue, 'USD', 0)}
-                    subValue={stats.pendingRevenue > 0 ? `+${formatCurrency(stats.pendingRevenue, 'USD', 0)} pending` : null}
+                    value={formatCurrency(stats.totalRevenue, displayCurrency, 0)}
+                    subValue={stats.pendingRevenue > 0 ? `+${formatCurrency(stats.pendingRevenue, displayCurrency, 0)} pending` : null}
                     color="text-green-400"
                     icon={<svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                 />
                 <PLStatsCard
                     label="Crew Costs"
-                    value={formatCurrency(stats.totalCrewCosts, 'USD', 0)}
+                    value={formatCurrency(stats.totalCrewCosts, displayCurrency, 0)}
                     subValue={`${crewBookings.filter(b => b.status !== 'cancelled').length} bookings`}
                     color="text-orange-400"
                     icon={<svg className="w-6 h-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
                 />
                 <PLStatsCard
                     label="Expenses"
-                    value={formatCurrency(stats.totalExpenses, 'USD', 0)}
+                    value={formatCurrency(stats.totalExpenses, displayCurrency, 0)}
                     subValue={`${expenses.length} items`}
                     color="text-red-400"
                     icon={<svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
                 />
                 <PLStatsCard
                     label="Net Profit"
-                    value={`${stats.profit >= 0 ? '+' : ''}${formatCurrency(stats.profit, 'USD', 0)}`}
+                    value={`${stats.profit >= 0 ? '+' : ''}${formatCurrency(stats.profit, displayCurrency, 0)}`}
                     subValue={stats.totalRevenue > 0 ? `${stats.margin.toFixed(1)}% margin` : null}
                     color={stats.profit >= 0 ? 'text-green-400' : 'text-red-400'}
                     icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke={stats.profit >= 0 ? '#4ade80' : '#f87171'}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
@@ -431,7 +435,7 @@ export default function ProfitLossPage({ onSelectProject }) {
                 {/* Trend Chart */}
                 <div className="lg:col-span-2 bg-dark-card border border-dark-border rounded-xl p-6">
                     <h3 className="text-lg font-medium text-gray-200 mb-4">6-Month Trend</h3>
-                    <MonthlyTrend invoices={invoices} expenses={expenses} crewBookings={crewBookings} />
+                    <MonthlyTrend invoices={invoices} expenses={expenses} crewBookings={crewBookings} displayCurrency={displayCurrency} />
                     <div className="flex items-center gap-4 mt-4 text-xs">
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 bg-green-500/50 rounded" />
@@ -451,7 +455,7 @@ export default function ProfitLossPage({ onSelectProject }) {
                 {/* Category Breakdown */}
                 <div className="bg-dark-card border border-dark-border rounded-xl p-6">
                     <h3 className="text-lg font-medium text-gray-200 mb-4">Cost Breakdown</h3>
-                    <CategoryBreakdown expenses={expenses} crewBookings={crewBookings} />
+                    <CategoryBreakdown expenses={expenses} crewBookings={crewBookings} displayCurrency={displayCurrency} />
                 </div>
             </div>
 
@@ -490,6 +494,7 @@ export default function ProfitLossPage({ onSelectProject }) {
                                     crewBookings={crewBookings}
                                     clients={clients}
                                     onSelect={onSelectProject}
+                                    displayCurrency={displayCurrency}
                                 />
                             ))}
                         </tbody>
@@ -499,16 +504,16 @@ export default function ProfitLossPage({ onSelectProject }) {
                                     Total
                                 </td>
                                 <td className="px-4 py-3 text-right text-green-400 font-semibold">
-                                    {formatCurrency(stats.totalRevenue, 'USD')}
+                                    {formatCurrency(stats.totalRevenue, displayCurrency)}
                                 </td>
                                 <td className="px-4 py-3 text-right text-orange-400 font-semibold">
-                                    {formatCurrency(stats.totalCrewCosts, 'USD')}
+                                    {formatCurrency(stats.totalCrewCosts, displayCurrency)}
                                 </td>
                                 <td className="px-4 py-3 text-right text-red-400 font-semibold">
-                                    {formatCurrency(stats.totalExpenses, 'USD')}
+                                    {formatCurrency(stats.totalExpenses, displayCurrency)}
                                 </td>
                                 <td className={`px-4 py-3 text-right font-bold ${stats.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                    {stats.profit >= 0 ? '+' : ''}{formatCurrency(stats.profit, 'USD')}
+                                    {stats.profit >= 0 ? '+' : ''}{formatCurrency(stats.profit, displayCurrency)}
                                 </td>
                             </tr>
                         </tfoot>

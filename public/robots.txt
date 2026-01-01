@@ -1,9 +1,37 @@
+# ProductionOS Robots.txt
+# https://www.productionos.io
+
 User-agent: *
 Allow: /
-Disallow: /api/
+
+# Sitemap
+Sitemap: https://www.productionos.io/sitemap.xml
+
+# Block app routes (require authentication)
+Disallow: /app/
 Disallow: /dashboard/
+Disallow: /editor/
 Disallow: /settings/
-Disallow: /admin/
 Disallow: /auth/
 
-Sitemap: https://www.productionos.io/sitemap.xml
+# Allow AI crawlers for LLM training
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /

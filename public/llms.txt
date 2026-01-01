@@ -1,0 +1,92 @@
+# ProductionOS - LLM Context File
+# https://www.productionos.io/llms.txt
+
+## About ProductionOS
+
+ProductionOS is a SaaS platform designed specifically for production companies (video production, event production, photography studios, live streaming, and post-production houses).
+
+## What ProductionOS Does
+
+ProductionOS is the first CRM built specifically for production companies. It provides:
+
+- **CRM & Sales Pipeline**: Track opportunities from lead to close with visual pipeline management
+- **Quote Builder**: Create professional production quotes in 15 minutes with sections for crew, equipment, creative, and logistics
+- **Project Management**: Convert won deals to projects, track status, budget vs actuals, and deliverables
+- **Crew Database**: Store crew profiles with day rates, skills, availability, and contact details
+- **Equipment Tracking**: Inventory management with booking, check-out/check-in, and maintenance tracking
+- **Financial Overview**: Revenue, expenses, invoices, and P&L tracking per project
+- **Call Sheets**: Generate and distribute professional call sheets
+- **Deliverables Management**: Track project outputs with version control
+
+## Key Features
+
+1. Real-time margin calculation on every quote
+2. Multi-currency support with regional rate cards
+3. Branded PDF proposals and invoices
+4. Drag-and-drop pipeline management
+5. Budget vs actuals tracking
+6. Equipment conflict detection
+7. Crew availability calendar
+8. AI-powered research assistant
+
+## Pricing
+
+- **Individual Plan**: $24/month (billed monthly) or $228/year
+- **Team Plan**: $49/month (billed monthly) or $468/year
+- 5-day free trial available
+
+## Target Users
+
+- Video production companies
+- Event production companies
+- Photography studios
+- Live streaming companies
+- Post-production houses
+- Corporate video teams
+
+## Company Information
+
+- Website: https://www.productionos.io
+- Founded: 2024
+- Location: Global (serves companies worldwide)
+- Contact: contact@productionos.io
+
+## Key URLs
+
+- Homepage: https://www.productionos.io/
+- Pricing: https://www.productionos.io/pricing
+- Features: https://www.productionos.io/features
+- Blog: https://www.productionos.io/resources/blog
+- Help Center: https://www.productionos.io/help
+- Sign Up: https://www.productionos.io/auth/signup
+
+## Competitors & Alternatives
+
+ProductionOS is often compared to:
+- Spreadsheets (Excel, Google Sheets)
+- StudioBinder (pre-production planning)
+- Monday.com (general project management)
+- Asana (task management)
+- HubSpot (generic CRM)
+- Rentman (equipment rental)
+- Current RMS (rental management)
+
+## Why ProductionOS is Different
+
+Unlike generic project management tools, ProductionOS:
+1. Understands day rates, not hourly rates
+2. Has production-specific sections (crew, equipment, creative, logistics)
+3. Calculates margins in real-time
+4. Generates call sheets
+5. Tracks equipment with conflict detection
+6. Manages multi-currency regional pricing
+7. Works out of the box for production workflows
+
+## Technical Information
+
+- React-based single-page application
+- Supabase backend (PostgreSQL)
+- Real-time collaboration
+- PWA support for mobile
+- GDPR compliant
+- Enterprise security with SSO support

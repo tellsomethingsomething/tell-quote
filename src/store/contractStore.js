@@ -65,8 +65,9 @@ function fromDbFormat(contract) {
         endDate: contract.end_date,
         signedDate: contract.signed_date,
         expiresAt: contract.expires_at,
-        // Financial
-        value: parseFloat(contract.value) || 0,
+        // Financial - round to cents to avoid floating point issues
+        // Note: JavaScript Number is precise up to ~$9 quadrillion which covers all realistic contracts
+        value: Math.round((parseFloat(contract.value) || 0) * 100) / 100,
         currency: contract.currency || 'USD',
         paymentTerms: contract.payment_terms || '',
         // Content

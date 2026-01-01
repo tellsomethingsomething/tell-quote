@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
+import SEOHead, { createBreadcrumbSchema } from '../components/common/SEOHead';
 import { Check, ArrowRight, Quote } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import MotionScreenGrab from '../components/ui/MotionScreenGrab';
@@ -57,13 +57,19 @@ export default function FeaturePage() {
 
     return (
         <Layout>
-            <Helmet>
-                <title>{data.seoTitle}</title>
-                <meta name="description" content={data.seoDesc} />
-            </Helmet>
+            <SEOHead
+                title={data.seoTitle}
+                description={data.seoDesc}
+                path={`/features/${featureId}`}
+                structuredData={createBreadcrumbSchema([
+                    { name: 'Home', url: 'https://www.productionos.io/' },
+                    { name: 'Features', url: 'https://www.productionos.io/features' },
+                    { name: data.title.split('.')[0], url: `https://www.productionos.io/features/${featureId}` }
+                ])}
+            />
 
             {/* Hero */}
-            <section className="pt-32 pb-20 container mx-auto px-6 md:px-12 text-center relative overflow-hidden">
+            <section className="pt-24 md:pt-32 pb-12 md:pb-20 container mx-auto px-4 md:px-12 text-center relative overflow-hidden">
                 {/* Background Blob */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl -z-10 bg-marketing-primary/5 blur-[100px] rounded-full pointer-events-none" />
 
@@ -71,17 +77,17 @@ export default function FeaturePage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                 >
-                    <div className="inline-block px-3 py-1 rounded-full bg-marketing-primary/10 text-marketing-primary text-sm font-medium mb-6 uppercase tracking-wider">
+                    <div className="inline-block px-3 py-1 rounded-full bg-marketing-primary/10 text-marketing-primary text-xs sm:text-sm font-medium mb-4 md:mb-6 uppercase tracking-wider">
                         {featureId.replace('-', ' ')}
                     </div>
-                    <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 max-w-4xl mx-auto leading-tight">
+                    <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 max-w-4xl mx-auto leading-tight">
                         {data.title}
                     </h1>
-                    <p className="text-lg md:text-xl text-marketing-text-secondary max-w-2xl mx-auto mb-10">
+                    <p className="text-base sm:text-lg md:text-xl text-marketing-text-secondary max-w-2xl mx-auto mb-8 md:mb-10">
                         {data.subtitle}
                     </p>
-                    <div className="flex justify-center gap-4 mb-12 md:mb-16">
-                        <Link to="/auth/signup" className="px-6 py-3 bg-marketing-primary text-white font-bold rounded-lg hover:bg-marketing-primary/90 transition-colors">
+                    <div className="flex justify-center gap-4 mb-8 md:mb-16">
+                        <Link to="/auth/signup" className="px-5 sm:px-6 py-2.5 sm:py-3 bg-marketing-primary text-white font-bold rounded-lg hover:bg-marketing-primary/90 transition-colors text-sm sm:text-base">
                             Start free trial
                         </Link>
                     </div>
@@ -126,18 +132,18 @@ export default function FeaturePage() {
             </section>
 
             {/* Pain Point vs Solution - Redesigned */}
-            <section className="py-24 bg-gradient-to-b from-marketing-background via-marketing-surface to-marketing-background relative overflow-hidden">
-                <div className="container mx-auto px-6 md:px-12 relative">
+            <section className="py-16 md:py-24 bg-gradient-to-b from-marketing-background via-marketing-surface to-marketing-background relative overflow-hidden">
+                <div className="container mx-auto px-4 md:px-12 relative">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-center mb-16"
+                        className="text-center mb-10 md:mb-16"
                     >
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">
+                        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4 bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">
                             From Chaos to Clarity
                         </h2>
-                        <p className="text-marketing-text-secondary text-lg max-w-2xl mx-auto">
+                        <p className="text-marketing-text-secondary text-base md:text-lg max-w-2xl mx-auto">
                             See how ProductionOS transforms your workflow
                         </p>
                     </motion.div>
@@ -268,10 +274,10 @@ export default function FeaturePage() {
             </section>
 
             {/* Benefits Grid */}
-            <section className="py-20">
-                <div className="container mx-auto px-6 md:px-12">
-                    <h2 className="text-3xl font-bold text-center mb-16">Key Features</h2>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <section className="py-12 md:py-20">
+                <div className="container mx-auto px-4 md:px-12">
+                    <h2 className="text-2xl md:text-3xl font-bold text-center mb-10 md:mb-16">Key Features</h2>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
                         {data.benefits.map((benefit, i) => (
                             <motion.div
                                 key={i}
@@ -306,9 +312,9 @@ export default function FeaturePage() {
             )}
 
             {/* Related Features */}
-            <section className="py-20 container mx-auto px-6 md:px-12 bg-marketing-surface border-t border-marketing-border">
-                <h2 className="text-2xl font-bold mb-8 text-center">Related Features</h2>
-                <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <section className="py-12 md:py-20 container mx-auto px-4 md:px-12 bg-marketing-surface border-t border-marketing-border">
+                <h2 className="text-xl md:text-2xl font-bold mb-6 md:mb-8 text-center">Related Features</h2>
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
                     {relatedFeatures.map((feature) => (
                         <Link key={feature.id} to={feature.path} className="block group">
                             <div className="p-6 border border-marketing-border rounded-xl bg-marketing-background hover:border-marketing-primary/50 transition-colors h-full">
@@ -324,11 +330,11 @@ export default function FeaturePage() {
             </section>
 
             {/* CTA */}
-            <section className="py-20 bg-marketing-primary/5 border-t border-marketing-border">
-                <div className="container mx-auto px-6 md:px-12 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to upgrade your workflow?</h2>
+            <section className="py-12 md:py-20 bg-marketing-primary/5 border-t border-marketing-border">
+                <div className="container mx-auto px-4 md:px-12 text-center">
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 md:mb-6">Ready to upgrade your workflow?</h2>
                     <div className="flex justify-center gap-4">
-                        <Link to="/auth/signup" className="px-8 py-4 bg-marketing-primary text-white font-bold rounded-xl hover:bg-marketing-primary/90 transition-colors">
+                        <Link to="/auth/signup" className="px-6 md:px-8 py-3 md:py-4 bg-marketing-primary text-white font-bold rounded-xl hover:bg-marketing-primary/90 transition-colors text-sm md:text-base">
                             Build your first quote for free
                         </Link>
                     </div>

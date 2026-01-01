@@ -132,14 +132,36 @@ export function formatCurrency(amount, currencyCode, options = {}) {
 }
 
 // Get the currency for a region
+// Reads from user settings first, falls back to sensible defaults
 export function getRegionCurrency(regionId) {
-    const regionCurrencies = {
+    // Try to get from settings store
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { useSettingsStore } = require('../store/settingsStore');
+        const regions = useSettingsStore.getState().settings?.regions;
+        if (regions) {
+            const region = regions.find(r => r.id === regionId);
+            if (region?.currency) {
+                return region.currency;
+            }
+        }
+    } catch {
+        // Settings store not available
+    }
+
+    // Legacy/fallback region currencies for backwards compatibility
+    const legacyRegionCurrencies = {
         MALAYSIA: 'MYR',
         SEA: 'USD',
         GULF: 'USD',
         CENTRAL_ASIA: 'USD',
+        // Global regions (aligned with opportunityStore REGIONS)
+        AMERICAS: 'USD',
+        EUROPE: 'EUR',
+        APAC: 'USD',
+        MEA: 'USD',
     };
-    return regionCurrencies[regionId] || 'USD';
+    return legacyRegionCurrencies[regionId] || 'USD';
 }
 
 // Get currency symbol

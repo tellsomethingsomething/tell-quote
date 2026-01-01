@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useInvoiceStore, INVOICE_STATUSES, PAYMENT_METHODS } from '../store/invoiceStore';
 import { useClientStore } from '../store/clientStore';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency, convertCurrency } from '../utils/currency';
+import { useDisplayCurrency } from '../hooks/useDisplayCurrency';
 
 // Format date helper
 const formatDate = (dateStr) => {
@@ -558,6 +559,9 @@ export default function InvoicesPage() {
     const { clients, savedQuotes } = useClientStore();
     const quotes = savedQuotes || [];
 
+    // Use global display currency from settings
+    const { currency: displayCurrency, rates } = useDisplayCurrency();
+
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
     const [filterStatus, setFilterStatus] = useState('all');
@@ -646,14 +650,14 @@ export default function InvoicesPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <StatsCard
                     label="Total Revenue"
-                    value={formatCurrency(stats.totalRevenue, 'USD', 0)}
+                    value={formatCurrency(stats.totalRevenue, displayCurrency, 0)}
                     subValue={`${stats.paid} paid invoices`}
                     color="text-green-400"
                     icon={<svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                 />
                 <StatsCard
                     label="Outstanding"
-                    value={formatCurrency(stats.totalOutstanding, 'USD', 0)}
+                    value={formatCurrency(stats.totalOutstanding, displayCurrency, 0)}
                     subValue={`${stats.sent} awaiting payment`}
                     color="text-blue-400"
                     icon={<svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}

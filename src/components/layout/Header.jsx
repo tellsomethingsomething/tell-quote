@@ -3,6 +3,8 @@ import { useQuoteStore } from '../../store/quoteStore';
 import { useClientStore } from '../../store/clientStore';
 import { useAuthStore } from '../../store/authStore';
 import { useSettingsStore } from '../../store/settingsStore';
+import { useDisplayCurrency } from '../../hooks/useDisplayCurrency';
+import { CURRENCIES } from '../../data/currencies';
 import Navigation from './Navigation';
 import { useToast } from '../common/Toast';
 import SaveAsTemplateModal from '../templates/SaveAsTemplateModal';
@@ -30,6 +32,84 @@ function ThemeToggle() {
                 </svg>
             )}
         </button>
+    );
+}
+
+// Currency Selector Component
+function CurrencySelector() {
+    const { currency, symbol, setCurrency, preferredCurrencies } = useDisplayCurrency();
+    const [isOpen, setIsOpen] = useState(false);
+
+    // Get full list of currencies for "More" option
+    const allCurrencies = Object.keys(CURRENCIES);
+    const [showAll, setShowAll] = useState(false);
+
+    const currenciesToShow = showAll ? allCurrencies : preferredCurrencies;
+
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="min-w-[44px] min-h-[44px] px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors flex items-center gap-1 text-sm text-gray-300"
+                title="Change display currency"
+            >
+                <span className="text-base">{symbol}</span>
+                <span className="hidden sm:inline text-xs font-medium">{currency}</span>
+                <svg className="w-3 h-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+            {isOpen && (
+                <>
+                    <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => { setIsOpen(false); setShowAll(false); }}
+                    />
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1f2e] border border-dark-border rounded-lg shadow-2xl z-50 overflow-hidden max-h-80 overflow-y-auto">
+                        <div className="px-3 py-2 border-b border-dark-border">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Display Currency</p>
+                        </div>
+                        {currenciesToShow.map((code) => {
+                            const config = CURRENCIES[code];
+                            if (!config) return null;
+                            return (
+                                <button
+                                    key={code}
+                                    onClick={() => {
+                                        setCurrency(code);
+                                        setIsOpen(false);
+                                        setShowAll(false);
+                                    }}
+                                    className={`w-full px-3 py-2 min-h-[40px] text-left text-sm transition-colors flex items-center justify-between ${currency === code
+                                        ? 'bg-brand-primary/20 text-brand-primary'
+                                        : 'text-gray-300 hover:bg-white/5'
+                                        }`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <span className="w-6 text-center">{config.symbol}</span>
+                                        <span>{code}</span>
+                                    </span>
+                                    {currency === code && (
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    )}
+                                </button>
+                            );
+                        })}
+                        {!showAll && (
+                            <button
+                                onClick={() => setShowAll(true)}
+                                className="w-full px-3 py-2 min-h-[40px] text-left text-xs text-gray-500 hover:bg-white/5 hover:text-gray-300 transition-colors border-t border-dark-border"
+                            >
+                                Show all currencies...
+                            </button>
+                        )}
+                    </div>
+                </>
+            )}
+        </div>
     );
 }
 
@@ -127,10 +207,13 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
                         />
                     </div>
 
-                    {/* Right Side - Subscription Badge, Theme Toggle, FS Button & User Menu */}
+                    {/* Right Side - Subscription Badge, Currency, Theme Toggle, FS Button & User Menu */}
                     <div className="flex items-center gap-2 sm:gap-3 relative">
                         {/* Subscription Status Badge */}
                         <SubscriptionBadge onUpgrade={onGoToSettings} />
+
+                        {/* Currency Selector */}
+                        <CurrencySelector />
 
                         {/* Theme Toggle */}
                         <ThemeToggle />
@@ -235,6 +318,9 @@ export default function Header({ view = 'editor', onGoToClients, onGoToRateCard,
 
                         {/* Right: Controls */}
                         <div className="flex items-center gap-1 sm:gap-2">
+                            {/* Currency Selector */}
+                            <CurrencySelector />
+
                             {/* Theme Toggle */}
                             <ThemeToggle />
 

@@ -6,20 +6,13 @@ import { useOpportunityStore, REGIONS, ALL_COUNTRIES, getRegionForCountry } from
 import { useClientStore } from '../store/clientStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useQuoteStore } from '../store/quoteStore';
+import { useDisplayCurrency } from '../hooks/useDisplayCurrency';
 import { formatCurrency, convertCurrency } from '../utils/currency';
-import { getPricingForUser } from '../services/pppService';
+import { formatDate } from '../utils/dateFormatting';
 import PipelineKanban from '../components/crm/PipelineKanban';
-import logger from '../utils/logger';
 
 // Lazy load timeline component
 const OpportunityTimeline = lazy(() => import('../components/timeline/OpportunityTimeline'));
-
-// Format date helper
-const formatDate = (dateStr) => {
-    if (!dateStr) return null;
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-};
 
 // Droppable country zone component
 function DroppableCountry({ country, children, isOver }) {
@@ -377,22 +370,8 @@ export default function OpportunitiesPage({ onSelectOpportunity }) {
 
     const hiddenCountries = opsPrefs.hiddenCountries || {};
 
-    // Auto-detect currency based on user's location (PPP)
-    const [dashboardCurrency, setDashboardCurrency] = useState('USD');
-
-    useEffect(() => {
-        const detectCurrency = async () => {
-            try {
-                const pricingInfo = await getPricingForUser();
-                if (pricingInfo?.currency) {
-                    setDashboardCurrency(pricingInfo.currency);
-                }
-            } catch (error) {
-                logger.warn('Currency detection failed, using USD');
-            }
-        };
-        detectCurrency();
-    }, []);
+    // Use global display currency from settings
+    const { currency: dashboardCurrency } = useDisplayCurrency();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRegion, setFilterRegion] = useState('all');

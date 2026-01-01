@@ -4,10 +4,19 @@ import logger from './logger';
 export async function exportQuoteToPDF(quote, currency, { showWatermark = false } = {}) {
     try {
         // Lazy load PDF dependencies to avoid 1.5MB bundle on initial load
-        const [{ pdf }, { default: CleanPDF }] = await Promise.all([
+        const [{ pdf }, { default: CleanPDF }, { validateQuoteForPDF }] = await Promise.all([
             import('@react-pdf/renderer'),
-            import('../components/pdf/CleanPDF')
+            import('../components/pdf/CleanPDF'),
+            import('../components/pdf/PDFErrorBoundary')
         ]);
+
+        // Validate quote data before attempting PDF generation
+        try {
+            validateQuoteForPDF(quote);
+        } catch (validationError) {
+            logger.error('Quote validation failed:', validationError.message);
+            throw new Error(`Cannot generate PDF: ${validationError.message}`);
+        }
 
         // Generate PDF blob
         const blob = await pdf(createElement(CleanPDF, { quote, currency, showWatermark })).toBlob();

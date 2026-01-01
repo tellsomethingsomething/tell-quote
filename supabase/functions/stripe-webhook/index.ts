@@ -79,47 +79,24 @@ serve(async (req: Request) => {
 
     let event: Stripe.Event;
 
-    // Try signature verification first
-    if (signature && webhookSecret) {
-        try {
-            event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-            console.log('Signature verified successfully. Event type:', event.type);
-        } catch (err) {
-            console.error('Signature verification failed:', err.message);
-            console.error('Secret starts with:', webhookSecret.substring(0, 10));
-            console.error('Signature starts with:', signature.substring(0, 30));
+    // SECURITY: Always require signature verification
+    // No development bypasses - all webhooks must be properly signed
+    if (!signature) {
+        console.error('Missing Stripe signature header');
+        return new Response('Missing signature', { status: 400 });
+    }
 
-            // DEVELOPMENT ONLY: Parse event anyway for testing
-            // Remove this fallback in production!
-            const isDevelopment = Deno.env.get('ENVIRONMENT') !== 'production';
-            if (isDevelopment) {
-                console.warn('⚠️ BYPASSING signature verification (development mode)');
-                try {
-                    event = JSON.parse(body) as Stripe.Event;
-                    console.log('Parsed event without verification. Type:', event.type);
-                } catch (parseErr) {
-                    return new Response('Invalid JSON', { status: 400 });
-                }
-            } else {
-                return new Response('Webhook signature verification failed', { status: 400 });
-            }
-        }
-    } else {
-        // No signature or secret - check if this is development
-        const isDevelopment = Deno.env.get('ENVIRONMENT') !== 'production';
-        if (!isDevelopment && signature) {
-            console.error('Missing webhook secret in production!');
-            return new Response('Webhook configuration error', { status: 500 });
-        }
+    if (!webhookSecret) {
+        console.error('STRIPE_WEBHOOK_SECRET not configured');
+        return new Response('Webhook not configured', { status: 500 });
+    }
 
-        // Parse directly (for testing only)
-        console.warn('⚠️ No signature verification (missing signature or secret)');
-        try {
-            event = JSON.parse(body) as Stripe.Event;
-            console.log('Parsed event type:', event.type);
-        } catch (parseErr) {
-            return new Response('Invalid JSON', { status: 400 });
-        }
+    try {
+        event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+        console.log('Signature verified successfully. Event type:', event.type);
+    } catch (err) {
+        console.error('Signature verification failed:', err.message);
+        return new Response('Webhook signature verification failed', { status: 400 });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);

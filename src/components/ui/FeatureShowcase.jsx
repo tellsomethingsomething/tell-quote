@@ -102,7 +102,7 @@ export default function FeatureShowcase() {
                         <button
                             key={feature.id}
                             onClick={() => scrollTo(index)}
-                            className={`flex-shrink-0 snap-start px-6 py-4 rounded-xl border transition-all duration-300 text-left min-w-[280px] sm:min-w-[320px] ${
+                            className={`flex-shrink-0 snap-start px-4 sm:px-6 py-3 sm:py-4 rounded-xl border transition-all duration-300 text-left min-w-[240px] sm:min-w-[320px] ${
                                 activeIndex === index
                                     ? 'bg-marketing-surface border-marketing-primary/50 shadow-lg'
                                     : 'bg-transparent border-marketing-border hover:border-marketing-border/80 hover:bg-marketing-surface/30'

@@ -13,9 +13,10 @@ const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
-// Backward compatibility: Support old password-based auth if Supabase not configured
-// SECURITY: Password must be set via environment variable - no hardcoded fallback
-const FALLBACK_PASSWORD = import.meta.env.VITE_APP_PASSWORD || null;
+// SECURITY: Password-based auth has been removed for production security
+// All authentication must go through Supabase Auth
+// If you need local development without Supabase, configure a local Supabase instance
+const FALLBACK_PASSWORD = null; // Disabled for security
 
 /**
  * Load authentication session from localStorage (async, encrypted)
