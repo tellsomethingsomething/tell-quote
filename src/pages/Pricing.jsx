@@ -128,20 +128,20 @@ export default function Pricing() {
                 </p>
 
                 {/* Toggle */}
-                <div className="flex items-center justify-center gap-6 mb-16 w-full">
-                    <span className={`text-2xl md:text-3xl font-medium ${billingCycle === 'monthly' ? 'text-marketing-text-primary' : 'text-marketing-text-secondary'}`}>Monthly</span>
+                <div className="flex items-center justify-center gap-4 mb-16">
+                    <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-marketing-text-primary' : 'text-marketing-text-secondary'}`}>Monthly</span>
                     <button
                         onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'annual' : 'monthly')}
-                        className="w-20 h-12 bg-marketing-surface border-2 border-marketing-border rounded-xl relative transition-colors focus:outline-none focus:ring-2 focus:ring-marketing-primary/50 cursor-pointer flex-shrink-0"
+                        className="w-14 h-8 bg-marketing-surface border border-marketing-border rounded-full relative transition-colors focus:outline-none focus:ring-2 focus:ring-marketing-primary/50 cursor-pointer"
                     >
                         <motion.div
-                            className="absolute top-1.5 left-1.5 w-8 h-8 bg-marketing-primary rounded-lg shadow-lg"
-                            animate={{ x: billingCycle === 'annual' ? 32 : 0 }}
+                            className="absolute top-1 left-1 w-6 h-6 bg-marketing-primary rounded-full shadow-lg"
+                            animate={{ x: billingCycle === 'annual' ? 24 : 0 }}
                             transition={{ type: "spring", stiffness: 500, damping: 30 }}
                         />
                     </button>
-                    <span className={`text-2xl md:text-3xl font-medium ${billingCycle === 'annual' ? 'text-marketing-text-primary' : 'text-marketing-text-secondary'}`}>
-                        Annual <span className="text-marketing-success text-lg md:text-xl ml-2 font-bold">SAVE 20%</span>
+                    <span className={`text-sm font-medium ${billingCycle === 'annual' ? 'text-marketing-text-primary' : 'text-marketing-text-secondary'}`}>
+                        Annual <span className="text-marketing-success text-xs ml-1 font-bold">SAVE 20%</span>
                     </span>
                 </div>
 
