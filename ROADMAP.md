@@ -1,12 +1,17 @@
 # ProductionOS - Launch Sprint
 
+> ## **PRODUCTION STATUS: LAUNCHED (2026-01-02)**
+>
+> ProductionOS is now live at https://productionos.io
+> This roadmap is historical reference. The launch sprint has been completed.
+
 ## Vision
 AI-native CRM + rental management platform for production companies, AV rental houses, and event businesses. The platform they wish Current RMS/Rentman was.
 
 **Brand:** ProductionOS
 **Killer Feature:** Real P&L per project
-**Price:** $29/user/month
-**Target:** 10 paying customers in 30 days
+**Price:** $24-49/user/month (Individual/Team plans)
+**Status:** LIVE - Production deployed 2026-01-02
 
 ---
 

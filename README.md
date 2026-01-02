@@ -1,16 +1,63 @@
-# React + Vite
+# ProductionOS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> ## **PRODUCTION SYSTEM - LIVE**
+>
+> **Status:** PRODUCTION (Live since 2026-01-02)
+> **URL:** https://productionos.io
 
-Currently, two official plugins are available:
+The first CRM built specifically for production companies. A multi-tenant SaaS platform providing CRM, quoting, project management, and financial tools for managing production workflows.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Quick Start
 
-## React Compiler
+```bash
+npm install          # Install dependencies
+npm run dev          # Start development server (localhost:5173)
+npm run build        # Production build
+npm run deploy       # Deploy to Vercel
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+- **Frontend:** React 19, Vite 7, Tailwind CSS
+- **State:** Zustand with localStorage persistence
+- **Backend:** Supabase (Auth + PostgreSQL)
+- **Payments:** Stripe (Live mode)
+- **PDF:** @react-pdf/renderer
+- **Hosting:** Vercel
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [CLAUDE.md](./CLAUDE.md) | AI assistant guidelines and architecture overview |
+| [SECURITY.md](./SECURITY.md) | Security implementation details |
+| [SOFT_LAUNCH_CHECKLIST.md](./SOFT_LAUNCH_CHECKLIST.md) | Production launch checklist |
+
+## Security
+
+All security measures are deployed and verified:
+- Supabase Auth with PKCE flow
+- Row Level Security (RLS) on all tables
+- Server-side rate limiting (5 attempts = 15-min lockout)
+- OAuth tokens encrypted with pgcrypto
+- HTTPS enforced via HSTS
+
+See [SECURITY.md](./SECURITY.md) for full details.
+
+## Environment Variables
+
+```bash
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+See `.env.example` for all configuration options.
+
+## License
+
+Proprietary - Tell Productions Ltd.
+
+---
+
+**Production URL:** https://productionos.io
+**Last Updated:** 2026-01-02

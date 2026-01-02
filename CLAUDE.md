@@ -1,5 +1,21 @@
 # CLAUDE.md
 
+> ## **PRODUCTION SYSTEM - LIVE DATA WARNING**
+>
+> **Status:** PRODUCTION (Live since 2026-01-02)
+> **URL:** https://productionos.io
+>
+> **CRITICAL RULES FOR AI ASSISTANTS:**
+> 1. **DO NOT** make changes to production data without explicit user approval
+> 2. **DO NOT** modify database schemas, RLS policies, or security configurations
+> 3. **DO NOT** deploy changes without user confirmation
+> 4. **DO NOT** run migrations or data updates on production database
+> 5. **ALWAYS** treat this as a live system with real customer data
+>
+> All code changes should be reviewed before deployment. This is a live SaaS product.
+
+---
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
