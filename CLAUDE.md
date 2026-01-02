@@ -142,16 +142,30 @@ Build is optimized with manual chunk splitting for caching (react-vendor, zustan
 
 ## Security
 
+**🟢 PRODUCTION STATUS: All security hardening complete (2026-01-02)**
+
 ### Authentication
 - Supabase Auth with PKCE flow (most secure OAuth pattern)
 - 24-hour session duration with auto-refresh on activity
-- Rate limiting: 5 failed attempts → 15-minute lockout
+- Rate limiting: 5 failed attempts → 15-minute lockout (server-side via `login_attempts` table)
 - Password requirements: 8+ chars, uppercase, lowercase, number, special character
 
 ### Database Security
 - Row Level Security (RLS) on all tables
 - Multi-tenant isolation via organization_id
 - All API keys stored server-side in edge functions
+- OAuth tokens encrypted with pgcrypto (`encrypt_token`/`decrypt_token` functions)
+- Encryption key stored in `app_secrets` table (inaccessible to clients)
+
+### Edge Function Security
+- Strict CORS origin validation (no wildcards)
+- Fail-closed rate limiting behavior
+- Decrypted token views for OAuth connections (`google_connections_decrypted`, `microsoft_connections_decrypted`)
+
+### Client-Side Security
+- User-specific salt for client-side encryption (v3 format)
+- Sensitive data encrypted before localStorage storage
+- No API keys exposed in client bundle
 
 ### Compliance
 - GDPR: Data export (JSON), account deletion with 30-day grace period
