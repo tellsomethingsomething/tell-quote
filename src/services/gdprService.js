@@ -175,6 +175,57 @@ export function downloadExportAsJSON(data, filename = 'my-data-export.json') {
 }
 
 /**
+ * Send account deletion confirmation email
+ * Uses Supabase edge function to send via Resend
+ * @param {string} email - User's email address
+ * @param {string} token - Confirmation token
+ * @param {Date} scheduledDeletionAt - Scheduled deletion date
+ */
+async function sendDeletionConfirmationEmail(email, token, scheduledDeletionAt) {
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    if (!SUPABASE_URL) {
+        throw new Error('Supabase URL not configured');
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+        throw new Error('Not authenticated');
+    }
+
+    const APP_URL = 'https://productionos.io';
+    const confirmUrl = `${APP_URL}/settings?confirm-deletion=${token}`;
+    const deletionDate = new Date(scheduledDeletionAt).toLocaleDateString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
+    // Call edge function to send email
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-gdpr-email`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+            type: 'deletion_confirmation',
+            email,
+            confirmUrl,
+            deletionDate,
+            token,
+        }),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Email send failed: ${response.status}`);
+    }
+
+    return response.json();
+}
+
+/**
  * Request account deletion
  * Creates a deletion request with 30-day grace period
  * @param {string} reason - Reason for deletion
@@ -225,7 +276,14 @@ export async function requestAccountDeletion(reason = '', organizationId = null)
 
     if (error) throw error;
 
-    // TODO: Send confirmation email with token
+    // Send confirmation email with token
+    try {
+        await sendDeletionConfirmationEmail(user.email, confirmationToken, scheduledDeletionAt);
+    } catch (emailError) {
+        // Log but don't fail the request - email is not critical for the flow
+        logger.error('Failed to send deletion confirmation email:', emailError);
+    }
+
     return { success: true, request: data };
 }
 

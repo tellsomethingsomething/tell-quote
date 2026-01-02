@@ -15,21 +15,21 @@ export default function SubscriptionBadge({ onUpgrade }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const loadStatus = async () => {
+            try {
+                const result = await checkSubscriptionAccess(organization.id);
+                setStatus(result);
+            } catch (err) {
+                logger.error('Failed to check subscription:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
         if (organization?.id) {
             loadStatus();
         }
     }, [organization?.id]);
-
-    const loadStatus = async () => {
-        try {
-            const result = await checkSubscriptionAccess(organization.id);
-            setStatus(result);
-        } catch (err) {
-            logger.error('Failed to check subscription:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     if (loading || !status) {
         return null;

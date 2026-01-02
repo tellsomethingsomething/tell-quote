@@ -10,7 +10,8 @@
 > 2. **DO NOT** modify database schemas, RLS policies, or security configurations
 > 3. **DO NOT** deploy changes without user confirmation
 > 4. **DO NOT** run migrations or data updates on production database
-> 5. **ALWAYS** treat this as a live system with real customer data
+> 5. **NEVER DELETE ANY DATA** - No DELETE queries, no dropping tables, no removing records
+> 6. **ALWAYS** treat this as a live system with real customer data
 >
 > All code changes should be reviewed before deployment. This is a live SaaS product.
 

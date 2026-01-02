@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Activity } from 'lucide-react';
 import { useTaskBoardStore } from '../../../store/taskBoardStore';
+import { useAuthStore } from '../../../store/authStore';
 
 const CommentsSection = ({ cardId, comments }) => {
     const [newComment, setNewComment] = useState('');
     const { addComment, deleteComment } = useTaskBoardStore();
+    const user = useAuthStore(state => state.user);
 
-    // TODO: Get actual user ID
-    const currentUserId = 'demo-user-id';
+    // Get actual user ID from auth store, fallback to anonymous if not logged in
+    const currentUserId = user?.userId || user?.profile?.id || 'anonymous';
 
     const handleAddComment = () => {
         if (newComment.trim()) {
@@ -26,7 +28,7 @@ const CommentsSection = ({ cardId, comments }) => {
             {/* Add comment */}
             <div className="flex gap-3 mb-4">
                 <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
-                    U
+                    {user?.email?.charAt(0)?.toUpperCase() || user?.profile?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
                 <div className="flex-1">
                     <textarea

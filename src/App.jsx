@@ -148,7 +148,7 @@ function App() {
 
   // State for subscription access
   const [subscriptionAccess, setSubscriptionAccess] = useState(null);
-  const [checkingSubscription, setCheckingSubscription] = useState(false);
+  const [checkingSubscription, setCheckingSubscription] = useState(false); // eslint-disable-line no-unused-vars -- used in handleRetrySubscriptionCheck
 
   // Valid view names that map to URL paths
   const validViews = [
@@ -440,10 +440,11 @@ function App() {
       case 'newOpportunity':
         confirmNavigateAway(() => setView('opportunities'));
         break;
-      case 'toggleTheme':
+      case 'toggleTheme': {
         const currentTheme = useSettingsStore.getState().settings.theme;
         useSettingsStore.getState().updateSettings({ theme: currentTheme === 'dark' ? 'light' : 'dark' });
         break;
+      }
       case 'showShortcuts':
         setShowShortcutsHelp(true);
         break;
@@ -452,6 +453,7 @@ function App() {
     }
   }, [confirmNavigateAway, handleNewQuote]);
 
+  // eslint-disable-next-line no-unused-vars -- reserved for quote-to-project conversion feature
   const handleConvertQuoteToProject = useCallback((projectId) => {
     setSelectedProjectId(projectId);
     setView('project-detail');
@@ -586,7 +588,7 @@ function App() {
           if (Date.now() - parsed.timestamp < 5 * 60 * 1000 && parsed.access !== ACCESS_LEVELS.BLOCKED) {
             setSubscriptionAccess(parsed);
           }
-        } catch (e) { /* ignore parse errors */ }
+        } catch { /* ignore parse errors */ }
       }
 
       // Always check in background for accuracy

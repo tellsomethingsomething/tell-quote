@@ -21,13 +21,13 @@ const COMPARISON_FEATURES = [
 export default function UpgradePrompt({
     isOpen,
     onClose,
-    feature,
+    feature, // eslint-disable-line no-unused-vars -- reserved for feature-specific upgrade messaging
     currentPlan = 'free',
     message,
     onUpgrade,
 }) {
     const [showComparison, setShowComparison] = useState(false);
-    const [selectedPlan, setSelectedPlan] = useState(null);
+    const [selectedPlan, setSelectedPlan] = useState(null); // eslint-disable-line no-unused-vars -- reserved for plan selection UI
 
     if (!isOpen) return null;
 

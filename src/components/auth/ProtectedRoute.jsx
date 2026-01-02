@@ -38,14 +38,12 @@ export default function ProtectedRoute({
     const {
         isAuthenticated,
         isSessionLoading,
-        user,
         hasPermission,
         isAdmin,
     } = useAuthStore(
         state => ({
             isAuthenticated: state.isAuthenticated,
             isSessionLoading: state.isSessionLoading,
-            user: state.user,
             hasPermission: state.hasPermission,
             isAdmin: state.isAdmin,
         }),

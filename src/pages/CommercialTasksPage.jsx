@@ -10,6 +10,18 @@ import logger from '../utils/logger';
 // Lazy load TaskBoardPage for Board view
 const TaskBoardPage = lazy(() => import('./TaskBoardPage'));
 
+// Safe JSON parse helper - prevents crashes from corrupted localStorage data
+const safeJsonParse = (jsonString, fallback = null) => {
+    if (!jsonString) return fallback;
+    try {
+        const parsed = JSON.parse(jsonString);
+        return parsed !== null ? parsed : fallback;
+    } catch (e) {
+        logger.warn('Failed to parse JSON from localStorage:', e.message);
+        return fallback;
+    }
+};
+
 // Edge function URL for commercial tasks generation
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -38,11 +50,13 @@ export default function CommercialTasksPage() {
 
     const [tasks, setTasks] = useState(() => {
         const saved = localStorage.getItem('tell_commercial_tasks_v2');
-        return saved ? JSON.parse(saved) : [];
+        const parsed = safeJsonParse(saved, []);
+        return Array.isArray(parsed) ? parsed : [];
     });
     const [manualTasks, setManualTasks] = useState(() => {
         const saved = localStorage.getItem('tell_manual_tasks');
-        return saved ? JSON.parse(saved) : [];
+        const parsed = safeJsonParse(saved, []);
+        return Array.isArray(parsed) ? parsed : [];
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -52,7 +66,8 @@ export default function CommercialTasksPage() {
     });
     const [completedTasks, setCompletedTasks] = useState(() => {
         const saved = localStorage.getItem('tell_completed_tasks_v2');
-        return saved ? JSON.parse(saved) : [];
+        const parsed = safeJsonParse(saved, []);
+        return Array.isArray(parsed) ? parsed : [];
     });
     const [nextScan, setNextScan] = useState(null);
     const [showAddTask, setShowAddTask] = useState(false);
@@ -129,7 +144,8 @@ export default function CommercialTasksPage() {
             const savedTasks = localStorage.getItem('tell_commercial_tasks_v2');
             if (savedTime && savedTasks) {
                 const timeSinceLastScan = Date.now() - new Date(savedTime).getTime();
-                const hasTasks = JSON.parse(savedTasks).length > 0;
+                const parsedTasks = safeJsonParse(savedTasks, []);
+                const hasTasks = Array.isArray(parsedTasks) && parsedTasks.length > 0;
                 if (timeSinceLastScan < SCAN_INTERVAL && hasTasks) {
                     isGenerating.current = false;
                     return;
@@ -293,8 +309,7 @@ Return ONLY JSON:
             setLoading(false);
             isGenerating.current = false;
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [clients, quotes, opportunities]);
+    }, [clients, quotes, opportunities, settings]);
 
     // Update next scan time when lastGenerated changes
     useEffect(() => {
@@ -319,7 +334,8 @@ Return ONLY JSON:
         // Check if we need to generate (no tasks or 3 hours passed)
         const savedTasks = localStorage.getItem('tell_commercial_tasks_v2');
         const savedTime = localStorage.getItem('tell_commercial_tasks_time');
-        const hasTasks = savedTasks && JSON.parse(savedTasks).length > 0;
+        const parsedSavedTasks = safeJsonParse(savedTasks, []);
+        const hasTasks = Array.isArray(parsedSavedTasks) && parsedSavedTasks.length > 0;
         const lastScan = savedTime ? new Date(savedTime) : null;
         const timeSinceLastScan = lastScan ? Date.now() - lastScan.getTime() : Infinity;
 
@@ -328,8 +344,11 @@ Return ONLY JSON:
         }
 
         // Set up interval for automatic scanning (every 3 hours)
+        // Wrap in async handler to properly catch errors
         scanIntervalRef.current = setInterval(() => {
-            generateTasks(true);
+            generateTasks(true).catch(err => {
+                logger.error('Background task generation failed:', err);
+            });
         }, SCAN_INTERVAL);
 
         return () => {
@@ -337,8 +356,7 @@ Return ONLY JSON:
                 clearInterval(scanIntervalRef.current);
             }
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [clients.length, quotes.length, opportunities.length]);
+    }, [generateTasks]);
 
     // Open log modal for a task
     const openLogModal = (task) => {

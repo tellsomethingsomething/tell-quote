@@ -4,6 +4,20 @@ import logger from './logger';
 const CACHE_KEY = 'exchange_rates_cache';
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
+// Validate FALLBACK_RATES at module initialization
+// This catches configuration issues early rather than at runtime
+(() => {
+    const invalidRates = [];
+    for (const [currency, rate] of Object.entries(FALLBACK_RATES)) {
+        if (typeof rate !== 'number' || rate <= 0 || !isFinite(rate)) {
+            invalidRates.push(`${currency}: ${rate}`);
+        }
+    }
+    if (invalidRates.length > 0) {
+        logger.error('Invalid FALLBACK_RATES detected:', invalidRates.join(', '));
+    }
+})();
+
 // Get cached rates
 function getCachedRates() {
     try {

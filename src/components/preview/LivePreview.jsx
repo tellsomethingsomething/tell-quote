@@ -5,6 +5,7 @@ import { usePDFWatermark } from '../../hooks/useSubscription';
 import { formatCurrency, convertFromUSD } from '../../utils/currency';
 import { CURRENCIES } from '../../data/currencies';
 import { calculateGrandTotal, calculateGrandTotalWithFees } from '../../utils/calculations';
+import logger from '../../utils/logger';
 
 export default function LivePreview() {
     const { quote, rates } = useQuoteStore();
@@ -32,16 +33,26 @@ export default function LivePreview() {
         setIsGenerating(true);
         try {
             // Lazy load PDF dependencies only when needed
-            const [{ pdf }, { default: CleanPDF }] = await Promise.all([
+            const [{ pdf }, { default: CleanPDF }, { validateQuoteForPDF }] = await Promise.all([
                 import('@react-pdf/renderer'),
-                import('../pdf/CleanPDF')
+                import('../pdf/CleanPDF'),
+                import('../pdf/PDFErrorBoundary')
             ]);
+
+            // Validate quote data before attempting PDF generation
+            try {
+                validateQuoteForPDF(quote);
+            } catch (validationError) {
+                logger.error('Quote validation failed:', validationError.message);
+                alert(`Cannot generate PDF: ${validationError.message}`);
+                return;
+            }
 
             const blob = await pdf(
                 createElement(CleanPDF, { quote, currency: quote.currency, includeTerms, showWatermark: shouldWatermark })
             ).toBlob();
 
-            const filename = `${client.company || 'Client'} - ${quote.project.title || 'Project'} - ${quote.quoteDate} - Quote.pdf`;
+            const filename = `${client.company || 'Client'} - ${quote.project?.title || 'Project'} - ${quote.quoteDate} - Quote.pdf`;
 
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -49,6 +60,9 @@ export default function LivePreview() {
             link.download = filename;
             link.click();
             URL.revokeObjectURL(url);
+        } catch (error) {
+            logger.error('PDF generation failed:', error);
+            alert('Failed to generate PDF. Please check the quote data and try again.');
         } finally {
             setIsGenerating(false);
         }

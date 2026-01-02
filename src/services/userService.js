@@ -2,6 +2,12 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import logger from '../utils/logger';
 
 /**
+ * Default tab permissions for new users
+ * Defined at module top to ensure availability for all functions
+ */
+export const DEFAULT_TAB_PERMISSIONS = ['dashboard', 'quotes', 'clients', 'opportunities', 'tasks'];
+
+/**
  * Fetch all user profiles (for admin user management)
  */
 export async function fetchAllUsers() {
@@ -207,7 +213,3 @@ export const AVAILABLE_TABS = [
     { id: 'settings', label: 'Settings', description: 'System configuration (Admin only)' },
 ];
 
-/**
- * Default tab permissions for new users
- */
-export const DEFAULT_TAB_PERMISSIONS = ['dashboard', 'quotes', 'clients', 'opportunities', 'tasks'];
