@@ -1,12 +1,10 @@
 // Microsoft OAuth Callback Edge Function
 // Handles OAuth callback from Microsoft Identity Platform
+// SECURITY: Includes encrypted token storage
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders, handleCorsPrelight } from '../_shared/cors.ts'
+import { checkRateLimit, rateLimitExceededResponse } from '../_shared/rateLimit.ts'
 
 interface MicrosoftTokenResponse {
   access_token: string
@@ -24,8 +22,10 @@ interface MicrosoftUserInfo {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return handleCorsPrelight(req)
   }
 
   try {
@@ -143,7 +143,15 @@ Deno.serve(async (req) => {
     // Parse scopes
     const scopes = tokens.scope.split(' ')
 
-    // Upsert Microsoft connection
+    // SECURITY: Encrypt tokens before storage
+    const { data: encryptedAccess } = await supabase.rpc('encrypt_token', {
+      token_text: tokens.access_token
+    })
+    const { data: encryptedRefresh } = await supabase.rpc('encrypt_token', {
+      token_text: tokens.refresh_token
+    })
+
+    // Upsert Microsoft connection with encrypted tokens only
     const { data: connection, error: upsertError } = await supabase
       .from('microsoft_connections')
       .upsert({
@@ -152,8 +160,9 @@ Deno.serve(async (req) => {
         microsoft_user_id: userInfo.id,
         microsoft_name: userInfo.displayName,
         microsoft_picture: photoUrl,
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
+        // SECURITY: Only store encrypted tokens
+        access_token_encrypted: encryptedAccess,
+        refresh_token_encrypted: encryptedRefresh,
         token_expires_at: tokenExpiresAt.toISOString(),
         scopes,
         status: 'active',

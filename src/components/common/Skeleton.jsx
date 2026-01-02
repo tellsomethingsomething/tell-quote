@@ -97,7 +97,7 @@ export function DashboardSkeleton() {
     return (
         <div className="h-[calc(100vh-60px)] overflow-y-auto" role="status" aria-label="Loading dashboard">
             <span className="sr-only">Loading dashboard content...</span>
-            <div className="bg-dark-bg border-b border-dark-border p-3 sm:p-6">
+            <div className="p-3 sm:p-6">
                 {/* Header skeleton */}
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                     <div>

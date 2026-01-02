@@ -19,8 +19,52 @@ import logger from './logger';
 const PBKDF2_ITERATIONS = 100000;
 const AES_KEY_LENGTH = 256;
 const IV_LENGTH = 12; // 96 bits for GCM
-const SALT = 'productionos-v2'; // Static salt for key derivation
-const VERSION_PREFIX = 'v2:'; // Prefix to identify AES-GCM encrypted data
+const SALT_PREFIX = 'productionos-v3-'; // Base salt prefix (user ID appended)
+const VERSION_PREFIX = 'v3:'; // Version prefix for user-specific encryption
+const LEGACY_VERSION_PREFIX = 'v2:'; // Legacy prefix for migration
+
+// Cache for user ID to avoid repeated localStorage reads
+let cachedUserId = null;
+
+/**
+ * Get user-specific salt for key derivation
+ * SECURITY: Uses user ID to ensure encryption is unique per user
+ * @returns {string} User-specific salt
+ */
+function getUserSalt() {
+    // Try to get user ID from multiple sources
+    if (!cachedUserId) {
+        try {
+            // Check localStorage for auth state
+            const authState = localStorage.getItem('productionos-auth');
+            if (authState) {
+                const parsed = JSON.parse(authState);
+                cachedUserId = parsed?.state?.userId || parsed?.state?.user?.id;
+            }
+
+            // Fallback: Check Supabase auth storage
+            if (!cachedUserId) {
+                const supabaseAuth = localStorage.getItem('sb-xprvufuzdmyniaplmpwf-auth-token');
+                if (supabaseAuth) {
+                    const parsed = JSON.parse(supabaseAuth);
+                    cachedUserId = parsed?.user?.id;
+                }
+            }
+        } catch (e) {
+            logger.debug('Could not get user ID for salt');
+        }
+    }
+
+    // Use user ID if available, otherwise use device-only salt (less secure but functional)
+    return SALT_PREFIX + (cachedUserId || 'device-fallback');
+}
+
+/**
+ * Clear cached user ID (call on logout)
+ */
+export function clearEncryptionCache() {
+    cachedUserId = null;
+}
 
 // Generate a device-specific key based on browser fingerprint
 function getDeviceKey() {
@@ -32,6 +76,8 @@ function getDeviceKey() {
         screen.width,
         screen.height,
         new Date().getTimezoneOffset(),
+        // SECURITY: Add user-specific component
+        cachedUserId || '',
     ].join('|');
 
     return entropy;
@@ -39,10 +85,12 @@ function getDeviceKey() {
 
 /**
  * Derive an AES-GCM key using PBKDF2
+ * SECURITY: Uses user-specific salt for unique key derivation per user
  * @param {string} passphrase - The passphrase to derive key from
+ * @param {string} salt - Optional salt override (for legacy decryption)
  * @returns {Promise<CryptoKey>} AES-GCM CryptoKey
  */
-async function deriveAESKey(passphrase) {
+async function deriveAESKey(passphrase, salt = null) {
     const encoder = new TextEncoder();
 
     // Import passphrase as key material
@@ -54,11 +102,14 @@ async function deriveAESKey(passphrase) {
         ['deriveBits', 'deriveKey']
     );
 
+    // Use user-specific salt for better security
+    const effectiveSalt = salt || getUserSalt();
+
     // Derive AES-GCM key using PBKDF2
     return await window.crypto.subtle.deriveKey(
         {
             name: 'PBKDF2',
-            salt: encoder.encode(SALT),
+            salt: encoder.encode(effectiveSalt),
             iterations: PBKDF2_ITERATIONS,
             hash: 'SHA-256',
         },
@@ -165,7 +216,7 @@ export async function encryptData(data) {
 
 /**
  * Decrypt data from localStorage
- * Supports both new AES-GCM format (v2:) and legacy XOR format
+ * Supports v3 (user-specific salt), v2 (static salt), and legacy XOR format
  * @param {string} encryptedData - Base64 encoded encrypted data
  * @returns {Promise<string>} Decrypted plain text
  */
@@ -179,11 +230,21 @@ export async function decryptData(encryptedData) {
             return encryptedData;
         }
 
-        // Check if this is new format (v2:) or legacy XOR
+        // Check format version and decrypt accordingly
         if (encryptedData.startsWith(VERSION_PREFIX)) {
-            // New AES-GCM format
+            // New v3 format with user-specific salt
             const base64Data = encryptedData.slice(VERSION_PREFIX.length);
             return await decryptAESGCM(base64Data);
+        } else if (encryptedData.startsWith(LEGACY_VERSION_PREFIX)) {
+            // Legacy v2 format with static salt - decrypt and re-encrypt with new format
+            const base64Data = encryptedData.slice(LEGACY_VERSION_PREFIX.length);
+            try {
+                const decrypted = await decryptAESGCM(base64Data, 'productionos-v2');
+                logger.debug('Decrypted legacy v2 data - will re-encrypt on next save');
+                return decrypted;
+            } catch (v2Error) {
+                logger.debug('v2 decryption failed, trying as plain text');
+            }
         } else {
             // Legacy XOR format - attempt migration
             try {
@@ -196,9 +257,9 @@ export async function decryptData(encryptedData) {
             } catch (legacyError) {
                 logger.debug('Legacy decryption failed, trying as plain text');
             }
-            // If legacy decryption fails, return as-is (might be unencrypted)
-            return encryptedData;
         }
+        // If all decryption fails, return as-is (might be unencrypted)
+        return encryptedData;
     } catch (e) {
         logger.error('Decryption failed:', e);
         return encryptedData; // Fallback to returning as-is
@@ -208,11 +269,12 @@ export async function decryptData(encryptedData) {
 /**
  * Decrypt AES-GCM encrypted data
  * @param {string} base64Data - Base64 encoded IV + ciphertext
+ * @param {string} legacySalt - Optional legacy salt for v2 format migration
  * @returns {Promise<string>} Decrypted plain text
  */
-async function decryptAESGCM(base64Data) {
+async function decryptAESGCM(base64Data, legacySalt = null) {
     const deviceKey = getDeviceKey();
-    const key = await deriveAESKey(deviceKey);
+    const key = await deriveAESKey(deviceKey, legacySalt);
 
     // Decode from base64
     const combined = new Uint8Array(

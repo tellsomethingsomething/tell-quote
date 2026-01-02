@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { shallow } from 'zustand/shallow';
 import { useOpportunityStore } from '../../store/opportunityStore';
 import { useTimelineStore, EVENT_TYPES, EVENT_CONFIGS } from '../../store/timelineStore';
 import { formatCurrency } from '../../utils/currency';
@@ -200,12 +201,15 @@ function ResearchMarker({ event, startDate, totalDays, onClick }) {
 
 // Main component
 export default function OpportunityTimeline({ opportunities: externalOpps, onSelectOpportunity }) {
-    const storeOpps = useOpportunityStore(state => state.opportunities);
+    const storeOpps = useOpportunityStore(state => state.opportunities, shallow);
     const updateOpportunity = useOpportunityStore(state => state.updateOpportunity);
     const opportunities = externalOpps || storeOpps;
 
     // Timeline store for research events
-    const { events: timelineEvents, initialize: initTimeline } = useTimelineStore();
+    const { events: timelineEvents, initialize: initTimeline } = useTimelineStore(
+        state => ({ events: state.events, initialize: state.initialize }),
+        shallow
+    );
 
     const [timeRange, setTimeRange] = useState('6m'); // 3m, 6m, 12m, all
     const [groupBy, setGroupBy] = useState('status'); // status, region, country

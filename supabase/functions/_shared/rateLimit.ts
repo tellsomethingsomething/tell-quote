@@ -62,9 +62,14 @@ export async function checkRateLimit(
 
         if (countError) {
             console.error('Rate limit check error:', countError);
-            // SECURITY: Fail open for rate limiting to avoid blocking legitimate users
-            // But log for monitoring
-            return { allowed: true, remaining: config.limit, resetAt };
+            // SECURITY: Fail CLOSED - block on error to prevent bypass attacks
+            // Attackers could exploit database errors to bypass rate limits
+            return {
+                allowed: false,
+                remaining: 0,
+                resetAt,
+                error: 'Rate limit check failed. Please try again later.'
+            };
         }
 
         const currentCount = count || 0;
@@ -90,8 +95,13 @@ export async function checkRateLimit(
 
     } catch (error) {
         console.error('Rate limit error:', error);
-        // SECURITY: Fail open but log
-        return { allowed: true, remaining: config.limit, resetAt };
+        // SECURITY: Fail CLOSED - block on exception to prevent bypass attacks
+        return {
+            allowed: false,
+            remaining: 0,
+            resetAt,
+            error: 'Rate limit check failed. Please try again later.'
+        };
     }
 }
 

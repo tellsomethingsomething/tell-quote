@@ -43,11 +43,6 @@ export function handleCorsPrelight(req: Request): Response {
     return new Response('ok', { headers: getCorsHeaders(req) });
 }
 
-/**
- * Legacy corsHeaders constant for backward compatibility
- * @deprecated Use getCorsHeaders(req) instead for proper origin validation
- */
-export const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// SECURITY: Legacy wildcard CORS has been removed
+// All Edge Functions MUST use getCorsHeaders(req) for proper origin validation
+// If you see a build error, update your imports to use getCorsHeaders(req) instead

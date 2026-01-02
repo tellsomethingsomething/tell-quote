@@ -56,14 +56,25 @@ export default function TaxLegalSettings({ onSave }) {
             {/* Tax Configuration for Invoicing */}
             <div className="space-y-4 mb-8">
                 <h4 className="text-sm font-semibold text-gray-300 border-b border-dark-border pb-2">Tax Configuration</h4>
-                <p className="text-xs text-gray-500">Configure how tax is calculated and displayed on invoices</p>
+                <p className="text-xs text-gray-500">Configure how tax is calculated and displayed on invoices. Tax settings auto-populate when you select a country.</p>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="label">Home Country</label>
                         <select
                             value={settings.taxConfig?.homeCountry || 'MY'}
-                            onChange={(e) => setTaxConfig({ homeCountry: e.target.value })}
+                            onChange={(e) => {
+                                const country = e.target.value;
+                                const taxRules = DEFAULT_TAX_RULES[country];
+                                // Auto-populate tax settings when country changes
+                                setTaxConfig({
+                                    homeCountry: country,
+                                    domesticTaxName: taxRules?.taxName || 'VAT',
+                                    domesticTaxRate: taxRules?.rate || 0,
+                                    reverseChargeEnabled: taxRules?.reverseCharge || false,
+                                });
+                                onSave?.();
+                            }}
                             className="input"
                         >
                             {Object.entries(DEFAULT_TAX_RULES).map(([code, rule]) => (

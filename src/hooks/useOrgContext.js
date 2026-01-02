@@ -3,6 +3,7 @@
  * Provides organization_id for all database operations
  */
 
+import { useMemo } from 'react';
 import { useOrganizationStore } from '../store/organizationStore';
 
 /**
@@ -16,17 +17,19 @@ export function useOrgId() {
 /**
  * Get organization context for database operations
  * Returns an object with organization_id that can be spread into records
+ * Memoized to prevent unnecessary re-renders
  */
 export function useOrgContext() {
     const organizationId = useOrganizationStore(state => state.organization?.id || null);
 
-    return {
+    // Memoize the return object to maintain stable references
+    return useMemo(() => ({
         organizationId,
         // Spread this into new records
         orgFields: organizationId ? { organization_id: organizationId } : {},
         // Check if org is loaded
         hasOrg: !!organizationId,
-    };
+    }), [organizationId]);
 }
 
 /**

@@ -198,19 +198,23 @@ export async function getOnboardingProgress(userId) {
 }
 
 /**
- * Update onboarding progress
+ * Update onboarding progress (uses upsert to create if not exists)
  */
 export async function updateOnboardingProgress(userId, updates) {
     if (!isSupabaseConfigured()) return null;
 
+    // Use upsert to create record if it doesn't exist, or update if it does
     const { data, error } = await supabase
         .from('onboarding_progress')
-        .update({
+        .upsert({
+            user_id: userId,
             ...updates,
             last_step_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
+        }, {
+            onConflict: 'user_id',
+            ignoreDuplicates: false,
         })
-        .eq('user_id', userId)
         .select()
         .single();
 

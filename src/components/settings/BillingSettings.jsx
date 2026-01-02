@@ -58,7 +58,7 @@ export default function BillingSettings() {
         try {
             const [usageData, limitsData, invoiceData] = await Promise.all([
                 getUsageStats(organization.id),
-                checkPlanLimits(organization.id, subscription?.plan_id || 'free'),
+                checkPlanLimits(organization.id, subscription?.plan || 'free'),
                 getInvoiceHistory(organization.id),
             ]);
 
@@ -151,8 +151,8 @@ export default function BillingSettings() {
         }
     };
 
-    const currentPlan = PLANS[subscription?.plan_id] || PLANS.free;
-    const isFreePlan = !subscription || subscription.plan_id === 'free';
+    const currentPlan = PLANS[subscription?.plan] || PLANS.free;
+    const isFreePlan = !subscription || subscription.plan === 'free';
 
     if (loading) {
         return (

@@ -29,8 +29,22 @@ const convertCurrency = (amount, fromCurrency, toCurrency, rates) => {
 };
 
 export default function RateCardPage() {
-    const { items, sections, addItem, updateItem, updateItemPricing, deleteItem, exportToCSV, importFromCSV, addSection, deleteSection, renameSection, moveSection, resetSectionsToDefaults, exportPublicRateCard } = useRateCardStore();
-    const { rates } = useQuoteStore();
+    // Optimized Zustand selectors - use individual selectors to avoid re-render loops
+    const items = useRateCardStore(state => state.items);
+    const sections = useRateCardStore(state => state.sections);
+    const addItem = useRateCardStore(state => state.addItem);
+    const updateItem = useRateCardStore(state => state.updateItem);
+    const updateItemPricing = useRateCardStore(state => state.updateItemPricing);
+    const deleteItem = useRateCardStore(state => state.deleteItem);
+    const exportToCSV = useRateCardStore(state => state.exportToCSV);
+    const importFromCSV = useRateCardStore(state => state.importFromCSV);
+    const addSection = useRateCardStore(state => state.addSection);
+    const deleteSection = useRateCardStore(state => state.deleteSection);
+    const renameSection = useRateCardStore(state => state.renameSection);
+    const moveSection = useRateCardStore(state => state.moveSection);
+    const resetSectionsToDefaults = useRateCardStore(state => state.resetSectionsToDefaults);
+    const exportPublicRateCard = useRateCardStore(state => state.exportPublicRateCard);
+    const rates = useQuoteStore(state => state.rates);
     const syncAllToRateCard = useKitStore(state => state.syncAllToRateCard);
     const kitItems = useKitStore(state => state.items);
     const toast = useToast();
@@ -260,7 +274,7 @@ export default function RateCardPage() {
     return (
         <div className="h-[calc(100vh-60px)] flex flex-col bg-dark-bg">
             {/* Header */}
-            <div className="bg-dark-bg border-b border-dark-border p-3 sm:p-4">
+            <div className="p-3 sm:p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                     <div className="flex items-center justify-between sm:justify-start gap-3">
                         <div>

@@ -763,9 +763,10 @@ export const useOrganizationStore = create(
 
         /**
          * Get current organization ID
+         * Falls back to localStorage if store not yet initialized
          */
         getOrganizationId: () => {
-            return get().organization?.id || null;
+            return get().organization?.id || localStorage.getItem('current_organization_id') || null;
         },
 
         /**

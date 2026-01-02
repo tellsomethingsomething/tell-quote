@@ -4,6 +4,7 @@ import {
     Phone, Calendar, Mail, FileText, Activity,
     Award, Zap, BarChart3, PieChart
 } from 'lucide-react';
+import { shallow } from 'zustand/shallow';
 import { useOpportunityStore } from '../../store/opportunityStore';
 import { useActivityStore } from '../../store/activityStore';
 import { useContactStore } from '../../store/contactStore';
@@ -12,8 +13,8 @@ import { formatCurrency, convertCurrency } from '../../utils/currency';
 
 // Win Rate Widget
 export const WinRateWidget = memo(function WinRateWidget({ dashboardCurrency, rates, timeRange = 'all' }) {
-    const { opportunities } = useOpportunityStore();
-    const { savedQuotes } = useClientStore();
+    const opportunities = useOpportunityStore(state => state.opportunities, shallow);
+    const savedQuotes = useClientStore(state => state.savedQuotes, shallow);
 
     const stats = useMemo(() => {
         // Calculate from opportunities
@@ -95,8 +96,8 @@ export const WinRateWidget = memo(function WinRateWidget({ dashboardCurrency, ra
 
 // Sales Velocity Widget
 export const SalesVelocityWidget = memo(function SalesVelocityWidget({ dashboardCurrency, rates }) {
-    const { opportunities } = useOpportunityStore();
-    const { savedQuotes } = useClientStore();
+    const opportunities = useOpportunityStore(state => state.opportunities, shallow);
+    const savedQuotes = useClientStore(state => state.savedQuotes, shallow);
 
     const velocity = useMemo(() => {
         // Get won opportunities with close dates
@@ -205,7 +206,7 @@ export const SalesVelocityWidget = memo(function SalesVelocityWidget({ dashboard
 
 // Activity Summary Widget
 export const ActivitySummaryWidget = memo(function ActivitySummaryWidget() {
-    const { activities } = useActivityStore();
+    const activities = useActivityStore(state => state.activities, shallow);
 
     const stats = useMemo(() => {
         const now = new Date();
@@ -287,8 +288,8 @@ export const ActivitySummaryWidget = memo(function ActivitySummaryWidget() {
 
 // Contact Coverage Widget
 export const ContactCoverageWidget = memo(function ContactCoverageWidget() {
-    const { contacts } = useContactStore();
-    const { clients } = useClientStore();
+    const contacts = useContactStore(state => state.contacts, shallow);
+    const clients = useClientStore(state => state.clients, shallow);
 
     const stats = useMemo(() => {
         const totalContacts = contacts.length;
@@ -373,7 +374,7 @@ export const ContactCoverageWidget = memo(function ContactCoverageWidget() {
 
 // Pipeline Health Widget
 export const PipelineHealthWidget = memo(function PipelineHealthWidget({ dashboardCurrency, rates }) {
-    const { opportunities } = useOpportunityStore();
+    const opportunities = useOpportunityStore(state => state.opportunities, shallow);
 
     const health = useMemo(() => {
         const now = new Date();

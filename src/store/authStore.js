@@ -278,6 +278,17 @@ export const useAuthStore = create((set, get) => ({
                 });
 
                 logSecurityEvent('session_restored', { email: session.user.email, emailVerified: authSession.emailVerified });
+            } else {
+                // IMPORTANT: No valid Supabase session - clear any stale localStorage session
+                // This prevents showing onboarding/dashboard to unauthenticated users
+                // who have leftover localStorage data from a previous session
+                saveAuthSession(null);
+                set({
+                    isAuthenticated: false,
+                    user: null,
+                    isSessionLoading: false
+                });
+                logSecurityEvent('stale_session_cleared');
             }
 
             // Listen for auth changes
@@ -830,7 +841,13 @@ export const useAuthStore = create((set, get) => ({
         if (isAdminRole(orgRole, profileRole)) return true;
 
         // Check tab permissions from profile
-        return user.profile?.tabPermissions?.includes(tabId) ?? false;
+        // If tabPermissions is not set, grant access by default (authenticated users see all)
+        // Only restrict if tabPermissions is explicitly configured
+        const tabPermissions = user.profile?.tabPermissions;
+        if (!tabPermissions || tabPermissions.length === 0) {
+            return true; // No restrictions configured = full access
+        }
+        return tabPermissions.includes(tabId);
     },
 
     /**

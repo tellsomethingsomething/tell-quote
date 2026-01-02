@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
-import { shallow } from 'zustand/shallow';
 import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -337,26 +336,22 @@ function OpportunityCard({ opportunity, onSelect, onDelete, onUpdateNotes, isExp
 }
 
 export default function OpportunitiesPage({ onSelectOpportunity }) {
-    // Optimized Zustand selectors - only subscribe to needed state
+    // Optimized Zustand selectors - use individual selectors to avoid re-render loops
     const opportunities = useOpportunityStore(state => state.opportunities);
-    const { addOpportunity, deleteOpportunity, updateOpportunity, updateStage } = useOpportunityStore(
-        state => ({
-            addOpportunity: state.addOpportunity,
-            deleteOpportunity: state.deleteOpportunity,
-            updateOpportunity: state.updateOpportunity,
-            updateStage: state.updateStage,
-        }),
-        shallow
-    );
+    const addOpportunity = useOpportunityStore(state => state.addOpportunity);
+    const deleteOpportunity = useOpportunityStore(state => state.deleteOpportunity);
+    const updateOpportunity = useOpportunityStore(state => state.updateOpportunity);
+    const updateStage = useOpportunityStore(state => state.updateStage);
 
     const clients = useClientStore(state => state.clients);
-    const settings = useSettingsStore(state => state.settings);
+    const opsPreferences = useSettingsStore(state => state.settings?.opsPreferences);
+    const settingsUsers = useSettingsStore(state => state.settings?.users);
     const setOpsPreferences = useSettingsStore(state => state.setOpsPreferences);
     const rates = useQuoteStore(state => state.rates);
-    const users = settings.users || [];
+    const users = settingsUsers || [];
 
     // Get ops preferences from settings (synced via Supabase)
-    const opsPrefs = settings.opsPreferences || {};
+    const opsPrefs = opsPreferences || {};
 
     // Initialize expandedCountries with defaults if empty
     const expandedCountries = useMemo(() => {

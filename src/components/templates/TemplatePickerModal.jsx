@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { shallow } from 'zustand/shallow';
 import { useQuoteTemplateStore } from '../../store/quoteTemplateStore';
 
 const CATEGORIES = [
@@ -12,7 +13,7 @@ const CATEGORIES = [
 ];
 
 export default function TemplatePickerModal({ isOpen, onClose, onSelectTemplate, onStartBlank }) {
-    const templates = useQuoteTemplateStore(state => state.templates);
+    const templates = useQuoteTemplateStore(state => state.templates, shallow);
     const deleteTemplate = useQuoteTemplateStore(state => state.deleteTemplate);
 
     const [selectedCategory, setSelectedCategory] = useState('all');

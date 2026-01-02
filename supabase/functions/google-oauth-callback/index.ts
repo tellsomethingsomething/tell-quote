@@ -6,18 +6,17 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { checkRateLimit, rateLimitExceededResponse } from '../_shared/rateLimit.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders, handleCorsPrelight } from '../_shared/cors.ts'
 
 // SECURITY: State token expiry window (10 minutes)
 const STATE_EXPIRY_MS = 10 * 60 * 1000
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return handleCorsPrelight(req)
   }
 
   try {
@@ -140,10 +139,7 @@ serve(async (req) => {
         google_user_id: userInfo.id,
         google_name: userInfo.name,
         google_picture: userInfo.picture,
-        // SECURITY: Store both encrypted and plaintext (for migration period)
-        // After migration is verified, remove plaintext columns
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
+        // SECURITY: Only store encrypted tokens - plaintext storage removed
         access_token_encrypted: encryptedAccess,
         refresh_token_encrypted: encryptedRefresh,
         token_expires_at: expiresAt.toISOString(),

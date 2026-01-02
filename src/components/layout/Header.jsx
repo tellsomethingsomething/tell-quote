@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { shallow } from 'zustand/shallow';
 import { useQuoteStore } from '../../store/quoteStore';
 import { useClientStore } from '../../store/clientStore';
 import { useAuthStore } from '../../store/authStore';
@@ -13,8 +14,10 @@ import Logo from '../Logo';
 
 // Theme Toggle Component
 function ThemeToggle() {
-    const { settings, setTheme } = useSettingsStore();
-    const isDark = settings.theme !== 'light';
+    // Only select the specific setting we need to prevent unnecessary re-renders
+    const theme = useSettingsStore(state => state.settings?.theme);
+    const setTheme = useSettingsStore(state => state.setTheme);
+    const isDark = theme !== 'light';
 
     return (
         <button
@@ -126,9 +129,15 @@ function SkipLink() {
 }
 
 export default function Header({ view = 'editor', onGoToClients, onGoToRateCard, onGoToSettings, onGoToDashboard, onGoToQuotes, onGoToFS, onGoToOpportunities, onGoToProjects, onGoToTasks, onGoToSOP, onGoToKnowledge, onGoToKit, onGoToContacts }) {
-    const { quote, ratesLoading, refreshRates } = useQuoteStore();
-    const { saveQuote } = useClientStore();
-    const { logout, user } = useAuthStore();
+    const { quote, ratesLoading, refreshRates } = useQuoteStore(
+        state => ({ quote: state.quote, ratesLoading: state.ratesLoading, refreshRates: state.refreshRates }),
+        shallow
+    );
+    const saveQuote = useClientStore(state => state.saveQuote);
+    const { logout, user } = useAuthStore(
+        state => ({ logout: state.logout, user: state.user }),
+        shallow
+    );
     const toast = useToast();
 
     // Get user display info

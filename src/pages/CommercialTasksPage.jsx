@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { shallow } from 'zustand/shallow';
 import { useClientStore } from '../store/clientStore';
 import { useOpportunityStore } from '../store/opportunityStore';
 import { useSettingsStore } from '../store/settingsStore';
@@ -24,15 +25,15 @@ const CATEGORIES = [
 ];
 
 export default function CommercialTasksPage() {
-    const clients = useClientStore(state => state.clients) || [];
-    const quotes = useClientStore(state => state.quotes) || [];
+    const clients = useClientStore(state => state.clients, shallow) || [];
+    const quotes = useClientStore(state => state.quotes, shallow) || [];
     const updateClient = useClientStore(state => state.updateClient);
     const addClient = useClientStore(state => state.addClient);
-    const opportunities = useOpportunityStore(state => state.opportunities) || [];
+    const opportunities = useOpportunityStore(state => state.opportunities, shallow) || [];
     const updateOpportunity = useOpportunityStore(state => state.updateOpportunity);
     const addOpportunity = useOpportunityStore(state => state.addOpportunity);
     const { addActivityLog } = useSettingsStore();
-    const settings = useSettingsStore(state => state.settings);
+    const settings = useSettingsStore(state => state.settings, shallow);
     const okrs = settings?.okrs || [];
 
     const [tasks, setTasks] = useState(() => {

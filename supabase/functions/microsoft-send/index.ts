@@ -1,12 +1,9 @@
 // Microsoft Send Email Edge Function
 // Sends emails via Microsoft Graph API
+// SECURITY: Includes proper CORS and encrypted token storage
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders, handleCorsPrelight } from '../_shared/cors.ts'
 
 async function refreshAccessToken(
   refreshToken: string,
@@ -50,8 +47,10 @@ function formatRecipient(email: string) {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return handleCorsPrelight(req)
   }
 
   try {
@@ -101,9 +100,9 @@ Deno.serve(async (req) => {
       throw new Error('Invalid user token')
     }
 
-    // Get Microsoft connection
+    // SECURITY: Get Microsoft connection with decrypted tokens via view
     const { data: connection, error: connError } = await supabase
-      .from('microsoft_connections')
+      .from('microsoft_connections_decrypted')
       .select('*')
       .eq('id', connectionId)
       .eq('user_id', user.id)
@@ -129,12 +128,20 @@ Deno.serve(async (req) => {
       const newExpiry = new Date()
       newExpiry.setSeconds(newExpiry.getSeconds() + tokens.expires_in)
 
+      // SECURITY: Store encrypted tokens only
+      const { data: encryptedAccess } = await supabase.rpc('encrypt_token', {
+        token_text: accessToken
+      })
+
       const updateData: any = {
-        access_token: accessToken,
+        access_token_encrypted: encryptedAccess,
         token_expires_at: newExpiry.toISOString(),
       }
       if (tokens.refresh_token) {
-        updateData.refresh_token = tokens.refresh_token
+        const { data: encryptedRefresh } = await supabase.rpc('encrypt_token', {
+          token_text: tokens.refresh_token
+        })
+        updateData.refresh_token_encrypted = encryptedRefresh
       }
 
       await supabase

@@ -196,8 +196,14 @@ export default function Sidebar({
     onToggleCollapse
 }) {
     const hasPermission = useAuthStore(state => state.hasPermission);
-    const { logout, user } = useAuthStore();
-    const { settings, setTheme } = useSettingsStore();
+    const logout = useAuthStore(state => state.logout);
+    // Select individual user properties to prevent infinite re-renders
+    const userProfileName = useAuthStore(state => state.user?.profile?.name);
+    const userEmail = useAuthStore(state => state.user?.email);
+    const userProfileRole = useAuthStore(state => state.user?.profile?.role);
+    // Only select the specific setting we need to prevent unnecessary re-renders
+    const theme = useSettingsStore(state => state.settings?.theme);
+    const setTheme = useSettingsStore(state => state.setTheme);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -236,9 +242,9 @@ export default function Sidebar({
         }));
     };
 
-    const isDark = settings.theme !== 'light';
-    const userName = user?.profile?.name || user?.email?.split('@')[0] || 'User';
-    const userRole = user?.profile?.role === 'admin' ? 'Admin' : 'User';
+    const isDark = theme !== 'light';
+    const userName = userProfileName || userEmail?.split('@')[0] || 'User';
+    const userRole = userProfileRole === 'admin' ? 'Admin' : 'User';
     const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
 
     // Filter categories and items based on permissions
@@ -468,7 +474,7 @@ export default function Sidebar({
                     </button>
 
                     {/* Admin Dashboard - Only for admins */}
-                    {user?.profile?.role === 'admin' && (
+                    {userProfileRole === 'admin' && (
                         <button
                             onClick={() => handleNavClick('admin')}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-1 ${isDark ? 'focus:ring-offset-dark-bg' : 'focus:ring-offset-white'} ${

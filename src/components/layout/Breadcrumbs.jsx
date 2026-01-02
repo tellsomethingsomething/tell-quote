@@ -92,7 +92,7 @@ export default function Breadcrumbs({ view, entityName, onNavigate }) {
     return (
         <nav
             aria-label="Breadcrumb"
-            className="flex items-center gap-1.5 text-sm text-gray-500 px-4 py-2 bg-dark-card/50 border-b border-dark-border"
+            className="flex items-center gap-1.5 text-sm text-gray-500 px-4 py-1.5"
         >
             {trail.map((item, index) => (
                 <div key={item.id} className="flex items-center gap-1.5">

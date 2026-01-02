@@ -3,7 +3,7 @@
  * Provides subscription status, feature gating, and upgrade prompts throughout the app
  */
 
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext, useMemo } from 'react';
 import { useOrganizationStore } from '../store/organizationStore';
 import {
     checkSubscriptionWithUsage,
@@ -21,7 +21,10 @@ const SubscriptionContext = createContext(null);
  * Wrap your app with this to provide subscription state
  */
 export function SubscriptionProvider({ children }) {
-    const { organization } = useOrganizationStore();
+    // IMPORTANT: Use a specific selector to prevent subscribing to entire store
+    // This prevents infinite re-render loops with React 18's useSyncExternalStore
+    const organizationId = useOrganizationStore(state => state.organization?.id);
+    // NOTE: Removed unused `organization` selector that was causing infinite loops
     const [state, setState] = useState({
         loading: true,
         subscription: null,
@@ -36,15 +39,16 @@ export function SubscriptionProvider({ children }) {
 
     // Load subscription data
     const loadSubscription = useCallback(async () => {
-        if (!organization?.id) {
-            setState(prev => ({ ...prev, loading: false }));
+        if (!organizationId) {
+            // Only update state if it's actually different to prevent render loops
+            setState(prev => prev.loading ? { ...prev, loading: false } : prev);
             return;
         }
 
         try {
             const [subscriptionData, trialData] = await Promise.all([
-                checkSubscriptionWithUsage(organization.id),
-                getTrialStatus(organization.id),
+                checkSubscriptionWithUsage(organizationId),
+                getTrialStatus(organizationId),
             ]);
 
             setState({
@@ -71,7 +75,7 @@ export function SubscriptionProvider({ children }) {
                 error: error.message,
             }));
         }
-    }, [organization?.id]);
+    }, [organizationId]);
 
     // Reload on organization change
     useEffect(() => {
@@ -84,7 +88,8 @@ export function SubscriptionProvider({ children }) {
         loadSubscription();
     }, [loadSubscription]);
 
-    const value = {
+    // Memoize context value to prevent unnecessary re-renders
+    const value = useMemo(() => ({
         ...state,
         refresh,
         // Helper properties
@@ -94,7 +99,7 @@ export function SubscriptionProvider({ children }) {
         isTrial: state.trial?.status === 'active' || state.trial?.status === 'expiring_soon',
         isFreePlan: state.planId === 'free',
         isPaidPlan: state.planId === 'individual' || state.planId === 'team',
-    };
+    }), [state, refresh]);
 
     return (
         <SubscriptionContext.Provider value={value}>

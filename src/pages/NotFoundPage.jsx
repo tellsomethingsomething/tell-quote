@@ -12,7 +12,7 @@ export default function NotFoundPage() {
                 <meta name="robots" content="noindex" />
             </Helmet>
 
-            <div className="min-h-[70vh] flex items-center justify-center px-4">
+            <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 pb-16 pt-8">
                 <div className="text-center max-w-lg">
                     {/* 404 Illustration */}
                     <div className="mb-8">

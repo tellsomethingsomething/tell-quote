@@ -7,8 +7,8 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useOrganizationStore } from '../store/organizationStore';
 import logger from '../utils/logger';
 
-// Use test mode in development
-const isTestMode = import.meta.env.DEV || import.meta.env.VITE_STRIPE_TEST_MODE === 'true';
+// Always use live mode - test mode removed for production
+const isTestMode = false;
 
 // Stripe Products (Live Mode)
 export const STRIPE_PRODUCTS = {
@@ -330,6 +330,9 @@ export const PLANS = {
         },
     },
 };
+
+// Alias for legacy/internal plan names
+PLANS.professional = PLANS.team;
 
 // Token Packs Configuration
 export const TOKEN_PACKS = {

@@ -20,20 +20,15 @@ const STATUSES = [
 
 export default function QuotesPage({ onEditQuote, onNewQuote }) {
     // Optimized Zustand selectors - only subscribe to needed state
-    const savedQuotes = useClientStore(state => state.savedQuotes);
-    const { updateQuoteStatus, deleteQuote } = useClientStore(
-        state => ({ updateQuoteStatus: state.updateQuoteStatus, deleteQuote: state.deleteQuote }),
-        shallow
-    );
-    const settings = useSettingsStore(state => state.settings);
+    const savedQuotes = useClientStore(state => state.savedQuotes, shallow);
+    const updateQuoteStatus = useClientStore(state => state.updateQuoteStatus);
+    const deleteQuote = useClientStore(state => state.deleteQuote);
+    const quotesPrefs = useSettingsStore(state => state.settings?.quotesPreferences) || {};
     const setQuotesPreferences = useSettingsStore(state => state.setQuotesPreferences);
-    const rates = useQuoteStore(state => state.rates);
+    const rates = useQuoteStore(state => state.rates, shallow);
 
     // Use global display currency from settings
     const { currency: displayCurrency } = useDisplayCurrency();
-
-    // Get quotes preferences from settings (synced via Supabase)
-    const quotesPrefs = settings.quotesPreferences || {};
     const sortBy = quotesPrefs.sortBy || 'updatedAt';
     const sortDir = quotesPrefs.sortDir || 'desc';
 

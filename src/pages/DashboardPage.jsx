@@ -58,35 +58,30 @@ function isFollowUpOverdue(nextFollowUpDate) {
 }
 
 export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportunities, onGoToKnowledge, onGoToSettings }) {
-    // Optimized Zustand selectors - only subscribe to needed state
-    const { savedQuotes, clients } = useClientStore(
-        state => ({ savedQuotes: state.savedQuotes, clients: state.clients }),
-        shallow
-    );
+    // Use separate selectors for arrays to prevent creating new object references
+    const savedQuotes = useClientStore(state => state.savedQuotes, shallow);
+    const clients = useClientStore(state => state.clients, shallow);
     const updateQuoteStatus = useClientStore(state => state.updateQuoteStatus);
 
-    const { rates, ratesUpdated, ratesLoading } = useQuoteStore(
-        state => ({ rates: state.rates, ratesUpdated: state.ratesUpdated, ratesLoading: state.ratesLoading }),
-        shallow
-    );
+    const rates = useQuoteStore(state => state.rates, shallow);
+    const ratesUpdated = useQuoteStore(state => state.ratesUpdated);
+    const ratesLoading = useQuoteStore(state => state.ratesLoading);
     const refreshRates = useQuoteStore(state => state.refreshRates);
 
-    const settings = useSettingsStore(state => state.settings);
+    // Use separate selectors for nested settings properties
+    const dashboardPreferences = useSettingsStore(state => state.settings?.dashboardPreferences, shallow);
+    const settingsUsers = useSettingsStore(state => state.settings?.users, shallow);
     const setDashboardPreferences = useSettingsStore(state => state.setDashboardPreferences);
 
-    const opportunities = useOpportunityStore(state => state.opportunities);
+    // Use shallow comparison for arrays/objects
+    const opportunities = useOpportunityStore(state => state.opportunities, shallow);
 
-    const activities = useActivityStore(state => state.activities);
+    const activities = useActivityStore(state => state.activities, shallow);
 
-    const { fragments, learnings } = useKnowledgeStore(
-        state => ({
-            fragments: state.fragments,
-            learnings: state.learnings
-        }),
-        shallow
-    );
+    const fragments = useKnowledgeStore(state => state.fragments, shallow);
+    const learnings = useKnowledgeStore(state => state.learnings, shallow);
 
-    const user = useAuthStore(state => state.user);
+    const user = useAuthStore(state => state.user, shallow);
     const { organizationId } = useOrgContext();
     const [selectedMonth, setSelectedMonth] = useState('all');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -94,12 +89,12 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
     const [dragOverColumn, setDragOverColumn] = useState(null);
 
     // Get dashboard preferences from settings (synced via Supabase)
-    const dashboardPrefs = settings.dashboardPreferences || {};
+    const dashboardPrefs = dashboardPreferences || {};
     const collapsedColumns = dashboardPrefs.collapsedColumns || {};
     const pipelineMinimized = dashboardPrefs.pipelineMinimized || false;
 
     // Use global display currency from settings
-    const { currency: dashboardCurrency } = useDisplayCurrency();
+    const { currency: dashboardCurrency, setCurrency, preferredCurrencies } = useDisplayCurrency();
 
     const setCollapsedColumns = (updater) => {
         const newCollapsed = typeof updater === 'function' ? updater(collapsedColumns) : updater;
@@ -123,7 +118,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
     };
 
     // Get active user name from auth context
-    const userName = user?.profile?.name || user?.email?.split('@')[0] || settings?.users?.[0]?.name || 'User';
+    const userName = user?.profile?.name || user?.email?.split('@')[0] || settingsUsers?.[0]?.name || 'User';
 
     // Get unique years from quotes
     const years = useMemo(() => {
@@ -543,7 +538,7 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
     return (
         <div className="h-[calc(100vh-60px)] overflow-y-auto">
             {/* Header / Navigation */}
-            <div className="bg-dark-bg border-b border-dark-border p-3 sm:p-6">
+            <div className="p-3 sm:p-6">
 
                 {/* Top Bar with Title and Navigation */}
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
@@ -603,6 +598,16 @@ export default function DashboardPage({ onViewQuote, onNewQuote, onGoToOpportuni
                             <option value="all">All Months</option>
                             {MONTHS.map((m, i) => (
                                 <option key={m} value={i}>{m}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={dashboardCurrency}
+                            onChange={(e) => setCurrency(e.target.value)}
+                            className="input-sm text-sm w-20 sm:w-24 min-h-[40px]"
+                            title="Display currency"
+                        >
+                            {preferredCurrencies.map(code => (
+                                <option key={code} value={code}>{code}</option>
                             ))}
                         </select>
                     </div>

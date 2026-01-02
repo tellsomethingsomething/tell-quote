@@ -152,9 +152,9 @@ Deno.serve(async (req) => {
       throw new Error('Invalid user token')
     }
 
-    // Get connection
+    // Get connection with decrypted tokens
     const { data: connection, error: connError } = await supabase
-      .from('google_connections')
+      .from('google_connections_decrypted')
       .select('*')
       .eq('id', connectionId)
       .eq('user_id', user.id)
@@ -180,10 +180,15 @@ Deno.serve(async (req) => {
       const newExpiry = new Date()
       newExpiry.setSeconds(newExpiry.getSeconds() + tokens.expires_in)
 
+      // SECURITY: Store encrypted tokens only
+      const { data: encryptedAccess } = await supabase.rpc('encrypt_token', {
+        token_text: accessToken
+      })
+
       await supabase
         .from('google_connections')
         .update({
-          access_token: accessToken,
+          access_token_encrypted: encryptedAccess,
           token_expires_at: newExpiry.toISOString(),
         })
         .eq('id', connectionId)

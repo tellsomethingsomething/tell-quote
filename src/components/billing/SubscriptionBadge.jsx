@@ -3,13 +3,14 @@
  * Shows trial/subscription status in the app header
  */
 import React, { useState, useEffect } from 'react';
+import { shallow } from 'zustand/shallow';
 import { Clock, AlertTriangle, CreditCard, Zap } from 'lucide-react';
 import { useOrganizationStore } from '../../store/organizationStore';
 import { checkSubscriptionAccess, ACCESS_LEVELS } from '../../services/subscriptionGuard';
 import logger from '../../utils/logger';
 
 export default function SubscriptionBadge({ onUpgrade }) {
-    const { organization } = useOrganizationStore();
+    const organization = useOrganizationStore(state => state.organization, shallow);
     const [status, setStatus] = useState(null);
     const [loading, setLoading] = useState(true);
 

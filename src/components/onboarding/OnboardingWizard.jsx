@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Building2, Globe2, CreditCard, Rocket, Film,
     CheckCircle, ArrowRight, ArrowLeft, Loader2, X,
@@ -8,6 +8,7 @@ import {
 import { useOrganizationStore } from '../../store/organizationStore';
 import { CURRENCIES, DEFAULT_TAX_RULES } from '../../store/settingsStore';
 import { supabase } from '../../lib/supabase';
+import CountrySelect from '../ui/CountrySelect';
 import {
     ONBOARDING_STEPS,
     COMPANY_TYPES,
@@ -263,6 +264,12 @@ export default function OnboardingWizard({ userId, onComplete }) {
 
     const handleNext = async () => {
         if (!validateStep()) return;
+
+        // Defensive check: ensure userId is available before attempting to save
+        if (!userId) {
+            setError('Please sign in to continue with onboarding.');
+            return;
+        }
 
         const step = ONBOARDING_STEPS[currentStep];
         setIsSaving(true);
@@ -589,6 +596,13 @@ export default function OnboardingWizard({ userId, onComplete }) {
 // Step Components
 
 function CompanySetupStep({ formData, updateField, handleCountryChange }) {
+    // Memoize sorted countries list
+    const countries = useMemo(() => {
+        return ALL_COUNTRY_CODES
+            .map(code => ({ code, name: DEFAULT_TAX_RULES[code]?.name || code }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, []);
+
     return (
         <div className="space-y-6">
             {/* Your Name */}
@@ -680,20 +694,12 @@ function CompanySetupStep({ formData, updateField, handleCountryChange }) {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                         Country *
                     </label>
-                    <select
+                    <CountrySelect
                         value={formData.country}
-                        onChange={(e) => handleCountryChange(e.target.value)}
-                        className="input w-full"
-                    >
-                        <option value="">Select country</option>
-                        {ALL_COUNTRY_CODES
-                            .map(code => ({ code, name: DEFAULT_TAX_RULES[code]?.name || code }))
-                            .sort((a, b) => a.name.localeCompare(b.name))
-                            .map(({ code, name }) => (
-                                <option key={code} value={code}>{name}</option>
-                            ))
-                        }
-                    </select>
+                        onChange={handleCountryChange}
+                        countries={countries}
+                        placeholder="Select country"
+                    />
                 </div>
 
                 <div>

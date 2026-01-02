@@ -22,6 +22,7 @@
  */
 
 import { Navigate, useLocation } from 'react-router-dom';
+import { shallow } from 'zustand/shallow';
 import { useAuthStore } from '../../store/authStore';
 import { useOrganizationStore } from '../../store/organizationStore';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -40,8 +41,18 @@ export default function ProtectedRoute({
         user,
         hasPermission,
         isAdmin,
-    } = useAuthStore();
-    const { organization, loading: isOrgLoading } = useOrganizationStore();
+    } = useAuthStore(
+        state => ({
+            isAuthenticated: state.isAuthenticated,
+            isSessionLoading: state.isSessionLoading,
+            user: state.user,
+            hasPermission: state.hasPermission,
+            isAdmin: state.isAdmin,
+        }),
+        shallow
+    );
+    const organization = useOrganizationStore(state => state.organization, shallow);
+    const isOrgLoading = useOrganizationStore(state => state.loading);
 
     // Show loading spinner while session is being loaded/decrypted
     if (isSessionLoading) {
@@ -128,8 +139,17 @@ export function useProtectionStatus(requiredPermission = null) {
         isSessionLoading,
         hasPermission,
         isAdmin,
-    } = useAuthStore();
-    const { organization, loading: isOrgLoading } = useOrganizationStore();
+    } = useAuthStore(
+        state => ({
+            isAuthenticated: state.isAuthenticated,
+            isSessionLoading: state.isSessionLoading,
+            hasPermission: state.hasPermission,
+            isAdmin: state.isAdmin,
+        }),
+        shallow
+    );
+    const organization = useOrganizationStore(state => state.organization, shallow);
+    const isOrgLoading = useOrganizationStore(state => state.loading);
 
     return {
         isLoading: isSessionLoading || isOrgLoading,

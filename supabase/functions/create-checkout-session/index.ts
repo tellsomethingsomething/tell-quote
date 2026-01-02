@@ -28,16 +28,25 @@ serve(async (req: Request) => {
             throw new Error('Missing authorization header');
         }
 
+        // Extract JWT token from Authorization header
+        const token = authHeader.replace('Bearer ', '');
+
         const supabase = createClient(
             Deno.env.get('SUPABASE_URL')!,
-            Deno.env.get('SUPABASE_ANON_KEY')!,
-            { global: { headers: { Authorization: authHeader } } }
+            Deno.env.get('SUPABASE_ANON_KEY')!
         );
 
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            throw new Error('Not authenticated');
+        // Pass the token directly to getUser() for validation
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError) {
+            console.error('Auth error:', authError.message);
+            throw new Error(`Authentication failed: ${authError.message}`);
         }
+        if (!user) {
+            console.error('No user returned from getUser()');
+            throw new Error('Not authenticated: no user found');
+        }
+        console.log('Authenticated user:', user.email);
 
         const { priceId, organizationId, successUrl, cancelUrl, mode = 'subscription', tier = 'tier1', currency = 'USD' } = await req.json();
 

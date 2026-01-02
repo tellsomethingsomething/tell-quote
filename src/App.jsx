@@ -14,6 +14,7 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import CookieConsent from './components/common/CookieConsent';
 import PWAStatus from './components/pwa/PWAStatus';
 import TemplatePickerModal from './components/templates/TemplatePickerModal';
+import { shallow } from 'zustand/shallow';
 import { useQuoteStore } from './store/quoteStore';
 import { useClientStore } from './store/clientStore';
 import { useRateCardStore } from './store/rateCardStore';
@@ -106,8 +107,18 @@ const EmailVerificationPage = lazy(() => import('./pages/EmailVerificationPage')
 
 // Views: 'clients' | 'client-detail' | 'opportunities' | 'opportunity-detail' | 'editor' | 'rate-card' | 'dashboard' | 'settings' | 'contacts'
 function App() {
-  const { isAuthenticated, user, needsOnboarding, setNeedsOnboarding, isEmailVerified } = useAuthStore();
-  const { organization, loading: isOrgLoading, initialize: initializeOrganization } = useOrganizationStore();
+  // IMPORTANT: Use selectors with shallow comparison to prevent infinite re-render loops
+  // Destructuring without selectors subscribes to entire store state, causing cascading updates
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  const user = useAuthStore(state => state.user, shallow);
+  const needsOnboarding = useAuthStore(state => state.needsOnboarding);
+  const setNeedsOnboarding = useAuthStore(state => state.setNeedsOnboarding);
+  const isEmailVerified = useAuthStore(state => state.isEmailVerified);
+
+  const organization = useOrganizationStore(state => state.organization, shallow);
+  const isOrgLoading = useOrganizationStore(state => state.loading);
+  const initializeOrganization = useOrganizationStore(state => state.initialize);
+
   const initializeQuote = useQuoteStore(state => state.initialize);
   const initializeClients = useClientStore(state => state.initialize);
   const initializeRateCard = useRateCardStore(state => state.initialize);
@@ -196,7 +207,7 @@ function App() {
   }, []);
 
   // Use custom hook for unsaved changes tracking
-  const quote = useQuoteStore(state => state.quote);
+  const quote = useQuoteStore(state => state.quote, shallow);
   const { confirmNavigateAway, markAsSaved } = useUnsavedChanges(
     view === 'editor',
     quote
@@ -537,7 +548,7 @@ function App() {
   }, [view, quote.quoteNumber, markAsSaved]);
 
   // Apply theme on initialization
-  const settings = useSettingsStore(state => state.settings);
+  const settings = useSettingsStore(state => state.settings, shallow);
   useEffect(() => {
     const theme = settings.theme || 'dark';
     if (theme === 'light') {
@@ -767,7 +778,8 @@ function App() {
   }
 
   // Show onboarding wizard for new users without an organization
-  if (showOnboarding || needsOnboarding || (!organization && !isOrgLoading)) {
+  // IMPORTANT: Only show if user is loaded (userId available) to prevent save failures
+  if ((showOnboarding || needsOnboarding || (!organization && !isOrgLoading)) && user?.userId) {
     const handleOnboardingComplete = (newOrg, firstAction) => {
       logger.info('Onboarding complete, org:', newOrg?.id, 'firstAction:', firstAction);
 

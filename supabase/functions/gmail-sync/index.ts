@@ -1,12 +1,9 @@
 // Gmail Sync Edge Function
 // Fetches emails from Gmail API and stores in Supabase
+// SECURITY: Includes proper CORS and encrypted token storage
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders, handleCorsPrelight } from '../_shared/cors.ts'
 
 interface GmailMessage {
   id: string
@@ -123,8 +120,10 @@ function extractAttachments(payload: any, messageId: string): any[] {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return handleCorsPrelight(req)
   }
 
   try {
@@ -155,9 +154,9 @@ Deno.serve(async (req) => {
       throw new Error('Invalid user token')
     }
 
-    // Get connection
+    // SECURITY: Get connection with decrypted tokens via view
     const { data: connection, error: connError } = await supabase
-      .from('google_connections')
+      .from('google_connections_decrypted')
       .select('*')
       .eq('id', connectionId)
       .eq('user_id', user.id)
@@ -183,10 +182,15 @@ Deno.serve(async (req) => {
       const newExpiry = new Date()
       newExpiry.setSeconds(newExpiry.getSeconds() + tokens.expires_in)
 
+      // SECURITY: Store encrypted tokens only
+      const { data: encryptedAccess } = await supabase.rpc('encrypt_token', {
+        token_text: accessToken
+      })
+
       await supabase
         .from('google_connections')
         .update({
-          access_token: accessToken,
+          access_token_encrypted: encryptedAccess,
           token_expires_at: newExpiry.toISOString(),
         })
         .eq('id', connectionId)

@@ -2,16 +2,18 @@ import { useSettingsStore } from '../store/settingsStore';
 import { useQuoteStore } from '../store/quoteStore';
 import { formatCurrency, convertCurrency } from '../utils/currency';
 import { CURRENCIES } from '../data/currencies';
+import { shallow } from 'zustand/shallow';
 
 /**
  * Hook for accessing and managing the app-wide display currency.
  * Provides currency formatting and conversion utilities.
  */
 export function useDisplayCurrency() {
+    // Use shallow comparison to prevent infinite re-renders with React 18
     const displayCurrency = useSettingsStore(s => s.settings.displayCurrency) || 'USD';
     const setDisplayCurrency = useSettingsStore(s => s.setDisplayCurrency);
-    const preferredCurrencies = useSettingsStore(s => s.settings.preferredCurrencies) || ['USD', 'EUR', 'GBP'];
-    const rates = useQuoteStore(s => s.rates) || {};
+    const preferredCurrencies = useSettingsStore(s => s.settings.preferredCurrencies, shallow) || ['USD', 'EUR', 'GBP'];
+    const rates = useQuoteStore(s => s.rates, shallow) || {};
 
     // Get currency config (symbol, name, etc.)
     const currencyConfig = CURRENCIES[displayCurrency] || CURRENCIES.USD;
